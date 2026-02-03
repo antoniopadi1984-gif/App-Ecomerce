@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --border: #e2e8f0;
+    }
+
+    body {
+      width: 340px;
+      padding: 0;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    .header {
+      background: #ffffff;
+      padding: 16px 20px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
+    .content {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input,
+    select {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 500;
+      outline: none;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    }
+
+    .btn-primary {
+      background: #0f172a;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+    }
+
+    .assets-list {
+      max-height: 200px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0;
+    }
+
+    .asset-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      transition: background 0.1s;
+    }
+
+    .asset-item:last-child {
+      border-bottom: none;
+    }
+
+    .asset-item:hover {
+      background: #f1f5f9;
+    }
+
+    .btn-sync {
+      background: white;
+      border: 1px solid var(--border);
+      color: #0f172a;
+      border-radius: 6px;
+      font-size: 9px;
+      padding: 6px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .btn-sync:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .footer {
+      padding: 12px;
+      text-align: center;
+      font-size: 9px;
+      color: #94a3b8;
+      border-top: 1px solid var(--border);
+      background: #f8fafc;
+      font-weight: 600;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>ECOMFLOW SPY</h1>
+    <div class="status-dot" title="Sistema Online"></div>
+  </div>
+
+  <div class="content">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div>
+        <label class="section-label">Nombre del Producto</label>
+        <input type="text" id="productName" placeholder="Ejem: Aspiradora...">
+      </div>
+      <div>
+        <label class="section-label">Competidor</label>
+        <input type="text" id="competitorName" placeholder="Ejem: Tienda Pro...">
+      </div>
+    </div>
+
+    <div>
+      <label class="section-label">Carpeta de Destino</label>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="targetFolder" placeholder="Referencias / Benchmarking" style="flex: 1;">
+        <button id="searchLibrary"
+          style="background: white; border: 1px solid var(--border); border-radius: 8px; width: 40px; cursor: pointer; color: #64748b;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button id="captureAssets" class="btn-primary" style="background: #4f46e5;">
+        <span id="btnText">Buscar Multimedia</span>
+      </button>
+      <button id="saveLanding" class="btn-primary" style="background: #0f172a;">
+        <span>Guardar Landing</span>
+      </button>
+    </div>
+
+    <div>
+      <label class="section-label">Multimedia Detectada</label>
+      <div class="assets-list" id="assetList">
+        <div style="color: #94a3b8; font-size: 11px; padding: 20px; text-align: center;">
+          No se han detectado archivos.<br>Haz clic en buscar para analizar la página.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    MOTOR FORENSE v3.2 &bull; ECOMFLOW
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>

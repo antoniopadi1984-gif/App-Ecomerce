@@ -1,0 +1,1287 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String            @id @default(cuid())
+  email        String            @unique
+  name         String?
+  password     String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  auditLogs    AuditLog[]
+  stores       UserStoreAccess[]
+  workSessions WorkSession[]
+}
+
+model UserStoreAccess {
+  id      String @id @default(cuid())
+  userId  String
+  storeId String
+  role    String @default("ATT")
+  store   Store  @relation(fields: [storeId], references: [id])
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@unique([userId, storeId])
+}
+
+model Store {
+  id                   String                  @id @default(cuid())
+  name                 String
+  domain               String?
+  currency             String                  @default("EUR")
+  brandKit             String?
+  swipeFile            String?
+  safeModeAds          Boolean                 @default(true)
+  aggressiveLandings   Boolean                 @default(true)
+  nomenclatureTemplate String                  @default("[PROD]_[CONC]_[VAR]_[LANG]")
+  targetProfitMargin   Float                   @default(30.0) // Desired percentage of revenue
+  adSpendSource        String                  @default("MANUAL") // MANUAL or API (Meta)
+  adMetrics            AdMetricDaily[]
+  agentProfiles        AgentProfile[]
+  agentRuns            AgentRun[]
+  agentActions         AgentAction[]
+  auditLogs            AuditLog[]
+  research             AvatarResearch[]
+  clowdbotConfig       ClowdbotConfig?
+  connections          Connection[]
+  creativeAssets       CreativeAsset[]
+  finances             DailyFinance[]
+  snapshots            DailySnapshot[]
+  expenses             Expense[]
+  fulfillmentRules     FulfillmentRule[]
+  historicalSheets     HistoricalSpreadsheet[]
+  scenarios            HypothesisScenario[]
+  ledgerEntries        LedgerEntry[]
+  moderationRules      ModerationRule[]
+  templates            NotificationTemplate[]
+  orders               Order[]
+  products             Product[]
+  themes               ShopifyTheme[]
+  socialAccounts       SocialAccount[]
+  suppliers            Supplier[]
+  thresholds           ThresholdConfig[]
+  users                UserStoreAccess[]
+  whatsappAccounts     WhatsAppAccount[]
+  monthlyGoals         MonthlyGoal[]
+  contentTemplates     ContentTemplate[]
+  contentAssets        ContentAsset[]
+  contentCampaigns     ContentCampaign[]
+  deliveryLogs         ContentDeliveryLog[]
+  landingProjects      LandingProject[]
+  avatarProfiles       AvatarProfile[]
+  landingSections      LandingSection[]
+  creativeBlueprints   CreativeBlueprint[]
+  languageDictionaries LanguageDictionary[]
+  agentCorrections     AgentCorrection[]
+}
+
+model HistoricalSpreadsheet {
+  id            String    @id @default(cuid())
+  storeId       String
+  name          String
+  spreadsheetId String
+  range         String    @default("Sheet1!A1:Z")
+  status        String    @default("ACTIVE")
+  lastSyncedAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  store         Store     @relation(fields: [storeId], references: [id])
+}
+
+model ShopifyTheme {
+  id             String   @id @default(cuid())
+  storeId        String
+  name           String
+  shopifyThemeId String?  @unique
+  role           String   @default("UNSET")
+  primaryColor   String?
+  secondaryColor String?
+  fontFamily     String?
+  sectionsJson   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  store          Store    @relation(fields: [storeId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  storeId   String
+  userId    String?
+  action    String
+  entity    String
+  entityId  String
+  oldValue  String?
+  newValue  String?
+  actorType String   @default("HUMAN") // HUMAN, IA
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+  store     Store    @relation(fields: [storeId], references: [id])
+}
+
+model WorkSession {
+  id          String    @id @default(cuid())
+  userId      String
+  startTime   DateTime  @default(now())
+  endTime     DateTime?
+  duration    Int?
+  cost        Float     @default(0)
+  activityLog String?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+model Supplier {
+  id          String    @id @default(cuid())
+  storeId     String
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  rating      Int?      @default(5)
+  alias       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+  store       Store     @relation(fields: [storeId], references: [id])
+}
+
+model Connection {
+  id            String    @id @default(cuid())
+  storeId       String
+  provider      String
+  apiKey        String?
+  apiSecret     String?
+  accessToken   String?
+  webhookSecret String?
+  webhookUrl    String?
+  extraConfig   String?
+  isActive      Boolean   @default(true)
+  lastSyncedAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  store         Store     @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, provider])
+}
+
+model Product {
+  id          String             @id @default(cuid())
+  storeId     String
+  shopifyId   String?            @unique
+  title       String
+  handle      String?
+  image       String?
+  driveFolder String?
+  supplierId  String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  avatars     AvatarResearch[]
+  competitors CompetitorLink[]
+  creatives   CreativeAsset[]
+  projects    CreativeProject[]
+  orderItems  OrderItem[]
+  supplier    Supplier?          @relation(fields: [supplierId], references: [id])
+  store       Store              @relation(fields: [storeId], references: [id])
+  finance          ProductFinance?
+  documents        ResearchDocument[]
+  contentAssets    ContentAsset[]
+  contentTemplates ContentTemplate[]
+  landingProjects  LandingProject[]
+  researchSources  ResearchSource[]
+  researchRuns     ResearchRun[]
+  vocQuotes        VoiceOfCustomerQuote[]
+  marketingAngles  MarketingAngle[]
+  creativeBlueprints CreativeBlueprint[]
+  copyContracts      CopyContract[]
+  competitorLandings CompetitorLanding[]
+  languageDictionaries LanguageDictionary[]
+  knowledgeNodes     KnowledgeNode[]
+  videoClips         VideoClip[]
+  videoJobs          VideoJob[]
+  maturity           ProductMaturity?
+}
+
+model Order {
+  id                     String       @id @default(cuid())
+  storeId                String
+  shopifyId              String?      @unique
+  orderNumber            String?
+  orderType              String       @default("REGULAR")
+  abandonedId            String?      @unique
+  draftId                String?      @unique
+  customerName           String?
+  customerEmail          String?
+  customerPhone          String?
+  customerIp             String?
+  userAgent              String?
+  addressLine1           String?
+  addressLine2           String?
+  city                   String?
+  province               String?
+  zip                    String?
+  country                String?
+  addressStatus          String       @default("PENDING")
+  correctedAddress       String?
+  geolocation            String?
+  lat                    Float?
+  lng                    Float?
+  totalPrice             Float        @default(0)
+  totalTax               Float        @default(0)
+  shippingCost           Float        @default(0)
+  paymentMethod          String       @default("COD")
+  financialStatus        String?
+  currency               String       @default("EUR")
+  discounts              Float        @default(0)
+  discountCode           String?
+  status                 String       @default("PENDING")
+  fulfillmentStatus      String?
+  carrier                String?
+  trackingCode           String?
+  shippedAt              DateTime?
+  deliveredAt            DateTime?
+  returnedAt             DateTime?
+  returnReason           String?
+  estimatedLogisticsCost Float        @default(0)
+  warehouse              String?
+  priority               String?
+  logisticsProvider      String?
+  trackingUrl            String?
+  logisticsStatus        String?
+  finalStatus            String?
+  confirmationDate       DateTime?
+  confirmationAttempts   Int          @default(0)
+  incidenceResult        String?
+  incidenceReason        String?
+  incidenceAttempts      Int          @default(0)
+  needsReview            Boolean      @default(false)
+  productTitle           String?
+  variantTitle           String?
+  sku                    String?
+  units                  Int          @default(1)
+  assignedAgentId        String?
+  processedAt            DateTime?
+  incidenciaType         String?
+  notes                  String?
+  shopifyNote            String?
+  tags                   String?
+  whatsappSent           Boolean      @default(false)
+  msgConfirmationSent    Boolean      @default(false)
+  msgTrackingSent        Boolean      @default(false)
+  msgDeliverySent        Boolean      @default(false)
+  msgIncidenceSent       Boolean      @default(false)
+  callAttempt1           String?
+  callAttempt2           String?
+  callAttempt3           String?
+  callRecordingUrl       String?
+  phoneValidated         Boolean      @default(false)
+  source                 String?
+  medium                 String?
+  campaign               String?
+  content                String?
+  term                   String?
+  adsetId                String?
+  adId                   String?
+  rawJson                String?
+  shopifyUpdatedAt       DateTime?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  estimatedProfit        Float?
+  realProfit             Float?
+  riskScore              Int          @default(0)
+  riskLevel              String       @default("LOW")
+  store                  Store        @relation(fields: [storeId], references: [id])
+  events                 OrderEvent[]
+  items                  OrderItem[]
+  messages     Message[]
+  attribution  OrderAttribution?
+  deliveryLogs ContentDeliveryLog[]
+}
+
+model OrderEvent {
+  id              String   @id @default(cuid())
+  orderId         String
+  timestamp       DateTime @default(now())
+  source          String
+  type            String
+  externalEventId String?
+  description     String
+  payload         String?
+  createdAt       DateTime @default(now())
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, externalEventId])
+}
+
+model OrderAttribution {
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmContent    String?
+  utmTerm       String?
+  fbclid        String?
+  gclid         String?
+  ttclid        String?
+  landingSite   String?
+  referringSite String?
+  referrer      String?
+  clientDetails String? // JSON string
+  rawNoteAttrs  String? // JSON string
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model FulfillmentRule {
+  id               String  @id @default(cuid())
+  storeId          String
+  provider         String
+  country          String  @default("ES")
+  baseShippingCost Float   @default(0)
+  returnCost       Float   @default(0)
+  codFeeFixed      Float   @default(0)
+  codFeePercent    Float   @default(0)
+  packagingCost    Float   @default(0)
+  handlingCost     Float   @default(0)
+  taxPercent       Float   @default(0)
+  extraZoneCost    String?
+  isActive         Boolean @default(true)
+  store            Store   @relation(fields: [storeId], references: [id])
+}
+
+model OrderItem {
+  id           String   @id @default(cuid())
+  orderId      String
+  productId    String?
+  sku          String?
+  title        String
+  variantTitle String?
+  quantity     Int      @default(1)
+  price        Float    @default(0)
+  unitCost     Float    @default(0)
+  totalPrice   Float    @default(0)
+  isUpsell     Boolean  @default(false)
+  product      Product? @relation(fields: [productId], references: [id])
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model BotMetric {
+  id                   String   @id @default(cuid())
+  storeId              String
+  botId                String   @default("CLOWDBOT")
+  messagesSent         Int      @default(0)
+  conversationsStarted Int      @default(0)
+  ordersAssisted       Int      @default(0)
+  revenueAssisted      Float    @default(0)
+  date                 DateTime @default(now())
+
+  @@unique([storeId, botId, date])
+}
+
+model CompetitorLink {
+  id        String   @id @default(cuid())
+  productId String
+  type      String
+  url       String
+  notes     String?
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model ResearchDocument {
+  id        String   @id @default(cuid())
+  productId String
+  type      String
+  title     String
+  content   String?
+  fileUrl   String?
+  language  String   @default("es")
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model AvatarResearch {
+  id                String   @id @default(cuid())
+  productId         String
+  storeId           String?
+  levelOfAwareness  String?  // Unaware to Most Aware
+  sophistication    String?  // 1-5
+  desires           String?
+  fears             String?
+  mainDesire        String?
+  howTheyTalk       String?  // VOC key phrases
+  momentsOfPurchase String?  // Detonants
+  triedBefore       String?  // Reasons for failure
+  taboos            String?  // Sensible claims
+  marketMood        String?
+  whyItSells        String?
+  angles            String?
+  createdAt         DateTime @default(now())
+  product           Product  @relation(fields: [productId], references: [id])
+  store             Store?   @relation(fields: [storeId], references: [id])
+  timelineHistoryJson String? // To store historical snapshots
+}
+
+model ResearchSource {
+  id        String   @id @default(cuid())
+  productId String
+  url       String?
+  content   String?
+  type      String   // URL, TEXT, IMAGE
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+  citationText String?
+  sourceDate   DateTime?
+}
+
+model ResearchRun {
+  id              String   @id @default(cuid())
+  productId       String
+  summary         String?
+  results         String?  // JSON with findings
+  avatarMatrix    String?  // JSON for Matrix (Avatar A, B, C)
+  objectionHeatmap String? // JSON heatmap
+  marketMechanism String?  // Breakthrough Advertising Mechanism
+  sophistication  String?
+  awareness       String?
+  sourcesSnapshot String?  // JSON list of sources used
+  createdAt       DateTime @default(now())
+  product         Product  @relation(fields: [productId], references: [id])
+  copyContracts   CopyContract[]
+}
+
+model CopyContract {
+  id             String   @id @default(cuid())
+  productId      String
+  researchRunId  String?
+  researchRun    ResearchRun? @relation(fields: [researchRunId], references: [id])
+  
+  // Framework Variables
+  avatarSegment  String
+  awarenessLevel String   // Schwartz O1-O5
+  sophistication String   // 1-5
+  mainAngle      String
+  
+  // Value Equation (Hormozi)
+  dreamOutcome      String?
+  perceivedProb     String?
+  timeDelay         String?
+  effortSacrifice   String?
+  
+  // Behavioral (Cashvertising)
+  psychologicalTriggers String? // JSON
+  promisesAllowed       String?
+  promisesProhibited    String?
+  
+  // Structural
+  objectionToKill    String?
+  proofRequired      String?
+  ctaAllowed         String?
+  tone               String?
+  
+  status             String   @default("ACTIVE")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  product            Product  @relation(fields: [productId], references: [id])
+  creativeProjects   CreativeProject[]
+}
+
+model CompetitorLanding {
+  id                String   @id @default(cuid())
+  productId         String
+  url               String
+  screenshotUrl     String?
+  type              String?  // Lead gen, Direct sell...
+  
+  // Breakdown
+  avatar            String?
+  awareness         String?
+  angle             String?
+  promise           String?
+  objectionsTreated String?
+  structureJson     String?
+  cta               String?
+  risks             String?
+  opportunityScore  Float?
+  
+  status            String   @default("DETECTED") // DETECTED, ANALYZED
+  createdAt         DateTime @default(now())
+  product           Product  @relation(fields: [productId], references: [id])
+}
+
+model VoiceOfCustomerQuote {
+  id        String   @id @default(cuid())
+  productId String
+  text      String
+  category  String   // PAIN, DESIRE, OBJECTION, COMPETITION
+  sourceUrl String?
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+  evidenceContext String?
+  citationText    String?
+}
+
+model MarketingAngle {
+  id             String   @id @default(cuid())
+  productId      String
+  title          String
+  hook           String
+  benefit        String
+  proof          String
+  objection      String
+  cta            String
+  awarenessLevel String?
+  isWinner       Boolean  @default(false)
+  saturationScore Float?   // Angle Saturation Detector
+  status         String   @default("OPPORTUNITY") // SATURATED, OPPORTUNITY, RIESGOSO
+  sourceBlueprintId String?
+  createdAt      DateTime @default(now())
+  product        Product  @relation(fields: [productId], references: [id])
+}
+
+model CreativeAsset {
+  id           String              @id @default(cuid())
+  productId    String
+  storeId      String?
+  type         String
+  name         String
+  driveUrl     String?
+  nomenclatura String?
+  editor       String?
+  angulo       String?
+  language     String              @default("es")
+  spend        Float               @default(0)
+  revenue      Float               @default(0)
+  purchases    Int                 @default(0)
+  hookRate     Float?
+  ctr          Float?
+  verdict      String?
+  createdAt    DateTime            @default(now())
+  product      Product             @relation(fields: [productId], references: [id])
+  store        Store?              @relation(fields: [storeId], references: [id])
+  dailyStats   CreativeDailyStat[]
+}
+
+model CreativeProject {
+  id            String   @id @default(cuid())
+  name          String
+  productId     String?
+  timelineState String
+  thumbnail     String?
+  duration      Int      @default(0)
+  aspectRatio    String   @default("9:16")
+  dissectionJson String?  // Hook, Structure, Claims
+  variationsJson String?  // Proposed variations
+  sourceUrl      String?  // Reference URL if cloned
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  product       Product? @relation(fields: [productId], references: [id])
+  blueprintId   String?  // Legacy
+  contractId    String?  // New mandatory contract
+  contract      CopyContract? @relation(fields: [contractId], references: [id])
+  qualityGateResultsJson String? // Checklist results
+  variantScoresJson      String? // AI variation scoring
+}
+
+model LandingProject {
+  id             String   @id @default(cuid())
+  storeId        String
+  productId      String?
+  name           String
+  url            String?  // Original URL if cloned
+  status         String   @default("DRAFT") // DRAFT, CLONING, READY
+  blocksJson     String?  // Conversion blocks structure
+  styleJson      String?  // BrandKit integration
+  versionsCount  Int      @default(1)
+  previousVersionJson String? // For Diff Optimizer
+  changeLogJson       String?  // Why things changed
+  blueprintId         String?  // Decision Trace
+
+  store          Store    @relation(fields: [storeId], references: [id])
+  product        Product? @relation(fields: [productId], references: [id])
+}
+
+model AvatarProfile {
+  id           String   @id @default(cuid())
+  storeId      String
+  name         String
+  sex          String   // MALE, FEMALE, UNKNOWN
+  ageRange     String?
+  region       String?
+  imageUrl     String?
+  videoUrl     String?
+  status       String   @default("READY") // READY, PARCIAL
+  metadataJson String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  store        Store    @relation(fields: [storeId], references: [id])
+}
+
+model ProductFinance {
+  id                   String   @id @default(cuid())
+  productId            String   @unique
+  unitCost             Float    @default(0)
+  sellingPrice         Float    @default(0)
+  shippingCost         Float    @default(0)
+  returnCost           Float    @default(0)
+  taxes                Float    @default(0)
+  isUpsell             Boolean  @default(false)
+  targetCPA            Float?
+  expectedDeliveryRate Float    @default(0.85)
+  updatedAt            DateTime @updatedAt
+  product              Product  @relation(fields: [productId], references: [id])
+}
+
+model PricingOffer {
+  id               String   @id @default(cuid())
+  storeId          String
+  productId        String?
+  offerName        String
+  productName      String
+  salePrice        Float    @default(0)
+  productCost      Float    @default(0)
+  iva              Float    @default(0)
+  shippingCost     Float    @default(0)
+  codFee           Float    @default(0)
+  shipmentRate     Float    @default(80)
+  deliveryRate     Float    @default(70)
+  // Calculated fields (stored for quick reference)
+  maxCpa           Float    @default(0)
+  roasBreakeven    Float    @default(0)
+  grossProfit      Float    @default(0)
+  effectiveProfit  Float    @default(0)
+  marginPercent    Float    @default(0)
+  roi              Float    @default(0)
+  // Tracking
+  isActive         Boolean  @default(true)
+  driveFolderId    String?
+  driveDocId       String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  storeId     String
+  date        DateTime
+  amount      Float
+  category    String
+  description String?
+  store       Store    @relation(fields: [storeId], references: [id])
+}
+
+model DailyFinance {
+  id           String   @id @default(cuid())
+  storeId      String
+  date         DateTime
+  adSpend      Float    @default(0)
+  visitors     Int      @default(0)
+  cogs         Float    @default(0)
+  shippingCost Float    @default(0)
+  totalRevenue Float    @default(0)
+  netProfit    Float    @default(0)
+  ordersCount  Int      @default(0)
+  deliveredCount Int    @default(0)
+  returnedCount  Int    @default(0)
+  cancelledCount Int    @default(0)
+  incidencesCount Int   @default(0)
+  recoveredIncidencesCount Int @default(0)
+  communicationCost Float     @default(0)
+  store        Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, date])
+}
+
+model HypothesisScenario {
+  id           String @id @default(cuid())
+  storeId      String
+  name         String
+  targetProfit Float
+  productCost  Float
+  shippingCost Float
+  targetCPA    Float?
+  targetROAS   Float?
+  store        Store  @relation(fields: [storeId], references: [id])
+}
+
+model NotificationTemplate {
+  id        String   @id @default(cuid())
+  storeId   String
+  name      String
+  trigger   String   // CONFIRMATION, PREPARATION, OUT_FOR_DELIVERY, DELIVERED, INCIDENCE
+  channel   String   // WHATSAPP, EMAIL
+  body      String
+  isEnabled Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store    @relation(fields: [storeId], references: [id])
+}
+
+model ClowdbotConfig {
+  id                     String   @id @default(cuid())
+  storeId                String   @unique
+  isActive               Boolean  @default(false)
+  agentName              String   @default("Clowdbot")
+  agentRole              String   @default("Especialista en Atención al Cliente")
+  agentEmail             String   @default("admin@ecombom.com")
+  smtpHost               String?
+  smtpPort               Int?
+  smtpUser               String?
+  smtpPass               String?
+  knowledgeBase          String?
+  roleKnowledge          String?
+  channels               String   @default("WHATSAPP,EMAIL")
+  humanInterventionAlert Boolean  @default(true)
+  notificationWebhook    String?
+  isFinancialExpert      Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  store                  Store    @relation(fields: [storeId], references: [id])
+}
+
+model WhatsAppAccount {
+  id              String   @id @default(cuid())
+  storeId         String
+  name            String   @default("WhatsApp Principal")
+  type            String   @default("API") // API or BUSINESS
+  phoneNumber     String?
+  accessToken     String?
+  phoneId         String?  // WABA Phone ID
+  businessAccountId String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  store           Store     @relation(fields: [storeId], references: [id])
+  messages        Message[]
+}
+
+model Message {
+  id                String           @id @default(cuid())
+  orderId           String?
+  customerContact   String
+  sender            String
+  content           String
+  channel           String           @default("WHATSAPP")
+  whatsappAccountId String?
+  isRead            Boolean          @default(false)
+  status            String           @default("SENT") // SENT, DELIVERED, READ, FAILED
+  cost              Float            @default(0)
+  timestamp         DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+  order             Order?           @relation(fields: [orderId], references: [id])
+  whatsappAccount   WhatsAppAccount? @relation(fields: [whatsappAccountId], references: [id])
+}
+
+model AdSpyCapture {
+  id            String   @id @default(cuid())
+  type          String
+  platform      String
+  url           String
+  cleanedUrl    String?
+  originalUrl   String?
+  title         String?
+  metadata      String?
+  captureMethod String   @default("direct")
+  sttScript     String?
+  status        String   @default("INBOX")
+  createdAt     DateTime @default(now())
+}
+
+model LedgerEntry {
+  id          String   @id @default(cuid())
+  storeId     String
+  orderId     String?
+  date        DateTime @default(now())
+  type        String
+  category    String
+  amount      Float
+  description String?
+  metadata    String?
+  createdAt   DateTime @default(now())
+  store       Store    @relation(fields: [storeId], references: [id])
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  type        String
+  status      String    @default("PENDING")
+  payload     String?
+  result      String?
+  progress    Int       @default(0)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  lockedAt    DateTime?
+  lastError   String?
+  runAt       DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AdMetricDaily {
+  id           String   @id @default(cuid())
+  storeId      String
+  date         DateTime
+  platform     String
+  level        String
+  externalId   String
+  name         String?
+  metricsRaw   String
+  metricsNorm  String
+  window       String   @default("DAY")
+  isActive     Boolean  @default(true)
+  completeness String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  store        Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, platform, level, externalId, date, window], map: "unique_ad_metric_window")
+}
+
+model CreativeDailyStat {
+  id                 String        @id @default(cuid())
+  creativeAssetId    String
+  date               DateTime
+  spend              Float         @default(0)
+  impressions        Int           @default(0)
+  clicks             Int           @default(0)
+  video_3s_views     Int           @default(0)
+  video_50pct_views  Int           @default(0)
+  landing_page_views Int           @default(0)
+  add_to_cart        Int           @default(0)
+  initiate_checkout  Int           @default(0)
+  purchases          Int           @default(0)
+  revenue            Float         @default(0)
+  delivered_orders   Int           @default(0)
+  real_revenue       Float         @default(0)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  creativeAsset      CreativeAsset @relation(fields: [creativeAssetId], references: [id])
+
+  @@unique([creativeAssetId, date])
+}
+
+model SocialAccount {
+  id             String       @id @default(cuid())
+  storeId        String
+  platform       String
+  externalId     String
+  name           String
+  pictureUrl     String?
+  moderationMode String       @default("MANUAL")
+  accessToken    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  store          Store        @relation(fields: [storeId], references: [id])
+  posts          SocialPost[]
+
+  @@unique([storeId, platform, externalId])
+}
+
+model SocialPost {
+  id              String          @id @default(cuid())
+  socialAccountId String
+  externalId      String          @unique
+  permalink       String?
+  caption         String?
+  type            String?
+  rawJson         String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  comments        SocialComment[]
+  socialAccount   SocialAccount   @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+}
+
+model SocialComment {
+  id         String         @id @default(cuid())
+  postId     String
+  externalId String         @unique
+  parentId   String?
+  authorName String
+  authorId   String
+  message    String
+  sentiment  String?
+  intent     String?
+  severity   String         @default("LOW")
+  status     String         @default("VISIBLE")
+  isReplied  Boolean        @default(false)
+  rawJson    String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  actions    SocialAction[]
+  post       SocialPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model SocialAction {
+  id         String        @id @default(cuid())
+  commentId  String
+  type       String
+  actorType  String
+  userId     String?
+  payload    String?
+  externalId String?
+  createdAt  DateTime      @default(now())
+  comment    SocialComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+}
+
+model ModerationRule {
+  id         String   @id @default(cuid())
+  storeId    String
+  name       String
+  enabled    Boolean  @default(true)
+  conditions String
+  actions    String
+  priority   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  store      Store    @relation(fields: [storeId], references: [id])
+}
+
+model AgentProfile {
+  id           String   @id @default(cuid())
+  storeId      String
+  name         String
+  role         String   @default("MEDIA_BUYING") // MEDIA_BUYING, ATT, MODERACION, etc.
+  instructions String   @default("")
+  tone         String   @default("professional")
+  channels     String   @default("[]") // JSON string of array
+  menus        String   @default("[]") // JSON string of array
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  store        Store    @relation(fields: [storeId], references: [id])
+
+  runs         AgentRun[]
+  actions      AgentAction[]
+}
+
+model ThresholdConfig {
+  id               String          @id @default(cuid())
+  storeId          String
+  type             String          @default("GLOBAL")
+  scenarioName     String?
+  version          Int             @default(1)
+  validFrom        DateTime        @default(now())
+  validTo          DateTime?
+  minProfitPercent Float           @default(20.0)
+  minRoas          Float           @default(0.0)
+  minDeliveryRate  Float           @default(0.0)
+  minConfirmRate   Float           @default(0.0)
+  maxIncidenceRate Float           @default(100.0)
+  minRecoveryRate  Float           @default(0.0)
+  maxReturnRate    Float           @default(100.0)
+  maxCpc           Float?
+  maxCpa           Float?
+  criticalKpis     String?         @default("[]")
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  snapshots        DailySnapshot[]
+  store            Store           @relation(fields: [storeId], references: [id])
+}
+
+model DailySnapshot {
+  id               String           @id @default(cuid())
+  storeId          String
+  date             DateTime
+  view             String           @default("ORDERS_CREATED")
+  thresholdId      String?
+  spendAds         Float            @default(0)
+  revenueReal      Float            @default(0)
+  costsReal        Float            @default(0)
+  netProfit        Float            @default(0)
+  roasReal         Float            @default(0)
+  deliveryRate     Float            @default(0)
+  incidenceRate    Float            @default(0)
+  status           String           @default("NEUTRAL")
+  isComplete       Boolean          @default(false)
+  metricsJson      String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  dataCompleteness String?          @default("{}")
+  threshold        ThresholdConfig? @relation(fields: [thresholdId], references: [id])
+  store            Store            @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, date, view])
+}
+
+model ProviderStatusMap {
+  id               String   @id @default(cuid())
+  provider         String
+  rawStatus        String
+  normalizedStatus String
+  labelEs          String
+  severity         String
+  isFinal          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([provider, rawStatus])
+}
+model MonthlyGoal {
+  id                String   @id @default(cuid())
+  storeId           String
+  month             Int
+  year              Int
+  adSpendBudget     Float    @default(0)
+  targetRoas        Float    @default(0)
+  breakevenRoas     Float    @default(0)
+  maxCpa            Float    @default(0)
+  maxCpc            Float    @default(0)
+  expectedConvRate  Float    @default(0) // percentage
+  expectedAvgTicket Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  store             Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, month, year])
+}
+
+model SystemHeartbeat {
+  id        String   @id @default("singleton")
+  timestamp DateTime @updatedAt
+  status    String   @default("OK")
+}
+
+
+model AgentRun {
+  id             String   @id @default(cuid())
+  agentProfileId String
+  storeId        String
+  context        String?  // e.g. "order_123", "comment_456"
+  input          String   @default("")
+  output         String   @default("")
+  latency        Int?     // milliseconds
+  status         String   @default("SUCCESS") // SUCCESS, FAILED
+  error          String?
+  createdAt      DateTime @default(now())
+  
+  agent          AgentProfile @relation(fields: [agentProfileId], references: [id])
+  store          Store        @relation(fields: [storeId], references: [id])
+  actions        AgentAction[]
+}
+
+model AgentAction {
+  id             String   @id @default(cuid())
+  agentRunId     String?
+  agentProfileId String?
+  storeId        String
+  actorType      String   @default("IA") // IA, HUMAN
+  actorId        String?  // userId if HUMAN, agentProfileId if IA
+  actionType     String   // SEND_WHATSAPP, HIDE_COMMENT, CREATE_ALERT, etc.
+  details        String?  // JSON details
+  impactMetric   String?  // e.g. "SALE_CONFIRMED"
+  impactValue    Float?
+  createdAt      DateTime @default(now())
+
+  run            AgentRun?     @relation(fields: [agentRunId], references: [id])
+  agent          AgentProfile? @relation(fields: [agentProfileId], references: [id])
+  store          Store         @relation(fields: [storeId], references: [id])
+}
+
+model ContentTemplate {
+  id           String         @id @default(cuid())
+  storeId      String
+  name         String
+  type         String         // EBOOK, MINI_COURSE, COUPON, CARD
+  description  String?
+  configJson   String         // Style, Tone, Instructions
+  productId    String?        // Associated product if specific
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  
+  store        Store          @relation(fields: [storeId], references: [id])
+  product      Product?       @relation(fields: [productId], references: [id])
+  assets       ContentAsset[]
+}
+
+model ContentAsset {
+  id           String               @id @default(cuid())
+  storeId      String
+  templateId   String?
+  productId    String?
+  name         String
+  fileUrl      String
+  type         String               // PDF, MP4, PNG
+  metadataJson String?              // e.g. duration, pages, version
+  createdAt    DateTime             @default(now())
+  
+  store        Store                @relation(fields: [storeId], references: [id])
+  template     ContentTemplate?     @relation(fields: [templateId], references: [id])
+  product      Product?             @relation(fields: [productId], references: [id])
+  lessons      CourseLesson[]
+  deliveries   ContentDeliveryLog[]
+}
+
+model CourseLesson {
+  id           String       @id @default(cuid())
+  assetId      String       // The main mini-course asset
+  title        String
+  videoUrl     String?
+  audioUrl     String?
+  content      String?      // Script or key points
+  duration     Int?         // in seconds
+  order        Int          @default(0)
+  
+  course       ContentAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model ContentCampaign {
+  id               String   @id @default(cuid())
+  storeId          String
+  name             String
+  triggerEvent     String   // ORDER_CREATED, ORDER_SHIPPED, etc.
+  assetId          String
+  isActive         Boolean  @default(true)
+  requireApproval  Boolean  @default(true)
+  conditionsJson   String?  // e.g. country, product tags
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  store            Store    @relation(fields: [storeId], references: [id])
+}
+
+model ContentDeliveryLog {
+  id           String       @id @default(cuid())
+  storeId      String
+  orderId      String
+  assetId      String
+  sentAt       DateTime     @default(now())
+  channel      String       @default("WHATSAPP")
+  status       String       @default("SENT") // SENT, DELIVERED, OPENED, FAILED
+  error        String?
+  
+  store        Store        @relation(fields: [storeId], references: [id])
+  order        Order        @relation(fields: [orderId], references: [id])
+  asset        ContentAsset @relation(fields: [assetId], references: [id])
+}
+
+model CreativeBlueprint {
+  id                String   @id @default(cuid())
+  storeId           String
+  productId         String
+  avatarSegment     String?
+  levelOfAwareness  String?
+  mainAngle         String?
+  secondaryAngles   String?  // JSON
+  centralClaim      String?
+  criticalObjection String?
+  recommendedCTA    String?
+  complianceRisks   String?  // JSON
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  store             Store    @relation(fields: [storeId], references: [id])
+  product           Product  @relation(fields: [productId], references: [id])
+}
+
+model LanguageDictionary {
+  id           String   @id @default(cuid())
+  storeId      String
+  productId    String
+  terms        String   // JSON: Metaphors, phrases, etc.
+  negativeTerms String? // JSON: Terms to avoid
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  store        Store    @relation(fields: [storeId], references: [id])
+  product      Product  @relation(fields: [productId], references: [id])
+}
+
+model LandingSection {
+  id              String   @id @default(cuid())
+  storeId         String
+  name            String
+  type            String   // HERO, OFFER, COMPARISON, SOCIAL_PROOF, etc.
+  awarenessLevel  String?
+  usageGuidelines String?
+  configJson      String   // Structural configuration
+  examplesJson    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  store           Store    @relation(fields: [storeId], references: [id])
+}
+
+// --- PHASE 8 EXTENSIONS: KNOWLEDGE GRAPH & VIDEO OS ---
+
+model KnowledgeNode {
+  id           String   @id @default(cuid())
+  productId    String
+  type         String   // AVATAR, ANGLE, CREATIVE, LANDING, OBJECTION, CLAIM
+  contentJson  String   // Detailed data
+  metadataJson String?  // Secondary context
+  createdAt    DateTime @default(now())
+  product      Product  @relation(fields: [productId], references: [id])
+  
+  outgoingLinks KnowledgeLink[] @relation("NodeSource")
+  incomingLinks KnowledgeLink[] @relation("NodeTarget")
+}
+
+model KnowledgeLink {
+  id           String   @id @default(cuid())
+  sourceId     String
+  targetId     String
+  relationType String   // "USES", "RESPONDS_TO", "CONVERTS_WELL_WITH", "CAUSES_RETURNS"
+  strength     Float    @default(1.0)
+  explanation  String?
+  createdAt    DateTime @default(now())
+
+  source       KnowledgeNode @relation("NodeSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target       KnowledgeNode @relation("NodeTarget", fields: [targetId], references: [id], onDelete: Cascade)
+}
+
+model VideoClip {
+  id           String   @id @default(cuid())
+  productId    String
+  type         String   // HOOK, BODY, CTA
+  url          String
+  scriptText   String?
+  duration     Int?     // seconds
+  metadataJson String?  // tags, scores
+  createdAt    DateTime @default(now())
+  product      Product  @relation(fields: [productId], references: [id])
+}
+
+model VideoJob {
+  id           String   @id @default(cuid())
+  productId    String
+  type         String   // MONTAGE, SCRIPT_TO_VIDEO, SEGMENTATION
+  status       String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  payloadJson  String?  // FFmpeg components
+  resultUrl    String?
+  progress     Int      @default(0)
+  error        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  product      Product  @relation(fields: [productId], references: [id])
+}
+
+model AgentCorrection {
+  id               String   @id @default(cuid())
+  storeId          String
+  agentProfileId   String?
+  originalContext  String?  // The incoming message or scenario
+  originalResponse String?  // What Clowdbot would have said
+  humanCorrection  String   // What the human actually wrote/fixed
+  reasoning        String?  // Why the human fixed it
+  learnedAt        DateTime @default(now())
+  
+  store            Store    @relation(fields: [storeId], references: [id])
+}
+
+model ProductMaturity {
+  id              String   @id @default(cuid())
+  productId       String   @unique
+  scoresJson      String   // { research: 0.8, avatar: 0.5, ... }
+  lastCalculatedAt DateTime @default(now())
+  product         Product  @relation(fields: [productId], references: [id])
+}

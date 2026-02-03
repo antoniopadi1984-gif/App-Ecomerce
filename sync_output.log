@@ -1,25 +1,0 @@
-* Host localhost:3000 was resolved.
-* IPv6: ::1
-* IPv4: 127.0.0.1
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:3000...
-* Connected to localhost (::1) port 3000
-> POST /api/marketing/sync HTTP/1.1
-> Host: localhost:3000
-> User-Agent: curl/8.7.1
-> Accept: */*
-> 
-* Request completely sent off
-< HTTP/1.1 500 Internal Server Error
-< vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
-< content-type: application/json
-< Date: Sat, 31 Jan 2026 11:27:52 GMT
-< Connection: keep-alive
-< Keep-Alive: timeout=5
-< Transfer-Encoding: chunked
-< 
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{ [4056 bytes data]
-100  4044    0  4044    0     0   4443      0 --:--:-- --:--:-- --:--:--  4439
-* Connection #0 to host localhost left intact
-{"error":"errorLogs is not defined","stack":"ReferenceError: errorLogs is not defined\n    at IntradaySyncService.syncWindow (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/.next/dev/server/chunks/[root-of-the-server]__243f3c03._.js:565:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async POST (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/.next/dev/server/chunks/[root-of-the-server]__243f3c03._.js:595:24)\n    at async AppRouteRouteModule.do (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)\n    at async AppRouteRouteModule.handle (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:45156)\n    at async responseGenerator (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/.next/dev/server/chunks/[root-of-the-server]__567b0a61._.js:18455:38)\n    at async AppRouteRouteModule.handleResponse (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:187713)\n    at async handleResponse (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/.next/dev/server/chunks/[root-of-the-server]__567b0a61._.js:18518:32)\n    at async Module.handler (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/.next/dev/server/chunks/[root-of-the-server]__567b0a61._.js:18571:13)\n    at async DevServer.renderToResponseWithComponentsImpl (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/base-server.js:1422:9)\n    at async DevServer.renderPageComponent (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/base-server.js:1474:24)\n    at async DevServer.renderToResponseImpl (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/base-server.js:1524:32)\n    at async DevServer.pipeImpl (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/base-server.js:1018:25)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/next-server.js:395:17)\n    at async DevServer.handleRequestImpl (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/base-server.js:909:17)\n    at async /Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/dev/next-dev-server.js:387:20\n    at async Span.traceAsyncFn (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/trace/trace.js:157:20)\n    at async DevServer.handleRequest (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/dev/next-dev-server.js:383:24)\n    at async invokeRender (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/lib/router-server.js:248:21)\n    at async handleRequest (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/lib/router-server.js:447:24)\n    at async requestHandlerImpl (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/lib/router-server.js:496:13)\n    at async Server.requestListener (/Users/padi/Library/Mobile Documents/com~apple~CloudDocs/APPs Propias/App Ecomerce/node_modules/next/dist/server/lib/start-server.js:226:13)","type":"ReferenceError"}

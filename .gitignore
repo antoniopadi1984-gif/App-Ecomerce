@@ -102,4 +102,5 @@ datasets/
 .next/cache/
 .turbo/
 .eslintcache
+*.log
 

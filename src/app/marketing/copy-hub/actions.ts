@@ -19,7 +19,7 @@ export async function generateProductCopy(params: {
         // 1. Get Product & Store Data
         const product = await prisma.product.findUnique({
             where: { id: productId },
-            include: { store: true, avatars: true }
+            include: { store: true, avatarResearches: true }
         });
 
         if (!product) throw new Error("Producto no encontrado");
@@ -32,8 +32,7 @@ export async function generateProductCopy(params: {
             productName: product.title,
             context,
             isSafeMode,
-            brandVoice: product.store.brandKit || undefined,
-            researchData: product.avatars[0] || {}
+            researchData: (product.avatarResearches?.[0] as any) || {}
         });
 
         // 4. Save to Database with Traceability

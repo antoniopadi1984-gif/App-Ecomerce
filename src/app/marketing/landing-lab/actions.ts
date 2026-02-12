@@ -9,23 +9,56 @@ import { revalidatePath } from "next/cache";
  */
 export async function uploadShopifyTheme(formData: FormData) {
     const file = formData.get("theme") as File;
-    console.log(`[Theme Scanner] Processing theme: ${file.name}`);
+    if (!file) return { success: false, message: "No se ha subido ningún archivo" };
 
-    // Simulation: Extracting sections from liquid files
-    await new Promise(r => setTimeout(r, 2000));
+    console.log(`🚀 [Theme Scanner] Procesando archivo real: ${file.name}`);
 
-    const mockSections = [
-        { id: "hero-video", name: "Hero con Video", type: "theme" },
-        { id: "image-with-text", name: "Imagen con Texto", type: "theme" },
-        { id: "review-grid", name: "Cuadrícula de Reseñas", type: "theme" },
-        { id: "faq-accordion", name: "Acordeón FAQ", type: "theme" }
-    ];
+    try {
+        const JSZip = (await import("jszip")).default;
+        const zip = new JSZip();
+        const content = await file.arrayBuffer();
+        const zipContent = await zip.loadAsync(content);
 
-    return {
-        success: true,
-        message: "Tema analizado correctamente",
-        sections: mockSections
-    };
+        const sections: { id: string, name: string, type: string }[] = [];
+
+        // Scan for .liquid files in /sections directory
+        for (const [path, zipFile] of Object.entries(zipContent.files)) {
+            if (path.startsWith("sections/") && path.endsWith(".liquid") && !zipFile.dir) {
+                const fileName = path.split("/").pop() || "";
+                const cleanName = fileName.replace(".liquid", "").replace(/-/g, " ").replace(/_/g, " ");
+
+                // Capitalize name
+                const displayName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+
+                sections.push({
+                    id: fileName.replace(".liquid", ""),
+                    name: displayName,
+                    type: "theme"
+                });
+            }
+        }
+
+        console.log(`✅ [Theme Scanner] Escaneo completado. ${sections.length} secciones reales detectadas.`);
+
+        if (sections.length === 0) {
+            return {
+                success: false,
+                message: "No se detectaron secciones válidas en la carpeta /sections del tema."
+            };
+        }
+
+        return {
+            success: true,
+            message: "Tema analizado correctamente",
+            sections: sections.sort((a, b) => a.name.localeCompare(b.name))
+        };
+    } catch (error: any) {
+        console.error("❌ [Theme Scanner] Error procesando ZIP:", error);
+        return {
+            success: false,
+            message: "El archivo no parece un tema de Shopify válido o está dañado."
+        };
+    }
 }
 
 /**
@@ -77,7 +110,7 @@ export async function replicateCompetitorLanding(url: string) {
         const res = await askGemini(prompt);
         if (res.error) throw new Error(res.error);
 
-        const data = JSON.parse(res.text.replace(/```json/g, "").replace(/```/g, ""));
+        const data = JSON.parse((res.text || "").replace(/```json/g, "").replace(/```/g, ""));
 
         return {
             success: true,

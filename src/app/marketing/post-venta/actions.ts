@@ -27,7 +27,7 @@ export async function calculateOrderRisk(orderId: string) {
         `;
 
         const res = await askGemini(riskPrompt, "Eres un analista de riesgos de e-commerce.");
-        const data = JSON.parse(res.text.match(/\{[\s\S]*\}/)?.[0] || "{}");
+        const data = JSON.parse((res.text || "").match(/\{[\s\S]*\}/)?.[0] || "{}");
 
         await (prisma as any).order.update({
             where: { id: orderId },
@@ -59,7 +59,7 @@ export async function generateReinforcementContent(orderId: string) {
         `;
 
         const res = await askGemini(prompt, "Eres un copywriter de post-venta brillante.");
-        return JSON.parse(res.text.match(/\{[\s\S]*\}/)?.[0] || "{}");
+        return JSON.parse((res.text || "").match(/\{[\s\S]*\}/)?.[0] || "{}");
     } catch (e: any) {
         throw new Error(e.message);
     }

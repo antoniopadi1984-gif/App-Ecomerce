@@ -87,21 +87,25 @@ export async function createDefaultTemplates(storeId: string) {
     const defaults = [
         {
             name: 'CONFIRMATION',
+            trigger: 'CONFIRMATION',
             body: "Hola {{name}}, hemos recibido tu pedido #{{orderNumber}} de {{product}}. En breve lo prepararemos. ¡Gracias por confiar en nosotros!",
             channel: 'WHATSAPP'
         },
         {
             name: 'TRACKING',
+            trigger: 'TRACKING',
             body: "¡Buenas noticias {{name}}! Tu pedido #{{orderNumber}} ya ha salido. Tu tracking es: {{tracking}}. Puedes seguirlo aquí: {{trackingUrl}}",
             channel: 'WHATSAPP'
         },
         {
             name: 'OUT_FOR_DELIVERY',
+            trigger: 'OUT_FOR_DELIVERY',
             body: "Hola {{name}}, tu pedido está HOY en reparto 🚚. Por favor, estate atento al teléfono/timbre. ¡Que lo disfrutes!",
             channel: 'WHATSAPP'
         },
         {
             name: 'INCIDENCE',
+            trigger: 'INCIDENCE',
             body: "Hola {{name}}, hubo un problema con la entrega de tu pedido. Por favor respóndenos para coordinar una nueva entrega.",
             channel: 'WHATSAPP'
         }
@@ -117,6 +121,7 @@ export async function createDefaultTemplates(storeId: string) {
                 data: {
                     storeId,
                     name: t.name,
+                    trigger: t.trigger,
                     channel: t.channel,
                     body: t.body,
                     isEnabled: true

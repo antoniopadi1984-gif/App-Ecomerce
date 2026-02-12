@@ -5,6 +5,8 @@ import path from "path";
 import { FEATURE_FLAGS } from "@/lib/feature-flags";
 import prisma from "@/lib/prisma";
 
+export const runtime = 'nodejs';
+
 export async function GET() {
     const capabilities: any = {
         ffmpeg: false,

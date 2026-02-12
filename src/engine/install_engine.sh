@@ -3,7 +3,8 @@
 # Nano Banana Local Engine Installer
 # Optimized for Mac Silicon (M1/M2/M3)
 
-echo "🍌 Initializing Nano Banana Local Engine Environment..."
+# Ensure we are in the project root
+cd "$(dirname "$0")/../.."
 
 # 1. Create Virtual Environment
 if [ ! -d "venv" ]; then
@@ -25,7 +26,7 @@ pip install --pre torch torchvision torchaudio --extra-index-url https://downloa
 
 # 5. Install Dependencies
 echo "Installing Engine Dependencies..."
-pip install -r requirements.txt
+pip install -r src/engine/requirements.txt
 
 # 6. Success
 echo ""

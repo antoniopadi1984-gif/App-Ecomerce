@@ -327,6 +327,9 @@ export default function InboxPage() {
                                                 <Badge variant="outline" className="text-[7px] font-black border-slate-100 text-slate-400">CRM</Badge>
                                             </div>
                                             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">{customer.customerPhone}</p>
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <Badge className="bg-indigo-600/10 text-indigo-600 border-none font-black text-[8px] uppercase">Clowdbot Copilot</Badge>
+                                            </div>
                                             <div className="flex items-center gap-2 mt-2">
                                                 <div className="px-2 py-0.5 bg-emerald-50 rounded text-[7px] font-black text-emerald-600 uppercase italic">
                                                     €{customer.totalSpent.toFixed(2)}
@@ -370,7 +373,7 @@ export default function InboxPage() {
                                                 aiActive ? "bg-white text-indigo-600 shadow-md ring-1 ring-indigo-500/5" : "bg-transparent text-slate-400"
                                             )}>
                                                 <Bot className={cn("h-4 w-4", aiActive ? "text-indigo-600" : "text-slate-300")} />
-                                                <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Nano AI Mode</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Clowdbot Mode</span>
                                                 <Switch
                                                     checked={aiActive}
                                                     onCheckedChange={setAiActive}

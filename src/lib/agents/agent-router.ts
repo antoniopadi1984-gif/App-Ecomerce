@@ -32,7 +32,7 @@ export class AgentRouter {
 
         // Priority 1: Direct menu mapping
         if (menu) {
-            const menuAgent = agents.find(a => {
+            const menuAgent = agents.find((a: any) => {
                 const menus = JSON.parse((a as any).menus || '[]');
                 return menus.includes(menu);
             });
@@ -48,7 +48,7 @@ export class AgentRouter {
         };
 
         const role = eventToRole[event];
-        const roleAgent = agents.find(a => a.role === role);
+        const roleAgent = agents.find((a: any) => a.role === role);
         if (roleAgent) return roleAgent;
 
         // Fallback: Return the first active agent (usually a generalist if exists)
@@ -120,7 +120,7 @@ export class AgentRouter {
                 entityId: action.id,
                 actorType: data.actorType,
                 newValue: data.details ? JSON.stringify(data.details) : null,
-                userId: data.actorType === 'HUMAN' ? data.actorId : null
+                userId: data.actorType === 'HUMAN' ? data.actorId : undefined
             }
         });
 

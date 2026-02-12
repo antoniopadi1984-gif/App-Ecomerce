@@ -45,7 +45,7 @@ export async function generateScriptFromConcept(concept: string, productName: st
             SALIDA REQUERIDA: Solo el texto del guion formateado para lectura fácil, sin introducciones ni despedidas de la IA.
         `;
 
-        const response = await askGemini(prompt);
+        const response = await askGemini(prompt, undefined, { model: "gemini-1.5-pro", apiVersion: "v1beta" });
 
         // Fallback robusto por si la API falla o no hay key
         if (!response.text || response.error || response.text.includes("No se obtuvo respuesta")) {

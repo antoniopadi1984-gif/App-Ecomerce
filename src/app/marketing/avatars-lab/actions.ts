@@ -2,6 +2,27 @@
 
 import { elevenLabs } from "@/lib/elevenlabs";
 
+export async function getFirstStoreId() {
+    console.log("🔍 [Actions] getFirstStoreId started");
+    const prisma = (await import("@/lib/prisma")).default;
+    try {
+        let store = await prisma.store.findFirst();
+        console.log("🏪 [Actions] Store found:", store?.id || "NONE");
+        if (!store) {
+            console.log("✨ [Actions] No store found, creating default...");
+            // Create a default store if none exists to prevent FK errors
+            store = await prisma.store.create({
+                data: { name: "Mi Tienda Ecombom" }
+            });
+            console.log("✅ [Actions] Default store created:", store.id);
+        }
+        return { success: true, id: store.id };
+    } catch (e: any) {
+        console.error("❌ [Actions] getFirstStoreId ERROR:", e.message);
+        return { success: false, error: e.message };
+    }
+}
+
 export async function getElevenLabsVoices() {
     try {
         const res = await elevenLabs.getVoices();
@@ -21,11 +42,22 @@ export async function checkLocalEngineHealth() {
     }
 }
 
-export async function generateAvatarLocal(prompt: string, style: string, image?: string) {
+export async function generateAvatarLocal(
+    prompt: string,
+    style: string,
+    gender: string = "Neutro",
+    ethnicity: string = "Caucásico",
+    age: string = "25",
+    image?: string
+) {
     try {
         const formData = new FormData();
         formData.append("prompt", prompt);
         formData.append("style", style);
+        formData.append("gender", gender);
+        formData.append("ethnicity", ethnicity);
+        formData.append("age", age);
+
         if (image) formData.append("image", image); // Assuming base64 or url
 
         const res = await fetch("http://localhost:8000/generate-avatar", {
@@ -36,7 +68,7 @@ export async function generateAvatarLocal(prompt: string, style: string, image?:
         if (!res.ok) throw new Error("Local Engine Error");
         return await res.json();
     } catch (error: any) {
-        return { success: false, error: "Motor Local No Detectado. Ejecuta './src/engine/install_engine.sh'" };
+        return { success: false, error: "Motor Local No Detectado o Error de Conexión." };
     }
 }
 
@@ -85,10 +117,10 @@ export async function generateAvatarScript(productContext: string, avatarType: s
     if (productContext.length === 25 || productContext.includes("-")) { // ID detection
         const product = await prisma.product.findUnique({
             where: { id: productContext },
-            include: { avatars: true }
+            include: { avatarResearches: true }
         });
         if (product) {
-            productDetails = `${product.title}. Avatares: ${JSON.stringify(product.avatars)}`;
+            productDetails = `${product.title}. Research: ${JSON.stringify(product.avatarResearches)}`;
         }
     }
 
@@ -107,7 +139,10 @@ export async function generateAvatarScript(productContext: string, avatarType: s
     `;
 
     try {
-        const res = await askGemini(prompt);
+        const res = await askGemini(prompt, undefined, {
+            model: "gemini-1.5-pro",
+            apiVersion: "v1beta"
+        });
         if (res.error) return { success: false, error: res.error };
         if (!res.text || res.text === "No se obtuvo respuesta de Gemini.") {
             return { success: false, error: "Gemini no generó un guión. Reintenta." };
@@ -149,40 +184,156 @@ export async function translateVideoScript(script: string, targetLang: string) {
     }
 }
 
-export async function getProducts() {
+export async function saveAvatarProfile(storeId: string, data: {
+    id?: string;
+    name: string;
+    sex: string;
+    ageRange: string;
+    region: string;
+    voiceId?: string;
+    hasGreyHair?: boolean;
+    hasWrinkles?: boolean;
+    hasAcne?: boolean;
+    customPrompt?: string;
+    evolutionId?: string;
+    evolutionStage?: string;
+    imageUrl?: string;
+}) {
+    console.log("🚀 [Actions] saveAvatarProfile started", { storeId, name: data.name, id: data.id });
     const prisma = (await import("@/lib/prisma")).default;
+    const { createJob } = await import("@/lib/worker");
     try {
-        const products = await prisma.product.findMany({
-            include: { avatars: true }
+        const payload = {
+            storeId,
+            name: data.name,
+            sex: data.sex,
+            ageRange: data.ageRange,
+            region: data.region,
+            status: "GENERATING_IMAGE",
+            evolutionId: data.evolutionId || null,
+            evolutionStage: data.evolutionStage || null,
+            metadataJson: JSON.stringify({
+                voiceId: (data.voiceId && data.voiceId !== 'none') ? data.voiceId : null,
+                customPrompt: data.customPrompt || null,
+                traits: {
+                    hasGreyHair: data.hasGreyHair || false,
+                    hasWrinkles: data.hasWrinkles || false,
+                    hasAcne: data.hasAcne || false
+                }
+            }),
+            imageUrl: data.imageUrl || "/static/placeholders/avatar_placeholder.png"
+        };
+
+        let profile;
+        if (data.id) {
+            console.log("💾 [Actions] Updating profile in DB:", data.id);
+            profile = await (prisma.avatarProfile as any).update({
+                where: { id: data.id },
+                data: payload
+            });
+        } else {
+            console.log("💾 [Actions] Creating new profile in DB...");
+            profile = await (prisma.avatarProfile as any).create({
+                data: payload
+            });
+        }
+
+        // Enqueue image generation job
+        console.log("📦 [Actions] Enqueuing job for profile:", profile.id);
+        await createJob('GENERATE_AVATAR_IMAGE', { avatarProfileId: profile.id });
+
+        console.log("✅ [Actions] Profile saved successfully");
+        return { success: true, data: profile };
+    } catch (e: any) {
+        console.error("❌ [Actions] Error in saveAvatarProfile:", e.message);
+        return { success: false, error: e.message };
+    }
+}
+
+export async function createEvolutionPair(baseAvatarId: string) {
+    console.log("🧬 [Actions] createEvolutionPair started for:", baseAvatarId);
+    const prisma = (await import("@/lib/prisma")).default;
+    const { createJob } = await import("@/lib/worker");
+    const { v4: uuidv4 } = await import("uuid");
+
+    try {
+        const base = await prisma.avatarProfile.findUnique({ where: { id: baseAvatarId } });
+        if (!base) throw new Error("Base avatar not found");
+
+        const evolutionId = uuidv4();
+
+        // 1. Update Base to be "BEFORE"
+        await (prisma.avatarProfile as any).update({
+            where: { id: baseAvatarId },
+            data: { evolutionId, evolutionStage: "BEFORE" }
         });
-        return { success: true, data: products };
+
+        // 2. Create "AFTER" profile
+        const after = await (prisma.avatarProfile as any).create({
+            data: {
+                storeId: base.storeId,
+                name: `${base.name} (Después)`,
+                sex: base.sex,
+                ageRange: base.ageRange,
+                region: base.region,
+                status: "DRAFT",
+                evolutionId,
+                evolutionStage: "AFTER",
+                metadataJson: JSON.stringify({
+                    ...JSON.parse(base.metadataJson || "{}"),
+                    traits: {
+                        hasGreyHair: JSON.parse(base.metadataJson || "{}").traits?.hasGreyHair || false,
+                        hasWrinkles: false, // Evolution goal: remove wrinkles
+                        hasAcne: false      // Evolution goal: remove acne
+                    }
+                }),
+                imageUrl: "/static/placeholders/avatar_placeholder.png"
+            }
+        });
+
+        // 3. Trigger Jobs
+        await createJob('GENERATE_AVATAR_IMAGE', { avatarProfileId: base.id });
+        await createJob('GENERATE_AVATAR_IMAGE', { avatarProfileId: after.id });
+
+        return { success: true, evolutionId };
     } catch (e: any) {
         return { success: false, error: e.message };
     }
 }
 
-export async function getProductResearch(productId: string) {
+export async function retryAvatarGeneration(avatarProfileId: string) {
+    const { createJob } = await import("@/lib/worker");
     const prisma = (await import("@/lib/prisma")).default;
     try {
-        // Here we can fetch research data from related models if we have them
-        // For now, let's return the product info with some mock research metadata if missing
-        const product = await prisma.product.findUnique({
-            where: { id: productId },
-            include: {
-                avatars: true,
-                creatives: {
-                    take: 5,
-                    orderBy: { createdAt: 'desc' }
-                }
-            }
+        await (prisma.avatarProfile as any).update({
+            where: { id: avatarProfileId },
+            data: { status: 'GENERATING_IMAGE', lastError: null }
         });
+        await createJob('GENERATE_AVATAR_IMAGE', { avatarProfileId });
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
 
-        // Simulating the expected 'research' structure used in the UI
-        const research = {
-            angles: product?.creatives?.map((c: any) => ({ title: c.angulo || "Ángulo Base", draft: c.nomenclatura })) || []
-        };
+export async function deleteAvatarProfile(id: string) {
+    const prisma = (await import("@/lib/prisma")).default;
+    try {
+        await prisma.avatarProfile.delete({ where: { id } });
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
 
-        return { success: true, data: research };
+export async function getAvatarProfiles(storeId: string) {
+    const prisma = (await import("@/lib/prisma")).default;
+    try {
+        const avatars = await prisma.avatarProfile.findMany({
+            where: { storeId },
+            orderBy: { createdAt: 'desc' }
+        });
+        return { success: true, data: avatars };
     } catch (e: any) {
         return { success: false, error: e.message };
     }
@@ -192,8 +343,7 @@ export async function synthesizeVoice(text: string, voiceId: string, settings: {
     try {
         const res = await elevenLabs.textToSpeech(text, voiceId, settings.stability, settings.similarity);
         if (res.success && res.blob) {
-            // In a real scenario, we'd save this or send it to the engine
-            return { success: true, message: "Audio sintetizado y enviado a VEO 3 Local Engine." };
+            return { success: true, message: "Audio sintetizado y listo." };
         }
         return { success: false, error: "Audio synthesis failed" };
     } catch (error: any) {

@@ -10,7 +10,7 @@ import { sendNotification } from "@/lib/notifications";
 import { recordOrderEvent, calculateOrderProfit, normalizeLogisticsStatus, calculateOrderRisk, getCustomerHistory } from "@/lib/logistics-engine";
 import { SnapshotService } from "@/lib/services/snapshot-service";
 import { AttributionService } from "@/lib/services/attribution";
-import { getProductMasterData } from "@/app/marketing/products/actions";
+// getProductMasterData removed as it was unused and pointing to non-existent file
 
 /**
  * Syncs products from Shopify to local database
@@ -1082,7 +1082,7 @@ export async function masterShopifySync() {
 }
 
 // Consolidated "Get Many Orders" Action (Replacing getLocalOrders)
-export async function getLocalOrders(skip = 0, take = 100, sortDirection: 'asc' | 'desc' = 'desc', typeFilter?: string, dateStr?: string) {
+export async function getLocalOrders(skip = 0, take = 100, sortDirection: 'asc' | 'desc' = 'desc', typeFilter?: string, dateStr?: string, productId?: string) {
     try {
         const where: any = {};
         if (dateStr) {
@@ -1093,6 +1093,15 @@ export async function getLocalOrders(skip = 0, take = 100, sortDirection: 'asc' 
         }
         if (typeFilter && typeFilter !== 'ALL') {
             // Example filter logic if needed
+            if (typeFilter === 'INCIDENCE') {
+                where.status = { in: ['INCIDENCE', 'RETURNED'] };
+            } else {
+                where.status = typeFilter;
+            }
+        }
+
+        if (productId) {
+            where.items = { some: { productId } };
         }
 
         const orders = await (prisma as any).order.findMany({

@@ -1,0 +1,90 @@
+// ============================================
+// CREATIVE SYSTEM MODELS
+// ============================================
+
+model GeneratedCreative {
+  id            String   @id @default(cuid())
+  productId     String?
+  storeId       String?
+  
+  type          String   // 'VIDEO' | 'STATIC_AD' | 'LANDING_PAGE'
+  stage         String?  // 'COLD' | 'WARM' | 'HOT'
+  
+  // Assets URLs
+  avatarUrl     String?
+  audioUrl      String?
+  videoUrl      String
+  thumbnailUrl  String?
+  captionsUrl   String?  // Video con subtítulos
+  
+  // Metadata
+  concept       String
+  script        String?
+  prompt        String?
+  generatedBy   String   @default("creative-factory")
+  
+  // Cost tracking
+  generationCost Float   @default(0)
+  
+  // Performance metrics (updated from ads)
+  views         Int      @default(0)
+  clicks        Int      @default(0)
+  ctr           Float?
+  conversions   Int      @default(0)
+  spend         Float    @default(0)
+  revenue       Float    @default(0)
+  
+  // Quality & Learning
+  qualityScore  Float?   // 1-10 by AI
+  userRating    Int?     // 1-5 by user
+  status        String   @default("GENERATED")  // GENERATED | APPROVED | ARCHIVED
+  
+  // Relations
+  product       Product? @relation(fields: [productId], references: [id])
+  store         Store?   @relation(fields: [storeId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AgentPromptLibrary {
+  id            String   @id @default(cuid())
+  
+  agentType     String   // 'video-editor' | 'design-cro' | 'caption-generator'
+  category      String   // 'hook' | 'transition' | 'cta' | 'layout' | 'color-grade'
+  
+  name          String
+  prompt        String
+  description   String?
+  
+  // Learning metrics
+  successRate   Float    @default(0.5)
+  timesUsed     Int      @default(0)
+  avgQualityScore Float?
+  avgCTR        Float?
+  
+  isActive      Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AgentLearning {
+  id            String   @id @default(cuid())
+  
+  agentType     String
+  taskType      String
+  creativeId    String?  // Reference to GeneratedCreative
+  
+  // Input/Output
+  inputData     String   // JSON: request details
+  outputData    String   // JSON: what was generated
+  promptUsed    String
+  
+  // Feedback
+  userFeedback  String?  // 'excellent' | 'good' | 'bad'
+  qualityScore  Float?
+  performanceData String? // JSON: CTR, conversions, etc
+  
+  createdAt     DateTime @default(now())
+}

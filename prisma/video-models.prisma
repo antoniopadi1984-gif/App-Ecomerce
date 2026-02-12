@@ -1,0 +1,96 @@
+
+// ============================================
+// VIDEO ASSET MODELS
+// For managing user-uploaded videos with metadata removal and clip extraction
+// ============================================
+
+model VideoAsset {
+  id              String       @id @default(cuid())
+  productId       String
+  product         Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  // File info
+  fileName        String
+  driveFileId     String       // Google Drive file ID
+  
+  // Video properties
+  duration        Float?       // Duration in seconds
+  resolution      String?      // JSON: {width, height}
+  fps             Float?       // Frames per second
+  
+  // Size tracking
+  originalSize    Int?         // Original file size (bytes)
+  cleanSize       Int?         // Size after metadata removal
+  
+  // Processing status
+  hasMetadata     Boolean      @default(true)
+  status          String       @default("UPLOADED") // UPLOADED, ANALYZING, READY, FAILED
+  
+  // Relations
+  clips           VideoClip[]
+  scripts         VideoScript[]
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([productId])
+  @@index([status])
+}
+
+model VideoClip {
+  id              String       @id @default(cuid())
+  productId       String
+  product         Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  videoAssetId    String?
+  videoAsset      VideoAsset?  @relation(fields: [videoAssetId], references: [id], onDelete: Cascade)
+  
+  // Clip timing
+  startTime       Float        // Start time in seconds
+  endTime         Float        // End time in seconds
+  duration        Float        // Duration in seconds
+  
+  // Clip metadata
+  clipNumber      Int?         // Sequential number in video
+  score           Float?       // Quality score (0-1)
+  
+  // Export info
+  driveFileId     String?      // If exported to Drive
+  exportedFormat  String?      // "9:16", "16:9", "1:1"
+  
+  // Status
+  status          String       @default("DETECTED") // DETECTED, SELECTED, EXPORTED
+  isUserSelected  Boolean      @default(false) // Manually selected by user
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([productId])
+  @@index([videoAssetId])
+  @@index([status])
+}
+
+model VideoScript {
+  id              String       @id @default(cuid())
+  productId       String
+  product         Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  videoAssetId    String?
+  videoAsset      VideoAsset?  @relation(fields: [videoAssetId], references: [id], onDelete: Cascade)
+  
+  // Script content
+  transcript      String       // Full transcript
+  timestampsJson  String?      // JSON: [{time: number, text: string}]
+  
+  // Language
+  language        String       @default("es")
+  
+  // Drive export
+  driveFileId     String?      // If exported to Drive
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([productId])
+  @@index([videoAssetId])
+}

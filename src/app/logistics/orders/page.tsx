@@ -38,8 +38,10 @@ import {
     importCRMFile, getTotalOrdersCount, markAsDuplicate
 } from "./actions";
 import { AgentPerformance } from "@/components/logistics/agent-performance";
+import { useProduct } from "@/context/ProductContext";
 
 export default function OrdersPage() {
+    const { productId, product } = useProduct();
     const [orders, setOrders] = useState<any[]>([]);
     const [isSyncing, setIsSyncing] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -66,8 +68,8 @@ export default function OrdersPage() {
 
         if (!silent) setIsSyncing(true);
         try {
-            const data = await getLocalOrders((currentPage - 1) * pageSize, pageSize, 'desc', activeTab, dateParam || undefined);
-            const total = await getTotalOrdersCount(activeTab);
+            const data = await getLocalOrders((currentPage - 1) * pageSize, pageSize, 'desc', activeTab, dateParam || undefined, productId || undefined);
+            const total = await getTotalOrdersCount(activeTab); // Note: total might need product filter too?
             setOrders(data || []);
             setTotalOrders(total);
             setLastUpdated(new Date());
@@ -78,7 +80,7 @@ export default function OrdersPage() {
         }
     };
 
-    useEffect(() => { loadOrders(); }, [activeTab, page, dateParam]);
+    useEffect(() => { loadOrders(); }, [activeTab, page, dateParam, productId]);
 
     // AUTO-SYNC HOOK: Real-time updates for New Orders & Logistics
     useEffect(() => {

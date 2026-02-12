@@ -30,7 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# environment
+/venv/
+/.venv/
 .env*
 
 # vercel
@@ -97,10 +99,16 @@ datasets/
 *.sqlite
 *.sqlite3
 *.db
+*.db-wal
+*.db-shm
+*.db-journal
 
 # misc tooling
 .next/cache/
 .turbo/
 .eslintcache
 *.log
+
+# Antigravity Sync (Allow memory to be synced across devices)
+!.antigravity/
 

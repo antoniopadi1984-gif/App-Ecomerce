@@ -33,7 +33,7 @@ export async function constructOffer(productId: string, type: string) {
         `;
 
         const res = await askGemini(prompt, "Eres un genio de las ofertas.");
-        const data = JSON.parse(res.text.match(/\{[\s\S]*\}/)?.[0] || "{}");
+        const data = JSON.parse((res.text || "").match(/\{[\s\S]*\}/)?.[0] || "{}");
 
         // Save to PricingOffer
         const offer = await (prisma as any).pricingOffer.create({

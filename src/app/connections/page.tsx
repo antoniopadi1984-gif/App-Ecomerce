@@ -8,8 +8,9 @@ import {
     Plus, Settings2, CheckCircle2, XCircle, RefreshCw,
     ExternalLink, ShieldCheck, Zap, Globe, Gauge,
     Table as TableIcon, HardDrive, Layout, ChevronRight,
-    ArrowUpRight, Copy, Check
+    ArrowUpRight, Copy, Check, Key
 } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,11 +39,25 @@ const providers = [
 
 function ConnectionsContent() {
     const [activeConnections, setActiveConnections] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [configOpen, setConfigOpen] = useState<string | null>(null);
+    const [serviceModalOpen, setServiceModalOpen] = useState(false);
+    const [serviceKeyJson, setServiceKeyJson] = useState("");
+    const [verifyingService, setVerifyingService] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState<string>("");
 
     const searchParams = useSearchParams();
+
+    const fetchConnections = async () => {
+        setLoading(true);
+        const res = await fetch("/api/connections");
+        if (res.ok) {
+            const data = await res.json();
+            setActiveConnections(data);
+        }
+        setLoading(false);
+    };
 
     useEffect(() => {
         const success = searchParams.get("success");
@@ -54,20 +69,50 @@ function ConnectionsContent() {
             toast.error("Error al conectar con Google", { description: "Por favor, inténtalo de nuevo." });
         }
 
-        const fetchConnections = async () => {
-            const res = await fetch("/api/connections");
-            if (res.ok) {
-                const data = await res.json();
-                setActiveConnections(data);
-            }
-        };
         fetchConnections();
     }, [searchParams]);
+
+    const deleteConnection = async (id: string) => {
+        if (!confirm("¿Seguro que quieres desconectar esta integración?")) return;
+        try {
+            await fetch(`/api/connections/${id}`, { method: 'DELETE' });
+            toast.success("Desconectado", { description: "La conexión ha sido eliminada." });
+            fetchConnections();
+        } catch (error) {
+            toast.error("Error", { description: "No se pudo desconectar." });
+        }
+    };
+
+    const handleServiceConnect = async () => {
+        if (!serviceKeyJson) return;
+        setVerifyingService(true);
+        try {
+            const res = await fetch("/api/connections/service-account", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ serviceAccountJson: serviceKeyJson })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Conectado", { description: `Cuenta de Servicio ${data.email} conectada.` });
+                setServiceModalOpen(false);
+                setServiceKeyJson("");
+                fetchConnections();
+            } else {
+                toast.error("Error", { description: data.error || "JSON Inválido" });
+            }
+        } catch (error) {
+            toast.error("Error Fatal", { description: "Fallo al guardar credenciales." });
+        } finally {
+            setVerifyingService(false);
+        }
+    };
 
     const copyToClipboard = () => {
         const url = "https://app.nanobanana.com/api/webhooks/master";
         navigator.clipboard.writeText(url);
         setIsCopied(true);
+        toast.success("Webhook copiado", { description: "URL lista para usar." });
         setTimeout(() => setIsCopied(false), 2000);
     };
 
@@ -77,7 +122,7 @@ function ConnectionsContent() {
 
     const openConfig = (providerId: string) => {
         setSelectedProvider(providerId);
-        setIsDialogOpen(true);
+        setConfigOpen(providerId); // Use setConfigOpen here
     };
 
     const getFieldLabels = (pid: string) => {
@@ -100,7 +145,7 @@ function ConnectionsContent() {
                     <p className="text-slate-500 font-medium">Gestiona el flujo de datos entre Shopify y tus herramientas de Growth.</p>
                 </div>
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={!!configOpen} onOpenChange={(open) => setConfigOpen(open ? selectedProvider : null)}>
                     <DialogTrigger asChild>
                         <Button onClick={() => openConfig("")} className="h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-xl shadow-indigo-100 gap-2 text-base transition-all active:scale-95">
                             <Plus className="h-5 w-5" /> NUEVA INTEGRACIÓN
@@ -117,8 +162,9 @@ function ConnectionsContent() {
                         </DialogHeader>
                         <form action={async (formData) => {
                             await saveConnection(formData);
-                            setIsDialogOpen(false);
-                            toast.success("Conexión guardada. Recarga para ver cambios.");
+                            setConfigOpen(null);
+                            toast.success("Conexión guardada", { description: "Recarga para ver cambios." });
+                            fetchConnections();
                         }} className="space-y-6 pt-4">
                             <div className="space-y-4">
                                 <div className="space-y-2">
@@ -153,81 +199,107 @@ function ConnectionsContent() {
                 </Dialog>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Dialog open={serviceModalOpen} onOpenChange={setServiceModalOpen}>
+                <DialogContent className="sm:max-w-[450px] bg-white border-none shadow-2xl rounded-3xl p-8">
+                    <DialogHeader>
+                        <DialogTitle className="text-3xl font-black tracking-tight">Conectar Cuenta de Servicio (Robot)</DialogTitle>
+                        <DialogDescription className="font-medium text-slate-500">
+                            Pega aquí el contenido completo del archivo JSON que descargaste de Google Cloud Console.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-2">
+                        <textarea
+                            className="w-full h-40 p-3 text-[10px] font-mono border rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                            placeholder='{ "type": "service_account", ... }'
+                            value={serviceKeyJson}
+                            onChange={(e) => setServiceKeyJson(e.target.value)}
+                        />
+                        <p className="mt-2 text-[10px] text-slate-400">
+                            * Tus credenciales se guardan cifradas. Asegúrate de compartir tus carpetas de Drive con el <code>client_email</code> del JSON.
+                        </p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setServiceModalOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleServiceConnect} disabled={verifyingService} className="bg-indigo-600 hover:bg-indigo-700">
+                            {verifyingService ? "Verificando..." : "Conectar Cuenta"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {providers.map((p) => {
                     const conn = activeConnections.find(c => c.provider === p.id);
                     const isActive = !!conn;
 
                     return (
-                        <Card key={p.id} className={cn(
-                            "premium-card border-none overflow-hidden group transition-all duration-500",
-                            isActive ? "ring-2 ring-emerald-500/20" : ""
-                        )}>
-                            <div className={cn("h-2 w-full", isActive ? "bg-emerald-500" : "bg-slate-100")} />
-                            <CardHeader className="p-8 pb-4 flex flex-row items-center gap-5">
-                                <div className={cn("h-16 w-16 rounded-2xl p-3 flex items-center justify-center border border-white shadow-sm ring-4 ring-white transition-transform group-hover:scale-110 duration-500 bg-white", p.color)}>
-                                    <img src={p.icon} alt={p.name} className="h-full w-full object-contain" />
-                                </div>
-                                <div className="flex-1">
-                                    <CardTitle className="text-xl font-black tracking-tight text-slate-800">{p.name}</CardTitle>
-                                    <div className="mt-1">
-                                        {isActive ? (
-                                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 rounded-lg text-[9px] font-black uppercase py-0.5 px-2">
-                                                Online & Syncing
-                                            </Badge>
-                                        ) : (
-                                            <Badge variant="outline" className="text-[9px] font-bold text-slate-300 border-slate-100 rounded-lg py-0.5 px-2">
-                                                Off-line
-                                            </Badge>
-                                        )}
+                        <Card key={p.id} className="border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
+                            <div className="p-6">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className={`p-3 rounded-xl ${isActive ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-500'}`}>
+                                        {/* Original icon rendering was an img tag, now it's just p.icon which is a URL.
+                                            Assuming p.icon should be rendered as an img tag inside this div. */}
+                                        <img src={p.icon} alt={p.name} className="h-6 w-6 object-contain" />
                                     </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-8 pt-0 space-y-6">
-                                <p className="text-sm font-medium text-slate-400 line-clamp-2 leading-relaxed">{p.description}</p>
-
-                                <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
-                                    {isActive ? (
-                                        <div className="flex items-center justify-between w-full">
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-slate-300 uppercase">Última Sync</span>
-                                                <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                                                    <RefreshCw className="h-3 w-3 text-emerald-500 animate-[spin_3s_linear_infinite]" /> Real-time
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all" onClick={() => openConfig(p.id)}>
-                                                    <Settings2 className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="outline" size="icon"
-                                                    className="h-10 w-10 rounded-xl border-slate-100 text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
-                                                    onClick={() => deleteConnection(conn.id)}
-                                                >
-                                                    <XCircle className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                    {isActive && (
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100/50 border border-green-200">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                            <span className="text-[11px] font-bold text-green-700 tracking-wide">ACTIVO</span>
                                         </div>
+                                    )}
+                                    {isActive && (
+                                        <Button
+                                            variant="ghost" size="icon"
+                                            className="h-6 w-6 -mr-1 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full"
+                                            onClick={() => deleteConnection(conn.id)}
+                                        >
+                                            <XCircle className="h-3.5 w-3.5" />
+                                        </Button>
+                                    )}
+                                </div>
+
+                                <div className="mb-4">
+                                    <h3 className="font-bold text-lg text-slate-800 leading-tight mb-1 flex items-center gap-2">
+                                        {p.name}
+                                    </h3>
+                                    <p className="text-sm font-medium text-slate-500 line-clamp-2 leading-relaxed">
+                                        {p.description}
+                                    </p>
+                                </div>
+
+                                <div className="pt-2 mt-auto">
+                                    {isActive ? (
+                                        <Button variant="outline" size="sm" className="w-full h-10 text-xs font-bold border-slate-200 bg-slate-50 hover:bg-white text-slate-600" onClick={() => openConfig(p.id)}>
+                                            <Settings2 className="h-4 w-4 mr-2" /> Configurar
+                                        </Button>
                                     ) : (
                                         p.id.startsWith("GOOGLE") ? (
-                                            <Button
-                                                onClick={handleGoogleConnect}
-                                                className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl gap-2 tracking-tight transition-all active:scale-95"
-                                            >
-                                                AUTORIZAR EN GOOGLE <ArrowUpRight className="h-3 w-3" />
-                                            </Button>
+                                            <div className="flex flex-col gap-2">
+                                                <Button
+                                                    onClick={handleGoogleConnect}
+                                                    className="w-full h-9 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-lg shadow-sm"
+                                                >
+                                                    <img src="https://www.google.com/favicon.ico" className="w-4 h-4 mr-2" /> Login Usuario
+                                                </Button>
+                                                <Button
+                                                    onClick={() => setServiceModalOpen(true)}
+                                                    className="w-full h-9 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg shadow-sm"
+                                                >
+                                                    <Key className="w-4 h-4 mr-2" /> Cuenta de Servicio (JSON)
+                                                </Button>
+                                            </div>
                                         ) : (
                                             <Button
                                                 variant="outline"
-                                                className="w-full h-11 border-slate-100 text-slate-900 font-bold text-xs rounded-xl hover:bg-slate-50 tracking-tight transition-all"
+                                                className="w-full h-10 border-slate-200 text-slate-700 font-bold text-xs rounded-lg hover:bg-slate-50 hover:border-indigo-200 hover:text-indigo-600 shadow-sm"
                                                 onClick={() => openConfig(p.id)}
                                             >
-                                                CONFIGURAR CREDENCIALES
+                                                CONECTAR
                                             </Button>
                                         )
                                     )}
                                 </div>
-                            </CardContent>
+                            </div>
                         </Card>
                     );
                 })}

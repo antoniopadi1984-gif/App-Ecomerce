@@ -112,28 +112,29 @@ export default function ProductFinancePage() {
             </div>
 
             {/* STATS CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-emerald-500/10 border-emerald-500/20">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-emerald-400">Rentabilidad Media</CardTitle></CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold flex items-center gap-2">
-                            28.5% <ArrowUpRight className="w-4 h-4" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Card className="bg-emerald-500/5 border-emerald-500/10 shadow-none">
+                    <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Rentabilidad Media</CardTitle></CardHeader>
+                    <CardContent className="p-3 pt-0">
+                        <div className="text-xl font-black flex items-center gap-2 text-emerald-700">
+                            28.5% <ArrowUpRight className="w-3 h-3" />
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-blue-500/10 border-blue-500/20">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-blue-400">Ticket Medio (PVP)</CardTitle></CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">€{stats?.productStats ? (stats.productStats.reduce((acc: number, p: any) => acc + (p.revenue / p.unitsSold || 0), 0) / stats.productStats.length).toFixed(2) : "0.00"}</div>
+                <Card className="bg-blue-500/5 border-blue-500/10 shadow-none">
+                    <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-blue-600">Ticket Medio (PVP)</CardTitle></CardHeader>
+                    <CardContent className="p-3 pt-0">
+                        <div className="text-xl font-black text-blue-700">€{stats?.productStats ? (stats.productStats.reduce((acc: number, p: any) => acc + (p.revenue / p.unitsSold || 0), 0) / stats.productStats.length).toFixed(2) : "0.00"}</div>
                     </CardContent>
                 </Card>
-                <Card className="bg-purple-500/10 border-purple-500/20">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-purple-400">Upsell Take Rate</CardTitle></CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">12.4%</div>
+                <Card className="bg-purple-500/5 border-purple-500/10 shadow-none">
+                    <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-purple-600">Upsell Take Rate</CardTitle></CardHeader>
+                    <CardContent className="p-3 pt-0">
+                        <div className="text-xl font-black text-purple-700">12.4%</div>
                     </CardContent>
                 </Card>
             </div>
+
 
             {/* SUPPLIER CARDS GRID */}
             <div className="space-y-8">
@@ -197,18 +198,19 @@ export default function ProductFinancePage() {
                                     </Dialog>
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-0">
+                            <CardContent className="p-0 border-t border-white/5">
                                 <Table>
                                     <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5 hover:bg-transparent text-xs uppercase tracking-wider">
-                                            <TableHead className="pl-6">Producto</TableHead>
-                                            <TableHead className="text-right">Coste Unit.</TableHead>
-                                            <TableHead className="text-right">Envío</TableHead>
-                                            <TableHead className="text-right">PVP</TableHead>
-                                            <TableHead className="text-right text-emerald-400">Margen</TableHead>
-                                            <TableHead className="w-[80px]"></TableHead>
+                                        <TableRow className="border-white/5 hover:bg-transparent h-8">
+                                            <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Producto</TableHead>
+                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Coste Unit.</TableHead>
+                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Envío</TableHead>
+                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">PVP</TableHead>
+                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-emerald-500 py-0">Margen</TableHead>
+                                            <TableHead className="w-[80px] py-0"></TableHead>
                                         </TableRow>
                                     </TableHeader>
+
                                     <TableBody>
                                         {supplierProducts.length === 0 ? (
                                             <TableRow>
@@ -282,15 +284,16 @@ export default function ProductFinancePage() {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-0">
+                    <CardContent className="p-0 border-t border-white/5">
                         <Table>
                             <TableHeader className="bg-white/5">
-                                <TableRow className="border-white/5 hover:bg-transparent text-xs uppercase tracking-wider">
-                                    <TableHead className="pl-6">Producto</TableHead>
-                                    <TableHead>Asignar Proveedor Rápido</TableHead>
-                                    <TableHead className="w-[80px]"></TableHead>
+                                <TableRow className="border-white/5 hover:bg-transparent h-8">
+                                    <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Producto</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Asignar Proveedor Rápido</TableHead>
+                                    <TableHead className="w-[60px] py-0"></TableHead>
                                 </TableRow>
                             </TableHeader>
+
                             <TableBody>
                                 {products.filter(p => !p.supplierId).map((product) => (
                                     <TableRow key={product.id} className="border-white/5 hover:bg-white/5 opacity-70 hover:opacity-100">

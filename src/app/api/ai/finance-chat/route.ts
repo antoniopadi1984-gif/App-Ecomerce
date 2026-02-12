@@ -16,8 +16,8 @@ Tu rol es analizar métricas financieras y dar recomendaciones accionables. Focu
 
 Para COD ecommerce, considera:
 - Tasa de entregas típica: 70-85%
-- ROAS mínimo saludable: 2-3x (depende de márgenes)
-- Margen neto objetivo: 15-25%
+- ROAS mínimo saludable: 3-4x (depende de márgenes)
+- Margen neto objetivo: 30-35%
 - Costes ocultos: COD fees, devoluciones, reenvíos
 
 Responde en español, de forma concisa y práctica. Da números específicos cuando sea posible.
@@ -55,7 +55,7 @@ DATOS DEL MES ACTUAL:
 `;
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
         const result = await model.generateContent({
             contents: [

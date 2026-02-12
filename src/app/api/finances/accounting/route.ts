@@ -1,5 +1,6 @@
 
-import { startOfMonth, endOfMonth, eachDayOfInterval, format, startOfDay } from "date-fns"; import { prisma } from "@/lib/prisma";
+import { startOfMonth, endOfMonth, eachDayOfInterval, format, startOfDay } from "date-fns";
+import { prisma } from "@/lib/prisma";
 import { SnapshotService } from "@/lib/services/snapshot-service";
 import { FinancialAdviser } from "@/lib/services/financial-adviser";
 import { ThresholdService } from "@/lib/threshold-service";
@@ -9,45 +10,67 @@ export async function GET(request: Request) {
     const storeId = searchParams.get('storeId');
     const month = parseInt(searchParams.get('month') || format(new Date(), 'M'));
     const year = parseInt(searchParams.get('year') || format(new Date(), 'yyyy'));
+    const productId = searchParams.get('productId');
 
     if (!storeId) {
         return Response.json({ error: "Store ID is required" }, { status: 400 });
     }
 
     try {
-        // 1. Get current snapshots
-        const summary = await SnapshotService.getMonthlySummary(storeId, month, year);
-
-        // 2. Fetch Monthly Projection/Goal
-        const goal = await prisma.monthlyGoal.findUnique({
-            where: { storeId_month_year: { storeId, month, year } }
-        });
-
-        // 3. Fetch Monthly Expenses (Gastos Tienda)
         const startDate = startOfMonth(new Date(year, month - 1));
         const endDate = endOfMonth(startDate);
 
-        const expenses = await prisma.expense.findMany({
-            where: {
-                storeId,
-                date: { gte: startDate, lte: endDate }
-            },
-            orderBy: { date: 'asc' }
+        // 1. Fetch Orders for Revenue/Product Costs (Filtered by Product if needed)
+        const orderWhere: any = {
+            storeId,
+            createdAt: { gte: startDate, lte: endDate },
+            status: { not: 'CANCELLED' } // Standard accounting filter
+        };
+
+        if (productId) {
+            orderWhere.items = { some: { productId } };
+        }
+
+        const orders = await prisma.order.findMany({
+            where: orderWhere,
+            include: { items: true }
         });
 
-        const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+        // 2. Fetch Ad Spend 
+        // If productId is present, we try to filter ad spend by linked Campaign IDs from MetaConfig
+        let adSpendByDate = new Map<string, number>();
+        let campaignIds: string[] = [];
 
-        // 4. Fetch Ad Metrics directly for historical months (to fill gaps in snapshots)
-        const adMetrics = await prisma.adMetricDaily.findMany({
-            where: {
-                storeId,
-                date: { gte: startDate, lte: endDate },
-                level: "ACCOUNT"
+        if (productId) {
+            const metaConfig = await prisma.metaConfig.findUnique({
+                where: { productId },
+                select: { campaignId: true, adAccountId: true }
+            });
+            if (metaConfig && metaConfig.campaignId) {
+                // If we have precise campaign mapping, use it
+                campaignIds = [metaConfig.campaignId];
+            } else {
+                // Fallback: If no direct map, maybe we shouldn't show ad spend or show everything?
+                // For now, let's try to query by name convention if possible, but that's risky.
+                // We will fetch ALL ad metrics and filter in memory if we can't filter by ID.
             }
+        }
+
+        const adMetricsWhere: any = {
+            storeId,
+            date: { gte: startDate, lte: endDate },
+            level: productId ? (campaignIds.length > 0 ? 'CAMPAIGN' : 'ACCOUNT') : 'ACCOUNT' // If filtering by product and has campaign, use CAMPAIGN level
+        };
+
+        if (productId && campaignIds.length > 0) {
+            adMetricsWhere.externalId = { in: campaignIds };
+        }
+
+        const adMetrics = await prisma.adMetricDaily.findMany({
+            where: adMetricsWhere
         });
 
-        // Create a map of ad spend by date
-        const adSpendByDate = new Map<string, number>();
+        // Populate Ad Spend Map
         adMetrics.forEach((m: any) => {
             const dateKey = format(m.date, 'yyyy-MM-dd');
             let spend = 0;
@@ -55,74 +78,96 @@ export async function GET(request: Request) {
                 const norm = JSON.parse(m.metricsNorm || '{}');
                 spend = norm.spend || 0;
             } catch (e) { }
+
+            // If filtering by product without campaign ID, we might need a way to estimate.
+            // For now, if productId is set but no campaignIds, we might strictly return 0 to avoid false data.
+            if (productId && campaignIds.length === 0) {
+                spend = 0; // Better zero than wrong attribution
+            }
+
             adSpendByDate.set(dateKey, (adSpendByDate.get(dateKey) || 0) + spend);
         });
 
-        // 5. Ensure all days of the month are represented, even if empty
+
+        // 3. Build Daily Data
         const allDays = eachDayOfInterval({ start: startDate, end: endDate });
-        const daysInMonth = allDays.length;
-        const dailyExpense = totalExpenses / daysInMonth;
 
-        const dayMap = new Map(summary.days.map(d => [format(d.date, 'yyyy-MM-dd'), d]));
+        // Pre-calculate per-day revenue/costs from Orders
+        const revenueByDate = new Map<string, number>();
+        const costsByDate = new Map<string, number>();
+        const profitByDate = new Map<string, number>();
 
-        // Calculate Daily Projection Pro-rata
-        const dailyProjection = goal ? {
-            adSpend: goal.adSpendBudget / daysInMonth,
-            revenue: (goal.adSpendBudget * goal.targetRoas) / daysInMonth,
-            profit: ((goal.adSpendBudget * goal.targetRoas) * (goal.expectedConvRate / 100)) / daysInMonth,
-            cpa: goal.maxCpa,
-            cpc: goal.maxCpc,
-            roas: goal.targetRoas,
-            breakevenRoas: goal.breakevenRoas
-        } : null;
+        orders.forEach(o => {
+            const dKey = format(o.createdAt, 'yyyy-MM-dd');
+
+            // Calculate portion if filtering by product? 
+            // 'orders' is already filtered.
+            // But 'totalPrice' is order-level. If an order has mixed products, we should ideally sum only the item's price.
+            // But simplified: If we filter orders where *items some*, we might count full order value which is technically correct (attributed to that product funnel).
+            // Let's stick to full order value for now as "Attributed Revenue".
+
+            const rev = o.totalPrice || 0;
+            const cost = (o.items.reduce((acc, i) => acc + (i.unitCost * i.quantity), 0)) + (o.shippingCost || 0); // Include shipping in cost? Or shipping is separate? usually shippingCost is revenue from shipping? No, `shippingCost` in Order model is usually what customer paid?
+            // Actually `o.totalPrice` includes shipping paid by customer.
+            // `o.shippingCost` (in some schemas) is cost to merchant? Let's check schema.
+            // Schema: `shippingCost Float @default(0)` in Order. Usually this is what customer paid.
+            // Real cost to merchant is `estimatedLogisticsCost`.
+            const realCost = o.estimatedLogisticsCost || 0;
+            const productCost = o.items.reduce((acc, i) => acc + (i.unitCost * i.quantity), 0);
+            const totalCost = realCost + productCost;
+
+            revenueByDate.set(dKey, (revenueByDate.get(dKey) || 0) + rev);
+            costsByDate.set(dKey, (costsByDate.get(dKey) || 0) + totalCost);
+            profitByDate.set(dKey, (profitByDate.get(dKey) || 0) + (rev - totalCost));
+        });
 
         const fullDays = allDays.map(day => {
             const key = format(day, 'yyyy-MM-dd');
-            const realData = dayMap.get(key);
 
-            // Use ad spend from adMetricDaily if snapshot doesn't have it
-            const snapshotSpend = realData?.spendAds || 0;
-            const directAdSpend = adSpendByDate.get(key) || 0;
-            const finalSpendAds = snapshotSpend > 0 ? snapshotSpend : directAdSpend;
+            const revenue = revenueByDate.get(key) || 0;
+            const costs = costsByDate.get(key) || 0;
+            const spendAds = adSpendByDate.get(key) || 0;
+            const grossProfit = revenue - costs - spendAds;
 
             return {
-                ...(realData || {
-                    date: day,
-                    spendAds: 0,
-                    revenueReal: 0,
-                    costsReal: 0,
-                    netProfit: 0,
-                    roasReal: 0,
-                    status: "NEUTRAL",
-                    isComplete: false,
-                    metricsJson: "{}"
-                }),
-                spendAds: finalSpendAds, // Override with actual ad data
-                projection: dailyProjection,
-                dailyExpense
+                date: day,
+                spendAds,
+                revenueReal: revenue,
+                costsReal: costs, // COGS + Logistics
+                netProfit: grossProfit, // Gross Profit (Net requires taxes/fixed ops)
+                roasReal: spendAds > 0 ? (revenue / spendAds) : 0,
+                status: "NEUTRAL",
+                isComplete: true
             };
         });
 
-        // Recalculate totals with actual ad spend
-        const totalAdSpend = fullDays.reduce((sum, d) => sum + (d.spendAds || 0), 0);
+        // 4. Summaries
+        const totalAdSpend = fullDays.reduce((sum, d) => sum + d.spendAds, 0);
+        const totalRevenue = fullDays.reduce((sum, d) => sum + d.revenueReal, 0);
+        const totalCosts = fullDays.reduce((sum, d) => sum + d.costsReal, 0);
+        const totalProfit = fullDays.reduce((sum, d) => sum + d.netProfit, 0);
 
-        // 6. Generate Insights
-        const threshold = await ThresholdService.getActiveThreshold(storeId);
-        const insights = FinancialAdviser.analyzePerformance(summary.days, threshold);
+        // 5. Goal (Only if global? Or scale goal?)
+        // If product filtered, maybe hiding goal is better or pro-rating.
+        const goal = productId ? null : await prisma.monthlyGoal.findUnique({
+            where: { storeId_month_year: { storeId, month, year } }
+        });
+
+        const insights = await FinancialAdviser.analyzePerformance(fullDays as any, await ThresholdService.getActiveThreshold(storeId));
 
         return Response.json({
-            ...summary,
+            days: fullDays,
             totals: {
-                ...summary.totals,
-                spendAds: totalAdSpend // Use recalculated total
+                spendAds: totalAdSpend,
+                revenueReal: totalRevenue,
+                costsReal: totalCosts,
+                netProfit: totalProfit,
+                roasReal: totalAdSpend > 0 ? (totalRevenue / totalAdSpend) : 0
             },
             goal,
-            days: fullDays,
-            insights,
-            expenses,
-            totalExpenses,
-            dailyExpense
+            insights
         });
+
     } catch (error: any) {
         console.error("Accounting API Error:", error);
         return Response.json({ error: error.message }, { status: 500 });

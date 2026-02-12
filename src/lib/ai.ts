@@ -1,5 +1,9 @@
 "use server";
 
+import dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
 import prisma from "@/lib/prisma";
 
 /**
@@ -44,71 +48,31 @@ export async function getStoreContext() {
     }
 }
 
-export async function askGemini(prompt: string, context?: string, imageBase64?: string) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return { error: "Falta GEMINI_API_KEY en el servidor." };
+import { agentDispatcher } from './agents/agent-dispatcher';
+
+/**
+ * LEGACY ADAPTER - Mantener compatibilidad
+ * Ahora usa el sistema de agentes internamente para decidir el mejor modelo.
+ */
+export async function askGemini(
+    prompt: string,
+    context?: string,
+    optionsOrImage?: string | { imageBase64?: string, model?: string, apiVersion?: 'v1' | 'v1beta' }
+) {
+    console.log('[Legacy askGemini] Routing to agent dispatcher...');
+
+    // Bridge para opciones legacy
+    let cleanContext = context || "";
+    if (typeof optionsOrImage === 'object' && optionsOrImage.imageBase64) {
+        // Si hay una imagen, podríamos manejarla aquí o pasarla como contexto
+        cleanContext += `\n[Imagen adjunta en formato base64 detectada]`;
+    }
 
     try {
-        const parts: any[] = [{ text: (context ? `CONTEXTO MAESTRO:\n${context}\n\n` : "") + prompt }];
+        // Despachar con auto-detección de tarea basada en el prompt
+        const result = await agentDispatcher.dispatchAuto(prompt, prompt, cleanContext);
 
-        if (imageBase64) {
-            let mimeType = "image/jpeg";
-            let cleanBase64 = imageBase64;
-
-            if (imageBase64.startsWith("data:")) {
-                const match = imageBase64.match(/^data:([^;]+);base64,(.*)$/);
-                if (match) {
-                    mimeType = match[1];
-                    cleanBase64 = match[2];
-                }
-            }
-
-            // Check size (Base64 is ~33% larger than raw)
-            const approxSizeMB = (cleanBase64.length * 0.75) / (1024 * 1024);
-            if (approxSizeMB > 15) {
-                return { error: `Video is too large for direct AI analysis (${approxSizeMB.toFixed(1)}MB). Please use a clip under 15MB.` };
-            }
-
-            parts.push({
-                inline_data: {
-                    mime_type: mimeType,
-                    data: cleanBase64
-                }
-            });
-        }
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{ parts: parts }],
-                generationConfig: {
-                    temperature: 0.4,
-                    topP: 0.8,
-                    topK: 40,
-                }
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            const msg = data?.error?.message || response.statusText;
-            console.error("Gemini API Error:", data);
-            return { error: `Gemini API Error (${response.status}): ${msg}` };
-        }
-
-        if (data.promptFeedback?.blockReason) {
-            return { error: `AI Safety Block: ${data.promptFeedback.blockReason}. Content might violate policies.` };
-        }
-
-        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!content) {
-            console.warn("Empty Gemini Response:", data);
-            return { error: "AI returned an empty response. Try again with a different part of the video." };
-        }
-
-        return { text: content };
+        return { text: result.text };
     } catch (e: any) {
         console.error("askGemini Exception:", e);
         return { error: `Network/Server Error: ${e.message}` };

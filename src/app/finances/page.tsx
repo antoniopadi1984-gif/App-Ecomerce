@@ -32,8 +32,10 @@ import { repairMonthOrderItems } from "../logistics/orders/actions";
 import { FinanceAgentChat } from "@/components/finance-agent-chat";
 import { AlertConfigPanel, getAlertLevel, AlertBadge, AlertThresholds } from "@/components/alert-config-panel";
 import { BellRing } from "lucide-react";
+import { useProduct } from "@/context/ProductContext";
 
 export default function AccountingDashboard() {
+    const { productId } = useProduct();
     const [date, setDate] = useState(new Date());
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -135,8 +137,11 @@ export default function AccountingDashboard() {
             const month = date.getMonth() + 1;
             const year = date.getFullYear();
 
+            let url = `/api/finances/accounting?storeId=${storeId}&month=${month}&year=${year}`;
+            if (productId) url += `&productId=${productId}`;
+
             const [accRes, threshRes] = await Promise.all([
-                fetch(`/api/finances/accounting?storeId=${storeId}&month=${month}&year=${year}`, { signal: controller.signal }).then(r => r.json()),
+                fetch(url, { signal: controller.signal }).then(r => r.json()),
                 getActiveThreshold(storeId)
             ]);
 
@@ -147,7 +152,7 @@ export default function AccountingDashboard() {
             setThreshold(threshRes);
 
             // Auto-sync logic (only if data loaded successfully)
-            if (accRes) {
+            if (accRes && !productId) { // Pro-tip: Only auto-sync global view to avoid confusing partial syncs
                 const hasData = accRes.days.some((d: any) => d.isComplete || d.spendAds > 0 || d.revenueReal > 0 || d.netProfit !== 0);
                 const isPastOrCurrent = new Date(year, month - 1, 1) <= new Date();
                 const monthKey = `${month}-${year}`;
@@ -186,7 +191,7 @@ export default function AccountingDashboard() {
         } finally {
             setLoading(false);
         }
-    }, [date, storeId, syncing]); // removed data dependency to avoid loops
+    }, [date, storeId, syncing, productId]); // added productId dependency
 
     useEffect(() => {
         loadData();
@@ -195,7 +200,7 @@ export default function AccountingDashboard() {
     // Auto-refresh cada 60 segundos
     useAutoRefresh(loadData, {
         interval: 60000,
-        enabled: true,
+        enabled: !productId, // Only auto-refresh global view for performance
         pauseOnHidden: true
     });
 
@@ -282,32 +287,34 @@ export default function AccountingDashboard() {
     return (
         <div className="min-h-screen bg-[#FDFDFF] p-0 text-slate-900 font-sans selection:bg-indigo-100 overflow-x-hidden">
             {/* Barra Superior de KPIs en Tiempo Real */}
-            <div className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-md border-b border-white/20 h-6 flex items-center px-2 overflow-x-auto no-scrollbar">
-                <div className="flex items-center gap-3 whitespace-nowrap">
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest">ROI:</span>
-                        <span className={cn("text-[7.5px] font-black italic", (t.netProfit || 0) > 0 ? "text-emerald-600" : "text-rose-600")}>
+            <div className="fixed top-0 left-0 right-0 z-50 bg-white/60 backdrop-blur-xl border-b border-white/40 h-7 flex items-center px-4 overflow-x-auto no-scrollbar shadow-sm">
+                <div className="flex items-center gap-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ROI</span>
+                        <Badge className={cn("text-[9px] font-black border-none px-1.5 py-0 h-4", (t.netProfit || 0) > 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700")}>
                             {(((t.netProfit || 0) / ((t.costsReal || 0) + (t.spendAds || 0) || 1)) * 100).toFixed(1)}%
-                        </span>
+                        </Badge>
                     </div>
-                    <div className="flex items-center gap-1.5 border-l border-slate-100 pl-3">
-                        <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest">NETO:</span>
-                        <span className="text-[7.5px] font-black text-indigo-600 italic">€{(t.netProfit || 0).toLocaleString('es-ES')}</span>
+                    <div className="h-3 w-px bg-slate-200" />
+                    <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">NETO</span>
+                        <span className="text-[10px] font-black text-indigo-600 italic">€{(t.netProfit || 0).toLocaleString('es-ES')}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 border-l border-slate-100 pl-3">
-                        <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest">ROAS:</span>
-                        <span className="text-[7.5px] font-black text-slate-900">{(avg.roasReal || 0).toFixed(2)}x</span>
+                    <div className="h-3 w-px bg-slate-200" />
+                    <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ROAS</span>
+                        <span className="text-[10px] font-black text-slate-900">{(avg.roasReal || 0).toFixed(2)}x</span>
                     </div>
 
                     {data?.goal && (
                         <>
                             <div className="flex items-center gap-2 border-l border-slate-100 pl-8">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-amber-500">PROY. ADSPEND:</span>
-                                <span className="text-[10px] font-black text-slate-900">€{data.goal.adSpendBudget.toLocaleString('es-ES')}</span>
+                                <span className="text-[10px] font-black text-slate-900">€{(data.goal.adSpendBudget || 0).toLocaleString('es-ES')}</span>
                             </div>
                             <div className="flex items-center gap-2 border-l border-slate-100 pl-8">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-amber-500">PROY. REVENUE:</span>
-                                <span className="text-[10px] font-black text-slate-900">€{(data.goal.adSpendBudget * data.goal.targetRoas).toLocaleString('es-ES')}</span>
+                                <span className="text-[10px] font-black text-slate-900">€{((data.goal.adSpendBudget || 0) * (data.goal.targetRoas || 0)).toLocaleString('es-ES')}</span>
                             </div>
                         </>
                     )}
@@ -425,104 +432,111 @@ export default function AccountingDashboard() {
                     <TabsTrigger value="projections" className="rounded px-4 h-5 font-black uppercase text-[7px] tracking-widest transition-all">
                         METAS
                     </TabsTrigger>
+                    <Link href="/finances/products">
+                        <TabsTrigger value="products" className="rounded px-4 h-5 font-black uppercase text-[7px] tracking-widest transition-all text-indigo-600 bg-indigo-50/50">
+                            COGS / PRODUCTOS
+                        </TabsTrigger>
+                    </Link>
                 </TabsList>
 
-                <TabsContent value="ledger" className="space-y-0.5">
-                    {/* Tabla de Desglose Diario - AHORA SIN CABECERA */}
-                    <Card className="bg-white/90 border-none rounded-md shadow-sm border border-slate-100 overflow-hidden">
+
+                <TabsContent value="ledger" className="space-y-4">
+                    {/* Tabla de Desglose Diario - PREMIUM GLASS */}
+                    <Card className="bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl shadow-indigo-500/5 rounded-xl overflow-hidden">
                         <CardContent className="p-0">
                             <div className="overflow-x-auto">
                                 <Table>
                                     <TableHeader className="bg-slate-50/40 backdrop-blur-sm sticky top-0 z-20">
                                         {/* FILA 1: GRUPOS PRINCIPALES */}
-                                        <TableRow className="border-b border-slate-200">
-                                            <TableHead rowSpan={2} className="w-10 text-center font-black text-[10px] uppercase tracking-widest text-slate-500 py-1.5 px-0.5 sticky left-0 bg-slate-50 z-30 border-r border-slate-200">DÍA</TableHead>
+                                        <TableRow className="h-8 border-b border-slate-200">
+                                            <TableHead rowSpan={2} className="w-10 text-center font-black text-[9px] uppercase tracking-widest text-slate-500 py-0 px-0.5 sticky left-0 bg-slate-50 z-30 border-r border-slate-200">DÍA</TableHead>
 
                                             {/* VENTAS - Agrupa: ADS, GASTOS, PROD, VISITAS, PEDIDOS, UNID, CONV%, TKT */}
-                                            <TableHead colSpan={8} className="text-center font-black text-[11px] uppercase tracking-widest text-indigo-600 bg-indigo-50/30 border-l-2 border-indigo-200 py-1.5">
+                                            <TableHead colSpan={8} className="text-center font-black text-[10px] uppercase tracking-widest text-indigo-600 bg-indigo-50/30 border-l-2 border-indigo-200 py-0">
                                                 📊 VENTAS
                                             </TableHead>
 
                                             {/* OPERACIONES - Agrupa: CONF, CANC, ENVÍO+COD, ENTR, DEV, INCID, RECUP, RECUP%, ENVÍO%, ENTR% */}
-                                            <TableHead colSpan={10} className="text-center font-black text-[11px] uppercase tracking-widest text-amber-600 bg-amber-50/30 border-l-2 border-amber-200 py-1.5">
+                                            <TableHead colSpan={10} className="text-center font-black text-[10px] uppercase tracking-widest text-amber-600 bg-amber-50/30 border-l-2 border-amber-200 py-0">
                                                 ⚙️ OPERACIONES
                                             </TableHead>
 
                                             {/* FINANZAS - Agrupa: REV.POSIB, REV.REAL, PROFIT POSIB, PROFIT REAL, %PROFIT, ROI, ROAS, CPA */}
-                                            <TableHead colSpan={8} className="text-center font-black text-[11px] uppercase tracking-widest text-emerald-600 bg-emerald-50/30 border-l-2 border-emerald-200 py-1.5">
+                                            <TableHead colSpan={8} className="text-center font-black text-[10px] uppercase tracking-widest text-emerald-600 bg-emerald-50/30 border-l-2 border-emerald-200 py-0">
                                                 💰 FINANZAS
                                             </TableHead>
 
-                                            <TableHead rowSpan={2} className="w-10 text-center font-black text-[10px] uppercase tracking-widest text-slate-500 sticky right-0 bg-slate-50 z-30 shadow-[-4px_0_10px_rgba(0,0,0,0.02)] border-l-2 border-slate-200 py-1.5 px-0.5">
+                                            <TableHead rowSpan={2} className="w-10 text-center font-black text-[9px] uppercase tracking-widest text-slate-500 sticky right-0 bg-slate-50 z-30 shadow-[-4px_0_10px_rgba(0,0,0,0.02)] border-l-2 border-slate-200 py-0 px-0.5">
                                                 <span className="block leading-tight">EST</span>
                                                 <span className="block leading-tight">ADO</span>
                                             </TableHead>
                                         </TableRow>
 
                                         {/* FILA 2: SUBCOLUMNAS - DOS LÍNEAS PARA COMPUESTOS, ALINEADOS AL CENTRO */}
-                                        <TableRow className="border-b border-slate-200">
+                                        <TableRow className="h-8 border-b border-slate-200">
                                             {/* VENTAS */}
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 border-l-2 border-indigo-200 px-1 py-1.5 bg-indigo-50/30 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 border-l-2 border-indigo-200 px-1 bg-indigo-50/30 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>GASTO</span><span>ADS</span></div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>GASTOS</span><span>TIENDA</span></div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">PROD</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">PROD</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>LPV</span><span>(META)</span></div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>CLICKS</span><span>(META)</span></div>
                                             </TableHead>
 
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">PEDIDOS</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">UNID</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">PEDIDOS</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">UNID</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>CONV</span><span>%</span></div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">TICKET</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">TICKET</TableHead>
 
                                             {/* OPERACIONES */}
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 border-l-2 border-amber-200 px-1 py-1.5 bg-amber-50/30 align-middle whitespace-nowrap">CONF</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">CANC</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 border-l-2 border-amber-200 px-1 bg-amber-50/30 align-middle whitespace-nowrap">CONF</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">CANC</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>ENVÍO</span><span>+COD</span></div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">ENTREG</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">DEVOL</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-rose-700 px-1 py-1.5 align-middle whitespace-nowrap bg-rose-50/20">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">ENTREG</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">DEVOL</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-rose-700 px-1 align-middle whitespace-nowrap bg-rose-50/20">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>GASTOS</span><span>DEVO</span></div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">INCID</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">RECUP</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">INCID</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">RECUP</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>RECUP</span><span>%</span></div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>ENVÍO</span><span>%</span></div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>ENTREG</span><span>%</span></div>
                                             </TableHead>
 
                                             {/* FINANZAS */}
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 border-l-2 border-emerald-200 px-1.5 py-2 bg-emerald-50/30 align-middle">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 border-l-2 border-emerald-200 px-1.5 bg-emerald-50/30 align-middle">
                                                 <div>FACT</div>
                                                 <div>SHOPIFY</div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1.5 py-2 align-middle">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1.5 align-middle">
                                                 <div>FACT</div>
                                                 <div>ENTREG</div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">PROFIT</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">PROFIT</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">
                                                 <div className="flex flex-col items-center justify-center leading-tight"><span>MARGEN</span><span>%</span></div>
                                             </TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">ROI</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">ROAS</TableHead>
-                                            <TableHead className="text-center text-[10px] font-black text-slate-700 px-1 py-1.5 align-middle whitespace-nowrap">CPA</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">ROI</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">ROAS</TableHead>
+                                            <TableHead className="text-center text-[9px] font-black text-slate-700 px-1 align-middle whitespace-nowrap">CPA</TableHead>
                                         </TableRow>
+
                                     </TableHeader>
                                     <TableBody>
                                         {data?.days?.map((day: any, i: number) => {
@@ -705,39 +719,42 @@ export default function AccountingDashboard() {
                     </Card>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 mt-2">
-                        {/* Panel de Insights (Asesor) - AHORA ABAJO */}
-                        <div className="lg:col-span-4 flex flex-col gap-2">
-                            <div className="bg-white/50 backdrop-blur-md rounded-xl p-3 border border-white/40 shadow-sm flex-1">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                        <Globe className="h-4 w-4 text-indigo-500" />
-                                        ASESOR IA CLOWDBOT
+                        {/* Panel de Insights (Asesor) - GLASS PRO */}
+                        <div className="lg:col-span-4 flex flex-col gap-4">
+                            <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl p-5 border border-white/10 shadow-2xl relative overflow-hidden group">
+                                {/* Ambient Glow */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl -z-10 group-hover:bg-indigo-500/30 transition-all" />
+
+                                <div className="flex items-center justify-between mb-4 relative z-10">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
+                                        <Globe className="h-4 w-4 text-indigo-400 animate-pulse" />
+                                        CLOWDBOT AI <span className="text-slate-500">v2.0</span>
                                     </h3>
-                                    <Badge className="bg-indigo-50 text-indigo-600 border-none font-black text-[8px] uppercase tracking-widest rounded-full px-2 py-0.5">Análisis en Vivo</Badge>
+                                    <Badge className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-black text-[8px] uppercase tracking-widest rounded-lg px-2 py-0.5">LIVE ANALYSIS</Badge>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-3 relative z-10 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent pr-2">
                                     {insights.length === 0 ? (
-                                        <div className="p-10 rounded-2xl border border-dashed border-slate-200 text-center flex flex-col items-center justify-center opacity-50">
-                                            <Zap className="h-8 w-8 text-slate-300 mb-2 animate-pulse" />
-                                            <p className="text-[10px] font-black text-slate-400 uppercase italic">Esperando datos de rendimiento...</p>
+                                        <div className="p-8 rounded-xl border border-dashed border-white/10 text-center flex flex-col items-center justify-center opacity-40">
+                                            <Zap className="h-6 w-6 text-white mb-2" />
+                                            <p className="text-[9px] font-black text-white uppercase tracking-widest">Awaiting data stream...</p>
                                         </div>
                                     ) : (
                                         insights.map((insight: any, i: number) => (
                                             <div key={i} className={cn(
-                                                "p-4 rounded-2xl border transition-all hover:scale-[1.02] cursor-default shadow-sm",
-                                                insight.level === 'CRITICAL' ? "bg-rose-50/50 border-rose-100 text-rose-900" :
-                                                    insight.level === 'WARNING' ? "bg-amber-50/50 border-amber-100 text-amber-900" :
-                                                        insight.level === 'OPTIMAL' ? "bg-emerald-50/50 border-emerald-100 text-emerald-900" :
-                                                            "bg-indigo-50/50 border-indigo-100 text-indigo-900"
+                                                "p-3 rounded-lg border transition-all hover:translate-x-1",
+                                                insight.level === 'CRITICAL' ? "bg-rose-500/10 border-rose-500/20 text-rose-200" :
+                                                    insight.level === 'WARNING' ? "bg-amber-500/10 border-amber-500/20 text-amber-200" :
+                                                        insight.level === 'OPTIMAL' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-200" :
+                                                            "bg-indigo-500/10 border-indigo-500/20 text-indigo-200"
                                             )}>
-                                                <div className="flex items-start justify-between gap-4">
+                                                <div className="flex items-start justify-between gap-3">
                                                     <div className="space-y-1">
-                                                        <p className="text-[10px] font-black uppercase tracking-tight italic">{insight.title}</p>
-                                                        <p className="text-[10px] font-bold leading-relaxed opacity-80">{insight.description}</p>
+                                                        <p className="text-[9px] font-black uppercase tracking-tight opacity-90">{insight.title}</p>
+                                                        <p className="text-[9px] font-medium leading-relaxed opacity-70">{insight.description}</p>
                                                     </div>
                                                     {insight.action && (
-                                                        <Badge className="bg-white/60 text-[8px] font-black uppercase text-inherit border-none shadow-sm whitespace-nowrap px-2">
+                                                        <Badge className="bg-white/10 text-[7px] font-black uppercase text-white border-none whitespace-nowrap px-1.5 hover:bg-white/20 cursor-pointer">
                                                             {insight.action}
                                                         </Badge>
                                                     )}
@@ -1072,11 +1089,11 @@ export default function AccountingDashboard() {
                                 <div className="flex gap-10">
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Facturación Est. Mes</span>
-                                        <span className="text-xl font-black italic">€{(projections.adSpendBudget * projections.targetRoas).toLocaleString('es-ES')}</span>
+                                        <span className="text-xl font-black italic">€{((projections.adSpendBudget || 0) * (projections.targetRoas || 0)).toLocaleString('es-ES')}</span>
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pedidos Est. Mes</span>
-                                        <span className="text-xl font-black italic">{(projections.expectedAvgTicket > 0 ? (projections.adSpendBudget * projections.targetRoas / projections.expectedAvgTicket) : 0).toFixed(0)}</span>
+                                        <span className="text-xl font-black italic">{(projections.expectedAvgTicket > 0 ? ((projections.adSpendBudget || 0) * (projections.targetRoas || 0) / projections.expectedAvgTicket) : 0).toFixed(0)}</span>
                                     </div>
                                 </div>
                                 <Button
@@ -1343,16 +1360,17 @@ function Comparison({ real, est, type = 'currency', suffix = '', color = 'slate'
     };
 
     return (
-        <div className="flex flex-col items-center justify-center whitespace-nowrap">
-            <span className={cn("text-[11px] font-black leading-none px-1 py-0.5 rounded", getColorClass())}>
+        <div className="flex flex-col items-center justify-center whitespace-nowrap leading-none">
+            <span className={cn("text-[10px] font-bold px-1 py-0 rounded", getColorClass())}>
                 {formatValue(real)}
             </span>
             {est > 0 && (
-                <span className="text-[7px] font-black text-slate-300 uppercase leading-none mt-0.5">META: {formatValue(est)}</span>
+                <span className="text-[6.5px] font-black text-slate-300 uppercase leading-none mt-0.5">M: {formatValue(est)}</span>
             )}
         </div>
     );
 }
+
 
 
 function SummaryCard({ title, value, sub, icon: Icon, color, trend, isRaw = false, gradient }: any) {

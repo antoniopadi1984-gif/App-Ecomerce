@@ -5,7 +5,7 @@ import {
     Calculator, Truck, Save, Plus, Trash2,
     DollarSign, Percent, AlertCircle, Copy, Link as LinkIcon,
     Package, RefreshCw, Box, AlertTriangle, ArrowRight, Settings2,
-    Zap, ShieldCheck, Globe, Info, RotateCcw
+    Zap, ShieldCheck, Globe, Info, RotateCcw, Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateFulfillmentRule, updateProductFinance, getSupplyChainStats, createFulfillmentRule, deleteFulfillmentRule, setProductProvider, syncShopifyProducts } from "../orders/actions";
-import { getProducts } from "@/app/marketing/products/actions";
+import { getProducts } from "../../marketing/maestro/actions";
 import { cn } from "@/lib/utils";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -665,21 +665,3 @@ export default function LogisticsFinanceManager() {
     );
 }
 
-function Loader2(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-        </svg>
-    );
-}

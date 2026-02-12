@@ -26,49 +26,50 @@
   --color-input: var(--card);
   --color-ring: var(--accent);
 
-  --radius-xl: 1rem;
-  --radius-lg: 0.75rem;
-  --radius-md: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-lg: 0.5rem;
+  --radius-md: 0.375rem;
   --radius-sm: 0.25rem;
 
-  --shadow-premium: 0 10px 15px -3px rgb(0 0 0 / 0.04), 0 4px 6px -4px rgb(0 0 0 / 0.02);
-  --shadow-luxe: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  --shadow-premium: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-luxe: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
 }
 
 :root {
-  --bg: #FFFFFF;
-  --card: #F7F7F8;
-  --text: #111827;
-  --muted: #F3F4F6;
+  --bg: #F6F7F9;
+  --card: #FFFFFF;
+  --text: #1F2937;
+  --muted: #F9FAFB;
   --muted-text: #6B7280;
   --border: #E5E7EB;
-  --accent: #F5B301;
-  --accent-text: #111827;
+  --accent: #2563EB;
+  /* Apple Blue */
+  --accent-text: #FFFFFF;
   --danger: #EF4444;
-  --success: #22C55E;
+  --success: #10B981;
   --warning: #F59E0B;
 }
 
 .dark {
-  --bg: #0B0F14;
-  --card: #111827;
-  --text: #E5E7EB;
-  --muted: #1F2937;
+  --bg: #111827;
+  --card: #1F2937;
+  --text: #F9FAFB;
+  --muted: #111827;
   --muted-text: #9CA3AF;
-  --border: #1F2937;
-  --accent: #F5B301;
-  --accent-text: #111827;
+  --border: #374151;
+  --accent: #3B82F6;
+  --accent-text: #FFFFFF;
 }
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased;
-    letter-spacing: -0.022em;
+    @apply bg-slate-50/50 text-slate-900 font-sans antialiased;
+    letter-spacing: -0.015em;
   }
 }
 
 .compact-card {
-  @apply bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden;
+  @apply bg-white border border-slate-100/80 shadow-sm rounded-xl overflow-hidden transition-all duration-300;
 }
 
 .input-compact {
@@ -92,51 +93,51 @@
   @apply text-xs font-bold text-slate-900;
 }
 
-/* REDUCING WHITE SPACE GLOBALLY */
+/* REDUCING WHITE SPACE GLOBALLY - UX ARCHITECT SPECS */
 .card-content-compact {
-  @apply p-4 sm:p-5;
+  @apply p-2 sm:p-3;
 }
 
 .heading-tight {
-  @apply tracking-tighter leading-none font-black italic uppercase;
+  @apply tracking-tighter leading-none font-bold italic uppercase text-[10px];
+}
+
+/* HIGH DENSITY OVERRIDES */
+@layer base {
+  body {
+    @apply bg-slate-50/50 text-slate-900 font-sans antialiased;
+    letter-spacing: -0.015em;
+    font-size: 14px;
+    /* Default Content */
+  }
+}
+
+.text-data {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.text-header {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-density {
+  @apply p-1 md:p-1.5;
+}
+
+/* APPLE DASHBOARD GLASSMORPHISM */
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-sm rounded-2xl;
+}
+
+/* ROW DENSITY */
+.row-32 {
+  @apply h-8 py-0;
 }
 
 /* PREMIUM SHARP DESIGN */
 .premium-card {
   @apply bg-white border border-slate-100 shadow-sm rounded-2xl transition-all duration-300 hover:shadow-md;
-}
-
-.premium-gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-primary to-slate-900 font-black;
-}
-
-/* COMPACT INPUTS & BUTTONS */
-.input-sharp {
-  @apply h-10 bg-slate-50 border-none rounded-xl text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all;
-}
-
-.button-sharp {
-  @apply h-10 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg active:scale-95 transition-all px-6;
-}
-
-/* UTILITY FOR TITLES */
-h1 {
-  @apply text-2xl sm:text-3xl font-black tracking-tighter;
-}
-
-h2 {
-  @apply text-xl sm:text-2xl font-black tracking-tighter;
-}
-
-h3 {
-  @apply text-lg sm:text-xl font-black tracking-tight;
-}
-
-.bg-dot-pattern {
-  background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px);
-  background-size: 20px 20px;
-}
-
-.glass {
-  @apply bg-white/70 backdrop-blur-md border border-white/20;
 }

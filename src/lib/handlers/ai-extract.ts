@@ -1,13 +1,28 @@
-
 import { JobHandler } from "../worker";
 import { askGemini } from "../ai";
 import prisma from "../prisma";
+import fs from "fs";
+import path from "path";
 
 const aiExtractHandler: JobHandler = {
     handle: async (payload, onProgress) => {
-        const { imageBase64, productId, productName, language } = payload;
+        let { imageBase64, productId, productName, language } = payload;
 
         await onProgress(10);
+
+        // Resolve file reference if offloaded
+        if (imageBase64 && imageBase64.startsWith("file://")) {
+            try {
+                const fileName = imageBase64.replace("file://", "");
+                const filePath = path.resolve(process.cwd(), "uploads", "jobs", fileName);
+                console.log(`📖 [Handler] Reading offloaded payload from: ${fileName}`);
+                imageBase64 = fs.readFileSync(filePath, "utf-8");
+            } catch (e) {
+                console.error("❌ [Handler] Failed to read offloaded payload:", e);
+                // Fallback: Continue without image or fail? Fail because extraction needs image
+                throw new Error("No se pudo leer el archivo de video procesado.");
+            }
+        }
 
         // Use any to bypass temporary prisma type delay
         const db = prisma as any;

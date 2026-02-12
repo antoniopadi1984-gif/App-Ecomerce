@@ -201,7 +201,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
     };
 
     return (
-        <div className="min-h-screen bg-[#05060f] text-white p-6 md:p-12 font-sans selection:bg-indigo-500/30 overflow-x-hidden">
+        <div className="min-h-screen bg-[#05060f] text-white p-3 md:p-6 font-sans selection:bg-indigo-500/30 overflow-x-hidden">
             {/* Ambient Background */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full" />
@@ -210,7 +210,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
             </div>
 
             {/* Header */}
-            <header className="relative flex flex-col md:flex-row items-center justify-between mb-16 z-20 gap-8">
+            <header className="relative flex flex-col md:flex-row items-center justify-between mb-8 z-20 gap-4">
                 <div className="flex flex-col items-center md:items-start text-center md:text-left">
                     <div className="flex items-center gap-4 group">
                         <div className="h-14 w-14 bg-gradient-to-br from-indigo-500 to-indigo-800 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.4)] border border-indigo-400/50 group-hover:scale-110 transition-transform duration-500">
@@ -252,11 +252,11 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
             </header>
 
             <div className="grid grid-cols-12 gap-8 relative z-20">
-                <div className="col-span-12 lg:col-span-8">
+                <div className="col-span-12">
                     {step === 1 && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
-                            <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] overflow-hidden group shadow-2xl transition-all hover:border-indigo-400/30">
-                                <CardContent className="p-10 space-y-10">
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                            <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2rem] overflow-hidden group shadow-2xl transition-all hover:border-indigo-400/30">
+                                <CardContent className="p-6 space-y-6">
                                     <div className="flex flex-col md:flex-row justify-between items-start gap-6">
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-3">
@@ -298,7 +298,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                                         setSelectedProductId(e.target.value);
                                                         if (p) setProductName(p.title);
                                                     }}
-                                                    className="w-full h-16 bg-white/5 border border-white/20 rounded-2xl focus:ring-2 focus:ring-indigo-400/20 transition-all font-black text-white px-8 outline-none appearance-none hover:bg-white/10 cursor-pointer text-sm"
+                                                    className="w-full h-12 bg-white/5 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400/20 transition-all font-black text-white px-6 outline-none appearance-none hover:bg-white/10 cursor-pointer text-sm"
                                                 >
                                                     <option value="" disabled className="bg-[#0a0b14]">Inventario</option>
                                                     {dbProducts.map(p => (
@@ -312,7 +312,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                             <label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Público Objetivo</label>
                                             <Input
                                                 placeholder="Ej: Emprendedores apasionados por el lujo..."
-                                                className="h-16 bg-white/5 border border-white/20 rounded-2xl focus:ring-2 focus:ring-indigo-400/20 text-white px-8 text-sm placeholder:text-white/20 font-bold"
+                                                className="h-12 bg-white/5 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400/20 text-white px-6 text-sm placeholder:text-white/20 font-bold"
                                             />
                                         </div>
                                     </div>
@@ -320,7 +320,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-3">
                                             <label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Plataforma</label>
-                                            <div className="grid grid-cols-2 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/20 h-16">
+                                            <div className="grid grid-cols-2 gap-2 bg-black/40 p-1 rounded-xl border border-white/20 h-10">
                                                 {["TikTok", "Instagram"].map((p) => (
                                                     <button
                                                         key={p}
@@ -338,7 +338,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                         </div>
                                         <div className="space-y-3">
                                             <label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Duración Maestro</label>
-                                            <div className="grid grid-cols-4 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/20 h-16">
+                                            <div className="grid grid-cols-4 gap-2 bg-black/40 p-1 rounded-xl border border-white/20 h-10">
                                                 {["15s", "30s", "50s", "Adaptar"].map((d) => (
                                                     <button
                                                         key={d}
@@ -358,11 +358,11 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                     <div className="space-y-6">
                                         <div className="flex justify-between items-center ml-2">
                                             <label className="text-[10px] font-black uppercase text-amber-400 tracking-[0.2em]">Referencia Creativa</label>
-                                            <Badge className="bg-indigo-400/20 text-indigo-300 border-none text-[8px] font-black uppercase tracking-tighter">Gemini 1.5 Pro Enabled</Badge>
+                                            <Badge className="bg-indigo-400/20 text-indigo-300 border-none text-[8px] font-black uppercase tracking-tighter">Gemini 3.5 Flash</Badge>
                                         </div>
 
                                         <Tabs defaultValue="upload" className="w-full">
-                                            <TabsList className="bg-black/60 p-1.5 rounded-2xl h-14 border border-white/20 grid grid-cols-2 mb-6 shadow-inner">
+                                            <TabsList className="bg-black/60 p-1 rounded-xl h-10 border border-white/20 grid grid-cols-2 mb-4 shadow-inner">
                                                 <TabsTrigger value="upload" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black transition-all">
                                                     <Upload className="h-4 w-4 mr-2" /> Subir Video
                                                 </TabsTrigger>
@@ -371,6 +371,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                                 </TabsTrigger>
                                             </TabsList>
 
+
                                             <TabsContent value="upload" className="mt-0 outline-none">
                                                 <div
                                                     onDragOver={onDragOver}
@@ -378,7 +379,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                                     onDrop={onDrop}
                                                     onClick={() => fileInputRef.current?.click()}
                                                     className={cn(
-                                                        "h-[220px] border-2 border-dashed rounded-[2rem] flex flex-col items-center justify-center transition-all duration-500 relative cursor-pointer group",
+                                                        "h-[150px] border-2 border-dashed rounded-[1.5rem] flex flex-col items-center justify-center transition-all duration-500 relative cursor-pointer group",
                                                         isDragging ? "border-indigo-400 bg-indigo-500/10 scale-[1.01]" : "border-white/20 bg-white/5 hover:border-indigo-400/50 hover:bg-white/10",
                                                         isAnalyzingVideo && "pointer-events-none"
                                                     )}
@@ -443,7 +444,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                         <Button
                                             onClick={handleGenerateScript}
                                             disabled={loading || !concept}
-                                            className="h-16 px-12 rounded-[2rem] bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-[0.3em] text-[12px] shadow-2xl shadow-indigo-500/30 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                                            className="h-12 px-8 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-indigo-500/30 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
                                         >
                                             {loading ? <RefreshCw className="h-5 w-5 animate-spin mr-3" /> : <Sparkles className="h-5 w-5 mr-3" />}
                                             {loading ? "Generando..." : "Generar Guion Maestro"}
@@ -537,94 +538,11 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                     )}
                 </div>
 
-                <div className="col-span-12 lg:col-span-4 space-y-8">
-                    {/* AVATAR STUDIO - HIGH CONTRAST MASTER */}
-                    <Card className="bg-[#05060f] border-2 border-indigo-500/30 rounded-[2.5rem] p-8 space-y-6 shadow-[0_0_50px_rgba(79,70,229,0.1)] group overflow-hidden relative text-white">
-                        <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:scale-125 transition-transform duration-1000 rotate-12">
-                            <UserSquare2 className="h-48 w-48 text-indigo-500/20" />
-                        </div>
-                        <div className="relative z-10 space-y-8">
-                            <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.4)]">
-                                    <Mic2 className="h-6 w-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Avatar Studio</h3>
-                                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-[0.2em] mt-1">Identidad Digital Neural</p>
-                                </div>
-                            </div>
 
-                            <p className="text-[14px] text-white/70 uppercase font-black tracking-widest leading-relaxed">
-                                Configura y clona tu identidad digital <br />
-                                para videos de alto impacto.
-                            </p>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.3em] ml-1">Sexo</label>
-                                    <select
-                                        value={avatarGender}
-                                        onChange={(e) => setAvatarGender(e.target.value)}
-                                        className="w-full h-14 bg-white/5 border-2 border-white/10 rounded-2xl px-6 text-[12px] font-black uppercase outline-none focus:border-indigo-500 transition-all cursor-pointer text-white appearance-none"
-                                    >
-                                        <option value="Masculino" className="bg-[#05060f] text-white">Masculino</option>
-                                        <option value="Femenino" className="bg-[#05060f] text-white">Femenino</option>
-                                        <option value="Neutro" className="bg-[#05060f] text-white">Neutro</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.3em] ml-1">Edad Target</label>
-                                    <Input
-                                        type="number"
-                                        value={avatarAge}
-                                        onChange={(e) => setAvatarAge(e.target.value)}
-                                        placeholder="Ej: 25"
-                                        className="h-14 bg-white/5 border-2 border-white/10 rounded-2xl px-6 text-[12px] font-black uppercase outline-none focus:border-indigo-500 transition-all text-white placeholder:text-white/20"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-6 pt-2">
-                                <div className="flex items-center gap-6">
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-2 w-2 bg-indigo-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(99,102,241,1)]" />
-                                        <span className="text-[10px] font-black uppercase text-white tracking-widest leading-none">30s Master</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-2 w-2 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                                        <span className="text-[10px] font-black uppercase text-white tracking-widest leading-none">LipSync</span>
-                                    </div>
-                                </div>
-
-                                <Button
-                                    onClick={() => avatarInputRef.current?.click()}
-                                    className="w-full h-18 bg-white text-black font-black uppercase text-[14px] tracking-[0.3em] hover:bg-indigo-500 hover:text-white shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4 rounded-3xl border-0"
-                                >
-                                    <MonitorPlay className="h-6 w-6" />
-                                    Entrenar Avatar
-                                </Button>
-
-                                <p className="text-center text-[10px] text-white/40 font-bold uppercase tracking-[0.4em]">Sube el video y deja que la IA se encargue</p>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-amber-500/10 to-transparent border border-white/5 rounded-[2.5rem] p-8 space-y-4 shadow-xl">
-                        <div className="flex items-center gap-3">
-                            <Zap className="h-5 w-5 text-amber-400" />
-                            <h4 className="text-sm font-black uppercase italic text-white">Preset: Viral Maestro</h4>
-                        </div>
-                        <p className="text-[10px] text-white/40 leading-relaxed font-bold">
-                            Configuración automática para videos de alto impacto <br />
-                            con ganchos psicológicos validados por IA.
-                        </p>
-                        <div className="flex flex-wrap gap-2 pt-2">
-                            <Badge className="bg-white/5 text-white/60 border-white/10 text-[8px] font-black">FAST CUTS</Badge>
-                            <Badge className="bg-white/5 text-white/60 border-white/10 text-[8px] font-black">DYNAMIC CAPTIONS</Badge>
-                            <Badge className="bg-white/5 text-white/60 border-white/10 text-[8px] font-black">4K RENDER</Badge>
-                        </div>
-                    </Card>
-                </div>
+                {/* 
+                   Space reserved for future modules or insights.
+                   Previously Avatar Studio was here, now moved to /marketing/avatars-lab
+                */}
             </div>
 
             <Dialog open={importModalOpen} onOpenChange={setImportModalOpen}>

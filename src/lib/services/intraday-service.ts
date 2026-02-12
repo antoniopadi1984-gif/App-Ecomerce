@@ -1,7 +1,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getMetaAdsService } from "../marketing/meta-ads";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 
 type WindowType = "DAY" | "3H" | "6H";
 
@@ -275,12 +275,25 @@ export class IntradaySyncService {
      */
     static async syncWindow(storeId: string, window: WindowType, targetDate?: Date) {
         const errorLogs: string[] = [];
+        const isToday = !targetDate || isSameDay(targetDate, new Date());
 
-        // 1. Circuit Breaker
+        // 1. Circuit Breaker & Throttling
         const isHealthy = await this.checkCircuitBreaker(storeId);
         if (!isHealthy) {
             console.warn(`[CircuitBreaker] Sync BLOCKED... BUT PROCEEDING FOR DEBUG.`);
-            // return { success: false, message: "Circuit Breaker Open" };
+        }
+
+        // Throttling: Only for "Today" syncs to prevent constant polling
+        if (isToday) {
+            const lastSync = await prisma.auditLog.findFirst({
+                where: { storeId, action: "INTRADAY_SYNC", newValue: "SUCCESS" },
+                orderBy: { createdAt: "desc" }
+            });
+
+            if (lastSync && (new Date().getTime() - lastSync.createdAt.getTime() < 15 * 60 * 1000)) {
+                console.log(`[IntradaySyncService] Throttling: Last sync was ${Math.round((new Date().getTime() - lastSync.createdAt.getTime()) / 60000)}m ago.`);
+                return { success: true, synced: 0, logs: ["Throttled: Recently synced"] };
+            }
         }
 
         try {
@@ -298,10 +311,13 @@ export class IntradaySyncService {
 
             for (const acc of accounts) {
                 // 3. Account Level (Direct Insight)
+                let hasSpend = false;
                 try {
                     const accInsights = await metaService.getInsights(acc.id, 'account', timeRange);
                     if (accInsights && accInsights.length > 0) {
                         const m = accInsights[0];
+                        hasSpend = parseFloat(m.spend || "0") > 0;
+
                         // Account Status comes from acc object
                         m.effective_status = acc.account_status === 1 ? 'ACTIVE' : 'PAUSED';
                         m.account_status = acc.account_status;
@@ -313,6 +329,12 @@ export class IntradaySyncService {
                     }
                 } catch (e: any) {
                     errorLogs.push(`Account Level Error: ${e.message}`);
+                }
+
+                // Optimization: If no spend for the day, skip fetching campaigns/ads/adsets
+                if (!hasSpend) {
+                    console.log(`[IntradaySyncService] Account ${acc.name} (${acc.id}) has 0 spend. Skipping details.`);
+                    continue;
                 }
 
                 // 4. Campaign Level

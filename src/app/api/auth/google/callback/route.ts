@@ -11,8 +11,14 @@ export async function GET(request: Request) {
     }
 
     try {
-        const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
-        const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+        // Fetch Dynamic Configuration
+        const appConfig = await prisma.connection.findFirst({
+            where: { provider: "GOOGLE_APP", isActive: true }
+        });
+
+        const clientId = appConfig?.apiKey || process.env.GOOGLE_OAUTH_CLIENT_ID;
+        const clientSecret = appConfig?.apiSecret || process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+
         // Hardcoded to match the start route exactly
         const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/google/callback`;
 
@@ -81,6 +87,15 @@ export async function GET(request: Request) {
                 where: { storeId_provider: { storeId: store.id, provider: "GOOGLE_ANALYTICS" } },
                 update: { apiKey: tokens.access_token, apiSecret: tokens.refresh_token, isActive: true },
                 create: { storeId: store.id, provider: "GOOGLE_ANALYTICS", apiKey: tokens.access_token, apiSecret: tokens.refresh_token, isActive: true }
+            });
+        }
+
+        // Upsert GOOGLE_DRIVE connection (Critical for Deep Research)
+        if (tokens.scope?.includes("drive")) {
+            await prisma.connection.upsert({
+                where: { storeId_provider: { storeId: store.id, provider: "GOOGLE_DRIVE" } },
+                update: { apiKey: tokens.access_token, apiSecret: tokens.refresh_token, isActive: true },
+                create: { storeId: store.id, provider: "GOOGLE_DRIVE", apiKey: tokens.access_token, apiSecret: tokens.refresh_token, isActive: true }
             });
         }
 

@@ -57,7 +57,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
+        "hover:bg-slate-50/80 data-[state=selected]:bg-slate-100 border-b border-slate-100 transition-colors h-8", // Reduced to 32px height
         className
       )}
       {...props}
@@ -70,7 +70,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "text-slate-400 h-8 px-2 text-left align-middle font-black uppercase tracking-widest text-[10px] whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]", // Ultra compact header
         className
       )}
       {...props}
@@ -83,13 +83,14 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "px-2 py-0 align-middle whitespace-nowrap text-[11px] font-medium text-slate-600 tracking-tight [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]", // Compact cell data
         className
       )}
       {...props}
     />
   )
 }
+
 
 function TableCaption({
   className,

@@ -24,7 +24,7 @@ export function FinanceAiBunker() {
         setLoading(true);
         const res = await getFinancialAdvice(goal);
         if (res.success) {
-            setAdvice(res.text);
+            setAdvice(res.text || null);
             toast.success("Estrategia generada por el Búnker AI");
         } else {
             toast.error("Error al conectar con el cerebro financiero");

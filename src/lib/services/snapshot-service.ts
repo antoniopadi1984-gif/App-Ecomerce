@@ -391,8 +391,11 @@ export class SnapshotService {
                 date: d.date,
                 spendAds: c?.spendAds || 0,
                 revenueReal: dv?.revenueReal || 0,
+                costsReal: dv?.costsReal || (c?.costsReal || 0),
                 netProfit: dv?.netProfit || 0,
+                roasReal: dv?.roasReal || 0,
                 deliveryRate: dv?.deliveryRate || (c?.deliveryRate || 0),
+                incidenceRate: dv?.incidenceRate || (c?.incidenceRate || 0),
                 isComplete: (c?.isComplete && dv?.isComplete) || false,
                 status: dv?.status || c?.status || 'NEUTRAL',
                 metricsJson: JSON.stringify(mergedMetrics)

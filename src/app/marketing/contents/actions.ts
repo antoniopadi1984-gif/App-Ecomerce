@@ -72,7 +72,7 @@ export async function generateEbook(templateId: string) {
     const aiResponse = await askGemini(prompt, "Eres un educador experto en productos de ecommerce.");
     let content;
     try {
-        content = JSON.parse(aiResponse.text.match(/\{[\s\S]*\}/)?.[0] || "{}");
+        content = JSON.parse((aiResponse.text || "").match(/\{[\s\S]*\}/)?.[0] || "{}");
     } catch (e) {
         console.error("JSON Parse failed", aiResponse.text);
         throw new Error("Fallo en la generación de contenido por IA");
@@ -153,7 +153,7 @@ export async function generateMiniCourse(templateId: string) {
     `;
 
     const aiResponse = await askGemini(prompt, "Eres un director de contenidos educativos.");
-    const content = JSON.parse(aiResponse.text.match(/\{[\s\S]*\}/)?.[0] || "{}");
+    const content = JSON.parse((aiResponse.text || "").match(/\{[\s\S]*\}/)?.[0] || "{}");
 
     // Step B: Audio & Music (Simulation for now, using external APIs if keys present)
     // In a real scenario, we would call ElevenLabs here.

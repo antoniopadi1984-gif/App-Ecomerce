@@ -157,7 +157,7 @@ export default function PerformancePage() {
     // Columnas y ordenamiento
     const [columns, setColumns] = useState<ColumnDef[]>(ALL_COLUMNS);
     const [sortConfig, setSortConfig] = useState<{ column: string; direction: 'asc' | 'desc' } | null>(null);
-    const [autoRefresh, setAutoRefresh] = useState(true);
+    const [autoRefresh, setAutoRefresh] = useState(false);
 
     // Paginación
     const [currentPage, setCurrentPage] = useState(1);
@@ -225,9 +225,10 @@ export default function PerformancePage() {
                 setData(res.rows || []);
             }
 
-            if ((!res.data || res.data.length === 0) && !syncing && period === 'today' && !silent) {
-                handleDeepSync(true);
-            }
+            // Removed automatic deep sync to prevent rate limiting loops
+            // if ((!res.data || res.data.length === 0) && !syncing && period === 'today' && !silent) {
+            //     handleDeepSync(true);
+            // }
         } catch (e) {
             if (!silent) toast.error("Error cargando métricas");
         } finally {
@@ -280,7 +281,7 @@ export default function PerformancePage() {
                 } else {
                     fetchData(true);
                 }
-            }, 30000);
+            }, 300000); // 5 minutes refresh interval instead of 30s
         }
         return () => clearInterval(interval);
     }, [autoRefresh, period, fetchData]);

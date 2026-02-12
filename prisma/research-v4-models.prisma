@@ -1,0 +1,62 @@
+// Nueva tabla para VOC Insights
+model VOCInsight {
+  id            String   @id @default(cuid())
+  productId     String
+  researchRunId String?
+  
+  phrase        String   // La frase extraída
+  category      String   // 'PAIN' | 'DESIRE' | 'OBJECTION' | 'TRIGGER'
+  emotionalIntensity Int  // 1-10
+  funnelStage   String?  // 'COLD' | 'WARM' | 'HOT'
+  frequency     Int      @default(1)
+  verbatimSource String? // Fuente original
+  
+  product       Product  @relation(fields: [productId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([productId])
+  @@index([category])
+}
+
+// Nueva tabla para análisis competitivo
+model CompetitiveAnalysis {
+  id            String   @id @default(cuid())
+  productId     String
+  
+  competitorName String
+  competitorUrl String?
+  price         Float?
+  rating        Float?
+  reviewCount   Int?
+  
+  strengths     String   // JSON array
+  weaknesses    String   // JSON array
+  gapOpportunity String?
+  
+  product       Product  @relation(fields: [productId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([productId])
+}
+
+// Nueva tabla para offer stacks
+model OfferStack {
+  id            String   @id @default(cuid())
+  productId     String
+  
+  name          String   // "1+1 Transformation Stack"
+  strategy      String   // '1+1' | 'BUNDLE' | 'UPGRADE'
+  components    String   // JSON array de componentes
+  
+  totalValue    Float
+  price         Float
+  discount      Float    // Percentage
+  
+  product       Product  @relation(fields: [productId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([productId])
+}

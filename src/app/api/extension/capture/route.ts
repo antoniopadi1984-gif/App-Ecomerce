@@ -30,3 +30,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+export async function GET() {
+    try {
+        const captures = await (prisma as any).adSpyCapture.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: 100
+        });
+        return NextResponse.json(captures);
+    } catch (error: any) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}

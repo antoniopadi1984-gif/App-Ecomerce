@@ -44,7 +44,7 @@ export async function syncKnowledgeGraph(productId: string) {
         `;
 
         const res = await askGemini(brainPrompt, "Eres el cerebro del sistema.");
-        const data = JSON.parse(res.text.match(/\{[\s\S]*\}/)?.[0] || "{}");
+        const data = JSON.parse((res.text || "").match(/\{[\s\S]*\}/)?.[0] || "{}");
 
         // Save nodes and links
         for (const node of data.nodes || []) {

@@ -1,14 +1,14 @@
 {
     "manifest_version": 3,
-    "name": "EcomFlow Elite Spy",
-    "version": "1.2",
-    "description": "Capture competitor ads, videos and images directly to your EcomFlow Library.",
+    "name": "EcomFlow Control Bridge",
+    "version": "2.0",
+    "description": "Integration bridge between EcomFlow Control and AI tools (Claude) + Ad Spy.",
     "permissions": [
         "activeTab",
         "storage",
-        "contextMenus",
         "notifications",
-        "scripting"
+        "scripting",
+        "clipboardRead"
     ],
     "action": {
         "default_popup": "popup.html",
@@ -24,7 +24,9 @@
     "content_scripts": [
         {
             "matches": [
-                "<all_urls>"
+                "https://www.facebook.com/ads/library*",
+                "https://www.tiktok.com/*",
+                "https://claude.ai/*"
             ],
             "js": [
                 "content.js"
@@ -34,7 +36,9 @@
     ],
     "host_permissions": [
         "http://localhost:3000/*",
-        "https://*/*"
+        "https://claude.ai/*",
+        "https://www.facebook.com/*",
+        "https://www.tiktok.com/*"
     ],
     "icons": {
         "16": "icons/icon16.png",

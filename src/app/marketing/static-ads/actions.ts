@@ -79,3 +79,133 @@ export async function generateStaticConcepts(productName: string, targetAudience
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * TEMPLATE-BASED STATIC AD GENERATION
+ * Quick generation using pre-built templates
+ */
+
+/**
+ * Generate static ads from research using templates
+ */
+export async function generateStaticAdsFromResearchAction(
+    productId: string,
+    templateCount: number = 5
+) {
+    try {
+        // Get product + research
+        const product = await prisma.product.findUnique({
+            where: { id: productId },
+            select: {
+                title: true,
+                price: true,
+                compareAtPrice: true,
+                productImages: true
+            }
+        });
+
+        if (!product) {
+            return { success: false, error: 'Product not found' };
+        }
+
+        // Get latest research
+        const research = await prisma.researchRun.findFirst({
+            where: { productId },
+            orderBy: { createdAt: 'desc' },
+            select: { results: true }
+        });
+
+        const raw = research?.results;
+        const researchData = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+
+        // Get random templates
+        const templates = await prisma.creativeTemplate.findMany({
+            take: templateCount,
+            orderBy: { usageCount: 'asc' } // Use least used first
+        });
+
+        if (templates.length === 0) {
+            return { success: false, error: 'No templates found. Run seed first.' };
+        }
+
+        // Generate ad for each template
+        const createdAds = [];
+
+        for (const template of templates) {
+            const creative = await prisma.creative.create({
+                data: {
+                    productId,
+                    type: 'STATIC',
+                    subtype: 'AD',
+                    title: `${template.name} - ${product.title}`,
+                    funnelStage: template.funnelStage,
+                    status: 'DRAFT',
+                    dimensions: JSON.parse(template.supportedFormats || '["1080x1920"]')[0],
+                    format: 'png'
+                }
+            });
+
+            // Increment usage
+            await prisma.creativeTemplate.update({
+                where: { id: template.id },
+                data: { usageCount: { increment: 1 } }
+            });
+
+            createdAds.push({
+                id: creative.id,
+                templateName: template.name,
+                funnelStage: template.funnelStage
+            });
+        }
+
+        return {
+            success: true,
+            message: `Generated ${createdAds.length} static ads`,
+            ads: createdAds
+        };
+
+    } catch (error: any) {
+        console.error('[generateStaticAdsFromResearchAction] Error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Get all creatives for a product
+ */
+export async function getProductCreativesAction(productId: string) {
+    try {
+        const creatives = await prisma.creative.findMany({
+            where: { productId },
+            include: {
+                avatar: {
+                    select: {
+                        name: true,
+                        avatarImageUrl: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        return {
+            success: true,
+            creatives: creatives.map(c => ({
+                id: c.id,
+                type: c.type,
+                title: c.title,
+                funnelStage: c.funnelStage,
+                status: c.status,
+                assetUrl: c.assetUrl,
+                thumbnailUrl: c.thumbnailUrl,
+                avatar: c.avatar,
+                dimensions: c.dimensions,
+                createdAt: c.createdAt
+            }))
+        };
+
+    } catch (error: any) {
+        console.error('[getProductCreativesAction] Error:', error);
+        return { success: false, error: error.message };
+    }
+}

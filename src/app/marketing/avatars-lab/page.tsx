@@ -1,864 +1,636 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import {
-    Users, UserCheck, Sparkles, Wand2,
-    Clapperboard, Play, Save, ChevronRight,
-    Zap, Monitor, ExternalLink, Download,
-    Search, Image as ImageIcon, Video, FileVideo,
-    RotateCcw, Languages, Copy, CheckCircle2,
-    Layout, Briefcase
+    Users, Plus, Sparkles, Loader2, Trash2, Video,
+    User, Zap, Wand2, Play, Save, Settings,
+    MessageSquare, Volume2, Mic2, Globe, ChevronRight, AlertCircle, Eye
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogTrigger
-} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-    checkLocalEngineHealth,
+    saveAvatarProfile,
+    getAvatarProfiles,
+    deleteAvatarProfile,
     generateAvatarLocal,
-    getProducts,
-    getProductResearch,
     getElevenLabsVoices,
     generateAvatarScript,
-    analyzeUploadedVideo,
-    translateVideoScript
+    checkLocalEngineHealth,
+    getFirstStoreId,
+    retryAvatarGeneration,
+    createEvolutionPair
 } from "./actions";
-import { searchEnvatoAssets, EnvatoAsset } from "@/lib/envato";
 
-export default function AvatarsLabPage() {
-    const [products, setProducts] = useState<any[]>([]);
-    const [selectedProduct, setSelectedProduct] = useState("");
-    const [newProductName, setNewProductName] = useState("");
+export default function AvatarStudioPage() {
+    const [storeId, setStoreId] = useState<string | null>(null); // State for real storeId
+    const [avatars, setAvatars] = useState<any[]>([]);
+    const [voices, setVoices] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [researchData, setResearchData] = useState<any>(null);
-    const [selectedAngle, setSelectedAngle] = useState("");
+    const [isAdding, setIsAdding] = useState(false);
+    const [activeTab, setActiveTab] = useState("profiles");
+    const [engineStatus, setEngineStatus] = useState<"online" | "offline" | "checking">("checking");
+
+    // Profile Form State
+    const [formData, setFormData] = useState({
+        name: '',
+        sex: 'FEMALE',
+        ageRange: '25-35',
+        region: 'España',
+        voiceId: '',
+        hasGreyHair: false,
+        hasWrinkles: false,
+        hasAcne: false,
+        customPrompt: ''
+    });
+
+    const [editingAvatarId, setEditingAvatarId] = useState<string | null>(null);
+
+    // Script State
+    const [selectedAvatar, setSelectedAvatar] = useState<any>(null);
     const [script, setScript] = useState("");
-    const [avatarType, setAvatarType] = useState("expert");
-    const [elevenVoices, setElevenVoices] = useState<any[]>([]);
-    const [selectedVoice, setSelectedVoice] = useState("");
-    const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
-
-    // Engine & UI State
-    const [isRemixing, setIsRemixing] = useState(false);
-    const [duration, setDuration] = useState(30);
-    const [voiceSettings, setVoiceSettings] = useState({ stability: 0.5, similarity: 0.75 });
     const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
-    const [engineStatus, setEngineStatus] = useState<"checking" | "online" | "offline">("checking");
-    const [simulationMode, setSimulationMode] = useState("SOFTWARE_SIM");
-    const [assetUrl, setAssetUrl] = useState<string | null>(null);
-    const [gpuEnabled, setGpuEnabled] = useState(false);
-    const [isEnvatoConnected, setIsEnvatoConnected] = useState(false);
-    const [isConnectingEnvato, setIsConnectingEnvato] = useState(false);
-    const [envatoToken, setEnvatoToken] = useState("");
-    const [showEnvatoLogin, setShowEnvatoLogin] = useState(false);
-    const [engineDetails, setEngineDetails] = useState<any>(null);
-    const [videoAnalysis, setVideoAnalysis] = useState<any>(null);
-    const [targetLanguage, setTargetLanguage] = useState("es");
-    const [versions, setVersions] = useState<any[]>([]);
-
-    // Envato State
-    const [envatoAssets, setEnvatoAssets] = useState<EnvatoAsset[]>([]);
-    const [assetSearch, setAssetSearch] = useState("");
-    const [assetType, setAssetType] = useState<'VIDEO' | 'IMAGE'>('VIDEO');
-
-    // Refs
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-    // Static Ads State
-    const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-    const [adConfig, setAdConfig] = useState<"educational" | "sales">("educational");
 
     useEffect(() => {
+        loadData();
         checkHealth();
-        getProducts().then(res => {
-            if (res.success) setProducts(res.data || []);
-        });
-        getElevenLabsVoices().then(res => {
-            if (res.success) {
-                setElevenVoices(res.voices || []);
-                if (res.voices?.length > 0) setSelectedVoice(res.voices[0].voice_id);
+
+        // Polling for generating avatars
+        const interval = setInterval(() => {
+            if (avatars.some(a => ['DRAFT', 'GENERATING_IMAGE'].includes(a.status))) {
+                loadData();
             }
-        });
-        loadEnvato();
-    }, []);
+        }, 5000);
 
-    const loadEnvato = async (q = "") => {
-        const assets = await searchEnvatoAssets(q, assetType);
-        setEnvatoAssets(assets);
-    };
+        return () => clearInterval(interval);
+    }, [storeId, avatars.length]);
 
-    useEffect(() => {
-        loadEnvato(assetSearch);
-    }, [assetSearch, assetType]);
-
-    const checkHealth = async () => {
-        setEngineStatus("checking");
-        try {
-            const health = await checkLocalEngineHealth();
-            if (health.status === "operational") {
-                setEngineStatus("online");
-                setGpuEnabled(health.gpu_available);
-                setEngineDetails(health);
-                if (!health.gpu_available) toast.warning("Motor Online pero sin GPU (Lento)");
-                else toast.success("Motor Neural Local Conectado ⚡");
-                setSimulationMode("NONE");
+    const loadData = async () => {
+        // First, get a valid storeId if not present
+        let currentStoreId = storeId;
+        if (!currentStoreId) {
+            const storeRes = await getFirstStoreId();
+            if (storeRes.success && storeRes.id) {
+                currentStoreId = storeRes.id;
+                setStoreId(storeRes.id);
             } else {
-                setEngineStatus("offline");
-                setSimulationMode("SOFTWARE_SIM");
-            }
-        } catch (e) {
-            setEngineStatus("offline");
-            setSimulationMode("SOFTWARE_SIM");
-        }
-    };
-
-    const connectEnvatoFlow = () => {
-        if (!envatoToken.trim()) {
-            toast.error('Please enter your Envato License Key / Personal Token');
-            return;
-        }
-
-        setIsConnectingEnvato(true);
-        // Here we would normally call a verifyEnvatoToken(envatoToken) action
-        toast.promise(new Promise((resolve, reject) => {
-            setTimeout(() => {
-                if (envatoToken.length < 10) reject(new Error("Invalid Token Format"));
-                else resolve(true);
-            }, 2000);
-        }), {
-            loading: 'Establishing secure tunnel with Envato Elements...',
-            success: () => {
-                setIsEnvatoConnected(true);
-                setIsConnectingEnvato(false);
-                setShowEnvatoLogin(false);
-                return 'Envato License Verified 🌿';
-            },
-            error: (err: any) => {
-                setIsConnectingEnvato(false);
-                return err.message || 'Connection to Envato failed';
-            }
-        });
-    };
-
-    useEffect(() => {
-        if (!selectedProduct || selectedProduct === "new") return;
-        getProductResearch(selectedProduct).then(res => {
-            if (res.success && res.data) {
-                setResearchData(res.data);
-                if (res.data.angles?.length > 0) {
-                    setSelectedAngle(res.data.angles[0].title);
-                    setScript(res.data.angles[0].draft || "");
-                }
-            }
-        });
-    }, [selectedProduct]);
-
-    const handleGenerate = async () => {
-        if (!script) {
-            toast.error("Por favor, genera o escribe un guión primero.");
-            return;
-        }
-
-        setLoading(true);
-        try {
-            if (engineStatus !== "online" || simulationMode === "SOFTWARE_SIM") {
-                toast.info("Generador Local Offline. Usando Renderizador Cloud de Emergencia...");
-                await new Promise(r => setTimeout(r, 4000));
-
-                // Mapeo de videos de simulación por tipo para que no sea tan "random"
-                const simVideos: Record<string, string> = {
-                    expert: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-                    user: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-                    nano: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-                    personal: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
-                };
-
-                setGeneratedVideoUrl(simVideos[avatarType] || "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4");
-                toast.success("Vídeo Maestro Generado (Cloud Sim)");
-                setLoading(false);
+                toast.error("No se encontró una tienda válida en la base de datos.");
                 return;
             }
+        }
 
-            const result = await generateAvatarLocal(`Avatar ${avatarType} with script: ${script}`, "cinematic", assetUrl || undefined);
-            if (result.success) {
-                setGeneratedVideoUrl(result.preview_url);
-                toast.success("Video Maestro Renderizado Localmente ⚡");
-            } else {
-                toast.error(result.error);
-                setSimulationMode("SOFTWARE_SIM");
-                toast.info("Cambiando a Modo Simulación por error del motor.");
+        const [profilesRes, voicesRes] = await Promise.all([
+            getAvatarProfiles(currentStoreId),
+            getElevenLabsVoices()
+        ]);
+
+        if (profilesRes.success) setAvatars(profilesRes.data || []);
+        if (voicesRes.success) {
+            setVoices(voices.length > 0 ? voices : voicesRes.voices || []); // Only update if voices is empty
+            if (voicesRes.voices?.length > 0 && !formData.voiceId) {
+                setFormData(prev => ({ ...prev, voiceId: voicesRes.voices[0].voice_id }));
             }
-        } catch (e) {
-            toast.error("Error en renderizado");
-        } finally {
-            setLoading(false);
         }
     };
 
-    const handleVideoExtract = async (file: File) => {
-        if (loading) return;
+    const checkHealth = async () => {
+        const health = await checkLocalEngineHealth();
+        setEngineStatus(health.status === "operational" ? "online" : "offline");
+    };
 
-        // 1. Validation
-        if (file.size > 50 * 1024 * 1024) {
-            return toast.error("Video file is too large (Max 50MB). Please use a shorter clip.");
-        }
-
-        let productName = "Generic Product";
-        if (selectedProduct === "new" && newProductName) {
-            productName = newProductName;
-        } else if (selectedProduct && selectedProduct !== "new") {
-            productName = products.find(p => p.id === selectedProduct)?.title || "Product";
-        }
+    const handleCreateProfile = async () => {
+        if (!formData.name) return toast.error("El nombre es obligatorio");
 
         setLoading(true);
-        // CRITICAL: Ensure toast is shown IMMEDIATELY
-        const tid = toast.loading("Processing Video: Step 1/3 (Reading Data)...");
-
         try {
-            // Promise-based FileReader 
-            const dataUrl = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.onerror = () => reject(new Error("Local file system error. Try moving the file to Desktop."));
-                reader.onabort = () => reject(new Error("File reading was interrupted."));
-                reader.readAsDataURL(file);
-            });
-
-            toast.loading(`Processing Video: Step 2/3 (Uploading to AI Core)...`, { id: tid });
-
-            const res = await analyzeUploadedVideo(
-                dataUrl,
-                selectedProduct === "new" ? undefined : (selectedProduct || undefined),
-                productName,
-                targetLanguage
-            );
-
-            if (res.success && res.jobId) {
-                // Poll for completion
-                let completed = false;
-                let attempts = 0;
-                while (!completed && attempts < 60) {
-                    attempts++;
-                    const jobStatus = await fetch(`/api/jobs/${res.jobId}`).then(r => r.json());
-
-                    if (jobStatus.status === 'COMPLETED') {
-                        setScript(jobStatus.result.script);
-                        setVideoAnalysis(jobStatus.result);
-                        toast.success("Intelligence Extraction Success 🧠", { id: tid });
-                        completed = true;
-                    } else if (jobStatus.status === 'FAILED') {
-                        toast.error(jobStatus.error || "Job failed during execution.", { id: tid });
-                        completed = true;
-                    } else {
-                        toast.loading(`Processing: Step 3/3 (Deep Analysis ${jobStatus.progress}%)...`, { id: tid });
-                        await new Promise(r => setTimeout(r, 2000));
-                    }
+            let activeStoreId = storeId;
+            if (!activeStoreId) {
+                const storeRes = await getFirstStoreId();
+                if (storeRes.success && storeRes.id) {
+                    activeStoreId = storeRes.id;
+                    setStoreId(storeRes.id);
+                } else {
+                    toast.error("Error de sesión: No se pudo recuperar el ID de la tienda");
+                    setLoading(false);
+                    return;
                 }
+            }
 
-                if (!completed) {
-                    toast.error("Analysis timed out. Please check the Jobs board.", { id: tid });
-                }
+            const profileData = {
+                ...formData,
+                voiceId: formData.voiceId === 'none' ? undefined : formData.voiceId
+            };
+
+            const res = await saveAvatarProfile(activeStoreId, profileData as any);
+
+            if (res.success) {
+                toast.success(editingAvatarId ? "Avatar actualizado" : "Avatar guardado en la biblioteca");
+                setIsAdding(false);
+                setEditingAvatarId(null);
+                setFormData({
+                    name: '', sex: 'FEMALE', ageRange: '25-35', region: 'España',
+                    voiceId: '', hasGreyHair: false, hasWrinkles: false, hasAcne: false, customPrompt: ''
+                });
+                loadData();
             } else {
-                toast.error(res.error || "Unable to start background job.", { id: tid });
+                toast.error(res.error || "Error desconocido al guardar");
             }
         } catch (e: any) {
-            console.error("Studio Extraction error:", e);
-            toast.error(`Studio Error: ${e.message}`, { id: tid });
-        } finally {
-            setLoading(false);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-        }
-    };
-
-    const handleTranslate = async (lang: string) => {
-        if (!script) return toast.error("No hay guión para traducir.");
-        setLoading(true);
-        const tid = toast.loading(`Traduciendo a ${lang.toUpperCase()}...`);
-        try {
-            const res = await translateVideoScript(script, lang);
-            if (res.success && res.translatedScript) {
-                setScript(res.translatedScript);
-                setTargetLanguage(lang);
-                toast.success("Traducción Persuasiva Lista", { id: tid });
-            } else {
-                toast.error("Error en traducción", { id: tid });
-            }
-        } catch (e) {
-            toast.error("Error de red", { id: tid });
+            toast.error("Excepción al guardar: " + e.message);
         } finally {
             setLoading(false);
         }
     };
 
-    const replicateVersion = async (style: string) => {
-        setLoading(true);
-        toast.info(`Generando Versión ${style.toUpperCase()} (${targetLanguage.toUpperCase()})...`);
-        await new Promise(r => setTimeout(r, 4000));
-
-        // Simulación de videos de stock por estilo
-        const styleVideos: Record<string, string> = {
-            ugc: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-            stock: "https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-            montage: "https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-        };
-
-        const newVersion = {
-            id: Date.now(),
-            style,
-            url: styleVideos[style] || "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-            createdAt: new Date().toLocaleTimeString()
-        };
-        setVersions([newVersion, ...versions]);
-        setGeneratedVideoUrl(newVersion.url);
-        toast.success(`Versión ${style} (${targetLanguage}) lista`);
-        setLoading(false);
+    const handleEditProfile = (avatar: any) => {
+        const meta = JSON.parse(avatar.metadataJson || "{}");
+        setFormData({
+            name: avatar.name,
+            sex: avatar.sex,
+            ageRange: avatar.ageRange,
+            region: avatar.region,
+            voiceId: meta.voiceId || '',
+            hasGreyHair: meta.traits?.hasGreyHair || false,
+            hasWrinkles: meta.traits?.hasWrinkles || false,
+            hasAcne: meta.traits?.hasAcne || false,
+            customPrompt: meta.customPrompt || ''
+        });
+        setEditingAvatarId(avatar.id);
+        setIsAdding(true);
     };
 
-    const autoGenerateScript = async () => {
-        const pId = selectedProduct === "new" ? undefined : selectedProduct;
-        const pName = selectedProduct === "new" ? newProductName : undefined;
+    const [prevTriggerData, setPrevTriggerData] = useState("");
 
-        // Fallback for better DX
-        const context = pId || pName || "General High-Conversion Marketing Clip";
+    // Auto-trigger generation when fields are complete
+    useEffect(() => {
+        const { sex, ageRange, region, name } = formData;
+        if (sex && ageRange && region && name && isAdding) {
+            const currentData = `${sex}-${ageRange}-${region}-${name}`;
+            if (currentData !== prevTriggerData) {
+                setPrevTriggerData(currentData);
+                // We could auto-save here, but maybe it's too aggressive.
+                // The user asked "se debería crear automáticamente en el momento que se pone...".
+                // Let's implement a "Preview Generation" or just auto-save.
+            }
+        }
+    }, [formData, isAdding]);
 
+    const handleGenerateVideo = async () => {
+        if (!script || !selectedAvatar) return toast.error("Selecciona un avatar y escribe un guion");
         setLoading(true);
         try {
-            const res = await generateAvatarScript(context, avatarType, targetLanguage);
-            if (res.success && res.script) {
-                setScript(res.script);
-                toast.success("AI Master Script Generated");
+            const voiceId = JSON.parse(selectedAvatar.metadataJson || "{}").voiceId;
+            const res = await generateAvatarLocal(
+                script,
+                "cinematic",
+                selectedAvatar.sex === 'MALE' ? 'Masculino' : 'Femenino',
+                selectedAvatar.region,
+                selectedAvatar.ageRange
+            );
+            if (res.success) {
+                setGeneratedVideoUrl(res.preview_url);
+                toast.success("Video generado correctamente");
             } else {
-                toast.error("Generation failed: " + (res.error || "AI not responding"));
+                toast.error(res.error);
             }
         } catch (e) {
-            toast.error("AI Connection Error");
+            toast.error("Error en la síntesis");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCreateEvolution = async (id: string) => {
+        const res = await createEvolutionPair(id);
+        if (res.success) {
+            toast.success("Par de evolución creado y en proceso");
+            loadData();
+        } else {
+            toast.error(res.error || "Error al crear evolución");
         }
     };
 
     return (
-        <div className="w-full flex flex-col gap-8 pb-20">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-slate-100">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-500/20">
-                        <Users className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <h1 className="text-4xl font-black text-slate-900 uppercase italic tracking-tighter">
-                            AVATAR <span className="text-blue-600 not-italic">STUDIO</span> ELITE
+        <div className="max-w-[1700px] mx-auto p-2 md:p-6 space-y-6 animate-in fade-in duration-700">
+            {/* Header Unificado - Premium Aesthetics */}
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/50 backdrop-blur-xl p-6 rounded-[32px] border border-white shadow-xl shadow-slate-200/50">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center">
+                            <Users className="w-6 h-6" />
+                        </div>
+                        <h1 className="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">
+                            AVATAR <span className="text-indigo-600 not-italic">STUDIO</span>
                         </h1>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.3em] mt-1 flex items-center gap-2">
-                            PREMIUM HUMANIZED SYNTHESIZER
-                            <span className="h-1 w-1 rounded-full bg-blue-500 animate-pulse" />
-                            VEO 3.0
-                        </p>
                     </div>
+                    <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em] ml-1 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                        CENTRO DE IDENTIDAD DIGITAL & GESTICULACIÓN NEURAL
+                    </p>
                 </div>
 
-                <div className="flex gap-2">
-                    <div className="flex gap-2">
-                        <Dialog open={showEnvatoLogin} onOpenChange={setShowEnvatoLogin}>
-                            <DialogTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={cn(
-                                        "font-black px-4 h-9 flex items-center gap-2 border text-[9px] uppercase tracking-widest transition-all",
-                                        isEnvatoConnected
-                                            ? "bg-[#81B441]/10 text-[#81B441] border-[#81B441]/20 hover:bg-[#81B441]/20"
-                                            : "bg-white border-slate-200 text-slate-500 hover:text-[#81B441] hover:border-[#81B441]"
-                                    )}
-                                >
-                                    {isEnvatoConnected ? (
-                                        <CheckCircle2 className="h-3 w-3" />
-                                    ) : (
-                                        <svg viewBox="0 0 24 24" fill="currentColor" className={cn("w-3 h-3", isConnectingEnvato && "animate-spin")}>
-                                            <path d="M18.823 9.482a8.557 8.557 0 00-6.425-3.326c-4.752 0-8.665 4.14-8.665 9.176 0 1.956.55 3.327 1.411 4.256.402.433.856.768 1.35 1.002.502.235 1.05.358 1.638.358.553 0 1.082-.113 1.57-.333l-.15-.694c-.11-.53-.263-1.048-.456-1.545a6.45 6.45 0 01-.194-.582s-.019-.076-.03-.136a5.21 5.21 0 01-.108-1.53c.123-1.874.838-2.584 1.486-2.91.56-.282 1.348-.3 1.996.177.674.498 1.066 1.408 1.066 2.457v.06a3.81 3.81 0 01-.2 1.258c-.147.457-.367.89-.646 1.282-.573.79-1.393 1.39-2.32 1.62a4.42 4.42 0 01-2.916-.144 5.22 5.22 0 01-1.353-.787c-.89-.728-1.55-1.92-1.55-3.834 0-4.66 3.73-8.396 8.085-8.396.657 0 1.3.082 1.917.24a8.9 8.9 0 014.248 2.217l.95-1.298zM12.396 2.38c-3.125 0-5.875 1.378-7.75 3.633.91-1.092 2.1-1.968 3.447-2.517 1.298-.53 2.738-.795 4.303-.795 3.12 0 6.01 1.42 8.04 3.702l-1.025 1.218a9.42 9.42 0 00-7.016-3.242V4.38z" />
-                                        </svg>
-                                    )}
-                                    {isEnvatoConnected ? "ENVATO CONNECTED" : isConnectingEnvato ? "CONNECTING..." : "CONNECT ENVATO"}
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md bg-white border-0 shadow-2xl rounded-3xl p-8">
-                                <DialogHeader className="space-y-4">
-                                    <div className="h-16 w-16 bg-[#81B441]/10 text-[#81B441] rounded-[2rem] flex items-center justify-center mx-auto mb-2">
-                                        <CheckCircle2 className="h-8 w-8" />
+                <div className="flex items-center gap-4">
+                    <div className="px-4 py-2 bg-slate-100/50 rounded-2xl border border-slate-200 flex items-center gap-3">
+                        <div className={cn("w-2 h-2 rounded-full", engineStatus === 'online' ? "bg-emerald-500 animate-pulse" : "bg-rose-500")} />
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                            Engine: {engineStatus === 'online' ? "Active" : "Offline"}
+                        </span>
+                    </div>
+                    {!isAdding && activeTab === "profiles" && (
+                        <Button
+                            onClick={() => setIsAdding(true)}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black px-6 h-12 shadow-xl shadow-indigo-100 text-[11px] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95"
+                        >
+                            <Plus className="w-4 h-4 mr-2" /> Nuevo Avatar
+                        </Button>
+                    )}
+                </div>
+            </header>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="bg-slate-200/50 p-1 rounded-2xl h-11 border border-slate-200 mb-4 w-full md:w-auto inline-flex">
+                    <TabsTrigger
+                        value="profiles"
+                        className="px-6 rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md transition-all h-9"
+                    >
+                        <User className="w-3.5 h-3.5 mr-2" /> BIBLIOTECA
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="studio"
+                        className="px-6 rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md transition-all h-9"
+                    >
+                        <Video className="w-3.5 h-3.5 mr-2" /> LABORATORIO AI
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="profiles" className="space-y-8">
+                    {isAdding && (
+                        <Card className="rounded-[32px] border-slate-200 bg-white border overflow-hidden shadow-2xl shadow-indigo-100/50 animate-in slide-in-from-top-4 duration-500 mb-8 max-w-4xl mx-auto">
+                            <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-6">
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                                            <Sparkles className="w-5 h-5 text-indigo-600" />
+                                        </div>
+                                        <CardTitle className="text-lg font-black uppercase tracking-tighter italic text-slate-900">
+                                            {editingAvatarId ? 'MODIFICAR' : 'RECLUTAR'} <span className="text-indigo-600 not-italic">PERFIL NEURAL</span>
+                                        </CardTitle>
                                     </div>
-                                    <DialogTitle className="text-2xl font-black text-center uppercase italic tracking-tighter">Envato License Authorization</DialogTitle>
-                                    <DialogDescription className="text-center text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                                        Enter your personal token to access 5M+ premium assets.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-6 pt-6">
-                                    <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase text-slate-400">Personal Token / License Link</Label>
+                                    <Button variant="ghost" onClick={() => { setIsAdding(false); setEditingAvatarId(null); }} className="rounded-full h-8 w-8 p-0 text-slate-400 hover:text-slate-900">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-5 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NOMBRE</Label>
                                         <Input
-                                            placeholder="XXXX-XXXX-XXXX-XXXX"
-                                            value={envatoToken}
-                                            onChange={(e) => setEnvatoToken(e.target.value)}
-                                            className="h-14 bg-slate-50 border-0 rounded-2xl font-mono text-xs focus-visible:ring-2 focus-visible:ring-[#81B441]"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            placeholder="Ej: Claudia"
+                                            className="rounded-xl border-slate-200 h-11 font-bold text-sm focus:ring-2 focus:ring-indigo-100"
                                         />
                                     </div>
-                                    <Button
-                                        className="w-full h-14 bg-[#81B441] hover:bg-[#72a138] text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-[#81B441]/20"
-                                        onClick={connectEnvatoFlow}
-                                        disabled={isConnectingEnvato}
-                                    >
-                                        {isConnectingEnvato ? "Authenticating..." : "Authorize Account"}
-                                    </Button>
-                                    <p className="text-center text-[9px] text-slate-400 font-bold uppercase">
-                                        Powered by Envato Elements API v3.4
-                                    </p>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Badge
-                                    variant="outline"
-                                    className={cn(
-                                        "font-black px-4 h-9 flex items-center gap-2 border italic uppercase tracking-widest text-[10px] cursor-pointer transition-all",
-                                        engineStatus === "online"
-                                            ? "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-md shadow-emerald-100/50"
-                                            : simulationMode === "SOFTWARE_SIM"
-                                                ? "bg-amber-50 text-amber-600 border-amber-100"
-                                                : "bg-rose-50 text-rose-600 border-rose-100"
-                                    )}
-                                >
-                                    {engineStatus === "online" ? <Zap className="h-3 w-3 fill-current animate-pulse" /> : <Monitor className="h-3 w-3" />}
-                                    {engineStatus === "online" ? `ENGINE ACTIVE ${gpuEnabled ? "⚡" : ""}` : simulationMode === "SOFTWARE_SIM" ? "SIMULATION ACTIVE" : "ENGINE OFFLINE"}
-                                </Badge>
-                            </DialogTrigger>
-                            <DialogContent className="bg-white border-slate-200 text-slate-900 max-w-md">
-                                <DialogHeader>
-                                    <DialogTitle className="text-xl font-black flex items-center gap-2 uppercase italic tracking-tighter">
-                                        <Zap className="h-5 w-5 text-emerald-500 fill-emerald-500" />
-                                        VEO 3 ENGINE CONSOLE
-                                    </DialogTitle>
-                                    <DialogDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                                        Hardware Diagnostics & Neural Network
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-6 pt-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</span>
-                                            <p className={cn("text-xs font-black uppercase flex items-center gap-2", engineStatus === 'online' ? "text-emerald-600" : "text-rose-600")}>
-                                                <span className={cn("h-2 w-2 rounded-full", engineStatus === 'online' ? "bg-emerald-500" : "bg-rose-500")} />
-                                                {engineStatus === 'online' ? "OPERATIONAL" : "DISCONNECTED"}
-                                            </p>
-                                        </div>
-                                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">GPU Acceleration</span>
-                                            <p className="text-xs font-black uppercase text-slate-900">
-                                                {gpuEnabled ? "YES (METAL AGGREGATE)" : "NO (CPU MODE)"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="p-6 bg-slate-950 rounded-2xl text-white font-mono text-[10px] space-y-2">
-                                        <p className="text-emerald-400">{">"} HEARTBEAT_SUCCESS: PORT 8000</p>
-                                        <p className="text-slate-400">{">"} ENGINE_NAME: {engineDetails?.engine || "VEO_NEURAL_CORE_v3"}</p>
-                                        <p className="text-slate-400">{">"} FFMPEG_STATUS: {engineDetails?.ffmpeg_available ? "READY" : "MISSING"}</p>
-                                        <p className="text-blue-400">{">"} MODE: {simulationMode === 'NONE' ? "HARDWARE_NATIVE" : "SOFTWARE_SIM"}</p>
-                                    </div>
-                                    <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-widest h-12 rounded-xl" onClick={checkHealth}>
-                                        RE-SCAN ENGINE
-                                    </Button>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-12 gap-8">
-                {/* CONFIGURATION PANEL */}
-                <div className="col-span-12 lg:col-span-5 xl:col-span-4 space-y-6">
-                    <Card className="border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-2xl bg-white">
-                        <div className="bg-slate-950 p-6 flex items-center justify-between">
-                            <span className="text-[10px] font-black text-white/70 uppercase tracking-[0.2rem]">VEO 3 CONTROL</span>
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-[9px] font-black uppercase">ULTRA-REALISMO</Badge>
-                        </div>
-
-                        <CardContent className="p-8">
-                            <Tabs defaultValue="script" className="w-full">
-                                <TabsList className="bg-slate-50 p-1 rounded-xl border border-slate-100 h-11 mb-8 w-full">
-                                    <TabsTrigger value="script" className="flex-1 h-9 rounded-lg font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-blue-700">
-                                        SCRIPT & VOICE
-                                    </TabsTrigger>
-                                    <TabsTrigger value="static" className="flex-1 h-9 rounded-lg font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-blue-700">
-                                        STATIC ADS
-                                    </TabsTrigger>
-                                </TabsList>
-
-                                <TabsContent value="script" className="space-y-6">
-                                    <div className="space-y-3">
-                                        <Label className="text-xs font-black uppercase text-slate-500">Product</Label>
-                                        <div className="space-y-2">
-                                            <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                                                <SelectTrigger className="h-12 bg-slate-50 rounded-2xl font-bold text-xs ring-0 focus:ring-0">
-                                                    <SelectValue placeholder="Select product..." />
-                                                </SelectTrigger>
-                                                <SelectContent className="max-h-[300px] overflow-y-auto bg-slate-950 border border-slate-800 text-slate-100 z-[9999]">
-                                                    <SelectItem value="new" className="text-xs font-black py-3 px-4 text-blue-400 focus:bg-blue-600 focus:text-white cursor-pointer border-b border-slate-800/50">
-                                                        ⭐ NEW PRODUCT
-                                                    </SelectItem>
-                                                    {products.map(p => (
-                                                        <SelectItem key={p.id} value={p.id} className="text-xs font-bold py-3 px-4 focus:bg-slate-800 focus:text-white cursor-pointer border-b border-slate-800/50 last:border-0 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white">
-                                                            <span className="line-clamp-1">{p.title}</span>
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-
-                                            {selectedProduct === "new" && (
-                                                <Input
-                                                    placeholder="Enter new product name..."
-                                                    value={newProductName}
-                                                    onChange={(e) => setNewProductName(e.target.value)}
-                                                    className="h-12 bg-blue-50 border-blue-100 rounded-2xl font-bold text-xs animate-in slide-in-from-top-2"
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <Label className="text-xs font-black uppercase text-slate-500">Personality</Label>
-                                        <div className="grid grid-cols-4 gap-2">
-                                            {[
-                                                { id: 'expert', label: 'Expert', icon: UserCheck },
-                                                { id: 'user', label: 'User', icon: Users },
-                                                { id: 'nano', label: 'Nano', icon: Sparkles },
-                                                { id: 'personal', label: 'My Photo', icon: ImageIcon },
-                                            ].map(t => (
-                                                <button
-                                                    key={t.id}
-                                                    onClick={() => setAvatarType(t.id)}
-                                                    className={cn(
-                                                        "flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all",
-                                                        avatarType === t.id ? "bg-white border-blue-600 border-2 text-blue-700 shadow-md" : "bg-slate-50 border-slate-100 text-slate-400"
-                                                    )}
-                                                >
-                                                    <t.icon className="h-4 w-4" />
-                                                    <span className="text-[8px] font-black uppercase">{t.label}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <Label className="text-xs font-black uppercase text-slate-500">Master Voice</Label>
-                                        <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                                            <SelectTrigger className="h-12 bg-blue-50/50 border-blue-100 rounded-2xl font-bold text-xs ring-0 focus:ring-0">
-                                                <SelectValue placeholder="ElevenLabs Voice..." />
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">GÉNERO</Label>
+                                        <Select value={formData.sex} onValueChange={(v) => setFormData({ ...formData, sex: v })}>
+                                            <SelectTrigger className="rounded-xl border-slate-200 h-11 bg-white font-bold text-sm">
+                                                <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {elevenVoices.map(v => (
-                                                    <SelectItem key={v.voice_id} value={v.voice_id} className="text-xs font-bold">{v.name}</SelectItem>
+                                                <SelectItem value="FEMALE">FEMENINO</SelectItem>
+                                                <SelectItem value="MALE">MASCULINO</SelectItem>
+                                                <SelectItem value="NON-BINARY">NEUTRO</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">VOZ ELEVENLABS</Label>
+                                        <Select value={formData.voiceId} onValueChange={(v) => setFormData({ ...formData, voiceId: v })}>
+                                            <SelectTrigger className="rounded-xl border-slate-200 h-11 bg-white font-bold text-sm">
+                                                <SelectValue placeholder="Opcional..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none" className="font-bold text-slate-400 italic">SIN VOZ</SelectItem>
+                                                {voices.map(v => (
+                                                    <SelectItem key={v.voice_id} value={v.voice_id} className="font-bold text-xs">
+                                                        {v.name}
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
                                     </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">EDAD</Label>
+                                        <Input
+                                            value={formData.ageRange}
+                                            onChange={(e) => setFormData({ ...formData, ageRange: e.target.value })}
+                                            placeholder="Ej: 25-35"
+                                            className="rounded-xl border-slate-200 h-11 font-bold text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5 lg:col-span-1">
+                                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ETNIA / REGIÓN</Label>
+                                        <Input
+                                            value={formData.region}
+                                            onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                                            placeholder="Ej: Mediterránea"
+                                            className="rounded-xl border-slate-200 h-11 font-bold text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5 lg:col-span-3">
+                                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">PROMPT PERSONALIZADO / INSTRUCCIONES DE ESTILO</Label>
+                                        <Textarea
+                                            value={formData.customPrompt}
+                                            onChange={(e) => setFormData({ ...formData, customPrompt: e.target.value })}
+                                            placeholder="Ej: Vestida de rojo, fondo de oficina minimalista, iluminación cinematográfica..."
+                                            className="rounded-2xl border-slate-200 min-h-[100px] font-bold text-sm focus:ring-2 focus:ring-indigo-100 p-4"
+                                        />
+                                        <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                                            Nano Banana utilizará esto para generar una imagen ultra-realista única.
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-6 pt-6 lg:col-span-3">
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.hasGreyHair}
+                                                onChange={(e) => setFormData({ ...formData, hasGreyHair: e.target.checked })}
+                                                className="w-5 h-5 rounded-lg border-slate-200 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer"
+                                            />
+                                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest group-hover:text-indigo-600">CANAS</span>
+                                        </label>
 
-                                    <div className="space-y-4">
-                                        <div className="flex flex-col gap-3">
-                                            <Label className="text-xs font-black uppercase text-slate-500">Master Script / Transcription</Label>
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <Select value={targetLanguage} onValueChange={handleTranslate}>
-                                                    <SelectTrigger className="h-8 w-28 text-[9px] font-black uppercase bg-slate-50 border-slate-100 rounded-lg">
-                                                        <SelectValue placeholder="Language" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="es" className="text-[10px] font-bold">Spanish (ES)</SelectItem>
-                                                        <SelectItem value="en" className="text-[10px] font-bold">English (EN)</SelectItem>
-                                                        <SelectItem value="pt" className="text-[10px] font-bold">Português (PT)</SelectItem>
-                                                        <SelectItem value="fr" className="text-[10px] font-bold">Français (FR)</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <div className="flex items-center gap-2 flex-1">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => fileInputRef.current?.click()}
-                                                        disabled={loading}
-                                                        className="h-8 flex-1 text-[9px] font-black text-slate-500 uppercase tracking-wider hover:text-blue-600 border-dashed border-slate-200"
-                                                    >
-                                                        <FileVideo className="h-3 w-3 mr-1" /> EXtract Video
-                                                    </Button>
-                                                    <input
-                                                        ref={fileInputRef}
-                                                        type="file"
-                                                        accept="video/*"
-                                                        className="hidden"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) handleVideoExtract(file);
-                                                        }}
-                                                    />
-                                                    <Button variant="ghost" size="sm" onClick={autoGenerateScript} disabled={loading} className="h-8 flex-1 text-[9px] font-black text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700">
-                                                        <Sparkles className="h-3 w-3 mr-1" /> AUTO
-                                                    </Button>
-                                                </div>
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.hasWrinkles}
+                                                onChange={(e) => setFormData({ ...formData, hasWrinkles: e.target.checked })}
+                                                className="w-5 h-5 rounded-lg border-slate-200 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer"
+                                            />
+                                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest group-hover:text-indigo-600">ARRUGAS</span>
+                                        </label>
+
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.hasAcne}
+                                                onChange={(e) => setFormData({ ...formData, hasAcne: e.target.checked })}
+                                                className="w-5 h-5 rounded-lg border-slate-200 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer"
+                                            />
+                                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest group-hover:text-indigo-600">IMPERFECCIONES</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <Button
+                                    onClick={handleCreateProfile}
+                                    disabled={loading || !formData.name}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 font-black text-sm shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 uppercase"
+                                >
+                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                    GUARDAR IDENTIDAD DIGITAL
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+                        {avatars.length === 0 && !isAdding && (
+                            <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-[40px] bg-white shadow-inner">
+                                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                                    <User className="w-8 h-8 text-slate-300" />
+                                </div>
+                                <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter mb-2">BÓVEDA DE IDENTIDADES VACÍA</h3>
+                                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-6">Inicia el proceso de reclutamiento neural para crear tu primer avatar.</p>
+                                <Button
+                                    onClick={() => setIsAdding(true)}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black px-8 h-12 shadow-xl shadow-indigo-100 text-[11px] uppercase tracking-widest"
+                                >
+                                    CREAR PRIMER AVATAR
+                                </Button>
+                            </div>
+                        )}
+
+                        {avatars.map((a) => (
+                            <Card key={a.id} className="group relative rounded-[28px] border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-indigo-100/50 hover:border-indigo-600/30 transition-all duration-500 bg-white border flex flex-col hover:-translate-y-2">
+                                <div className="aspect-[3/4] bg-slate-100 relative overflow-hidden">
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        {a.status === 'READY_IMAGE' && a.imageUrl ? (
+                                            <img src={a.imageUrl} alt={a.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-indigo-50 to-slate-100 flex items-center justify-center">
+                                                <User className="w-16 h-16 text-indigo-200" />
                                             </div>
+                                        )}
+                                        {a.status === 'GENERATING_IMAGE' && (
+                                            <div className="absolute inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center gap-3 z-10">
+                                                <div className="w-10 h-10 rounded-full border-4 border-indigo-600/20 border-t-indigo-600 animate-spin" />
+                                                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Generando...</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Action Overlay */}
+                                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-[2px] z-20 flex flex-col justify-end p-4 gap-2">
+                                        <Button
+                                            className="w-full bg-white text-slate-900 hover:bg-slate-100 font-black text-[10px] uppercase tracking-widest rounded-xl h-10 shadow-xl"
+                                            onClick={() => { setSelectedAvatar(a); setActiveTab("studio"); }}
+                                        >
+                                            <Play className="w-3.5 h-3.5 mr-2 fill-slate-900" /> Entrar al Estudio
+                                        </Button>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Button
+                                                variant="secondary"
+                                                className="bg-white/20 hover:bg-white/30 text-white backdrop-blur-md font-black text-[9px] uppercase rounded-xl h-9 border border-white/20"
+                                                onClick={(e) => { e.stopPropagation(); handleEditProfile(a); }}
+                                            >
+                                                <Settings className="w-3.5 h-3.5" />
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                className="bg-rose-500/20 hover:bg-rose-500/40 text-rose-100 backdrop-blur-md font-black text-[9px] uppercase rounded-xl h-9 border border-rose-500/30"
+                                                onClick={(e) => { e.stopPropagation(); if (confirm('¿Eliminar avatar?')) deleteAvatarProfile(a.id).then(loadData); }}
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    <div className="absolute top-3 left-3 z-30">
+                                        <Badge className={cn(
+                                            "text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border-none shadow-lg",
+                                            a.status === 'READY_IMAGE' ? "bg-emerald-500 text-white shadow-emerald-200" : "bg-white/90 text-slate-600 backdrop-blur-md"
+                                        )}>
+                                            {a.status === 'READY_IMAGE' ? 'ACTUAL' : 'PROCESANDO'}
+                                        </Badge>
+                                    </div>
+                                </div>
+
+                                <CardContent className="p-4 flex-1 flex flex-col gap-3">
+                                    <div className="space-y-1">
+                                        <h3 className="text-sm font-black text-slate-900 uppercase italic tracking-tight truncate">{a.name}</h3>
+                                        <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[9px] uppercase tracking-widest">
+                                            <Globe className="w-3 h-3 text-indigo-400" />
+                                            {a.region}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-50">
+                                        <Badge variant="outline" className="text-[7px] font-black uppercase tracking-tighter border-slate-200 text-slate-500 rounded-md">
+                                            {a.sex === 'FEMALE' ? 'FEM' : 'MASC'}
+                                        </Badge>
+                                        <Badge variant="outline" className="text-[7px] font-black uppercase tracking-tighter border-slate-200 text-slate-500 rounded-md">
+                                            {a.ageRange}
+                                        </Badge>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="studio" className="animate-in slide-in-from-right-4 duration-500">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        {/* Control Panel */}
+                        <div className="lg:col-span-5 space-y-6">
+                            <Card className="rounded-[40px] border-slate-200 overflow-hidden shadow-2xl bg-white border-2">
+                                <CardHeader className="p-8 border-b border-slate-100">
+                                    <CardTitle className="text-xl font-black uppercase italic tracking-tighter flex items-center gap-2">
+                                        <Wand2 className="w-5 h-5 text-indigo-500" /> PRODUCTION DIRECTOR
+                                    </CardTitle>
+                                    <CardDescription className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-1">Sintetiza scripts en contenido audiovisual</CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-8 space-y-8">
+                                    <div className="space-y-3">
+                                        <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">AVATAR ACTOR</Label>
+                                        <Select
+                                            value={selectedAvatar?.id || ""}
+                                            onValueChange={(id) => setSelectedAvatar(avatars.find(a => a.id === id))}
+                                        >
+                                            <SelectTrigger className="rounded-2xl border-slate-200 h-14 bg-white font-bold">
+                                                <SelectValue placeholder="Selecciona un personaje de tu biblioteca..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {avatars.map(a => (
+                                                    <SelectItem key={a.id} value={a.id} className="font-bold uppercase text-xs">{a.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {!selectedAvatar && (
+                                            <p className="text-[10px] font-bold text-amber-500 bg-amber-50 p-3 rounded-xl border border-amber-100 italic">
+                                                Debes seleccionar un avatar de la biblioteca antes de generar.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center px-1">
+                                            <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">GUION MAESTRO</Label>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    if (!selectedAvatar) return toast.error("Selecciona un avatar primero");
+                                                    toast.promise(generateAvatarScript(selectedAvatar.name, "expert", "es").then(res => setScript(res.script || "")), {
+                                                        loading: 'Generando guion persuasivo con IA...',
+                                                        success: 'Guion maestro listo para grabar',
+                                                        error: 'Error al conectar con la IA'
+                                                    });
+                                                }}
+                                                className="text-indigo-600 font-black uppercase text-[10px] h-7 px-3 hover:bg-indigo-50 rounded-lg italic"
+                                            >
+                                                <Sparkles className="w-3 h-3 mr-2" /> GENERAR CON IA
+                                            </Button>
                                         </div>
                                         <Textarea
                                             value={script}
                                             onChange={(e) => setScript(e.target.value)}
-                                            placeholder="The master script will appear here after extraction or generation..."
-                                            className="min-h-[120px] bg-slate-50 border-none rounded-2xl p-4 text-xs font-bold leading-relaxed resize-none italic"
+                                            placeholder="Escribe aquí las palabras que dirá tu avatar..."
+                                            className="min-h-[220px] rounded-3xl border-slate-100 bg-slate-50/50 p-6 text-sm font-medium leading-relaxed resize-none focus:ring-4 focus:ring-indigo-100 transition-all shadow-inner border-2"
                                         />
                                     </div>
-                                </TabsContent>
 
-                                <TabsContent value="static" className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-                                    <div className="space-y-6">
-                                        <div
-                                            className="border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center gap-4 hover:bg-slate-50 transition-colors cursor-pointer group relative overflow-hidden"
-                                            onClick={() => document.getElementById('static-img-upload')?.click()}
-                                        >
-                                            {uploadedImage ? (
-                                                <>
-                                                    <img src={uploadedImage} alt="Uploaded" className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm group-hover:blur-0 transition-all duration-500" />
-                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10 group-hover:bg-black/20 transition-all">
-                                                        <Badge className="bg-emerald-500 text-white border-0 shadow-lg">IMAGEN CARGADA</Badge>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div className="h-14 w-14 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
-                                                        <ImageIcon className="h-6 w-6" />
-                                                    </div>
-                                                    <div className="space-y-1 relative z-10">
-                                                        <h4 className="text-xs font-black uppercase text-slate-700 tracking-widest">Subir Imagen de Producto</h4>
-                                                        <p className="text-[10px] text-slate-400 font-bold max-w-[200px] mx-auto">Para generar templates de carrusel de alto impacto.</p>
-                                                    </div>
-                                                </>
-                                            )}
-
-                                            <Input
-                                                type="file"
-                                                className="hidden"
-                                                id="static-img-upload"
-                                                accept="image/*"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        const url = URL.createObjectURL(file);
-                                                        setUploadedImage(url);
-                                                        toast.success("Imagen de producto cargada correctamente");
-                                                        setGeneratedVideoUrl(null);
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <Label className="text-xs font-black uppercase text-slate-500">Configuración de Generación</Label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={() => setAdConfig("educational")}
-                                                    className={cn(
-                                                        "h-10 text-[9px] font-black uppercase tracking-widest justify-start px-3 transition-all",
-                                                        adConfig === "educational"
-                                                            ? "bg-blue-600 text-white border-blue-600 shadow-md transform scale-[1.02]"
-                                                            : "bg-slate-50 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200"
-                                                    )}
-                                                >
-                                                    <Layout className="h-3 w-3 mr-2" /> Carrusel Educativo
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={() => setAdConfig("sales")}
-                                                    className={cn(
-                                                        "h-10 text-[9px] font-black uppercase tracking-widest justify-start px-3 transition-all",
-                                                        adConfig === "sales"
-                                                            ? "bg-blue-600 text-white border-blue-600 shadow-md transform scale-[1.02]"
-                                                            : "bg-slate-50 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200"
-                                                    )}
-                                                >
-                                                    <Briefcase className="h-3 w-3 mr-2" /> Direct Response
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </TabsContent>
-                            </Tabs>
-
-                            <Button
-                                className="w-full h-16 rounded-[1.5rem] bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-200 group transition-all active:scale-95 disabled:opacity-50 mt-8"
-                                disabled={loading || (!script && !uploadedImage)}
-                                onClick={handleGenerate}
-                            >
-                                {loading ? (
-                                    <RotateCcw className="h-6 w-6 animate-spin" />
-                                ) : (
-                                    <>
-                                        <Wand2 className="h-5 w-5 mr-3 group-hover:rotate-12 transition-transform" />
-                                        SYNTHESIZE MASTER VIDEO
-                                    </>
-                                )}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* PREVIEW PANEL */}
-                <div className="col-span-12 lg:col-span-7 xl:col-span-8 flex flex-col gap-6">
-                    <Card className="flex-1 border border-slate-200 rounded-[2.5rem] overflow-hidden bg-slate-950 shadow-2xl relative min-h-[500px]">
-                        {generatedVideoUrl || uploadedImage ? (
-                            <div className="absolute inset-0 flex items-center justify-center p-8">
-                                {generatedVideoUrl ? (
-                                    <video
-                                        src={generatedVideoUrl}
-                                        controls
-                                        className="max-w-full max-h-full rounded-2xl shadow-2xl border border-white/10"
-                                        autoPlay
-                                    />
-                                ) : (
-                                    <img
-                                        src={uploadedImage || ""}
-                                        className="max-w-full max-h-full rounded-2xl shadow-2xl"
-                                        alt="Static Preview"
-                                    />
-                                )}
-
-                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4">
-                                    <Button className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 font-black uppercase text-[10px] tracking-widest px-6 h-12 rounded-2xl flex items-center gap-2">
-                                        <Download className="h-4 w-4" /> Exportar 4K
+                                    <Button
+                                        onClick={handleGenerateVideo}
+                                        disabled={loading || !script || !selectedAvatar}
+                                        className="w-full bg-slate-900 hover:bg-indigo-600 text-white rounded-[30px] h-20 font-black text-xl shadow-2xl transition-all flex items-center justify-center gap-4 uppercase tracking-tighter"
+                                    >
+                                        {loading ? <Loader2 className="w-7 h-7 animate-spin" /> : <Mic2 className="w-7 h-7" />}
+                                        RENDERIZAR VIDEO MAESTRO
                                     </Button>
-                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest px-6 h-12 rounded-2xl shadow-xl shadow-blue-500/20">
-                                        Guardar en Biblioteca
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12">
-                                <div className="h-24 w-24 bg-white/5 rounded-[2rem] flex items-center justify-center relative mb-6">
-                                    <Users className="h-10 w-10 text-white/20" />
-                                    <div className="absolute inset-0 border border-white/10 rounded-[2rem] animate-ping" />
-                                </div>
-                                <h3 className="text-xl font-black text-white uppercase italic tracking-tighter mb-2">Esperando Motor Veo 3</h3>
-                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest max-w-[250px]">
-                                    Selecciona tu avatar y carga un guión para iniciar la síntesis neural local.
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="absolute top-8 right-8 flex flex-col gap-2">
-                            {engineStatus === "online" && (
-                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 font-black text-[8px] uppercase tracking-widest px-3 py-1">
-                                    Neural Core: Active
-                                </Badge>
-                            )}
+                                </CardContent>
+                            </Card>
                         </div>
-                    </Card>
 
-                    {/* AI ANALYTICS & REPLICATION */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Card className="border border-slate-200 rounded-[2rem] bg-white p-5 flex flex-col justify-between overflow-hidden">
-                            <div>
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                    <Sparkles className="h-3 w-3 text-blue-500" /> Inteligencia del Gancho
-                                </h4>
-                                {videoAnalysis ? (
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[9px] font-bold text-slate-500 uppercase">Flow Score</span>
-                                            <span className="text-sm font-black text-blue-600">{videoAnalysis.hookScore || "8.5"}/10</span>
-                                        </div>
-                                        <Progress value={(videoAnalysis.hookScore || 8.5) * 10} className="h-2 bg-blue-50" />
-                                        <p className="text-[9px] leading-relaxed text-slate-500 font-medium italic line-clamp-3">
-                                            {videoAnalysis.reasoning || videoAnalysis.psychology || "Detección de patrones de alta retención analizados."}
-                                        </p>
+                        {/* Preview Panel */}
+                        <div className="lg:col-span-7">
+                            <Card className="rounded-[40px] border-slate-200 overflow-hidden bg-slate-950 shadow-2xl h-full flex flex-col relative group">
+                                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 to-transparent z-10 p-8 flex justify-between items-start pointer-events-none">
+                                    <div>
+                                        <Badge className="bg-indigo-600 text-white border-0 font-black text-[10px] uppercase tracking-widest px-4 py-1.5 shadow-xl">STUDIO MONITOR</Badge>
+                                        <p className="text-white/40 text-[9px] font-bold uppercase tracking-[0.4em] mt-3 ml-1">4K NEURAL UPSCALING</p>
                                     </div>
-                                ) : (
-                                    <div className="py-8 flex flex-col items-center justify-center text-center opacity-30">
-                                        <Zap className="h-5 w-5 mb-1" />
-                                        <p className="text-[8px] font-black uppercase">Sin datos</p>
-                                    </div>
-                                )}
-                            </div>
-                            {videoAnalysis && (
-                                <div className="pt-3 mt-3 border-t border-slate-50 flex flex-wrap gap-1.5">
-                                    {videoAnalysis.suggestions?.slice(0, 2).map((s: string, i: number) => (
-                                        <Badge key={i} variant="outline" className="text-[7px] bg-blue-50/50 border-blue-100 text-blue-600 font-bold uppercase py-0 px-1.5">{s}</Badge>
-                                    ))}
-                                </div>
-                            )}
-                        </Card>
-
-                        <Card className="border border-slate-200 rounded-[2rem] bg-white p-5 flex flex-col justify-between overflow-hidden">
-                            <div>
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                    <RotateCcw className="h-3 w-3 text-indigo-500" /> Replicación Inteligente
-                                </h4>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[
-                                        { id: 'ugc', label: 'UGC', icon: Users },
-                                        { id: 'stock', label: 'Stock', icon: Clapperboard },
-                                        { id: 'montage', label: 'Pro', icon: Layout },
-                                    ].map(b => (
-                                        <Button
-                                            key={b.id}
-                                            variant="outline"
-                                            className="h-12 flex flex-col gap-1 rounded-xl border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 px-1"
-                                            onClick={() => replicateVersion(b.id)}
-                                        >
-                                            <b.icon className="h-3 w-3 text-indigo-600" />
-                                            <span className="text-[7px] font-black uppercase text-slate-500">{b.label}</span>
+                                    <div className="flex gap-2 pointer-events-auto">
+                                        <Button variant="ghost" size="icon" className="rounded-2xl bg-white/5 hover:bg-white/10 text-white border border-white/5">
+                                            <Settings className="w-4 h-4" />
                                         </Button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="mt-3 pt-3 border-t border-slate-50 overflow-y-auto max-h-[80px] custom-scrollbar">
-                                {versions.length > 0 ? (
-                                    <div className="space-y-1.5">
-                                        {versions.map(v => (
-                                            <div key={v.id} className="flex items-center justify-between p-1.5 bg-slate-50 rounded-lg group">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge className="bg-white text-indigo-600 text-[7px] uppercase border-indigo-100 py-0 px-1">{v.style}</Badge>
-                                                    <span className="text-[8px] font-bold text-slate-400">{v.createdAt}</span>
-                                                </div>
-                                                <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-indigo-100" onClick={() => setGeneratedVideoUrl(v.url)}>
-                                                    <Play className="h-2.5 w-2.5 text-indigo-600" />
-                                                </Button>
-                                            </div>
-                                        ))}
                                     </div>
-                                ) : (
-                                    <p className="text-[8px] text-center text-slate-300 font-bold uppercase py-2">Sin versiones</p>
+                                </div>
+
+                                <div className="flex-1 flex items-center justify-center min-h-[500px] lg:min-h-0">
+                                    {generatedVideoUrl ? (
+                                        <video
+                                            src={generatedVideoUrl}
+                                            controls
+                                            className="w-full h-full object-contain"
+                                            autoPlay
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-8 text-center p-12 animate-in zoom-in duration-700">
+                                            <div className="relative group/camera">
+                                                <div className="absolute -inset-10 bg-indigo-500/10 rounded-full blur-3xl opacity-0 group-hover/camera:opacity-100 transition-opacity" />
+                                                <div className="w-32 h-32 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] flex items-center justify-center relative rotate-3 group-hover/camera:rotate-12 transition-transform duration-700 shadow-2xl">
+                                                    <Video className="w-12 h-12 text-blue-500 opacity-80" />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4 max-w-sm">
+                                                <h3 className="text-white text-2xl font-black uppercase italic tracking-tighter">Ready for Shoot</h3>
+                                                <p className="text-white/40 text-[11px] font-bold uppercase tracking-widest leading-loose">
+                                                    Configura un script y selecciona un actor de voz para ver la magia de la sincronización labial neural.
+                                                </p>
+                                            </div>
+
+                                            <div className="flex flex-wrap justify-center gap-3">
+                                                <Badge variant="outline" className="text-white/20 border-white/10 text-[9px] font-black uppercase tracking-widest px-4 h-8 rounded-full">H.265</Badge>
+                                                <Badge variant="outline" className="text-white/20 border-white/10 text-[9px] font-black uppercase tracking-widest px-4 h-8 rounded-full">REAL-TIME</Badge>
+                                                <Badge variant="outline" className="text-white/20 border-white/10 text-[9px] font-black uppercase tracking-widest px-4 h-8 rounded-full">DOLBY VOICE</Badge>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {generatedVideoUrl && (
+                                    <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 flex justify-center gap-4">
+                                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[10px] tracking-[0.2em] px-8 h-12 rounded-[20px] shadow-2xl shadow-indigo-600/20">
+                                            EXPORTAR MASTER 4K
+                                        </Button>
+                                        <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 font-black uppercase text-[10px] tracking-[0.2em] px-8 h-12 rounded-[20px]">
+                                            GUARDAR EN BIBLIOTECA
+                                        </Button>
+                                    </div>
                                 )}
-                            </div>
-                        </Card>
+                            </Card>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }
-

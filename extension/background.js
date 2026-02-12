@@ -1,17 +1,16 @@
 
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('HubSby Elite Spy Extension Installed');
+    console.log('EcomFlow Control Bridge Extension Installed');
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'save_asset' || request.action === 'quick_save') {
-        const adData = request.data;
-        console.log('⚡ HubSby Spy: Capturando Anuncio...', adData);
+    const API_BASE = 'http://localhost:3000/api';
 
-        fetch('http://localhost:3000/api/extension/capture', {
+    if (request.action === 'quick_save') {
+        fetch(`${API_BASE}/extension/capture`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(adData)
+            body: JSON.stringify(request.data)
         })
             .then(res => res.json())
             .then(data => {
@@ -20,22 +19,47 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         type: 'basic',
                         iconUrl: 'icons/icon128.png',
                         title: '⚡ ¡BIEN HECHO!',
-                        message: `Ad guardado en Biblioteca: ${adData.title || 'Referencia'}`
+                        message: `Anuncio guardado en Biblioteca.`
                     });
                     sendResponse({ success: true });
-                } else {
-                    sendResponse({ success: false, error: data.error });
                 }
             })
-            .catch(err => {
-                chrome.notifications.create({
-                    type: 'basic',
-                    iconUrl: 'icons/icon128.png',
-                    title: '⚠️ ERROR DE CONEXIÓN',
-                    message: '¿Está el servidor HubSby activo?'
-                });
-                sendResponse({ success: false, error: err.message });
-            });
+            .catch(err => sendResponse({ success: false, error: err.message }));
+        return true;
+    }
+
+    if (request.action === 'import_copy') {
+        // En un escenario real, necesitaríamos el productId y jobId. 
+        // Podemos guardarlos en storage cuando se abre la pestaña de Claude.
+        chrome.storage.local.get(['activeProductId', 'activeJobId', 'activeCopyType'], (result) => {
+            const payload = {
+                productId: result.activeProductId,
+                jobId: result.activeJobId,
+                type: result.activeCopyType,
+                resultText: request.data.resultText
+            };
+
+            fetch(`${API_BASE}/copy/import`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        chrome.notifications.create({
+                            type: 'basic',
+                            iconUrl: 'icons/icon128.png',
+                            title: '🚀 ¡COPY IMPORTADO!',
+                            message: `El resultado de Claude ya está en EcomFlow.`
+                        });
+                        sendResponse({ success: true });
+                    } else {
+                        sendResponse({ success: false, error: data.error });
+                    }
+                })
+                .catch(err => sendResponse({ success: false, error: err.message }));
+        });
         return true;
     }
 });

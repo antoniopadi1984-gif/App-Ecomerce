@@ -183,6 +183,7 @@ export const ES = {
     'pending': 'Pendiente',
     'completed': 'Completado',
     'failed': 'Fallido',
+    'filter': 'Filtrar',
 
     // AI Engine
     'ai_engine': 'Motor IA',

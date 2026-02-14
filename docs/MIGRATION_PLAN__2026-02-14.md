@@ -12,7 +12,7 @@
    - Documentación de flows críticos actuales para asegurar no regresión.
 
 3. **Auditoría Previa (Completada/En Progreso)**:
-   - Mapeo de rutas, componentes y APIs existentes (`AUDIT_COMPLETE.md`).
+   - Mapeo de rutas, componentes y APIs existentes (`AUDIT_COMPLETE__2026-02-14.md`).
    - Identificación de código legacy a refactorizar.
 
 ## Fase B: Implementación Incremental (Módulo por Módulo)

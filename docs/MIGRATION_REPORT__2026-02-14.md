@@ -1,5 +1,5 @@
 # Reporte de Migración: Arquitectura Multi-Agente Especializada
-Referencia: `/docs/MIGRATION_REPORT.md` (Version 1.1)
+Referencia: `/docs/MIGRATION_REPORT__2026-02-14.md` (Version 1.1)
 
 ## 📋 Resumen Ejecutivo
 Se ha implementado una arquitectura de IA de tres niveles (Tiered Architecture) para optimizar la calidad del output, la latencia y los costos operativos. El sistema ahora selecciona dinámicamente entre Anthropic (Claude 3.5 Sonnet) y Google Vertex AI (Gemini 1.5 Pro/Flash) según la naturaleza de la tarea.

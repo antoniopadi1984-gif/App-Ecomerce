@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -e
+blocked=$(git diff --cached --name-only | grep -E '^(venv/|\.venv/|prisma/.*\.db|prisma/.*stale_)' || true)
+if [ -n "$blocked" ]; then
+  echo "ERROR: Estás intentando commitear venv o DB local:"
+  echo "$blocked"
+  exit 1
+fi

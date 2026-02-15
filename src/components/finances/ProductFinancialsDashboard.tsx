@@ -34,13 +34,13 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
 
     if (loading && !data) {
         return (
-            <div className="space-y-6">
+            <div className="space-y-4">
                 <div className="grid grid-cols-4 gap-4 animate-pulse">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="h-24 bg-slate-100 rounded-2xl" />
+                        <div key={i} className="h-24 bg-slate-100 rounded-lg" />
                     ))}
                 </div>
-                <div className="h-[400px] bg-slate-50 rounded-3xl animate-pulse" />
+                <div className="h-[400px] bg-slate-50 rounded-lg animate-pulse" />
             </div>
         );
     }
@@ -50,7 +50,7 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
     const isProfitable = netProfit > 0;
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-4 pb-12">
             {/* Top Summaries - High Density Style */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3">
                 <MetricCard
@@ -84,7 +84,7 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="px-1 py-1 bg-white border border-slate-200 rounded-2xl mb-6 shadow-sm inline-flex overflow-x-auto no-scrollbar max-w-full">
+                <div className="px-1 py-1 bg-white border border-slate-200 rounded-lg mb-4 shadow-sm inline-flex overflow-x-auto no-scrollbar max-w-full">
                     <TabsList className="bg-transparent h-9 gap-1">
                         <TabsTrigger value="daily" className="rounded-xl px-4 py-1.5 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all whitespace-nowrap">
                             <CalendarDays className="w-3.5 h-3.5 mr-2" />
@@ -113,9 +113,9 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
                     </TabsList>
                 </div>
 
-                <TabsContent value="daily" className="m-0 space-y-6">
+                <TabsContent value="daily" className="m-0 space-y-4">
                     {/* Metrics Table */}
-                    <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+                    <div className="bg-white rounded-lg border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
                         <div className="overflow-x-auto no-scrollbar">
                             <table className="w-full text-left border-collapse table-fixed min-w-[2200px]">
                                 <thead>
@@ -186,7 +186,7 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
                 </TabsContent>
 
                 <TabsContent value="monthly">
-                    <div className="bg-white rounded-[2rem] border border-dashed border-slate-300 p-20 text-center">
+                    <div className="bg-white rounded-lg border border-dashed border-slate-300 py-10 text-center">
                         <BarChart3 className="w-10 h-10 text-slate-200 mx-auto mb-4" />
                         <p className="text-slate-400 font-black text-xs uppercase tracking-[0.3em]">Vista Mensual en Desarrollo</p>
                     </div>
@@ -206,7 +206,7 @@ function MetricCard({ label, value, sub, icon: Icon, color, trend }: { label: st
     };
 
     return (
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group overflow-hidden relative hover:-translate-y-1">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group overflow-hidden relative hover:-translate-y-1">
             <div className="absolute -right-1 -top-1 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
                 <Icon className="w-16 h-16 rotate-12" />
             </div>
@@ -225,7 +225,7 @@ function MetricCard({ label, value, sub, icon: Icon, color, trend }: { label: st
 
             <div className="flex flex-col">
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mb-0.5">{label}</span>
-                <span className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">{value}</span>
+                <span className="text-lg font-black text-slate-900 tracking-tight leading-none mb-1">{value}</span>
                 <span className="text-[10px] text-slate-500 font-bold">{sub}</span>
             </div>
         </div>

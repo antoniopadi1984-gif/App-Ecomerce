@@ -5,16 +5,6 @@
 
 export const API_CONFIG = {
     // ============================================
-    // ANTHROPIC (Claude)
-    // ============================================
-    anthropic: {
-        apiKey: process.env.ANTHROPIC_API_KEY || '',
-        endpoint: 'https://api.anthropic.com/v1/messages',
-        model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20240620',
-        version: '2023-06-01'
-    },
-
-    // ============================================
     // VERTEX AI
     // ============================================
     vertexAI: {
@@ -98,11 +88,6 @@ export const API_CONFIG = {
 // Validación de configuración
 export function validateConfig(): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
-
-    // Verificar Anthropic (solo warning si no está)
-    if (!API_CONFIG.anthropic.apiKey) {
-        errors.push('ANTHROPIC_API_KEY no configurado (opcional para copywriting premium)');
-    }
 
     // Verificar Vertex AI
     if (!API_CONFIG.vertexAI.projectId) {

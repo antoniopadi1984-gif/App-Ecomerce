@@ -8,9 +8,9 @@ const logisticsSyncHandler: JobHandler = {
 
         await onProgress(10);
 
-        // We call the existing robust action
         // 'limit: 0' means full history or until API stops
-        const result = await syncBeepingStatuses(0);
+        const priority = !!payload.priority;
+        const result = await syncBeepingStatuses(0, priority);
 
         await onProgress(100);
 

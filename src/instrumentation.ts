@@ -26,8 +26,8 @@ export async function register() {
 
                 console.log("✅ [Instrumentation] Worker Sidecar is now backgrounded.");
 
-                // Start Python Engine (Nano Banana)
-                console.log("🍌 [Instrumentation] Auto-Starting Nano Banana Engine...");
+                // Start Python Engine (EcomBoom Control)
+                console.log("🚀 [Instrumentation] Auto-Starting EcomBoom Control Engine...");
                 const engineScript = path.resolve(process.cwd(), "src/engine/start_engine.sh");
                 const engineProcess = spawn("bash", [engineScript], {
                     detached: true,
@@ -35,7 +35,7 @@ export async function register() {
                     cwd: process.cwd()
                 });
                 engineProcess.unref();
-                console.log("✅ [Instrumentation] Nano Banana Engine initialization triggered.");
+                console.log("✅ [Instrumentation] EcomBoom Control Engine initialization triggered.");
             } catch (e) {
                 console.error("❌ [Instrumentation] Failed to auto-start worker:", e);
                 (global as any)._workerStarted = false; // Reset lock on failure

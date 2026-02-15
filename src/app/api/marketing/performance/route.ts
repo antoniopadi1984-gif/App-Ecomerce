@@ -183,73 +183,37 @@ export async function GET(request: Request) {
         }, {});
 
         // Fetch Real Delivery Data from Orders (UTM Matching)
-        // CRITICAL: Filter orders by the same DATE RANGE as the metrics
         const orders = await prisma.order.findMany({
             where: {
                 storeId: store.id,
                 status: { not: 'CANCELLED' },
-                createdAt: dateFilter // Lock attribution to the same period
+                createdAt: dateFilter
             },
-            select: {
-                totalPrice: true,
-                logisticsStatus: true,
-                source: true,
-                medium: true,
-                campaign: true,
-                content: true,
-                adsetId: true,
-                adId: true,
-                term: true
+            include: {
+                items: true // Needed for COGS
             }
         });
 
         const rows = Object.values(grouped).map((m: any) => {
             const kpis = calculateMarketingKPIs(m);
 
-            // Match orders to this metric level (Robust Matching)
+            // --- STRICT ATTRIBUTION MATCHING (ID ONLY) ---
             const matchedOrders = orders.filter(o => {
-                // Helper for safe string comparison
-                const safeMatch = (orderVal: string | null, metricId: string, metricName: string) => {
-                    if (!orderVal) return false;
-                    const o = orderVal.toLowerCase().trim();
-                    if (o === 'default' || o === 'unknown') return false;
-
-                    const mid = metricId.toLowerCase().trim();
-                    const mname = metricName.toLowerCase().trim();
-
-                    // 1. Exact matches (ID or Name)
-                    if (o === mid || o === mname) return true;
-
-                    // 2. Contains match (Only for IDs or long names to avoid false positives with short strings)
-                    if (mid.length > 5 && o.includes(mid)) return true;
-                    // For names, we only match if order value is at least 6 characters and is a significant part
-                    if (mname.length > 6 && o.includes(mname)) return true;
-
-                    return false;
-                };
+                const mid = (m.id || '').toLowerCase().trim();
+                if (!mid) return false;
 
                 if (m.level === 'AD') {
-                    // 1. Direct Ad ID match
-                    if (o.adId === m.id) return true;
-                    // 2. Check UTM Content, Term, and Campaign (Ads often inherit names from parents in UTMs)
-                    return safeMatch(o.content, m.id, m.name) ||
-                        safeMatch(o.term, m.id, m.name) ||
-                        safeMatch(o.campaign, m.id, m.name);
+                    return (o.adId?.toLowerCase() === mid) ||
+                        (o.term?.toLowerCase() === mid) ||
+                        (o.content?.toLowerCase() === mid);
                 }
                 if (m.level === 'ADSET') {
-                    // 1. Direct AdSet ID match
-                    if (o.adsetId === m.id) return true;
-                    // 2. Exact match on term, content or campaign (Some UTM setups use campaign for adset name)
-                    return safeMatch(o.term, m.id, m.name) ||
-                        safeMatch(o.content, m.id, m.name) ||
-                        safeMatch(o.campaign, m.id, m.name);
+                    return (o.adsetId?.toLowerCase() === mid) ||
+                        (o.content?.toLowerCase() === mid) ||
+                        (o.campaign?.toLowerCase() === mid); // Adsets sometimes in campaign UTM
                 }
                 if (m.level === 'CAMPAIGN') {
-                    // Try to match by Campaign ID or Name in ANY UTM field
-                    return safeMatch(o.campaign, m.id, m.name) ||
-                        safeMatch(o.term, m.id, m.name) ||
-                        safeMatch(o.content, m.id, m.name) ||
-                        safeMatch(o.source, m.id, m.name);
+                    return (o.campaign?.toLowerCase() === mid);
                 }
                 return false;
             });
@@ -259,18 +223,39 @@ export async function GET(request: Request) {
             const revenueReal = matchedOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
             const totalSpend = m.spend || 0;
 
+            // COGS: sum(unitCost * quantity)
+            const cogsReal = matchedOrders.reduce((sum, o) => {
+                const orderCogs = o.items.reduce((iSum, item) => iSum + ((item.unitCost || 0) * (item.quantity || 1)), 0);
+                return sum + orderCogs;
+            }, 0);
+
+            // Logistics: sum(shippingCost)
+            const logisticsReal = matchedOrders.reduce((sum, o) => sum + (o.shippingCost || o.estimatedLogisticsCost || 0), 0);
+
+            // Fees: Standard 3% fallback for now (Card + COD average)
+            const feesReal = revenueReal * 0.03;
+
+            const marginReal = revenueReal - cogsReal - logisticsReal - feesReal;
+            const netProfit = marginReal - totalSpend;
+
             return {
                 ...kpis,
                 metricsNorm: m.metricsNorm,
                 isActive: m.isActive,
-                real_purchases: matchedOrders.length,
-                real_revenue: revenueReal,
+                // Mandatory 6 Real Columns
+                purchases_real: matchedOrders.length,
+                revenue_real: revenueReal,
+                cpa_real: matchedOrders.length > 0 ? totalSpend / matchedOrders.length : 0,
+                roas_real: totalSpend > 0 ? revenueReal / totalSpend : 0,
+                margin_real: revenueReal > 0 ? (marginReal / revenueReal) : 0, // as percentage
+                net_profit: netProfit,
+
+                // Extra metadata
+                real_purchases: matchedOrders.length, // legacy compat
                 delivered_orders: delivered,
                 delivery_rate: matchedOrders.length > 0 ? (delivered / matchedOrders.length) : 0,
-                real_cpa: matchedOrders.length > 0 ? totalSpend / matchedOrders.length : 0,
-                real_roas: totalSpend > 0 ? revenueReal / totalSpend : 0,
                 name: m.name,
-                entity_id: m.id, // Meta external ID for sorting
+                entity_id: m.id,
                 account_id: m.account_id,
                 account_name: m.account_name,
                 last_active: m.last_active

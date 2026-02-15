@@ -39,21 +39,21 @@ export default function EagleEyePage() {
     );
 
     return (
-        <div className="space-y-10 max-w-[1600px] mx-auto p-4 md:p-8 bg-mesh-light min-h-screen">
+        <div className="space-y-4 max-w-[1600px] mx-auto p-4 bg-mesh-light min-h-screen">
             {/* Header / Title */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-2">
-                    <Badge variant="outline" className="bg-indigo-600 text-white border-none gap-2 px-4 py-1.5 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-100 italic">
+                <div className="space-y-1">
+                    <Badge variant="outline" className="bg-indigo-600 text-white border-none gap-2 px-3 py-1 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-100 italic">
                         <Compass className="h-3 w-3" /> ESTRATEGIA MASTER INTEL
                     </Badge>
-                    <h1 className="text-6xl font-black tracking-tighter text-slate-900 drop-shadow-sm uppercase italic">
+                    <h1 className="text-lg font-black tracking-tighter text-slate-900 drop-shadow-sm uppercase italic leading-tight">
                         Vista de Águila
                     </h1>
-                    <p className="text-slate-500 font-bold tracking-tight text-lg">Fusión master de Shopify, Ads & Google Analytics 4.</p>
+                    <p className="text-slate-500 font-bold tracking-tight text-sm">Fusión master de Shopify, Ads & Google Analytics 4.</p>
                 </div>
-                <div className="flex gap-3">
-                    <Button variant="outline" className="premium-card h-14 px-8 font-black border-slate-100 hover:bg-slate-50 transition-all">DATASET: 7D</Button>
-                    <Button className="h-14 px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 uppercase tracking-tighter">RECALIBRAR SISTEMA</Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" className="premium-card h-10 px-6 font-black border-slate-100 hover:bg-slate-50 transition-all">DATASET: 7D</Button>
+                    <Button className="h-10 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-lg shadow-xl shadow-indigo-100 transition-all active:scale-95 uppercase tracking-tighter">RECALIBRAR SISTEMA</Button>
                 </div>
             </div>
 
@@ -86,11 +86,11 @@ export default function EagleEyePage() {
             </Card>
 
             {/* Main Scorecard Sections */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                 {/* 1. VENTAS & MARKETING */}
-                <div className="space-y-6">
-                    <h3 className="text-xl font-black flex items-center gap-3 tracking-tighter text-slate-900 italic uppercase">
+                <div className="space-y-4">
+                    <h3 className="text-lg font-black flex items-center gap-3 tracking-tighter text-slate-900 italic uppercase">
                         <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-100">
                             <TrendingUp className="h-5 w-5 text-white" />
                         </div>
@@ -105,8 +105,8 @@ export default function EagleEyePage() {
                 </div>
 
                 {/* 2. OPERACIONES & LOGÍSTICA */}
-                <div className="space-y-6">
-                    <h3 className="text-xl font-black flex items-center gap-3 tracking-tighter text-slate-900 italic uppercase">
+                <div className="space-y-4">
+                    <h3 className="text-lg font-black flex items-center gap-3 tracking-tighter text-slate-900 italic uppercase">
                         <div className="h-8 w-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-100">
                             <Truck className="h-5 w-5 text-white" />
                         </div>
@@ -127,33 +127,33 @@ export default function EagleEyePage() {
 
 function PulseStat({ label, value, color }: any) {
     return (
-        <div className="p-10 text-center group hover:bg-slate-50/50 transition-all duration-500">
-            <span className="text-[10px] uppercase font-black text-slate-400 block mb-4 tracking-[0.2em] opacity-80">{label}</span>
-            <span className={cn("text-5xl font-black tracking-tighter block drop-shadow-sm group-hover:scale-110 transition-transform duration-500", color || "text-slate-900")}>{value}</span>
+        <div className="p-4 text-center group hover:bg-slate-50/50 transition-all duration-500">
+            <span className="text-[10px] uppercase font-black text-slate-400 block mb-2 tracking-[0.2em] opacity-80">{label}</span>
+            <span className={cn("text-lg font-black tracking-tighter block drop-shadow-sm group-hover:scale-110 transition-transform duration-500", color || "text-slate-900")}>{value}</span>
         </div>
     );
 }
 
 function MetricRow({ label, value, target, status }: any) {
     return (
-        <div className="flex items-center justify-between p-7 hover:bg-indigo-50/30 transition-all group cursor-default">
-            <div className="flex items-center gap-5">
+        <div className="flex items-center justify-between p-4 hover:bg-indigo-50/30 transition-all group cursor-default">
+            <div className="flex items-center gap-4">
                 <div className={cn(
-                    "h-3 w-3 rounded-full",
+                    "h-2 w-2 rounded-full",
                     status === 'green' ? "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" :
                         status === 'yellow' ? "bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.6)]" :
                             "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]"
                 )} />
                 <span className="text-sm font-black text-slate-500 group-hover:text-slate-900 transition-colors uppercase tracking-tight">{label}</span>
             </div>
-            <div className="flex items-center gap-12">
+            <div className="flex items-center gap-8">
                 <div className="text-right">
-                    <span className="text-[10px] font-black text-slate-300 uppercase block tracking-wider mb-1">Actual</span>
-                    <span className="text-2xl font-black text-slate-900 tracking-tighter italic">{value}</span>
+                    <span className="text-[10px] font-black text-slate-300 uppercase block tracking-wider">Actual</span>
+                    <span className="text-lg font-black text-slate-900 tracking-tighter italic">{value}</span>
                 </div>
-                <div className="text-right min-w-[80px]">
-                    <span className="text-[10px] font-black text-slate-300 uppercase block tracking-wider mb-1">Target</span>
-                    <span className="text-sm font-black text-slate-400 opacity-60 px-2 bg-slate-100 rounded-md">{target}</span>
+                <div className="text-right min-w-[70px]">
+                    <span className="text-[10px] font-black text-slate-300 uppercase block tracking-wider">Target</span>
+                    <span className="text-xs font-black text-slate-400 opacity-60 px-2 bg-slate-100 rounded-md">{target}</span>
                 </div>
             </div>
         </div>

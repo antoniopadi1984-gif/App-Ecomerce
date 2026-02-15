@@ -112,3 +112,20 @@ datasets/
 # Antigravity Sync (Allow memory to be synced across devices)
 !.antigravity/
 
+
+# Python virtualenv
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Prisma / local db artifacts
+prisma/*.db
+prisma/*.db-*
+prisma/*.db.*
+prisma/dev.db*
+prisma/*.stale_*
+prisma/*.stale_root
+
+# macOS
+.DS_Store

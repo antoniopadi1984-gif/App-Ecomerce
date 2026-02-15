@@ -8,7 +8,7 @@ import prisma from "@/lib/prisma";
 
 /**
  * SERVICIO CENTRAL DE INTELIGENCIA (Búnker AI)
- * Gestión de modelos: Gemini (Research), Claude (Copywriting), GPT-4 (Logic)
+ * Gestión de modelos: Gemini (Research), Replicate (Claude/Images/Video)
  */
 
 /**
@@ -79,32 +79,7 @@ export async function askGemini(
     }
 }
 
-export async function askClaude(prompt: string, systemPrompt?: string) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return { error: "Falta ANTHROPIC_API_KEY en el servidor." };
 
-    try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-                "x-api-key": apiKey,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "claude-3-5-sonnet-20240620",
-                max_tokens: 2048,
-                system: systemPrompt || "Eres un experto en Marketing Directo y Copywriting de respuesta directa.",
-                messages: [{ role: "user", content: prompt }]
-            })
-        });
-
-        const data = await response.json();
-        return { text: data.content?.[0]?.text || "No se obtuvo respuesta de Claude." };
-    } catch (e: any) {
-        return { error: e.message };
-    }
-}
 
 /**
  * Agente Especialista en Marketing Profundo

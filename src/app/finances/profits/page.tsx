@@ -24,40 +24,44 @@ export default function ProfitsDashboard() {
     }, []);
 
     const MetricCard = ({ title, value, subtitle, icon: Icon, color }: any) => (
-        <Card className="border-0 shadow-lg rounded-3xl bg-white overflow-hidden">
-            <CardHeader className="pb-2">
+        <Card className="border border-slate-100 shadow-sm rounded-lg bg-white overflow-hidden">
+            <CardHeader className="p-3 pb-1">
                 <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{title}</span>
-                    <Icon className={`h-4 w-4 ${color}`} />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none">{title}</span>
+                    <Icon className="h-3.5 w-3.5 text-slate-900" />
                 </div>
-                <CardTitle className="text-2xl font-black">{value}</CardTitle>
+                <CardTitle className="text-lg font-black tracking-tighter italic">{value}</CardTitle>
             </CardHeader>
-            <CardContent>
-                <p className="text-[10px] font-bold text-slate-500 uppercase">{subtitle}</p>
+            <CardContent className="px-3 pb-3">
+                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{subtitle}</p>
             </CardContent>
         </Card>
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 p-8 space-y-8">
+        <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-4">
             <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 lowercase">
-                        <DollarSign className="h-8 w-8 text-emerald-600" />
-                        PROFIT <span className="text-emerald-600 uppercase">ANALYSIS</span>
-                    </h1>
-                    <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Technical Truth Layer: Real-time Profitability</p>
+                <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg shadow-slate-200">
+                        <DollarSign className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-black text-slate-900 flex items-center gap-2 italic uppercase tracking-tighter">
+                            PROFIT <span className="text-slate-400">ANALYSIS</span>
+                        </h1>
+                        <p className="text-slate-500 font-bold uppercase text-[8px] tracking-[0.2em] mt-0.5">Technical Truth Layer: Real-time Profitability</p>
+                    </div>
                 </div>
-                <Button onClick={fetchStats} variant="outline" className="rounded-xl">Recalcular</Button>
+                <Button onClick={fetchStats} variant="outline" className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest px-4 border-slate-200">Recalcular</Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <MetricCard
                     title="Revenue Real"
                     value={`${stats?.totalRevenue?.toFixed(2) || 0} €`}
                     subtitle="Solo pedidos entregados"
                     icon={TrendingUp}
-                    color="text-emerald-500"
+                    color="text-slate-900"
                 />
                 <MetricCard
                     title="COGS Acumulado"
@@ -71,38 +75,38 @@ export default function ProfitsDashboard() {
                     value={`${stats?.totalLogistics?.toFixed(2) || 0} €`}
                     subtitle="Envío + COD + Retornos"
                     icon={Shuffle}
-                    color="text-blue-400"
+                    color="text-slate-400"
                 />
                 <MetricCard
                     title="Profit Neto Real"
                     value={`${stats?.netProfit?.toFixed(2) || 0} €`}
                     subtitle="Verdad técnica (Neto)"
                     icon={DollarSign}
-                    color="text-emerald-600"
+                    color="text-slate-900"
                 />
             </div>
 
-            <Card className="border-0 shadow-2xl rounded-[3rem] bg-white overflow-hidden">
-                <CardHeader className="p-10">
-                    <CardTitle className="text-xl font-black uppercase">Desglose de Pedidos Recientes</CardTitle>
-                    <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Verificando cada céntimo</CardDescription>
+            <Card className="border border-slate-100 shadow-sm rounded-lg bg-white overflow-hidden">
+                <CardHeader className="p-4 border-b border-slate-50">
+                    <CardTitle className="text-sm font-black uppercase italic tracking-tighter">Desglose de Pedidos Recientes</CardTitle>
+                    <CardDescription className="text-[8px] font-bold uppercase tracking-widest text-slate-400">Verificando cada céntimo</CardDescription>
                 </CardHeader>
-                <CardContent className="p-10">
-                    <div className="space-y-4">
+                <CardContent className="p-0">
+                    <div className="divide-y divide-slate-50">
                         {stats?.recentOrders?.map((order: any) => (
-                            <div key={order.id} className="flex justify-between items-center p-4 border rounded-2xl border-slate-50 hover:bg-slate-50 transition-all">
+                            <div key={order.id} className="flex justify-between items-center p-3 hover:bg-slate-50/50 transition-all">
                                 <div className="flex flex-col">
-                                    <span className="text-xs font-black">{order.orderNumber}</span>
-                                    <span className="text-[10px] text-slate-400 uppercase font-bold">{order.logisticsStatus}</span>
+                                    <span className="text-[11px] font-black text-slate-900 italic">{order.orderNumber}</span>
+                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-widest leading-none mt-1">{order.logisticsStatus}</span>
                                 </div>
-                                <div className="flex gap-10 items-center">
-                                    <div className="flex flex-col items-end">
-                                        <span className="text-[10px] uppercase font-bold text-slate-400">Profit</span>
-                                        <span className={`text-sm font-black ${order.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                <div className="flex gap-8 items-center">
+                                    <div className="flex flex-col items-end leading-none">
+                                        <span className="text-[8px] uppercase font-black tracking-widest text-slate-400 mb-1">PROFIT</span>
+                                        <span className="text-[12px] font-black italic tracking-tighter text-slate-950">
                                             {order.profit?.toFixed(2)} €
                                         </span>
                                     </div>
-                                    <Badge variant={order.status === 'REAL' ? 'default' : 'secondary'} className="rounded-lg text-[8px] h-5">
+                                    <Badge variant="outline" className="rounded-sm text-[7px] font-black uppercase tracking-widest px-1.5 h-4 border-slate-200 text-slate-600 bg-slate-50">
                                         {order.status}
                                     </Badge>
                                 </div>

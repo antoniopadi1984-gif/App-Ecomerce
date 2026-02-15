@@ -65,12 +65,23 @@ export class AttributionService {
         const gclid = getQS(landingUrl, 'gclid') || pickNA(['gclid', 'gac']);
         const ttclid = getQS(landingUrl, 'ttclid') || pickNA(['ttclid']);
 
+        // --- STRICT ATTRIBUTION HIERARCHY ---
+        const utmCampaign = pickNA(KEYS_CAMPAIGN) || getFromProps(KEYS_CAMPAIGN) || getQS(landingUrl, 'utm_campaign');
+        const utmContent = pickNA(KEYS_CONTENT) || getFromProps(KEYS_CONTENT) || getQS(landingUrl, 'utm_content');
+        const utmTerm = pickNA(KEYS_TERM) || getFromProps(KEYS_TERM) || getQS(landingUrl, 'utm_term');
+        const utmMedium = pickNA(KEYS_MEDIUM) || getFromProps(KEYS_MEDIUM) || getQS(landingUrl, 'utm_medium');
+        const utmSource = pickNA(KEYS_SOURCE) || getFromProps(KEYS_SOURCE) || getQS(landingUrl, 'utm_source');
+
+        // Rule: If no UTMs valid -> NO ATTRIBUTED
+        const hasUtms = !!(utmSource || utmMedium || utmCampaign || utmContent || utmTerm);
+        const finalSource = hasUtms ? (utmSource || 'direct') : 'NO ATTRIBUTED';
+
         return {
-            utmSource: pickNA(KEYS_SOURCE) || getFromProps(KEYS_SOURCE) || getQS(landingUrl, 'utm_source') || 'organic',
-            utmMedium: pickNA(KEYS_MEDIUM) || getFromProps(KEYS_MEDIUM) || getQS(landingUrl, 'utm_medium'),
-            utmCampaign: pickNA(KEYS_CAMPAIGN) || getFromProps(KEYS_CAMPAIGN) || getQS(landingUrl, 'utm_campaign'),
-            utmContent: pickNA(KEYS_CONTENT) || getFromProps(KEYS_CONTENT) || getQS(landingUrl, 'utm_content'),
-            utmTerm: pickNA(KEYS_TERM) || getFromProps(KEYS_TERM) || getQS(landingUrl, 'utm_term'),
+            utmSource: finalSource,
+            utmMedium: utmMedium || null,
+            utmCampaign: utmCampaign || null,
+            utmContent: utmContent || null,
+            utmTerm: utmTerm || null,
             fbclid: fbclid || null,
             gclid: gclid || null,
             ttclid: ttclid || null,

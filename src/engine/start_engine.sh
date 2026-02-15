@@ -16,4 +16,4 @@ echo "🍌 [ENGINE] Activating Virtual Environment..."
 source venv/bin/activate
 
 echo "🍌 [ENGINE] Starting Python Server..."
-python src/engine/server.py
+python3 src/engine/server.py

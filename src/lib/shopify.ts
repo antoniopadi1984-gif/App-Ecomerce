@@ -180,7 +180,7 @@ export class ShopifyClient {
             method: "POST",
             body: JSON.stringify({
                 reason: reason,
-                note: "Anulado desde Nano Banana Maestro"
+                note: "Anulado desde EcomBoom Control"
             }),
         });
     }

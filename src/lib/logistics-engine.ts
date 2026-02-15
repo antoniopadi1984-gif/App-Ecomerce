@@ -6,47 +6,67 @@ import { sendNotification } from "./notifications";
  * Map external statuses from different providers to our internal high-level status.
  */
 export function normalizeLogisticsStatus(source: string, externalStatus: string | number): string {
-    const status = String(externalStatus).toUpperCase();
+    const status = String(externalStatus).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").trim();
+
+    // Mapping Spanish labels (from Beeping) to internal English codes
+    const SPANISH_MAP: Record<string, string> = {
+        'SIN ESTADO LOGISTICO': 'PENDING',
+        'EN TRANSITO': 'SHIPPED',
+        'EN REPARTO': 'OUT_FOR_DELIVERY',
+        'PUNTO DE RECOGIDA': 'INCIDENCE',
+        'ENTREGADO': 'DELIVERED',
+        'DEVUELTO AL REMITENTE': 'RETURNED',
+        'CANCELADO': 'CANCELLED',
+        'SINIESTRO': 'INCIDENCE',
+        'PENDIENTE': 'PENDING',
+        'PENDIENTE DE STOCK': 'PENDING',
+        'EN PREPARACION': 'PROCESSING',
+        'ENVIADO': 'SHIPPED',
+        'DEVUELTO': 'RETURNED',
+        'POR CONFIRMAR': 'PENDING'
+    };
+
+    if (SPANISH_MAP[status]) return SPANISH_MAP[status];
 
     // internal states: PENDING, PROCESSING, SHIPPED, OUT_FOR_DELIVERY, DELIVERED, RETURNED, INCIDENCE
 
-    // Example for Beeping (using numerical IDs if possible, but handles strings for safety)
-    // Example for Beeping (Handles combined status/tracking_stage logic via payload check if object passed, otherwise single value)
     if (source === 'BEEPING') {
         const num = parseInt(status);
+        if (!isNaN(num)) {
+            // Priority 1: Shipment Status (order_shipment_status_id)
+            const shipmentMap: Record<number, string> = {
+                1: 'PENDING',
+                2: 'SHIPPED',
+                3: 'OUT_FOR_DELIVERY',
+                4: 'INCIDENCE',
+                5: 'DELIVERED',
+                6: 'RETURNED',
+                7: 'CANCELLED',
+                8: 'INCIDENCE'
+            };
 
-        // Priority 1: Shipment Status (order_shipment_status_id)
-        const shipmentMap: Record<number, string> = {
-            1: 'PENDING',          // Sin estado logístico
-            2: 'SHIPPED',          // En Tránsito
-            3: 'OUT_FOR_DELIVERY', // En Reparto
-            4: 'INCIDENCE',        // Punto de recogida
-            5: 'DELIVERED',        // Entregado
-            6: 'RETURNED',         // Devuelto al Remitente
-            7: 'CANCELLED',        // Cancelado
-            8: 'INCIDENCE'         // Siniestro
-        };
+            // Priority 2: Order Status (status)
+            const orderMap: Record<number, string> = {
+                1: 'PENDING',
+                2: 'PENDING',
+                3: 'PROCESSING',
+                4: 'SHIPPED',
+                5: 'RETURNED',
+                6: 'PENDING',
+                0: 'CANCELLED'
+            };
 
-        // Priority 2: Order Status (status)
-        const orderMap: Record<number, string> = {
-            1: 'PENDING',          // Pendiente
-            2: 'PENDING',          // Pendiente de stock
-            3: 'PROCESSING',       // En preparación
-            4: 'SHIPPED',          // Enviado
-            5: 'RETURNED',         // Devuelto
-            6: 'PENDING',          // Por confirmar
-            0: 'CANCELLED'         // Cancelado
-        };
-
-        return shipmentMap[num] || orderMap[num] || 'PENDING';
+            return shipmentMap[num] || orderMap[num] || 'PENDING';
+        }
     }
 
     // Generic fallback
     if (status.includes('REPARTO')) return 'OUT_FOR_DELIVERY';
     if (status.includes('ENTREGADO')) return 'DELIVERED';
     if (status.includes('DEVUELTO')) return 'RETURNED';
-    if (status.includes('INCIDENCIA')) return 'INCIDENCE';
+    if (status.includes('INCIDENCIA') || status.includes('SINIESTRO')) return 'INCIDENCE';
     if (status.includes('ENVIADO')) return 'SHIPPED';
+    if (status.includes('TRANSITO')) return 'SHIPPED';
 
     return 'PENDING';
 }
@@ -96,6 +116,9 @@ export async function recordOrderEvent(params: {
             if (internalStatus === 'OUT_FOR_DELIVERY') await sendNotification(orderId, 'OUT_FOR_DELIVERY');
             if (internalStatus === 'DELIVERED') await sendNotification(orderId, 'DELIVERED');
             if (internalStatus === 'INCIDENCE') await sendNotification(orderId, 'INCIDENCE');
+
+            // 4. Recalculate Profitability (Hardening fix 6.4)
+            await calculateOrderProfit(orderId);
         }
 
         return { success: true };
@@ -134,43 +157,81 @@ export async function calculateOrderProfit(orderId: string) {
         packagingCost: 0.5
     };
 
-    // 3. Costs
-    // Use real shipping cost if available, otherwise use rule
-    const shipping = order.shippingCost > 0 ? order.shippingCost : rule.baseShippingCost;
-    const codFee = order.paymentMethod === 'COD' ? (rule.codFeeFixed + (order.totalPrice * rule.codFeePercent / 100)) : 0;
-    const packaging = rule.packagingCost || 0.5;
+    // 3. Costs (Rule-based fallbacks)
+    const baseShipping = order.shippingCost > 0 ? order.shippingCost : rule.baseShippingCost;
+    const baseCodFee = order.paymentMethod === 'COD' ? (rule.codFeeFixed + (order.totalPrice * rule.codFeePercent / 100)) : 0;
+    const basePackaging = rule.packagingCost || 0.5;
 
-    // 4. COGS (Cost of Goods Sold)
+    // 4. COGS (Cost of Goods Sold) and Product-Level Fulfillment Costs
     let totalCogs = 0;
+    let totalProductShipping = 0;
+    let totalProductReturn = 0;
+    let totalProductPackaging = 0;
+    let totalProductCodFee = 0;
+    let totalProductInsurance = 0;
+
     if (order.items && order.items.length > 0) {
         for (const item of order.items) {
-            // Use local item unitCost (which we now sync correctly)
-            // Fallback to 0 if not set, instead of hardcoded 15
-            totalCogs += (item.unitCost || 0) * (item.quantity || 1);
+            // Get Finance info for each product
+            const pf = await (prisma as any).productFinance.findUnique({
+                where: { productId: item.productId }
+            });
+
+            const qty = item.quantity || item.units || 1;
+            totalCogs += (item.unitCost || pf?.unitCost || 0) * qty;
+
+            // Additive product-level logistics costs
+            totalProductShipping += (pf?.shippingCost || 0) * qty;
+            totalProductReturn += (pf?.returnCost || 0) * qty;
+            totalProductPackaging += (pf?.packagingCost || 0) * qty;
+            totalProductCodFee += (pf?.codFee || 0) * qty;
+            totalProductInsurance += (pf?.insuranceFee || 0) * qty;
         }
     }
 
-    const estimatedProfit = revenue - (shipping + codFee + totalCogs + packaging);
+    // 5. Aggregate Costs
+    // Use rule-based fallback only if product-level costs are zero
+    const finalShipping = totalProductShipping > 0 ? totalProductShipping : baseShipping;
+    const finalPackaging = totalProductPackaging > 0 ? totalProductPackaging : basePackaging;
+    const finalInsurance = totalProductInsurance;
+
+    // COD fee priority: Product-level > Rule-based
+    let finalCodFee = totalProductCodFee;
+    if (finalCodFee === 0 && order.paymentMethod === 'COD') {
+        finalCodFee = baseCodFee;
+    }
+
+    const estimatedProfit = revenue - (finalShipping + finalCodFee + totalCogs + finalPackaging + finalInsurance);
+    const fulfillmentCost = finalShipping + finalCodFee + finalPackaging + finalInsurance;
 
     // Real Profit depends on final status
-    let realProfit = null;
+    let netProfit = null;
     const status = order.logisticsStatus || order.status;
 
     if (status === 'DELIVERED') {
-        realProfit = revenue - (shipping + codFee + totalCogs + packaging);
-    } else if (status === 'RETURNED' || status === 'RETURN_TO_SENDER') {
-        // Return cost + shipping + packaging + COGS (if not restockable)
-        realProfit = -(shipping + rule.returnCost + totalCogs + packaging);
+        netProfit = revenue - (fulfillmentCost + totalCogs);
+    } else if (status === 'RETURNED' || status === 'RETURN_TO_SENDER' || status === 'INCIDENCE') {
+        // Return cost priority: Product-level > Rule-based
+        const returnCost = totalProductReturn > 0 ? totalProductReturn : rule.returnCost;
+        netProfit = -(fulfillmentCost + returnCost + totalCogs);
     } else if (status === 'CANCELLED') {
-        realProfit = 0;
+        netProfit = 0;
     }
+
+    const netMargin = netProfit !== null ? (netProfit / (revenue || 1)) : null;
 
     await (prisma as any).order.update({
         where: { id: orderId },
-        data: { estimatedProfit, realProfit }
+        data: {
+            estimatedProfit,
+            realProfit: netProfit, // Keep for legacy
+            fulfillmentCost,
+            netProfit,
+            netMargin
+        }
     });
 
-    console.log(`[Profit] Order ${order.orderNumber}: Rev ${revenue}, Ship ${shipping}, COGS ${totalCogs} => Profit ${realProfit ?? estimatedProfit}`);
+    console.log(`[Profit] Order ${order.orderNumber}: Rev ${revenue}, Cost ${fulfillmentCost}, COGS ${totalCogs} => Net Profit ${netProfit ?? estimatedProfit}`);
 }
 
 /**

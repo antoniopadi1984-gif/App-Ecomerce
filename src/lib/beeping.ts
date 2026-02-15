@@ -65,20 +65,17 @@ export class BeepingClient {
             if (onBatch) await onBatch(orders);
             all = [...all, ...orders];
 
-            // Logic to determine if there are more pages. 
-            // Usually if we get less than per_page, or if response has meta.
             const perPage = response.per_page || 100;
             const total = response.total || 0;
 
             if (total > 0) {
                 if (all.length >= total) hasMore = false;
             } else {
-                // If no total provided, stop if we got less than perPage
                 if (orders.length < 100) hasMore = false;
             }
 
             page++;
-            if (page > 1000) break; // Safety break
+            if (page > 1000) break;
         }
 
         return all;
@@ -114,76 +111,55 @@ export class BeepingClient {
         });
     }
 
-    static readonly STATUS_MAP: Record<number, string> = {
-        1: "PENDING",           // Pendiente
-        2: "STOCK_PENDING",     // Pendiente de stock
-        3: "PREPARING",         // En preparación
-        4: "SHIPPED",           // Enviado
-        5: "RETURNED",          // Devuelto
-        6: "PENDING",           // Por confirmar
-        0: "CANCELLED"          // Cancelado
-    };
-
-    static readonly SHIPMENT_STATUS_MAP: Record<number, string> = {
-        1: "NO_STATUS",         // Sin estado logístico
-        2: "IN_TRANSIT",        // En Tránsito
-        3: "OUT_FOR_DELIVERY",  // En Reparto
-        4: "PICKUP_POINT",      // Punto de recogida
-        5: "DELIVERED",         // Entregado
-        6: "RETURN_TO_SENDER",  // Devuelto al Remitente
-        7: "CANCELLED",         // Cancelado
-        8: "ACCIDENT"           // Siniestro
-    };
-
-    static readonly COURIER_MAP: Record<number | string, string> = {
-        1: "Correos Express",
-        3: "Correos",
-        5: "GLS",
-        9: "GLS-14",
-        10: "GLS-19",
-        11: "GLS-Internacional",
-    };
-
-    static mapCourier(courierId: number | string | null | undefined): string | null {
-        if (!courierId) return null;
-        return this.COURIER_MAP[courierId] || courierId.toString();
-    }
-
+    // Normalización de estados EcomBoom PHASE 2 - Official Mapping (Spanish Labels & Priorities)
     static mapStatus(beepingOrder: any): string {
         const orderStatus = parseInt(beepingOrder.status);
         const shipmentStatus = parseInt(beepingOrder.order_shipment_status_id || beepingOrder.shipment_status);
 
-        // Priority 1: Shipment status
+        // Rule: Priority is Shipment status if available (order_shipment_status_id)
         const shipmentMap: Record<number, string> = {
-            1: "PENDING",
-            2: "SHIPPED",
-            3: "OUT_FOR_DELIVERY",
-            4: "INCIDENCE",
-            5: "DELIVERED",
-            6: "RETURN_TO_SENDER",
-            7: "CANCELLED",
-            8: "ACCIDENT"
+            1: "Sin estado logístico",
+            2: "En Tránsito",
+            3: "En Reparto",
+            4: "Punto de recogida",
+            5: "Entregado",
+            6: "Devuelto al remitente",
+            7: "Cancelado",
+            8: "Siniestro"
         };
 
         if (shipmentStatus && shipmentMap[shipmentStatus]) {
             return shipmentMap[shipmentStatus];
         }
 
-        // Priority 2: Order status
+        // Fallback: Order status (status)
         const orderMap: Record<number, string> = {
-            1: "PENDING",
-            2: "STOCK_PENDING",
-            3: "PREPARING",
-            4: "SHIPPED",
-            5: "RETURNED",
-            6: "PENDING",
-            0: "CANCELLED"
+            1: "Pendiente",
+            2: "Pendiente de stock",
+            3: "En preparación",
+            4: "Enviado",
+            5: "Devuelto",
+            6: "Por confirmar",
+            0: "Cancelado"
         };
 
-        if (orderStatus !== undefined && orderMap[orderStatus]) {
+        if (orderStatus !== undefined && orderMap[orderStatus] !== undefined) {
             return orderMap[orderStatus];
         }
 
-        return "PROCESSING";
+        return "Pendiente";
+    }
+
+    static mapCourier(courierId: number | string | null | undefined): string | null {
+        const COURIER_MAP: Record<number | string, string> = {
+            1: "Correos Express",
+            3: "Correos",
+            5: "GLS",
+            9: "GLS-14",
+            10: "GLS-19",
+            11: "GLS Internacional",
+        };
+        if (!courierId) return null;
+        return COURIER_MAP[courierId] || courierId.toString();
     }
 }

@@ -160,38 +160,35 @@ export default function SupplyChainDashboard() {
             <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-500/10 rounded-full blur-[160px] -z-10 -translate-y-1/2 translate-x-1/2 animate-pulse" />
             <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[140px] -z-10 -translate-x-1/2" />
 
-            {/* HEADER SECTION */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4">
-                <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg">
-                        <Map className="h-4 w-4 text-indigo-400" />
+            {/* HEADER SECTION - COMPACT & PREMIUM */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 bg-slate-950 rounded-lg flex items-center justify-center shadow-lg shadow-slate-200">
+                        <Map className="h-3.5 w-3.5 text-indigo-400" />
                     </div>
                     <div>
-                        <h1 className="text-sm font-black tracking-tighter text-slate-900 flex items-center gap-2 uppercase italic">
-                            LOGISTICS <span className="text-indigo-600">ENGINE</span>
+                        <h1 className="text-xs font-black tracking-tighter text-slate-900 flex items-center gap-1.5 uppercase italic leading-none">
+                            LOGISTICS <span className="text-indigo-600 not-italic">ENGINE</span> <span className="text-[8px] text-blue-500 font-bold not-italic ml-1">v4.5</span>
                         </h1>
-                        <div className="flex items-center gap-2">
-                            <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[7px] uppercase tracking-widest px-2 py-0.5 rounded-sm">LIVE OPS</Badge>
-                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
-                                Actualizado: Live
-                            </span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[6px] font-black text-slate-400 uppercase tracking-[0.2em] opacity-80">Operational Intelligence Cluster</span>
                         </div>
                     </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 h-8">
-                        <div className="px-2 flex items-center gap-2 border-r border-slate-100">
-                            <Calendar className="h-3 w-3 text-slate-400" />
+                    <div className="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 h-7">
+                        <div className="px-2 flex items-center gap-1.5 border-r border-slate-100">
+                            <Calendar className="h-2.5 w-2.5 text-slate-400" />
                             <select
                                 value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                className="bg-transparent border-none text-[8px] font-black uppercase tracking-widest outline-none cursor-pointer text-slate-900"
+                                className="bg-transparent border-none text-[7.5px] font-black uppercase tracking-widest outline-none cursor-pointer text-slate-900"
                             >
                                 {Array.from({ length: 12 }, (_, i) => (
                                     <option key={i + 1} value={i + 1}>
-                                        {new Date(0, i).toLocaleString('es', { month: 'short' })}
+                                        {new Date(0, i).toLocaleString('es', { month: 'short' }).toUpperCase()}
                                     </option>
                                 ))}
                             </select>
@@ -199,7 +196,7 @@ export default function SupplyChainDashboard() {
                         <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                            className="bg-transparent border-none text-[8px] font-black uppercase tracking-widest outline-none px-2 cursor-pointer text-slate-900"
+                            className="bg-transparent border-none text-[7.5px] font-black uppercase tracking-widest outline-none px-2 cursor-pointer text-slate-900"
                         >
                             {[2024, 2025, 2026].map(y => (
                                 <option key={y} value={y}>{y}</option>
@@ -211,18 +208,18 @@ export default function SupplyChainDashboard() {
                         variant="outline"
                         onClick={handleSync}
                         disabled={syncing}
-                        className="h-8 px-3 rounded-lg border-slate-200 bg-white text-slate-700 font-black uppercase text-[8px] tracking-widest shadow-xs hover:bg-slate-50 transition-all"
+                        className="h-7 px-3 rounded-lg border-slate-200 bg-white text-slate-700 font-black uppercase text-[8px] tracking-widest shadow-xs hover:bg-slate-50 transition-all"
                     >
                         <RefreshCw className={cn("w-3 h-3 mr-2 text-indigo-500", syncing && "animate-spin")} />
-                        SYNC
+                        SYNC CORE
                     </Button>
 
                     <Button
                         onClick={() => window.location.href = '/logistics/costs'}
-                        className="h-8 px-3 rounded-lg bg-indigo-600 border-none text-white font-black uppercase text-[8px] tracking-widest shadow-lg shadow-indigo-100/50 hover:bg-indigo-700 transition-all"
+                        className="h-7 px-3 rounded-lg bg-slate-900 border-none text-white font-black uppercase text-[8px] tracking-widest shadow-lg shadow-slate-200 hover:bg-black transition-all"
                     >
-                        <Settings2 className="w-3 h-3 mr-2" />
-                        COSTES
+                        <Settings2 className="w-3 h-3 mr-2 text-indigo-400" />
+                        SETTINGS
                     </Button>
                 </div>
             </div>
@@ -241,19 +238,19 @@ export default function SupplyChainDashboard() {
                 </div>
             </div>
 
-            {/* LOGISTICS STATUS ROW (SECONDARY) */}
-            <div className="grid grid-cols-4 lg:grid-cols-4 gap-2 opacity-80 hover:opacity-100 transition-opacity">
-                <MiniStatusCard label="Tránsito" value={s.inTransit} color="indigo" icon={Truck} />
-                <MiniStatusCard label="Errores" value={s.incidences} color="rose" icon={AlertTriangle} />
-                <MiniStatusCard label="Devol." value={s.returns} color="slate" icon={RotateCcw} />
-                <MiniStatusCard label="% Fallo" value={`${(100 - avgDeliveryRate).toFixed(1)}%`} color="amber" icon={AlertCircle} />
+            {/* LOGISTICS STATUS ROW - DENSE */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2">
+                <MiniStatusCard label="Tránsito" value={s.inTransit} color="indigo" icon={Truck} trend="+4" />
+                <MiniStatusCard label="Errores" value={s.incidences} color="rose" icon={AlertTriangle} trend="-2" />
+                <MiniStatusCard label="Devol." value={s.returns} color="slate" icon={RotateCcw} trend="0" />
+                <MiniStatusCard label="% Fallo" value={`${(100 - avgDeliveryRate).toFixed(0)}%`} color="amber" icon={AlertCircle} trend="-1.2%" />
             </div>
 
             {/* MAIN OPERATIONAL DECK */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
                 {/* AI DIAGNOSTIC CONSOLE - THE "BRAIN" */}
                 <div className="xl:col-span-3">
-                    <Card className="bg-slate-900 border-indigo-500/20 rounded-xl shadow-2xl h-[650px] overflow-hidden relative flex flex-col group">
+                    <Card className="bg-slate-950 border-none rounded-lg shadow-2xl h-[580px] overflow-hidden relative flex flex-col group">
                         {/* THE SCANNING EFFECT */}
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.15),transparent)] pointer-events-none" />
                         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent animate-scan" style={{ animation: 'scan 4s linear infinite' }} />
@@ -278,8 +275,8 @@ export default function SupplyChainDashboard() {
                             <div className="space-y-3 pt-2">
                                 <div className="p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 space-y-3 shadow-inner">
                                     <div className="flex items-center justify-between">
-                                        <Label className="text-[7px] font-black uppercase text-slate-400 tracking-widest">Optimized Target</Label>
-                                        <span className="text-[14px] font-black text-indigo-400 italic">{targetROAS.toFixed(1)}x</span>
+                                        <Label className="text-[7.5px] font-black uppercase text-slate-400 tracking-widest leading-none">Target ROAS</Label>
+                                        <span className="text-[12px] font-black text-indigo-400 italic">x{targetROAS.toFixed(1)}</span>
                                     </div>
                                     <input
                                         type="range" min="1" max="6" step="0.1"
@@ -290,18 +287,18 @@ export default function SupplyChainDashboard() {
                                     <Button
                                         onClick={handleGetAIAdvice}
                                         disabled={loadingAdvice}
-                                        className="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase text-[8px] tracking-[0.2em] shadow-[0_0_20px_rgba(79,70,229,0.2)] border-none transition-all active:scale-95"
+                                        className="w-full h-8 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase text-[8px] tracking-[0.2em] shadow-lg shadow-indigo-500/20 border-none transition-all active:scale-95"
                                     >
                                         {loadingAdvice ? (
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
                                                 <Loader2 className="h-3 w-3 animate-spin" />
                                                 <span>Sincronizando...</span>
                                             </div>
-                                        ) : "Analyze Performance"}
+                                        ) : "Analyze Matrix"}
                                     </Button>
                                 </div>
 
-                                <ScrollArea className="h-[320px] pr-3 -mr-3">
+                                <ScrollArea className="h-[280px] pr-2">
                                     {aiAdvice ? (
                                         <div className="text-slate-300 text-[10px] leading-relaxed font-black uppercase tracking-tight whitespace-pre-wrap animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                                             {aiAdvice.split('\n').map((line, i) => (
@@ -345,7 +342,7 @@ export default function SupplyChainDashboard() {
 
                 {/* OPERATIONAL MATRIX TABLE - PREMIUM WHITE STYLE */}
                 <div className="xl:col-span-9 h-full">
-                    <Card className="bg-white border border-slate-100 shadow-sm rounded-xl h-full flex flex-col overflow-hidden relative">
+                    <Card className="bg-white border border-slate-100 shadow-xs rounded-lg h-full flex flex-col overflow-hidden relative">
                         <CardHeader className="p-3 border-b border-slate-50 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <div className="h-7 w-7 bg-slate-50 rounded-lg flex items-center justify-center">
@@ -514,10 +511,10 @@ function MetricCard({ icon: Icon, label, value, subtext, color, alert }: any) {
 function DetailMetric({ label, value, onEdit, onUpdate, edit, color = "indigo" }: any) {
     return (
         <div
-            className={cn("flex flex-col items-center transition-all", onEdit && "cursor-pointer hover:bg-slate-100 px-3 py-1 rounded-xl")}
+            className={cn("flex flex-col items-center transition-all", onEdit && "cursor-pointer hover:bg-slate-100 px-3 py-1 rounded-lg")}
             onClick={onEdit}
         >
-            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+            <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
             {edit ? (
                 <input
                     autoFocus type="number"
@@ -541,7 +538,7 @@ function DetailMetric({ label, value, onEdit, onUpdate, edit, color = "indigo" }
     );
 }
 
-function MiniStatusCard({ label, value, color, icon: Icon }: any) {
+function MiniStatusCard({ label, value, color, icon: Icon, trend }: any) {
     const bg: any = {
         indigo: "bg-indigo-50/50 text-indigo-700",
         rose: "bg-rose-50/50 text-rose-700",
@@ -549,14 +546,24 @@ function MiniStatusCard({ label, value, color, icon: Icon }: any) {
         amber: "bg-amber-50/50 text-amber-700"
     };
     return (
-        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-100 bg-white/50 shadow-xs transition-all", bg[color])}>
-            <div className="h-6 w-6 flex items-center justify-center rounded-md bg-white/80 shrink-0">
-                <Icon className="h-3 w-3" />
+        <div className={cn("flex items-center justify-between px-3 py-2 rounded-lg border border-slate-100 bg-white shadow-xs transition-all hover:shadow-md", bg[color])}>
+            <div className="flex items-center gap-2">
+                <div className="h-6 w-6 flex items-center justify-center rounded-md bg-white/80 shrink-0 shadow-sm">
+                    <Icon className="h-3 w-3" />
+                </div>
+                <div className="text-left overflow-hidden">
+                    <span className="text-[6.5px] font-black uppercase tracking-widest opacity-60 block leading-none mb-0.5">{label}</span>
+                    <span className="text-[11px] font-black italic block leading-none">{(value || 0).toLocaleString()}</span>
+                </div>
             </div>
-            <div className="text-left overflow-hidden">
-                <span className="text-[6.5px] font-black uppercase tracking-widest opacity-60 block leading-none mb-0.5">{label}</span>
-                <span className="text-[11px] font-black italic block leading-none">{(value || 0).toLocaleString()}</span>
-            </div>
+            {trend && (
+                <div className={cn(
+                    "text-[7px] font-black px-1.5 py-0.5 rounded-sm bg-white/50",
+                    trend.includes('+') ? "text-emerald-500" : trend.includes('-') ? "text-rose-500" : "text-slate-400"
+                )}>
+                    {trend}
+                </div>
+            )}
         </div>
     );
 }

@@ -1,5 +1,5 @@
 /**
- * ElevenLabs API Client for Nano Banana
+ * ElevenLabs API Client for EcomBoom Control
  * Handles voice synthesis and cloning.
  */
 

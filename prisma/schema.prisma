@@ -60,6 +60,7 @@ model Store {
   contentCampaigns     ContentCampaign[]
   deliveryLogs         ContentDeliveryLog[]
   contentTemplates     ContentTemplate[]
+  conversations        Conversation[]
   creativeAssets       CreativeAsset[]
   creativeBlueprints   CreativeBlueprint[]
   customers            Customer[]
@@ -86,7 +87,21 @@ model Store {
   thresholds           ThresholdConfig[]
   users                UserStoreAccess[]
   whatsappAccounts     WhatsAppAccount[]
-  conversations        Conversation[]
+  alertRules           AlertRule[]
+}
+
+model AlertRule {
+  id        String   @id @default(cuid())
+  storeId   String
+  scope     String   // ORDERS | PRODUCTS | FINANCES | MARKETING
+  field     String   // cpa, roas, cost, etc.
+  operator  String   // GT, GTE, LT, LTE, EQ
+  threshold Float
+  label     String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 }
 
 model HistoricalSpreadsheet {
@@ -278,7 +293,6 @@ model Product {
   productFamily       String?
   driveDocId          String?
   driveDocUrl         String?
-  metaConfig          MetaConfig?
   adCopies            AdCopy[]
   avatars             Avatar[]
   avatarResearches    AvatarResearch[]
@@ -296,24 +310,26 @@ model Product {
   creativeProjects    CreativeProject[]
   driveAssets         DriveAsset[]
   evidenceChunks      EvidenceChunk[]
+  funnelAnalyses      FunnelAnalysis[]
   GeneratedCreative   GeneratedCreative[]
   knowledgeNodes      KnowledgeNode[]
   landingProjects     LandingProject[]
   dictionaries        LanguageDictionary[]
   angles              MarketingAngle[]
+  metaConfig          MetaConfig?
   OfferStack          OfferStack[]
   itemOf              OrderItem[]
   pageBlueprints      PageBlueprint[]
   store               Store                  @relation(fields: [storeId], references: [id])
   supplier            Supplier?              @relation(fields: [supplierId], references: [id])
   finance             ProductFinance?
+  branding            ProductBranding?
   maturity            ProductMaturity?
   documents           ResearchDocument[]
   researchProjects    ResearchProject?
   researchRuns        ResearchRun[]
   researchSessions    ResearchSession[]
   researchSources     ResearchSource[]
-  funnelAnalyses      FunnelAnalysis[]
   scriptLibrary       ScriptLibrary[]
   searchQueries       SearchQuery[]
   VOCInsight          VOCInsight[]
@@ -411,45 +427,48 @@ model Order {
   updatedAt              DateTime             @updatedAt
   estimatedProfit        Float?
   realProfit             Float?
+  fulfillmentCost        Float?               @default(0)
+  netProfit              Float?
+  netMargin              Float?
   riskScore              Int                  @default(0)
   riskLevel              String               @default("LOW")
-  deliveryLogs           ContentDeliveryLog[]
-  messages               Message[]
-  customer               Customer?            @relation(fields: [customerId], references: [id])
-  store                  Store                @relation(fields: [storeId], references: [id])
-  attribution            OrderAttribution?
-  events                 OrderEvent[]
-  items                  OrderItem[]
   fraudScore             Int                  @default(0)
   fraudStatus            String               @default("PENDING")
   shopifyOrderId         String?              @unique
+  deliveryLogs           ContentDeliveryLog[]
+  messages               Message[]
+  store                  Store                @relation(fields: [storeId], references: [id])
+  customer               Customer?            @relation(fields: [customerId], references: [id])
+  attribution            OrderAttribution?
+  events                 OrderEvent[]
+  items                  OrderItem[]
 }
 
 model MetaConfig {
-  id                    String   @id @default(cuid())
-  productId             String   @unique
-  pixelId               String?
-  accessToken           String?
-  campaignId            String?
-  adAccountId           String?
-  status                String   @default("INACTIVE")
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  product               Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  productId   String   @unique
+  pixelId     String?
+  accessToken String?
+  campaignId  String?
+  adAccountId String?
+  status      String   @default("INACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Conversation {
-  id            String      @id @default(cuid())
+  id            String    @id @default(cuid())
   storeId       String
-  externalId    String      @unique
-  platform      String      @default("WHATSAPP")
-  status        String      @default("OPEN")
-  lastMessageAt DateTime    @default(now())
-  agentPaused   Boolean     @default(false)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  externalId    String    @unique
+  platform      String    @default("WHATSAPP")
+  status        String    @default("OPEN")
+  lastMessageAt DateTime  @default(now())
+  agentPaused   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  store         Store     @relation(fields: [storeId], references: [id])
   messages      Message[]
-  store         Store       @relation(fields: [storeId], references: [id])
 }
 
 model OrderEvent {
@@ -591,13 +610,13 @@ model ResearchSource {
 }
 
 model ResearchRun {
-  id               String         @id @default(cuid())
+  id               String              @id @default(cuid())
   productId        String
   sessionId        String?
-  status           String         @default("RUNNING")
-  version          String         @default("V2")
-  currentPhase     Int            @default(0)
-  progress         Int            @default(0)
+  status           String              @default("RUNNING")
+  version          String              @default("V2")
+  currentPhase     Int                 @default(0)
+  progress         Int                 @default(0)
   logs             String?
   results          String?
   summary          String?
@@ -606,40 +625,40 @@ model ResearchRun {
   marketMechanism  String?
   sophistication   String?
   objectionHeatmap String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @default(now()) @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @default(now()) @updatedAt
   copyContracts    CopyContract[]
-  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  session          ResearchSession? @relation(fields: [sessionId], references: [id])
   iterations       ResearchIteration[]
+  session          ResearchSession?    @relation(fields: [sessionId], references: [id])
+  product          Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@index([status])
 }
 
 model ResearchSession {
-  id            String   @id @default(cuid())
-  productId     String
-  name          String
-  configJson    String?
-  status        String   @default("OPEN")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  runs          ResearchRun[]
-  iterations    ResearchIteration[]
+  id         String              @id @default(cuid())
+  productId  String
+  name       String
+  configJson String?
+  status     String              @default("OPEN")
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  iterations ResearchIteration[]
+  runs       ResearchRun[]
+  product    Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model ResearchIteration {
-  id               String          @id @default(cuid())
-  sessionId        String
-  runId            String?
-  version          Int             @default(1)
-  changeLog        String?
-  dataJson         String?
-  createdAt        DateTime        @default(now())
-  session          ResearchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  run              ResearchRun?    @relation(fields: [runId], references: [id])
+  id        String          @id @default(cuid())
+  sessionId String
+  runId     String?
+  version   Int             @default(1)
+  changeLog String?
+  dataJson  String?
+  createdAt DateTime        @default(now())
+  run       ResearchRun?    @relation(fields: [runId], references: [id])
+  session   ResearchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model FunnelAnalysis {
@@ -859,8 +878,8 @@ model LandingProject {
   blueprintId         String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  product             Product? @relation(fields: [productId], references: [id])
   store               Store    @relation(fields: [storeId], references: [id])
+  product             Product? @relation(fields: [productId], references: [id])
 }
 
 model AvatarProfile {
@@ -908,6 +927,9 @@ model ProductFinance {
   isUpsell             Boolean  @default(false)
   targetCPA            Float?
   expectedDeliveryRate Float    @default(0.85)
+  packagingCost        Float    @default(0)
+  codFee               Float    @default(0)
+  insuranceFee         Float    @default(0)
   updatedAt            DateTime @updatedAt
   product              Product  @relation(fields: [productId], references: [id])
 }
@@ -1072,10 +1094,10 @@ model Message {
   cost              Float            @default(0)
   timestamp         DateTime         @default(now())
   createdAt         DateTime         @default(now())
-  whatsappAccount   WhatsAppAccount? @relation(fields: [whatsappAccountId], references: [id])
-  order             Order?           @relation(fields: [orderId], references: [id])
-  conversation      Conversation?    @relation(fields: [conversationId], references: [id])
   conversationId    String?
+  conversation      Conversation?    @relation(fields: [conversationId], references: [id])
+  order             Order?           @relation(fields: [orderId], references: [id])
+  whatsappAccount   WhatsAppAccount? @relation(fields: [whatsappAccountId], references: [id])
 }
 
 model AdSpyCapture {
@@ -1580,6 +1602,19 @@ model ProductMaturity {
   scoresJson       String
   lastCalculatedAt DateTime @default(now())
   product          Product  @relation(fields: [productId], references: [id])
+}
+
+model ProductBranding {
+  id              String   @id @default(cuid())
+  productId       String   @unique
+  palette         String?  // JSON: { primary, secondary, accent }
+  typography      String?  // JSON: { heading, body }
+  visualStyle     String?  // Text description
+  packagingDir    String?  // Text description
+  landingLayout   String?  // Text description
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model CopyJob {

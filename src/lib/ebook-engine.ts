@@ -36,7 +36,7 @@ export async function generateEbookPDF(req: EbookRequest) {
             2. CAPÍTULO 1: LA CIENCIA TRAS EL ÉXITO: Detalles técnicos y prácticos sobre ${req.theme}. (400 palabras)
             3. CAPÍTULO 2: IMPLEMENTACIÓN MÉTODO MAESTRO: Pasos exactos A-B-C para dominarlo. (400 palabras)
             4. CAPÍTULO 3: ERRORES FATALES Y CÓMO EVITARLOS: Lo que nadie dice. (400 palabras)
-            5. TRUCO "NANO BANANA": Un secreto de "insider" exclusivo relacionado con ${req.productName} que duplica sus resultados.
+            5. TRUCO "ECOMBOOM": Un secreto de "insider" exclusivo relacionado con ${req.productName} que duplica sus resultados.
             6. CIERRE ESTRATÉGICO: Llamada a la acción hacia la comunidad y fidelización total.
             
             FORMATO CRÍTICO:
@@ -64,7 +64,7 @@ export async function generateEbookPDF(req: EbookRequest) {
         const applyTitleStyle = () => {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(24);
-            doc.setTextColor(5, 6, 15); // Dark Blue Nano Banana
+            doc.setTextColor(5, 6, 15); // Dark Blue EcomBoom
         };
 
         const applyHeaderStyle = () => {
@@ -85,7 +85,7 @@ export async function generateEbookPDF(req: EbookRequest) {
 
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(10);
-        doc.text("GUÍA EXCLUSIVA NANO BANANA MAESTRO", pageWidth / 2, 20, { align: "center" });
+        doc.text("GUÍA EXCLUSIVA ECOMBOOM MAESTRO", pageWidth / 2, 20, { align: "center" });
 
         yPos = 80;
         applyTitleStyle();

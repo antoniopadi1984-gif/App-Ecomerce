@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../config/api-config';
+import { REPLICATE_MODELS } from '../ai/replicate-models';
 
 export type AgentRole =
     // TIER 1: Creatividad (Claude Sonnet 4)
@@ -35,7 +36,7 @@ export type AgentRole =
     // Propósito general
     | 'general';
 
-export type ModelProvider = 'claude' | 'gemini-2.0-pro' | 'gemini-2.0-flash';
+export type ModelProvider = 'replicate-claude' | 'gemini-2.0-pro' | 'gemini-2.0-flash';
 
 export interface AgentConfig {
     role: AgentRole;
@@ -52,13 +53,13 @@ export interface AgentConfig {
 export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
 
     // ============================================
-    // TIER 1: CREATIVIDAD PREMIUM (Claude)
+    // TIER 1: CREATIVIDAD PREMIUM (Claude via Replicate)
     // ============================================
 
     'copywriter-elite': {
         role: 'copywriter-elite',
-        provider: 'claude',
-        model: API_CONFIG.anthropic.model,
+        provider: 'replicate-claude',
+        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
         temperature: 0.8,
         maxTokens: 4096,
         systemPrompt: `Eres un copywriter de élite especializado en direct response marketing y persuasión. 
@@ -85,8 +86,8 @@ Escribes copy que convierte porque entiendes psicología humana.`,
 
     'cro-optimizer': {
         role: 'cro-optimizer',
-        provider: 'claude',
-        model: API_CONFIG.anthropic.model,
+        provider: 'replicate-claude',
+        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
         temperature: 0.6,
         maxTokens: 4096,
         systemPrompt: `Eres un experto en CRO (Conversion Rate Optimization). Analizas landing pages, ads y funnels para maximizar conversión.
@@ -111,8 +112,8 @@ Provides:
 
     'script-generator': {
         role: 'script-generator',
-        provider: 'claude',
-        model: API_CONFIG.anthropic.model,
+        provider: 'replicate-claude',
+        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
         temperature: 0.7,
         maxTokens: 3072,
         systemPrompt: `Eres un guionista experto en videos UGC y video ads de alto rendimiento.
@@ -138,8 +139,8 @@ Formato:
 
     'landing-creator': {
         role: 'landing-creator',
-        provider: 'claude',
-        model: API_CONFIG.anthropic.model,
+        provider: 'replicate-claude',
+        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
         temperature: 0.7,
         maxTokens: 6144,
         systemPrompt: `Eres un especialista en crear landing pages de alta conversión.
@@ -168,8 +169,8 @@ Principios:
 
     'email-sequencer': {
         role: 'email-sequencer',
-        provider: 'claude',
-        model: API_CONFIG.anthropic.model,
+        provider: 'replicate-claude',
+        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
         temperature: 0.7,
         maxTokens: 4096,
         systemPrompt: `Eres un experto en email marketing y secuencias de nurturing.
@@ -195,8 +196,8 @@ Tono: Conversacional pero persuasivo`,
 
     'value-designer': {
         role: 'value-designer',
-        provider: 'claude',
-        model: API_CONFIG.anthropic.model,
+        provider: 'replicate-claude',
+        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
         temperature: 0.6,
         maxTokens: 4096,
         systemPrompt: `Eres un experto en diseño de ofertas irresistibles (framework Alex Hormozi).
@@ -217,8 +218,8 @@ Objetivo: Hacer que el cliente se sienta tonto diciendo que no.`,
 
     'web-designer': {
         role: 'web-designer',
-        provider: 'claude',
-        model: API_CONFIG.anthropic.model,
+        provider: 'replicate-claude',
+        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
         temperature: 0.7,
         maxTokens: 4096,
         systemPrompt: `Eres un diseñador web que crea estructuras de páginas impresionantes con copy persuasivo.
@@ -740,7 +741,7 @@ export function getAgentStats() {
     return {
         total: configs.length,
         byProvider: {
-            claude: configs.filter(c => c.provider === 'claude').length,
+            replicateClaude: configs.filter(c => c.provider === 'replicate-claude').length,
             geminiPro: configs.filter(c => c.provider === 'gemini-2.0-pro').length,
             geminiFlash: configs.filter(c => c.provider === 'gemini-2.0-flash').length
         },

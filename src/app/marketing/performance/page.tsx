@@ -109,6 +109,10 @@ const ALL_COLUMNS: ColumnDef[] = [
     { id: 'real_roas', label: 'ROAS', visible: true, width: 50, type: 'ratio', sortable: true, description: 'ROAS Real' },
     { id: 'roas', label: 'Px ROAS', visible: false, width: 50, type: 'ratio', sortable: true, description: 'ROAS Pixel' },
 
+    // === BENEFICIO ===
+    { id: 'margin_real', label: 'Margen', visible: true, width: 50, type: 'percent', sortable: true, description: 'Margen Real' },
+    { id: 'net_profit', label: 'Beneficio', visible: true, width: 70, type: 'currency', sortable: true, description: 'Beneficio Neto' },
+
     // === ENTREGA ===
     { id: 'delivered_orders', label: 'Entreg.', visible: true, width: 50, type: 'number', sortable: true },
     { id: 'delivery_rate', label: '%Entreg', visible: true, width: 50, type: 'percent', sortable: true },
@@ -432,14 +436,16 @@ export default function PerformancePage() {
 
         switch (col.id) {
             case 'spend': return row.spend;
-            case 'real_purchases': return row.real_purchases;
+            case 'real_purchases': return row.purchases_real;
             case 'purchases': return norm.compras;
-            case 'real_cpa': return row.real_cpa;
+            case 'real_cpa': return row.cpa_real;
             case 'cpa_pixel': return norm.coste_compra;
-            case 'real_revenue': return row.real_revenue;
+            case 'real_revenue': return row.revenue_real;
             case 'revenue': return norm.valor_compras;
-            case 'real_roas': return row.real_roas;
+            case 'real_roas': return row.roas_real;
             case 'roas': return norm.roas_compras || row.roas;
+            case 'margin_real': return row.margin_real;
+            case 'net_profit': return row.net_profit;
             case 'delivered_orders': return row.delivered_orders;
             case 'delivery_rate': return row.delivery_rate;
             case 'impressions': return norm.impresiones;

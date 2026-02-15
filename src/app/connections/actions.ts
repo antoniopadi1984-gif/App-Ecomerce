@@ -2,27 +2,27 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { logAudit } from "@/lib/audit";
 
-export async function saveConnection(formData: FormData) {
+export async function saveConnection(formData: FormData, storeId?: string) {
     const provider = formData.get("provider") as string;
     const apiKey = formData.get("apiKey") as string;
     const apiSecret = formData.get("apiSecret") as string;
     const extraConfig = formData.get("extraConfig") as string;
 
     try {
-        // Ensure store exists
-        let store = await prisma.store.findFirst();
-        if (!store) {
-            store = await prisma.store.create({
-                data: { id: "default-store", name: "Nano Banana Store", currency: "EUR" }
-            });
-        }
-        const storeId = store.id;
+        // Resolver store
+        const resolvedStoreId = storeId || (await prisma.store.findFirst())?.id;
+        if (!resolvedStoreId) throw new Error("No hay tienda disponible");
+
+        const existing = await prisma.connection.findUnique({
+            where: { storeId_provider: { storeId: resolvedStoreId, provider } }
+        });
 
         await prisma.connection.upsert({
             where: {
                 storeId_provider: {
-                    storeId: store.id,
+                    storeId: resolvedStoreId,
                     provider: provider
                 }
             },
@@ -34,7 +34,7 @@ export async function saveConnection(formData: FormData) {
                 updatedAt: new Date()
             },
             create: {
-                storeId: store.id,
+                storeId: resolvedStoreId,
                 provider,
                 apiKey,
                 apiSecret,
@@ -43,21 +43,47 @@ export async function saveConnection(formData: FormData) {
             }
         });
 
+        await logAudit({
+            storeId: resolvedStoreId,
+            action: existing ? "CONNECTION_UPDATED" : "CONNECTION_CREATED",
+            entity: "CONNECTION",
+            entityId: provider,
+            oldValue: existing ? { isActive: existing.isActive } : null,
+            newValue: { provider, isActive: true },
+        });
+
         revalidatePath("/connections");
-        // Returning void or a simple object works, but TS in client components can be picky
     } catch (error) {
         console.error("Error saving connection:", error);
     }
 }
 
-export async function getActiveConnections() {
+export async function getActiveConnections(storeId?: string) {
+    const resolvedStoreId = storeId || (await prisma.store.findFirst())?.id;
     return prisma.connection.findMany({
-        where: { isActive: true }
+        where: {
+            isActive: true,
+            ...(resolvedStoreId ? { storeId: resolvedStoreId } : {}),
+        }
     });
 }
+
 export async function deleteConnection(id: string) {
+    const existing = await prisma.connection.findUnique({ where: { id } });
+
     await prisma.connection.delete({
         where: { id }
     });
+
+    if (existing) {
+        await logAudit({
+            storeId: existing.storeId,
+            action: "CONNECTION_DELETED",
+            entity: "CONNECTION",
+            entityId: existing.provider,
+            oldValue: { provider: existing.provider, isActive: existing.isActive },
+        });
+    }
+
     revalidatePath("/connections");
 }

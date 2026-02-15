@@ -13,7 +13,8 @@ export function useProductOrders(productId: string, initialStatus: string = 'ALL
         if (!productId) return;
         setLoading(true);
         try {
-            const url = `/api/products/${productId}/orders?page=${page}&pageSize=${pagination.pageSize}&status=${statusFilter}`;
+            // New unified endpoint that supports GLOBAL
+            const url = `/api/orders?page=${page}&pageSize=${pagination.pageSize}&status=${statusFilter}&productId=${productId}`;
             const response = await fetch(url);
             const result = await response.json();
 
@@ -23,7 +24,7 @@ export function useProductOrders(productId: string, initialStatus: string = 'ALL
             setPagination(result.data.pagination);
         } catch (error: any) {
             console.error("Error loading product orders:", error);
-            toast.error("Error al cargar pedidos del producto");
+            toast.error("Error al cargar pedidos");
         } finally {
             setLoading(false);
         }

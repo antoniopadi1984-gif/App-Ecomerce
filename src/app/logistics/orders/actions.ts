@@ -207,6 +207,20 @@ export async function upsertShopifyOrder(shopifyOrder: any, storeId: string) {
         currentStatus = "CONFIRMED";
     }
 
+    // Detect Logistics Provider (Priority: Line Item Service > Fulfillment Company > Manual)
+    let detectedProvider = "MANUAL";
+    const service = firstItem?.fulfillment_service;
+    if (service) {
+        const s = service.toLowerCase();
+        if (s.includes('beeping')) detectedProvider = "BEEPING";
+        else if (s.includes('droppi') || s.includes('dropi')) detectedProvider = "DROPPI";
+        else if (s.includes('amazon')) detectedProvider = "AMAZON";
+        else if (s !== "manual") detectedProvider = service.toUpperCase();
+    }
+    if (detectedProvider === "MANUAL" && tCarrier) {
+        detectedProvider = tCarrier.toUpperCase();
+    }
+
     const commonData: any = {
         status: currentStatus,
         totalPrice: toFloat(shopifyOrder.total_price),
@@ -245,6 +259,7 @@ export async function upsertShopifyOrder(shopifyOrder: any, storeId: string) {
         where: { shopifyId: sId },
         update: {
             ...updateData,
+            logisticsProvider: detectedProvider,
             source: attr.utmSource,
             medium: attr.utmMedium,
             campaign: attr.utmCampaign,
@@ -253,6 +268,7 @@ export async function upsertShopifyOrder(shopifyOrder: any, storeId: string) {
         },
         create: {
             ...commonData,
+            logisticsProvider: detectedProvider,
             source: attr.utmSource,
             medium: attr.utmMedium,
             campaign: attr.utmCampaign,
@@ -302,12 +318,15 @@ export async function upsertShopifyOrder(shopifyOrder: any, storeId: string) {
         } catch (beepingErr) { }
     }
 
+    // --- LINE ITEMS (FOR PROD COSTS) ---
+    await syncOrderItemsAndProducts(shopifyOrder, mainOrder.id, storeId);
+
+    // --- PROFIT CALCULATION ---
+    await calculateOrderProfit(mainOrder.id);
+
     // --- GEOCODING & RISK ---
     await autoGeocodeOrder(mainOrder.id).catch(() => { });
     await calculateOrderRisk(mainOrder.id);
-
-    // --- LINE ITEMS (FOR PROD COSTS) ---
-    await syncOrderItemsAndProducts(shopifyOrder, mainOrder.id, storeId);
 
     return mainOrder;
 }
@@ -617,8 +636,9 @@ export async function syncShopifyHistory(storeId: string) {
 
         const storeIdToUse = await getOrCreateStoreId(connection.storeId);
 
-        // --- 1. SYNC COMPLETED ORDERS ---
+        // --- 1. SYNC COMPLETED ORDERS (Historical Backfill since 2025-01-01) ---
         await shopify.getAllOrders(async (batch) => {
+            console.log(`[Shopify Sync] Processing batch of ${batch.length} orders...`);
             for (const shopifyOrder of batch) {
                 try {
                     await upsertShopifyOrder(shopifyOrder, storeIdToUse);
@@ -627,7 +647,7 @@ export async function syncShopifyHistory(storeId: string) {
                     console.error("Error order sync:", e);
                 }
             }
-        });
+        }, { minDate: "2025-01-01T00:00:00Z" });
 
         // --- 2. SYNC ABANDONED CHECKOUTS ---
         await shopify.getAllAbandonedCheckouts(async (batch) => {
@@ -778,97 +798,7 @@ export async function syncRecentShopifyOrders(limit = 250) {
 
         let count = 0;
         for (const shopifyOrder of orders) {
-            const utms = extractUtms(shopifyOrder);
-            const fulfillment = shopifyOrder.fulfillments?.[0];
-            const pDate = new Date(shopifyOrder.created_at);
-            const pEmail = (shopifyOrder.customer?.email || shopifyOrder.email || "").toLowerCase().trim();
-            const pName = ((shopifyOrder.customer?.first_name || shopifyOrder.shipping_address?.first_name || "") + " " + (shopifyOrder.customer?.last_name || shopifyOrder.shipping_address?.last_name || "")).trim() || "Cliente";
-
-            // Safe Tracking extraction
-            const tCode = fulfillment?.tracking_number ? String(fulfillment.tracking_number) : undefined;
-            const tUrl = fulfillment?.tracking_url ? String(fulfillment.tracking_url) : undefined;
-            const tCompany = fulfillment?.tracking_company ? String(fulfillment.tracking_company) : undefined;
-
-            const pm = mapPaymentMethod(shopifyOrder);
-
-            // Detect Logistics Provider (Priority: Line Item Service > Fulfillment Company > Manual)
-            let detectedProvider = "MANUAL";
-            const firstItem = shopifyOrder.line_items?.[0];
-            const service = firstItem?.fulfillment_service;
-            if (service) {
-                const s = service.toLowerCase();
-                if (s.includes('beeping')) detectedProvider = "BEEPING";
-                else if (s.includes('droppi') || s.includes('dropi')) detectedProvider = "DROPPI";
-                else if (s.includes('amazon')) detectedProvider = "AMAZON";
-                else if (s !== "manual") detectedProvider = service.toUpperCase();
-            }
-            if (detectedProvider === "MANUAL" && tCompany) {
-                detectedProvider = tCompany.toUpperCase();
-            }
-
-            const mainOrder = await (prisma as any).order.upsert({
-                where: { shopifyId: shopifyOrder.id.toString() },
-                update: {
-                    status: shopifyOrder.financial_status === "paid" ? "CONFIRMED" : "PENDING",
-                    logisticsProvider: detectedProvider,
-                    totalPrice: parseFloat(shopifyOrder.total_price),
-                    financialStatus: shopifyOrder.financial_status,
-                    shopifyUpdatedAt: new Date(shopifyOrder.updated_at),
-                    createdAt: pDate,
-                    customerEmail: pEmail,
-                    customerName: pName,
-                    addressLine1: shopifyOrder.shipping_address?.address1,
-                    city: shopifyOrder.shipping_address?.city,
-                    province: shopifyOrder.shipping_address?.province,
-                    zip: shopifyOrder.shipping_address?.zip,
-                    country: shopifyOrder.shipping_address?.country,
-                    paymentMethod: pm,
-                    source: utms.source,
-                    medium: utms.medium,
-                    campaign: utms.campaign,
-                    content: utms.content,
-                    term: utms.term,
-                    ...(tCode ? { trackingCode: tCode } : {}),
-                    ...(tUrl ? { trackingUrl: tUrl } : {}),
-                    ...(tCompany ? { carrier: tCompany } : {}),
-                } as any,
-                create: {
-                    storeId: storeIdToUse,
-                    shopifyId: shopifyOrder.id.toString(),
-                    orderNumber: shopifyOrder.name,
-                    customerName: pName,
-                    customerPhone: shopifyOrder.customer?.phone || shopifyOrder.shipping_address?.phone,
-                    customerEmail: pEmail,
-                    addressLine1: shopifyOrder.shipping_address?.address1,
-                    city: shopifyOrder.shipping_address?.city,
-                    province: shopifyOrder.shipping_address?.province,
-                    zip: shopifyOrder.shipping_address?.zip,
-                    country: shopifyOrder.shipping_address?.country,
-                    totalPrice: parseFloat(shopifyOrder.total_price),
-                    status: shopifyOrder.financial_status === "paid" ? "CONFIRMED" : "PENDING",
-                    source: utms.source, medium: utms.medium, campaign: utms.campaign,
-                    content: utms.content, term: utms.term,
-                    orderType: "REGULAR",
-                    paymentMethod: pm,
-                    rawJson: JSON.stringify(shopifyOrder),
-                    createdAt: pDate
-                } as any
-            });
-
-            await recordOrderEvent({
-                orderId: mainOrder.id,
-                source: 'SHOPIFY',
-                type: shopifyOrder.shopifyId ? 'ORDER_UPDATED' : 'ORDER_CREATED',
-                externalEventId: `shopify-${shopifyOrder.id}-${shopifyOrder.updated_at}`,
-                description: shopifyOrder.shopifyId ? 'Sincronización de actualización Shopify' : 'Pedido importado desde Shopify',
-                payload: { status: shopifyOrder.financial_status }
-            });
-
-            await calculateOrderProfit(mainOrder.id);
-            // CRITICAL: Geocode FIRST, then calculate risk based on the geocoding state
-            await autoGeocodeOrder(mainOrder.id).catch(e => console.error("Geocoding failed:", e));
-            await calculateOrderRisk(mainOrder.id);
-
+            await upsertShopifyOrder(shopifyOrder, storeIdToUse);
             count++;
         }
 
@@ -1110,7 +1040,7 @@ export async function getLocalOrders(skip = 0, take = 100, sortDirection: 'asc' 
             take,
             skip,
             // Include relations if needed for UI
-            include: { items: true, store: true }
+            include: { items: true, store: true, attribution: true }
         });
 
         // Map to UI-friendly structure if needed, or return raw.
@@ -1575,7 +1505,52 @@ export async function syncSingleOrderBeeping(orderId: string, apiKey?: string, a
     }
 }
 
-export async function syncBeepingStatuses(limit = 0) {
+async function processBeepingOrderUpdate(bo: any) {
+    const externalId = bo.external_id || bo.ref || bo.reference;
+    if (!externalId) return { updated: false };
+
+    // Find local order
+    const local = await (prisma as any).order.findFirst({
+        where: {
+            OR: [
+                { shopifyId: externalId.toString() },
+                { orderNumber: bo.ref },
+                { orderNumber: `#${bo.ref}` },
+                { orderNumber: bo.reference }
+            ]
+        }
+    });
+
+    if (local) {
+        const status = BeepingClient.mapStatus(bo);
+        const courier = BeepingClient.mapCourier(bo.courier_id);
+
+        const updateData: any = {
+            logisticsStatus: status,
+            carrier: courier,
+            trackingCode: bo.tracking_number,
+            logisticsProvider: "BEEPING",
+            trackingUrl: bo.tracking_url || local.trackingUrl,
+            shippingCost: bo.shipping_cost ? parseFloat(bo.shipping_cost) : local.shippingCost,
+            finalStatus: (status === 'DELIVERED' || status === 'RETURNED') ? status : local.finalStatus
+        };
+
+        if (status === 'DELIVERED' && !local.deliveredAt) updateData.deliveredAt = new Date();
+        if (status === 'RETURNED' && !local.returnedAt) updateData.returnedAt = new Date();
+
+        await (prisma as any).order.update({
+            where: { id: local.id },
+            data: updateData
+        });
+
+        // Recalculate profit for accounting
+        await calculateOrderProfit(local.id);
+        return { updated: true };
+    }
+    return { updated: false };
+}
+
+export async function syncBeepingStatuses(limit = 0, priority = false, segment: 'ACTIVE' | 'TRANSIT' | 'FINAL' = 'FINAL') {
     try {
         const apiKey = process.env.BEEPING_API_KEY;
         if (!apiKey) return { success: false, message: "BEEPING API KEY missing" };
@@ -1584,56 +1559,47 @@ export async function syncBeepingStatuses(limit = 0) {
         let updated = 0;
         let processed = 0;
 
-        // Use the paginated full sync logic
-        await client.getAllOrders(async (batch) => {
-            for (const bo of batch) {
-                processed++;
-                const externalId = bo.external_id || bo.ref || bo.reference;
-                if (!externalId) continue;
+        // Determine which orders to sync based on segment
+        const where: any = { logisticsProvider: "BEEPING" };
 
-                // Find local order
-                const local = await (prisma as any).order.findFirst({
-                    where: {
-                        OR: [
-                            { shopifyId: externalId.toString() },
-                            { orderNumber: bo.ref },
-                            { orderNumber: `#${bo.ref}` },
-                            { orderNumber: bo.reference }
-                        ]
-                    }
-                });
+        if (segment === 'ACTIVE') {
+            where.logisticsStatus = { in: ["PENDING", "PROCESSING", "PREPARACION"] };
+        } else if (segment === 'TRANSIT') {
+            where.logisticsStatus = { in: ["SHIPPED", "EN TRANSITO", "EN REPARTO", "OUT_FOR_DELIVERY"] };
+        } else if (segment === 'FINAL') {
+            // For FINAL, we might want to reconcile older orders too
+            where.status = { notIn: ["CANCELLED"] };
+        }
 
-                if (local) {
-                    const status = BeepingClient.mapStatus(bo);
-                    const courier = BeepingClient.mapCourier(bo.courier_id);
+        // Only sync orders from the last 60 days to keep it efficient
+        where.createdAt = { gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) };
 
-                    const updateData: any = {
-                        logisticsStatus: status,
-                        carrier: courier,
-                        trackingCode: bo.tracking_number,
-                        logisticsProvider: "BEEPING",
-                        trackingUrl: bo.tracking_url || local.trackingUrl,
-                        shippingCost: bo.shipping_cost ? parseFloat(bo.shipping_cost) : local.shippingCost,
-                        finalStatus: (status === 'DELIVERED' || status === 'RETURNED') ? status : local.finalStatus
-                    };
-
-                    if (status === 'DELIVERED' && !local.deliveredAt) updateData.deliveredAt = new Date();
-                    if (status === 'RETURNED' && !local.returnedAt) updateData.returnedAt = new Date();
-
-                    await (prisma as any).order.update({
-                        where: { id: local.id },
-                        data: updateData
-                    });
-
-                    // Recalculate profit for accounting
-                    await calculateOrderProfit(local.id);
-                    updated++;
-                }
-            }
+        const pendingOrders = await (prisma as any).order.findMany({
+            where,
+            select: { shopifyId: true, orderNumber: true }
         });
 
-        revalidatePath("/logistics/orders");
-        return { success: true, message: `Sincronización API Completa: ${updated}/${processed} pedidos actualizados.` };
+        if (pendingOrders.length === 0) return { success: true, message: `No orders found in segment ${segment}.` };
+
+        // Beeping get_orders 'in' param takes a comma separated list of external IDs or refs
+        // Handle chunking for large segments
+        const chunkSize = 100;
+        for (let i = 0; i < pendingOrders.length; i += chunkSize) {
+            const chunk = pendingOrders.slice(i, i + chunkSize);
+            const ids = chunk.map((o: any) => o.shopifyId || o.orderNumber.replace('#', '')).join(',');
+
+            const response = await client.getOrders({ in: ids, per_page: 100 });
+            const orders = Array.isArray(response) ? response : (response.data || []);
+
+            for (const bo of orders) {
+                processed++;
+                const res = await (import('./actions').then(a => (a as any).processBeepingOrderUpdate(bo)));
+                if (res.updated) updated++;
+            }
+        }
+
+        revalidatePath("/pedidos");
+        return { success: true, message: `[${segment}] Sync Completa: ${updated}/${processed} actualizados.` };
     } catch (error: any) {
         console.error("Beeping sync error:", error);
         return { success: false, message: error.message };

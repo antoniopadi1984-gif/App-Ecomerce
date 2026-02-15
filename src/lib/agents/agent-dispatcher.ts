@@ -1,6 +1,7 @@
 import { getAgentConfig, AgentRole, selectAgentForTask, getAgentProvider } from './agent-registry';
 import { API_CONFIG } from '../config/api-config';
 import { GoogleAuth } from 'google-auth-library';
+import { ReplicateProvider } from '../ai/providers/replicate';
 
 export interface AgentRequest {
     role?: AgentRole;
@@ -27,6 +28,7 @@ export interface AgentResponse {
 
 export class AgentDispatcher {
     private googleAuth: GoogleAuth;
+    private replicateProvider: ReplicateProvider;
 
     constructor() {
         try {
@@ -48,6 +50,8 @@ export class AgentDispatcher {
                 scopes: ['https://www.googleapis.com/auth/cloud-platform']
             });
         }
+
+        this.replicateProvider = new ReplicateProvider();
     }
 
     /**
@@ -65,8 +69,8 @@ export class AgentDispatcher {
 
         // Despachar según provider
         switch (provider) {
-            case 'claude':
-                return this.dispatchToClaude(role, agentConfig, request);
+            case 'replicate-claude':
+                return this.dispatchToReplicate(role, agentConfig, request);
 
             case 'gemini-2.0-pro':
             case 'gemini-2.0-flash':
@@ -78,63 +82,41 @@ export class AgentDispatcher {
     }
 
     /**
-     * Despachar a Claude (Anthropic)
+     * Despachar a Claude via Replicate (sin llamada directa a Anthropic)
      */
-    private async dispatchToClaude(
+    private async dispatchToReplicate(
         role: AgentRole,
         config: any,
         request: AgentRequest
     ): Promise<AgentResponse> {
 
-        if (!API_CONFIG.anthropic.apiKey) {
-            throw new Error('ANTHROPIC_API_KEY not configured');
+        if (!process.env.REPLICATE_API_TOKEN) {
+            throw new Error('REPLICATE_API_TOKEN not configured');
         }
 
-        const response = await fetch(API_CONFIG.anthropic.endpoint, {
-            method: 'POST',
-            headers: {
-                'x-api-key': API_CONFIG.anthropic.apiKey,
-                'anthropic-version': API_CONFIG.anthropic.version,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: config.model,
-                max_tokens: request.maxTokens || config.maxTokens,
-                temperature: request.temperature ?? config.temperature,
-                system: config.systemPrompt,
-                messages: [{
-                    role: 'user',
-                    content: request.context
-                        ? `CONTEXTO:\n${request.context}\n\nTAREA:\n${request.prompt}${request.jsonSchema ? '\n\nIMPORTANTE: Responde ÚNICAMENTE en formato JSON válido según el esquema solicitado.' : ''}`
-                        : request.prompt
-                }]
-            })
+        const prompt = request.context
+            ? `CONTEXTO:\n${request.context}\n\nTAREA:\n${request.prompt}${request.jsonSchema ? '\n\nIMPORTANTE: Responde ÚNICAMENTE en formato JSON válido según el esquema solicitado.' : ''}`
+            : request.prompt;
+
+        const result = await this.replicateProvider.invokeText({
+            model: config.model,
+            prompt,
+            systemPrompt: config.systemPrompt,
+            temperature: request.temperature ?? config.temperature,
+            maxTokens: request.maxTokens || config.maxTokens,
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Claude API error: ${errorText}`);
-        }
-
-        const data = await response.json();
-        const text = data.content?.[0]?.text || '';
-
-        // Calcular costo aproximado (Tarifas Sonnet 3.5 aprox)
-        const inputTokens = data.usage?.input_tokens || 0;
-        const outputTokens = data.usage?.output_tokens || 0;
-        const cost = (inputTokens / 1000000 * 3) + (outputTokens / 1000000 * 15);
 
         return {
             role,
-            provider: 'claude',
+            provider: 'replicate-claude',
             model: config.model,
-            text,
+            text: result.text,
             usage: {
-                promptTokens: inputTokens,
-                completionTokens: outputTokens,
-                totalTokens: inputTokens + outputTokens
+                promptTokens: result.usage?.inputTokens || 0,
+                completionTokens: result.usage?.outputTokens || 0,
+                totalTokens: (result.usage?.inputTokens || 0) + (result.usage?.outputTokens || 0)
             },
-            cost
+            cost: result.usage?.costEur || 0
         };
     }
 

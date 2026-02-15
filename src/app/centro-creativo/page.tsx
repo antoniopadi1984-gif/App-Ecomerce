@@ -39,12 +39,12 @@ export default function CentroCreativoPage() {
     if (!productId) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center animate-in fade-in duration-700">
-                <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center">
-                    <Sparkles className="w-10 h-10 text-indigo-500" />
+                <div className="w-16 h-16 bg-indigo-50 rounded-lg flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-indigo-500" />
                 </div>
                 <div className="space-y-2">
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight italic uppercase">Factoría Creativa</h2>
-                    <p className="text-slate-500 max-w-sm mx-auto font-medium">Selecciona un producto para acceder a todas las herramientas de creación.</p>
+                    <h2 className="text-lg font-black text-slate-900 tracking-tight italic uppercase">Factoría Creativa</h2>
+                    <p className="text-sm text-slate-500 max-w-sm mx-auto font-medium">Selecciona un producto para acceder a todas las herramientas de creación.</p>
                 </div>
             </div>
         );
@@ -53,51 +53,40 @@ export default function CentroCreativoPage() {
     return (
         <div className="flex flex-col h-[calc(100vh-100px)] space-y-4">
             {/* Header / Nav */}
-            <div className="bg-white rounded-3xl border border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-100/50">
-                        <Sparkles className="w-5 h-5 text-white" />
+            <div className="bg-white rounded-lg border border-slate-200 px-4 py-3 flex items-center justify-between shadow-xs">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center shadow-md shadow-slate-200">
+                        <Sparkles className="w-4 h-4 text-indigo-400" />
                     </div>
                     <div>
-                        <h1 className="text-sm font-black text-slate-900 uppercase tracking-tighter leading-none">Centro Creativo</h1>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Creative Hub & AI Factory</p>
+                        <h1 className="text-xs font-black text-slate-900 uppercase tracking-tighter leading-none italic">Centro <span className="text-indigo-600 not-italic">Creativo</span></h1>
+                        <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.1em] mt-1 shrink-0">Creative Hub & AI Factory</p>
                     </div>
                 </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-                <div className="px-1 py-1 bg-white border border-slate-200 rounded-2xl mb-4 shadow-sm inline-flex overflow-x-auto no-scrollbar max-w-full">
-                    <TabsList className="bg-transparent h-9 gap-1">
-                        <TabsTrigger value="landings" className="rounded-xl px-4 py-1.5 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all whitespace-nowrap">
-                            <Layout className="w-3.5 h-3.5 mr-2" />
-                            Landing Builder
-                        </TabsTrigger>
-                        <TabsTrigger value="advertorials" className="rounded-xl px-4 py-1.5 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all whitespace-nowrap">
-                            <FileText className="w-3.5 h-3.5 mr-2" />
-                            Advertorial Builder
-                        </TabsTrigger>
-                        <TabsTrigger value="listicles" className="rounded-xl px-4 py-1.5 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all whitespace-nowrap">
-                            <BookOpen className="w-3.5 h-3.5 mr-2" />
-                            Listicle Builder
-                        </TabsTrigger>
-                        <TabsTrigger value="avatars" className="rounded-xl px-4 py-1.5 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all whitespace-nowrap">
-                            <Users className="w-3.5 h-3.5 mr-2" />
-                            Avatares IA
-                        </TabsTrigger>
-                        <TabsTrigger value="video" className="rounded-xl px-4 py-1.5 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all whitespace-nowrap">
-                            <Video className="w-3.5 h-3.5 mr-2" />
-                            Editor Vídeo
-                        </TabsTrigger>
-                        <TabsTrigger value="library" className="rounded-xl px-4 py-1.5 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all whitespace-nowrap">
-                            <Grid3X3 className="w-3.5 h-3.5 mr-2" />
-                            Biblioteca
-                        </TabsTrigger>
+                <div className="px-0.5 py-0.5 bg-slate-100 border border-slate-200 rounded-lg mb-3 shadow-xs inline-flex overflow-x-auto no-scrollbar max-w-full">
+                    <TabsList className="bg-transparent h-8 gap-0.5">
+                        {[
+                            { value: 'landings', icon: Layout, label: 'LANDING BUILDER' },
+                            { value: 'advertorials', icon: FileText, label: 'ADVERTORIAL BUILDER' },
+                            { value: 'listicles', icon: BookOpen, label: 'LISTICLE BUILDER' },
+                            { value: 'avatars', icon: Users, label: 'AVATARES IA' },
+                            { value: 'video', icon: Video, label: 'VIDEO EDITOR' },
+                            { value: 'library', icon: Grid3X3, label: 'LIBRARY' },
+                        ].map((t) => (
+                            <TabsTrigger key={t.value} value={t.value} className="rounded-md px-3 py-1 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all whitespace-nowrap">
+                                <t.icon className="w-3 h-3 mr-1.5" />
+                                {t.label}
+                            </TabsTrigger>
+                        ))}
                     </TabsList>
                 </div>
 
-                <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col min-h-0 overflow-hidden relative">
+                <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col min-h-0 overflow-hidden relative">
                     <ScrollArea className="flex-1">
-                        <div className="p-8">
+                        <div className="p-4">
                             <TabsContent value="landings" className="m-0 animate-in fade-in duration-500">
                                 <LandingLabModule productId={productId} productTitle={product?.title} />
                             </TabsContent>
@@ -107,7 +96,7 @@ export default function CentroCreativoPage() {
                             </TabsContent>
 
                             <TabsContent value="listicles" className="m-0 animate-in fade-in duration-500">
-                                <div className="py-20 text-center space-y-4">
+                                <div className="py-10 text-center space-y-4">
                                     <BookOpen className="w-12 h-12 text-slate-200 mx-auto" />
                                     <div>
                                         <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Listicle Builder</h3>
@@ -124,7 +113,7 @@ export default function CentroCreativoPage() {
                                 <VideoLabModule productId={productId} productTitle={product?.title} allProducts={allProducts} />
                             </TabsContent>
 
-                            <TabsContent value="library" className="m-0 space-y-8 animate-in fade-in duration-500">
+                            <TabsContent value="library" className="m-0 space-y-4 animate-in fade-in duration-500">
                                 <CreativeHeader
                                     stats={creativeData?.stats || { totalSpend: 0, totalRevenue: 0, avgCtr: 0, count: 0 }}
                                     onGenerate={() => generateVideos({ maxVideos: 3 })}

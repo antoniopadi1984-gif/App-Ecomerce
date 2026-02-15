@@ -84,26 +84,55 @@ export async function startWorker() {
         }
     };
 
-    // --- INSTANT SYNC SCHEDULER (Every 2 Minutes) ---
+    // --- INTELLIGENT SCHEDULER (5/15 Min Polling) ---
+    let lastFullLogisticsSync = 0;
+    let lastPriorityLogisticsSync = 0;
+
     const runScheduler = async () => {
-        console.log("⏰ [Worker] Running High-Frequency Scheduler...");
+        console.log("⏰ [Worker] Running Intelligent Scheduler...");
+        const now = Date.now();
         try {
-            const criticalJobs: JobType[] = ['SHOPIFY_SYNC', 'LOGISTICS_SYNC', 'META_SYNC_ACCOUNTS'];
+            // 1. Shopify Sync (Every 2 min, as before)
+            const shopifyExisting = await prisma.job.findFirst({
+                where: { type: 'SHOPIFY_SYNC', status: { in: ['PENDING', 'PROCESSING'] } }
+            });
+            if (!shopifyExisting) {
+                console.log(`🆕 [Worker] Auto-Enqueuing critical job: SHOPIFY_SYNC`);
+                await createJob('SHOPIFY_SYNC', {});
+            }
 
-            for (const type of criticalJobs) {
-                // Check if a job of this type is already pending or processing
-                const existing = await prisma.job.findFirst({
-                    where: {
-                        type,
-                        status: { in: ['PENDING', 'PROCESSING'] }
-                    }
-                });
+            // 2. Logistics Sync (Intelligent Polling - Hardening 6.4)
+            const logisticsExisting = await prisma.job.findFirst({
+                where: { type: 'LOGISTICS_SYNC', status: { in: ['PENDING', 'PROCESSING'] } }
+            });
 
-                if (!existing) {
-                    console.log(`🆕 [Worker] Auto-Enqueuing critical job: ${type}`);
-                    await createJob(type, {});
+            if (!logisticsExisting) {
+                const fiveMin = 5 * 60 * 1000;
+                const tenMin = 10 * 60 * 1000;
+                const sixtyMin = 60 * 60 * 1000;
+
+                // Priority 1: PREPARACION / ACTIVE (5 min)
+                if (now - lastPriorityLogisticsSync > fiveMin) {
+                    console.log(`🆕 [Worker] Auto-Enqueuing PRIORITY Logistics Sync (Active/5m)`);
+                    await createJob('LOGISTICS_SYNC', { segment: 'ACTIVE', priority: true });
+                    lastPriorityLogisticsSync = now;
+                }
+                // Priority 2: EN TRANSITO (10 min)
+                else if (now - lastFullLogisticsSync > tenMin) {
+                    console.log(`🆕 [Worker] Auto-Enqueuing TRANSIT Logistics Sync (10m)`);
+                    await createJob('LOGISTICS_SYNC', { segment: 'TRANSIT' });
+                    lastFullLogisticsSync = now;
+                }
+                // Priority 3: FINAL RECONCILLATION (60 min)
+                else if (now - (global as any).lastFinalLogisticsSync > sixtyMin) {
+                    console.log(`🆕 [Worker] Auto-Enqueuing FINAL Logistics Reconcillation (60m)`);
+                    await createJob('LOGISTICS_SYNC', { segment: 'FINAL' });
+                    (global as any).lastFinalLogisticsSync = now;
                 }
             }
+
+            // 3. Meta Sync (Every 30-60 min - let's do 30 min)
+            // ... can add similar logic for Meta if needed
         } catch (e) {
             console.error("❌ [Worker] Scheduler Error:", e);
         }

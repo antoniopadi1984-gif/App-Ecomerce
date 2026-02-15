@@ -60,6 +60,9 @@ export default function ProductFinancePage() {
             sellingPrice: product.finance?.sellingPrice || 0,
             shippingCost: product.finance?.shippingCost || 0,
             returnCost: product.finance?.returnCost || 0,
+            packagingCost: product.finance?.packagingCost || 0,
+            codFee: product.finance?.codFee || 0,
+            insuranceFee: product.finance?.insuranceFee || 0,
             isUpsell: product.finance?.isUpsell || false,
             supplierId: product.supplierId || "none"
         });
@@ -89,8 +92,8 @@ export default function ProductFinancePage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent">Finanzas de Producto (COGS)</h1>
-                    <p className="text-muted-foreground">Control de costes, proveedores y rentabilidad unitaria.</p>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Finanzas de <span className="text-slate-400">Producto (COGS)</span></h1>
+                    <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">Control de costes, proveedores y rentabilidad unitaria.</p>
                 </div>
                 <div className="flex gap-2">
                     <Dialog>
@@ -113,24 +116,24 @@ export default function ProductFinancePage() {
 
             {/* STATS CARDS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Card className="bg-emerald-500/5 border-emerald-500/10 shadow-none">
-                    <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Rentabilidad Media</CardTitle></CardHeader>
+                <Card className="bg-white border-slate-100 shadow-sm rounded-lg overflow-hidden">
+                    <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rentabilidad Media</CardTitle></CardHeader>
                     <CardContent className="p-3 pt-0">
-                        <div className="text-xl font-black flex items-center gap-2 text-emerald-700">
-                            28.5% <ArrowUpRight className="w-3 h-3" />
+                        <div className="text-xl font-black flex items-center gap-2 text-slate-900">
+                            28.5% <ArrowUpRight className="w-3 h-3 text-slate-400" />
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-blue-500/5 border-blue-500/10 shadow-none">
-                    <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-blue-600">Ticket Medio (PVP)</CardTitle></CardHeader>
+                <Card className="bg-white border-slate-100 shadow-sm rounded-lg overflow-hidden">
+                    <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ticket Medio (PVP)</CardTitle></CardHeader>
                     <CardContent className="p-3 pt-0">
-                        <div className="text-xl font-black text-blue-700">€{stats?.productStats ? (stats.productStats.reduce((acc: number, p: any) => acc + (p.revenue / p.unitsSold || 0), 0) / stats.productStats.length).toFixed(2) : "0.00"}</div>
+                        <div className="text-xl font-black text-slate-900">€{stats?.productStats ? (stats.productStats.reduce((acc: number, p: any) => acc + (p.revenue / p.unitsSold || 0), 0) / stats.productStats.length).toFixed(2) : "0.00"}</div>
                     </CardContent>
                 </Card>
-                <Card className="bg-purple-500/5 border-purple-500/10 shadow-none">
-                    <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-purple-600">Upsell Take Rate</CardTitle></CardHeader>
+                <Card className="bg-slate-900 border-none shadow-xl rounded-lg overflow-hidden">
+                    <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-400">Upsell Take Rate</CardTitle></CardHeader>
                     <CardContent className="p-3 pt-0">
-                        <div className="text-xl font-black text-purple-700">12.4%</div>
+                        <div className="text-xl font-black text-white italic">12.4%</div>
                     </CardContent>
                 </Card>
             </div>
@@ -144,23 +147,23 @@ export default function ProductFinancePage() {
                     const totalValue = supplierProducts.reduce((acc, p) => acc + ((p.finance?.unitCost || 0) * (stats?.productStats?.find((s: any) => s.productId === p.id)?.unitsSold || 0)), 0);
 
                     return (
-                        <Card key={supplier.id} className="bg-black/40 border-white/10 overflow-hidden">
-                            <CardHeader className="bg-white/5 pb-4">
+                        <Card key={supplier.id} className="bg-white border-slate-100 overflow-hidden shadow-sm rounded-lg">
+                            <CardHeader className="bg-slate-50/50 pb-4 border-b border-slate-50">
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-lg">
+                                        <div className="h-10 w-10 rounded-lg bg-slate-900 flex items-center justify-center text-white font-black text-lg italic shadow-xl">
                                             {supplier.name.charAt(0)}
                                         </div>
                                         <div>
-                                            <CardTitle className="text-xl">{supplier.name}</CardTitle>
-                                            <CardDescription>
-                                                {supplierProducts.length} productos asignados · Valor inventario vendible: <span className="text-emerald-400 font-bold">€{totalValue.toFixed(2)}</span>
+                                            <CardTitle className="text-xl font-black italic uppercase tracking-tighter text-slate-900">{supplier.name}</CardTitle>
+                                            <CardDescription className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                                {supplierProducts.length} productos asignados · Valor inventario: <span className="text-slate-900 font-black">€{totalValue.toFixed(2)}</span>
                                             </CardDescription>
                                         </div>
                                     </div>
                                     <Dialog>
                                         <DialogTrigger asChild>
-                                            <Button variant="outline" className="border-indigo-500/30 hover:bg-indigo-500/10 text-indigo-300">
+                                            <Button variant="outline" className="h-8 rounded-lg border-slate-200 text-slate-600 font-black text-[9px] uppercase tracking-widest">
                                                 <Plus className="w-4 h-4 mr-2" /> Añadir Productos
                                             </Button>
                                         </DialogTrigger>
@@ -198,15 +201,18 @@ export default function ProductFinancePage() {
                                     </Dialog>
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-0 border-t border-white/5">
+                            <CardContent className="p-0 border-t border-slate-50">
                                 <Table>
-                                    <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5 hover:bg-transparent h-8">
+                                    <TableHeader className="bg-slate-50/30">
+                                        <TableRow className="border-slate-50 hover:bg-transparent h-8">
                                             <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Producto</TableHead>
-                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Coste Unit.</TableHead>
+                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Unitario</TableHead>
                                             <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Envío</TableHead>
+                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Pack/COD</TableHead>
+                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Retorno</TableHead>
+                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">Seguro</TableHead>
                                             <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 py-0">PVP</TableHead>
-                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-emerald-500 py-0">Margen</TableHead>
+                                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-900 py-0">Neto</TableHead>
                                             <TableHead className="w-[80px] py-0"></TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -218,15 +224,15 @@ export default function ProductFinancePage() {
                                             </TableRow>
                                         ) : (
                                             supplierProducts.map((product) => (
-                                                <TableRow key={product.id} className="border-white/5 hover:bg-white/5">
-                                                    <TableCell className="pl-6 font-medium">
+                                                <TableRow key={product.id} className="border-slate-50 hover:bg-slate-50/30">
+                                                    <TableCell className="pl-6 font-bold text-slate-900 italic">
                                                         {product.title}
-                                                        <div className="text-[10px] text-muted-foreground">{product.sku}</div>
+                                                        <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{product.sku}</div>
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         {editingId === product.id ? (
                                                             <Input
-                                                                type="number" className="h-7 w-20 ml-auto bg-black/50 text-right"
+                                                                type="number" step="0.01" className="h-7 w-16 ml-auto bg-black/50 text-right"
                                                                 value={editForm.unitCost}
                                                                 onChange={(e) => setEditForm({ ...editForm, unitCost: parseFloat(e.target.value) })}
                                                             />
@@ -235,7 +241,7 @@ export default function ProductFinancePage() {
                                                     <TableCell className="text-right">
                                                         {editingId === product.id ? (
                                                             <Input
-                                                                type="number" className="h-7 w-20 ml-auto bg-black/50 text-right"
+                                                                type="number" step="0.01" className="h-7 w-16 ml-auto bg-black/50 text-right"
                                                                 value={editForm.shippingCost}
                                                                 onChange={(e) => setEditForm({ ...editForm, shippingCost: parseFloat(e.target.value) })}
                                                             />
@@ -243,17 +249,64 @@ export default function ProductFinancePage() {
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         {editingId === product.id ? (
+                                                            <div className="flex flex-col gap-1 items-end">
+                                                                <Input
+                                                                    type="number" step="0.01" className="h-7 w-16 bg-black/50 text-right"
+                                                                    placeholder="Pack"
+                                                                    value={editForm.packagingCost}
+                                                                    onChange={(e) => setEditForm({ ...editForm, packagingCost: parseFloat(e.target.value) })}
+                                                                />
+                                                                <Input
+                                                                    type="number" step="0.01" className="h-7 w-16 bg-black/50 text-right border-emerald-500/30"
+                                                                    placeholder="COD"
+                                                                    value={editForm.codFee}
+                                                                    onChange={(e) => setEditForm({ ...editForm, codFee: parseFloat(e.target.value) })}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="text-[10px] font-bold text-slate-600">P: €{product.finance?.packagingCost || 0}</span>
+                                                                <span className="text-[10px] font-black text-slate-400">C: €{product.finance?.codFee || 0}</span>
+                                                            </div>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {editingId === product.id ? (
                                                             <Input
-                                                                type="number" className="h-7 w-20 ml-auto bg-black/50 text-right"
+                                                                type="number" step="0.01" className="h-7 w-16 ml-auto bg-black/50 text-right border-red-500/30"
+                                                                value={editForm.returnCost}
+                                                                onChange={(e) => setEditForm({ ...editForm, returnCost: parseFloat(e.target.value) })}
+                                                            />
+                                                        ) : (
+                                                            <span className="text-slate-400 text-[10px] font-bold">€{product.finance?.returnCost || 0}</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {editingId === product.id ? (
+                                                            <Input
+                                                                type="number" step="0.01" className="h-7 w-16 ml-auto bg-black/50 text-right border-blue-500/30"
+                                                                value={editForm.insuranceFee}
+                                                                onChange={(e) => setEditForm({ ...editForm, insuranceFee: parseFloat(e.target.value) })}
+                                                            />
+                                                        ) : (
+                                                            <span className="text-slate-400 text-[10px] font-bold">€{product.finance?.insuranceFee || 0}</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {editingId === product.id ? (
+                                                            <Input
+                                                                type="number" step="0.01" className="h-7 w-16 ml-auto bg-black/50 text-right"
                                                                 value={editForm.sellingPrice}
                                                                 onChange={(e) => setEditForm({ ...editForm, sellingPrice: parseFloat(e.target.value) })}
                                                             />
                                                         ) : `€${product.finance?.sellingPrice || 0}`}
                                                     </TableCell>
-                                                    <TableCell className="text-right font-bold text-emerald-400">
+                                                    <TableCell className="text-right font-black text-slate-950 italic">
                                                         €{(
                                                             (editingId === product.id ? editForm.sellingPrice : (product.finance?.sellingPrice || 0)) -
-                                                            (editingId === product.id ? editForm.unitCost + editForm.shippingCost : (product.finance?.unitCost || 0) + (product.finance?.shippingCost || 0))
+                                                            (editingId === product.id
+                                                                ? (editForm.unitCost + editForm.shippingCost + editForm.packagingCost + editForm.codFee + editForm.insuranceFee)
+                                                                : ((product.finance?.unitCost || 0) + (product.finance?.shippingCost || 0) + (product.finance?.packagingCost || 0) + (product.finance?.codFee || 0) + (product.finance?.insuranceFee || 0)))
                                                         ).toFixed(2)}
                                                     </TableCell>
                                                     <TableCell>

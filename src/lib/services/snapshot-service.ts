@@ -33,7 +33,13 @@ export class SnapshotService {
         const currentMetrics = existing?.metricsJson ? JSON.parse(existing.metricsJson) : this.getEmptyMetrics();
         const currentCompleteness = existing?.dataCompleteness ? JSON.parse(existing.dataCompleteness) : this.getEmptyCompleteness();
 
-        // 2. Merge Block Data
+        // 2. IMMUTABILITY CHECK
+        if (existing?.status === 'CLOSED') {
+            console.warn(`[SnapshotService] Day ${dayStart.toISOString()} is CLOSED. Update skipped.`);
+            return existing;
+        }
+
+        // 3. Merge Block Data
         const updatedMetrics = this.mergeBlockData(currentMetrics, block, data);
         const updatedCompleteness = { ...currentCompleteness, [block]: 'OK' }; // For simplicity, we mark block as OK if data is provided
 
@@ -166,7 +172,6 @@ export class SnapshotService {
         const start = startOfDay(date);
         const end = endOfDay(date);
 
-        // Logistics is tricky because it depends on the view too
         const orderFilter: any = { storeId };
         if (view === 'ORDERS_CREATED') {
             orderFilter.createdAt = { gte: start, lte: end };
@@ -175,47 +180,79 @@ export class SnapshotService {
             orderFilter.logisticsStatus = 'DELIVERED';
         }
 
-        const orders = await prisma.order.findMany({ where: orderFilter });
+        const orders = await prisma.order.findMany({
+            where: orderFilter,
+            include: { items: { include: { product: { include: { finance: true } } } } }
+        });
+
         const delivered = orders.filter(o => o.logisticsStatus === 'DELIVERED');
         const returned = orders.filter(o => ['RETURNED', 'RETURN_TO_SENDER', 'REFUNDED'].includes(o.logisticsStatus || ''));
         const incidents = orders.filter(o => o.logisticsStatus === 'INCIDENCE' || o.incidenceReason != null);
         const recovered = orders.filter(o => o.logisticsStatus === 'DELIVERED' && (o.incidenceResult === 'RECOVERED' || o.incidenciaType === 'RECOVERED'));
         const deliveredRevenue = delivered.reduce((acc, o) => acc + (o.totalPrice || 0), 0);
 
-        // Logistics Costs Rules
+        // Logistics Costs Rules (Fallbacks)
         const rules = await (prisma as any).fulfillmentRule.findMany({ where: { storeId, isActive: true } });
         const getRule = (provider: string | null) => {
             const rule = rules.find((r: any) => r.provider === provider);
-            return rule || rules.find((r: any) => r.provider === "GENÉRICO") || { baseShippingCost: 6.5, returnCost: 5.0, codFeeFixed: 1.0, codFeePercent: 0 };
+            return rule || rules.find((r: any) => r.provider === "GENÉRICO") || { baseShippingCost: 6.5, returnCost: 5.0, codFeeFixed: 1.0, codFeePercent: 0, packagingCost: 0.5 };
         };
 
-        const shippingCosts = orders.filter(o => !['CANCELLED', 'ABANDONED'].includes(o.status || '')).reduce((acc, o) => {
-            const r = getRule(o.logisticsProvider);
-            let c = (r.baseShippingCost || 0) + (r.packagingCost || 0) + (r.handlingCost || 0);
-            if (o.paymentMethod === 'COD') {
-                c += (r.codFeeFixed || 0) + ((o.totalPrice || 0) * (r.codFeePercent || 0) / 100);
-            }
-            return acc + c;
-        }, 0);
+        let totalShippingCosts = 0;
+        let totalReturnLoss = 0;
 
-        const returnLoss = returned.reduce((acc, o) => {
+        orders.filter(o => !['CANCELLED', 'ABANDONED'].includes(o.status || '')).forEach(o => {
             const r = getRule(o.logisticsProvider);
-            return acc + (r.baseShippingCost || 0) + (r.returnCost || 0);
-        }, 0);
+
+            // Product-level aggregation
+            let prodShipping = 0;
+            let prodPackaging = 0;
+            let prodCodFee = 0;
+            let prodInsurance = 0;
+            let prodReturn = 0;
+
+            o.items.forEach(item => {
+                const pf = (item.product as any)?.finance;
+                const qty = item.quantity || 1;
+                prodShipping += (pf?.shippingCost || 0) * qty;
+                prodPackaging += (pf?.packagingCost || 0) * qty;
+                prodCodFee += (pf?.codFee || 0) * qty;
+                prodInsurance += (pf?.insuranceFee || 0) * qty;
+                prodReturn += (pf?.returnCost || 0) * qty;
+            });
+
+            // Aggregate logical costs for this order
+            const finalShipping = prodShipping > 0 ? prodShipping : (o.shippingCost > 0 ? o.shippingCost : r.baseShippingCost || 0);
+            const finalPackaging = prodPackaging > 0 ? prodPackaging : (r.packagingCost || 0);
+            const finalInsurance = prodInsurance;
+
+            let finalCodFee = prodCodFee;
+            if (finalCodFee === 0 && o.paymentMethod === 'COD') {
+                finalCodFee = (r.codFeeFixed || 0) + ((o.totalPrice || 0) * (r.codFeePercent || 0) / 100);
+            }
+
+            totalShippingCosts += (finalShipping + finalPackaging + finalInsurance + finalCodFee);
+
+            // Return loss calculation
+            if (['RETURNED', 'RETURN_TO_SENDER', 'REFUNDED'].includes(o.logisticsStatus || '')) {
+                const finalReturn = prodReturn > 0 ? prodReturn : (r.returnCost || 0);
+                totalReturnLoss += (finalShipping + finalReturn);
+            }
+        });
 
         await this.patchSnapshot(storeId, date, view, 'logistics', {
             delivered: delivered.length,
             returned: returned.length,
             incidents: incidents.length,
             recovered: recovered.length,
-            shipping: shippingCosts,
-            returnLoss,
+            shipping: totalShippingCosts,
+            returnLoss: totalReturnLoss,
             revenueReal: view === 'DELIVERED' ? deliveredRevenue : 0
         });
     }
 
     /**
-     * Sync Costs Block (COGS)
+     * Sync Costs Block (COGS + Store Expenses)
      */
     static async syncCostsBlock(storeId: string, date: Date, view: SnapshotView) {
         const start = startOfDay(date);
@@ -239,15 +276,25 @@ export class SnapshotService {
         let hasMissingCosts = false;
 
         items.forEach(item => {
-            const cost = item.unitCost || item.product?.finance?.unitCost;
-            if (cost === undefined || cost === null) {
-                hasMissingCosts = true;
+            const cost = item.unitCost || (item.product as any)?.finance?.unitCost || (item.product as any)?.unitCost;
+            if (cost === undefined || cost === null || cost === 0) {
+                // Only mark as missing if we really don't have a cost
+                if (!item.unitCost && !(item.product as any)?.finance?.unitCost && !(item.product as any)?.unitCost) {
+                    hasMissingCosts = true;
+                }
             }
-            cogs += ((cost || 0) * (item.quantity || 0));
+            cogs += ((cost || 0) * (item.quantity || 1));
         });
+
+        // --- PRORATED STORE EXPENSES ---
+        const store = await (prisma as any).store.findUnique({ where: { id: storeId } });
+        const monthlyTotal = (store?.baseRent || 0) + (store?.baseApps || 0) + (store?.baseSalaries || 0);
+        const daysInMonth = (endOfMonth(date)).getDate();
+        const dailyExpense = monthlyTotal / daysInMonth;
 
         await this.patchSnapshot(storeId, date, view, 'costs', {
             cogs,
+            storeExpenses: dailyExpense,
             profitStatus: hasMissingCosts ? 'PARTIAL' : 'REAL'
         });
     }
@@ -287,9 +334,9 @@ export class SnapshotService {
 
     private static getEmptyMetrics() {
         return {
-            counts: { lpv: 0, clicks: 0, orders: 0, units: 0, confirmed: 0, cancelled: 0, delivered: 0, returned: 0, incidents: 0, recovered: 0 },
-            financials: { spendAds: 0, revenueConfirmed: 0, revenueReal: 0, averageTicket: 0, cogs: 0, shipping: 0, returnLoss: 0, communicationCost: 0, storeExpenses: 0, netProfit: 0, directProfit: 0 },
-            rates: { convRate: 0, roasReal: 0, profitMargin: 0, deliveryRate: 0, shipmentRate: 0, recoveryRate: 0, incidenceRate: 0 },
+            counts: { orders: 0, confirmed: 0, cancelled: 0, delivered: 0, returned: 0, incidents: 0, recovered: 0, lpv: 0, clicks: 0, units: 0 },
+            financials: { revenueConfirmed: 0, revenueReal: 0, netProfit: 0, cogs: 0, shipping: 0, returnLoss: 0, storeExpenses: 0, communicationCost: 0, spendAds: 0 },
+            rates: {},
             profitStatus: 'REAL'
         };
     }
@@ -320,6 +367,7 @@ export class SnapshotService {
             current.financials.returnLoss = data.returnLoss;
         } else if (block === 'costs') {
             current.financials.cogs = data.cogs;
+            current.financials.storeExpenses = data.storeExpenses || 0;
             current.profitStatus = data.profitStatus;
         }
         return current;
@@ -364,31 +412,37 @@ export class SnapshotService {
             else if (s.view === 'DELIVERED') entry.delivered = s;
         });
 
-        const fullDays = Array.from(dayMap.values()).map(d => {
-            const c = d.created;
-            const dv = d.delivered;
+        const allDays = eachDayOfInterval({ start, end });
+        const fullDays = allDays.map(day => {
+            const d = new Date(day);
+            const dateKey = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 
-            const cM = JSON.parse(c?.metricsJson || '{}');
-            const dM = JSON.parse(dv?.metricsJson || '{}');
+            const entry = dayMap.get(dateKey);
+            const c = entry?.created;
+            const dv = entry?.delivered;
+
+            const baseMetrics = this.getEmptyMetrics();
+            const cM = c?.metricsJson ? JSON.parse(c.metricsJson) : baseMetrics;
+            const dM = dv?.metricsJson ? JSON.parse(dv.metricsJson) : baseMetrics;
 
             // Merge for UI
             const mergedMetrics = {
                 ...cM,
                 counts: {
-                    ...(cM.counts || {}),
+                    ...(cM.counts || baseMetrics.counts),
                     delivered: dM.counts?.delivered || 0,
                     returned: dM.counts?.returned || 0,
                 },
                 financials: {
-                    ...(cM.financials || {}),
+                    ...(cM.financials || baseMetrics.financials),
                     revenueReal: dM.financials?.revenueReal || 0,
                     netProfit: dM.financials?.netProfit || 0
                 }
             };
 
             return {
-                id: c?.id || dv?.id,
-                date: d.date,
+                id: c?.id || dv?.id || `missing-${dateKey}`,
+                date: day,
                 spendAds: c?.spendAds || 0,
                 revenueReal: dv?.revenueReal || 0,
                 costsReal: dv?.costsReal || (c?.costsReal || 0),
@@ -396,8 +450,8 @@ export class SnapshotService {
                 roasReal: dv?.roasReal || 0,
                 deliveryRate: dv?.deliveryRate || (c?.deliveryRate || 0),
                 incidenceRate: dv?.incidenceRate || (c?.incidenceRate || 0),
-                isComplete: (c?.isComplete && dv?.isComplete) || false,
-                status: dv?.status || c?.status || 'NEUTRAL',
+                status: c?.status || dv?.status || 'NEUTRAL',
+                isComplete: c?.isComplete || dv?.isComplete || false,
                 metricsJson: JSON.stringify(mergedMetrics)
             };
         });
@@ -456,7 +510,7 @@ export class SnapshotService {
     /**
      * FULL REBUILD: Guarantees 1 row per day from start to end.
      */
-    static async rebuildFullHistory(storeId: string, startStr = "2025-09-01") {
+    static async rebuildFullHistory(storeId: string, startStr = "2025-01-01") {
         const start = startOfDay(fromZonedTime(new Date(startStr), TIMEZONE));
         const end = endOfDay(toZonedTime(new Date(), TIMEZONE));
 

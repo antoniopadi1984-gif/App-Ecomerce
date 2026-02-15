@@ -194,10 +194,10 @@ export default function HypothesesPage() {
         <div className="space-y-4 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent flex items-center gap-2">
-                        <Calculator className="h-6 w-6 text-primary" /> Simulador de Hipótesis
+                    <h2 className="text-2xl font-black tracking-tighter uppercase italic text-slate-900 flex items-center gap-2">
+                        <Calculator className="h-6 w-6 text-slate-900" /> Simulador de <span className="text-slate-400">Hipótesis</span>
                     </h2>
-                    <p className="text-xs text-muted-foreground mt-1">Calcula tu rentabilidad ideal y define límites de gasto publicitario.</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Calcula tu rentabilidad ideal y define límites de gasto publicitario.</p>
                 </div>
                 <div className="flex gap-2">
                     {/* Load Product */}
@@ -231,21 +231,21 @@ export default function HypothesesPage() {
                     <CardContent className="p-4 pt-0 space-y-4">
 
                         {bundle.enabled && (
-                            <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20 space-y-2">
-                                <Label className="text-[10px] text-purple-300 font-bold uppercase">Configuración de Oferta (Bundle)</Label>
+                            <div className="p-3 bg-slate-900 rounded-lg border border-slate-800 space-y-2 shadow-xl">
+                                <Label className="text-[10px] text-white font-black uppercase tracking-widest">Configuración de Oferta (Bundle)</Label>
                                 <div className="flex gap-4">
                                     <div className="space-y-1">
-                                        <Label className="text-[9px]">Unidades Cobradas</Label>
+                                        <Label className="text-[9px] text-slate-400 font-bold uppercase">Unidades Cobradas</Label>
                                         <Input
-                                            type="number" className="h-7 w-20 text-xs"
+                                            type="number" className="h-7 w-20 text-[11px] font-black bg-white/5 border-white/10"
                                             value={bundleConfig.paidUnits}
                                             onChange={(e) => setBundleConfig({ ...bundleConfig, paidUnits: parseInt(e.target.value) || 1 })}
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label className="text-[9px]">Unidades Enviadas</Label>
+                                        <Label className="text-[9px] text-slate-400 font-bold uppercase">Unidades Enviadas</Label>
                                         <Input
-                                            type="number" className="h-7 w-20 text-xs"
+                                            type="number" className="h-7 w-20 text-[11px] font-black bg-white/5 border-white/10"
                                             value={bundleConfig.shippedUnits}
                                             onChange={(e) => setBundleConfig({ ...bundleConfig, shippedUnits: parseInt(e.target.value) || 1 })}
                                         />
@@ -318,59 +318,59 @@ export default function HypothesesPage() {
                 <div className="md:col-span-7 space-y-4">
                     {/* Primary Results */}
                     <div className="grid grid-cols-2 gap-4">
-                        <Card className="bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
+                        <Card className="bg-slate-900 border-none shadow-xl rounded-lg overflow-hidden">
                             <CardHeader className="p-3 pb-0">
-                                <CardDescription className="text-[10px] uppercase">CPA Máximo ({results.targetROAS} ROAS)</CardDescription>
+                                <CardDescription className="text-[10px] font-black uppercase tracking-widest text-slate-500">CPA Máximo ({results.targetROAS} ROAS)</CardDescription>
                             </CardHeader>
                             <CardContent className="p-3">
-                                <div className="text-2xl font-black text-emerald-400">€{results.targetCPA}</div>
-                                <p className="text-[9px] text-muted-foreground mt-1">Para ganar €{params.targetProfitPerOrder}/pedido</p>
+                                <div className="text-2xl font-black text-white italic tracking-tighter">€{results.targetCPA}</div>
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-1">Para ganar €{params.targetProfitPerOrder}/pedido</p>
                             </CardContent>
                         </Card>
-
-                        <Card className="bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20">
+                        |
+                        <Card className="bg-white border-slate-100 shadow-sm rounded-lg overflow-hidden">
                             <CardHeader className="p-3 pb-0">
-                                <CardDescription className="text-[10px] uppercase">CPC Máximo (Ads)</CardDescription>
+                                <CardDescription className="text-[10px] font-black uppercase tracking-widest text-slate-400">CPC Máximo (Ads)</CardDescription>
                             </CardHeader>
                             <CardContent className="p-3">
-                                <div className="text-2xl font-black text-blue-400">€{results.maxCPC}</div>
-                                <p className="text-[9px] text-muted-foreground mt-1">Límite para tus pujas en Meta</p>
+                                <div className="text-2xl font-black text-slate-900 italic tracking-tighter">€{results.maxCPC}</div>
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-1">Límite para tus pujas en Meta</p>
                             </CardContent>
                         </Card>
                     </div>
 
                     {/* Metrics Table */}
-                    <Card className="bg-gray-900/30 border-white/5">
+                    <Card className="bg-white border-slate-100 shadow-sm rounded-lg overflow-hidden">
                         <CardHeader className="p-4 pb-2">
-                            <CardTitle className="text-sm">Análisis de Rentabilidad {bundle.enabled ? '(BUNDLE)' : ''}</CardTitle>
+                            <CardTitle className="text-xs font-black uppercase italic tracking-tighter">Análisis de Rentabilidad {bundle.enabled ? '(BUNDLE)' : ''}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 pt-2 space-y-4">
                             <div className="grid grid-cols-3 gap-2 text-center mb-4">
-                                <div className="p-2 bg-white/5 rounded">
-                                    <div className="text-[10px] text-muted-foreground uppercase">Ingresos</div>
-                                    <div className="font-bold">€{results.revenue}</div>
+                                <div className="p-2 bg-slate-50 rounded">
+                                    <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Ingresos</div>
+                                    <div className="font-black text-slate-900 italic tracking-tighter">€{results.revenue}</div>
                                 </div>
-                                <div className="p-2 bg-white/5 rounded">
-                                    <div className="text-[10px] text-muted-foreground uppercase">Costes Tot.</div>
-                                    <div className="font-bold text-rose-400">€{results.cost}</div>
+                                <div className="p-2 bg-slate-50 rounded">
+                                    <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Costes Tot.</div>
+                                    <div className="font-black text-slate-900 italic tracking-tighter">€{results.cost}</div>
                                 </div>
-                                <div className="p-2 bg-white/5 rounded">
-                                    <div className="text-[10px] text-muted-foreground uppercase">Margen</div>
-                                    <div className="font-bold text-emerald-400">€{results.margin}</div>
+                                <div className="p-2 bg-slate-900 rounded shadow-lg">
+                                    <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Margen</div>
+                                    <div className="font-black text-white italic tracking-tighter">€{results.margin}</div>
                                 </div>
                             </div>
-
-                            <Separator className="bg-white/5" />
-
+                            |
+                            <Separator className="bg-slate-50" />
+                            |
                             <div className="flex items-center justify-between text-xs pt-2">
-                                <span className="text-muted-foreground">ROAS de Equilibrio (Break-Even)</span>
-                                <Badge variant="outline" className="border-rose-500/30 text-rose-400">{results.breakEvenROAS}</Badge>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">ROAS de Equilibrio (Break-Even)</span>
+                                <Badge variant="outline" className="border-slate-200 text-slate-600 font-black">{results.breakEvenROAS}</Badge>
                             </div>
-
-                            <div className="bg-primary/5 border border-primary/10 rounded-md p-3 flex gap-3 mt-4">
-                                <Info className="h-4 w-4 text-primary shrink-0" />
-                                <p className="text-[10px] leading-relaxed text-muted-foreground">
-                                    Con un <strong>ROAS de {results.targetROAS}</strong> y una tasa de conversión del <strong>{params.conversionRate}%</strong>, aseguras tu beneficio objetivo de <strong>€{params.targetProfitPerOrder}</strong>.
+                            |
+                            <div className="bg-slate-50 border border-slate-100 rounded-md p-3 flex gap-3 mt-4">
+                                <Info className="h-4 w-4 text-slate-900 shrink-0" />
+                                <p className="text-[9px] leading-relaxed text-slate-500 font-bold uppercase tracking-tight">
+                                    Con un <strong className="text-slate-950 underline decoration-slate-950/20 underline-offset-2">ROAS de {results.targetROAS}</strong> y una tasa de conversión de <strong className="text-slate-950">{params.conversionRate}%</strong>, aseguras tu beneficio objetivo de <strong className="text-slate-950">€{params.targetProfitPerOrder}</strong>.
                                 </p>
                             </div>
                         </CardContent>

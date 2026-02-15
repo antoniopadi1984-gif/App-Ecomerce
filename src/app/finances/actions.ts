@@ -92,8 +92,10 @@ export async function getActiveThreshold(storeId: string) {
 
 // --- NEW ACTIONS FOR PRODUCTS FINANCE ---
 
-export async function getProductsWithFinance() {
+export async function getProductsWithFinance(storeId?: string) {
+    const resolvedStoreId = storeId || (await prisma.store.findFirst())?.id;
     const products = await prisma.product.findMany({
+        where: resolvedStoreId ? { storeId: resolvedStoreId } : {},
         include: {
             finance: true,
             supplier: true
@@ -103,24 +105,25 @@ export async function getProductsWithFinance() {
     return products;
 }
 
-export async function getSuppliers() {
+export async function getSuppliers(storeId?: string) {
+    const resolvedStoreId = storeId || (await prisma.store.findFirst())?.id;
     const suppliers = await prisma.supplier.findMany({
+        where: resolvedStoreId ? { storeId: resolvedStoreId } : {},
         orderBy: { name: 'asc' }
     });
     return suppliers;
 }
 
-export async function createSupplier(data: { name: string }) {
-    // Attempt to find a default store since context is missing in this simpler action
-    const store = await prisma.store.findFirst();
-    if (!store) {
-        throw new Error("No store found to associate supplier");
+export async function createSupplier(data: { name: string }, storeId?: string) {
+    const resolvedStoreId = storeId || (await prisma.store.findFirst())?.id;
+    if (!resolvedStoreId) {
+        throw new Error("No hay tienda disponible para asociar proveedor");
     }
 
     const supplier = await prisma.supplier.create({
         data: {
             name: data.name,
-            storeId: store.id
+            storeId: resolvedStoreId
         }
     });
     return supplier;
@@ -140,7 +143,7 @@ export async function updateProductFinance(productId: string, data: any) {
     }
 
     // Upsert finance data
-    const finance = await prisma.productFinance.upsert({
+    const finance = await (prisma as any).productFinance.upsert({
         where: { productId },
         create: {
             productId,
@@ -148,6 +151,9 @@ export async function updateProductFinance(productId: string, data: any) {
             sellingPrice: Number(financeData.sellingPrice) || 0,
             shippingCost: Number(financeData.shippingCost) || 0,
             returnCost: Number(financeData.returnCost) || 0,
+            packagingCost: Number(financeData.packagingCost) || 0,
+            codFee: Number(financeData.codFee) || 0,
+            insuranceFee: Number(financeData.insuranceFee) || 0,
             isUpsell: Boolean(financeData.isUpsell),
         },
         update: {
@@ -155,19 +161,39 @@ export async function updateProductFinance(productId: string, data: any) {
             sellingPrice: Number(financeData.sellingPrice) || 0,
             shippingCost: Number(financeData.shippingCost) || 0,
             returnCost: Number(financeData.returnCost) || 0,
+            packagingCost: Number(financeData.packagingCost) || 0,
+            codFee: Number(financeData.codFee) || 0,
+            insuranceFee: Number(financeData.insuranceFee) || 0,
             isUpsell: Boolean(financeData.isUpsell),
         }
     });
 
     revalidatePath("/finances/products");
+
+    // 4. Trigger Recalculation of all associated orders (Hardening fix 6.4)
+    // Run asynchronously to not block the UI
+    (async () => {
+        try {
+            const { calculateOrderProfit } = await import("@/lib/logistics-engine");
+            const orders = await prisma.order.findMany({
+                where: { items: { some: { productId } } },
+                select: { id: true }
+            });
+            console.log(`[Finance Update] Recalculating profit for ${orders.length} orders of product ${productId}`);
+            for (const order of orders) {
+                await calculateOrderProfit(order.id);
+            }
+        } catch (e) {
+            console.error("[Finance Update] Profit recalculation failed:", e);
+        }
+    })();
+
     return finance;
 }
 
-export async function getDetailedStats() {
-    // Calculate simple stats to feed the dashboard
+export async function getDetailedStats(storeId?: string) {
+    const resolvedStoreId = storeId || (await prisma.store.findFirst())?.id;
 
-    // Product Performance (derived from OrderItems)
-    // Note: This is an approximation. Ideally we use DailySnapshot but user asked for "detailed stats" likely for the product table/cards.
     const productStatsData = await prisma.orderItem.groupBy({
         by: ['productId'],
         _sum: {
@@ -175,7 +201,10 @@ export async function getDetailedStats() {
             quantity: true
         },
         where: {
-            productId: { not: null }
+            productId: { not: null },
+            ...(resolvedStoreId ? {
+                order: { storeId: resolvedStoreId }
+            } : {})
         }
     });
 
@@ -185,8 +214,6 @@ export async function getDetailedStats() {
         unitsSold: p._sum.quantity || 0
     }));
 
-    // Supplier Performance (Mocked or simple for now as it requires complex joins not easy with simple Prisma calls)
-    // We will return empty for now to avoid errors, as the UI handles empty arrays gracefully.
     const supplierStats: any[] = [];
 
     return {
@@ -227,20 +254,17 @@ export async function saveMonthlyGoal(storeId: string, month: number, year: numb
 
 // --- HYPOTHESIS ACTIONS ---
 
-export async function saveHypothesis(data: any) {
-    const store = await prisma.store.findFirst();
-    if (!store) throw new Error("No store found");
+export async function saveHypothesis(data: any, storeId?: string) {
+    const resolvedStoreId = storeId || (await prisma.store.findFirst())?.id;
+    if (!resolvedStoreId) throw new Error("No hay tienda disponible");
 
-    // Use a simple JSON storage approach since we don't have a Hypothesis model
-    // We'll store in a generic KeyValue or create one in memory
     const hypothesis = {
         id: `hyp_${Date.now()}`,
         ...data,
+        storeId: resolvedStoreId,
         createdAt: new Date().toISOString()
     };
 
-    // For now, return the hypothesis as-is (stateless)
-    // In a real implementation, you'd save to a Hypothesis table
     return hypothesis;
 }
 
@@ -255,7 +279,7 @@ export async function deleteHypothesis(id: string) {
     return { success: true, id };
 }
 
-export async function loadProductCosts(productId?: string) {
+export async function loadProductCosts(productId?: string, storeId?: string) {
     if (productId) {
         const product = await prisma.product.findUnique({
             where: { id: productId },
@@ -272,7 +296,9 @@ export async function loadProductCosts(productId?: string) {
         };
     }
 
+    const resolvedStoreId = storeId || (await prisma.store.findFirst())?.id;
     const products = await prisma.product.findMany({
+        where: resolvedStoreId ? { storeId: resolvedStoreId } : {},
         include: {
             finance: true
         }

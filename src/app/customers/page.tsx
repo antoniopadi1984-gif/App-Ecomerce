@@ -62,34 +62,33 @@ export default function CustomersPage() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-2rem)] bg-white rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-2xl relative">
+        <div className="flex h-[calc(100vh-2rem)] bg-white rounded-lg overflow-hidden border border-slate-200 shadow-2xl relative">
 
             {/* LEFT: CUSTOMER LIST */}
             <div className={cn(
                 "flex flex-col border-r border-slate-100 bg-slate-50/20 transition-all duration-500",
                 selectedId ? "w-[400px]" : "w-full"
             )}>
-                <div className="p-8 pb-6 flex flex-col gap-6">
+                <div className="p-4 flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
-                                <User className="h-5 w-5 text-white" />
+                            <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-md shadow-slate-200">
+                                <User className="h-4 w-4 text-emerald-400" />
                             </div>
                             <div>
-                                <h1 className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">Base <span className="text-emerald-600">CRM</span></h1>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{customers.length} Clientes Unificados</p>
+                                <h1 className="text-xs font-black uppercase tracking-tighter text-slate-900 leading-none italic">Base <span className="text-emerald-600 not-italic">CRM</span></h1>
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.1em] mt-1 shrink-0">{customers.length} Clientes Unificados</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
                                 variant="outline"
-                                size="sm"
-                                className="h-9 rounded-xl border-slate-100 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-600"
+                                className="h-7 px-3 rounded-lg border-slate-200 bg-white text-slate-700 font-black uppercase text-[8px] tracking-widest shadow-xs hover:bg-slate-50 transition-all"
                                 onClick={handleSync}
                                 disabled={syncing}
                             >
-                                {syncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-2" /> : <RefreshCw className="h-3.5 w-3.5 mr-2" />}
-                                Sincronizar
+                                <RefreshCw className={cn("h-3 w-3 mr-2 text-emerald-500", syncing && "animate-spin")} />
+                                SYNC
                             </Button>
                         </div>
                     </div>
@@ -99,12 +98,12 @@ export default function CustomersPage() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
                             <Input
                                 placeholder="BUSCAR POR NOMBRE, TLF O EMAIL..."
-                                className="h-12 pl-12 bg-white border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest placeholder:text-slate-300 focus:ring-emerald-500/10 focus:border-emerald-500/50 shadow-sm"
+                                className="h-10 pl-12 bg-white border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest placeholder:text-slate-300 focus:ring-emerald-500/10 focus:border-emerald-500/50 shadow-sm"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                             />
                         </div>
-                        <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl border-slate-200 bg-white">
+                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-lg border-slate-200 bg-white">
                             <Filter className="h-4 w-4 text-slate-400" />
                         </Button>
                     </div>
@@ -114,7 +113,7 @@ export default function CustomersPage() {
                     <div className="space-y-2 pb-8">
                         {loading ? (
                             Array.from({ length: 8 }).map((_, i) => (
-                                <div key={i} className="h-24 rounded-[1.5rem] bg-slate-100 animate-pulse mx-4" />
+                                <div key={i} className="h-20 rounded-lg bg-slate-100 animate-pulse" />
                             ))
                         ) : customers.length === 0 ? (
                             <div className="p-12 text-center flex flex-col items-center gap-4">
@@ -129,14 +128,14 @@ export default function CustomersPage() {
                                 key={c.id}
                                 onClick={() => setSelectedId(c.id)}
                                 className={cn(
-                                    "p-5 rounded-[1.5rem] cursor-pointer transition-all border flex gap-4 group",
+                                    "p-3 rounded-lg cursor-pointer transition-all border flex gap-4 group",
                                     selectedId === c.id
                                         ? "bg-white border-emerald-100 shadow-xl shadow-emerald-900/5 ring-1 ring-emerald-500/10"
                                         : "bg-transparent border-transparent hover:bg-white hover:border-slate-100 hover:shadow-lg"
                                 )}
                             >
-                                <Avatar className="h-12 w-12 border-2 border-white shadow-sm ring-1 ring-slate-100">
-                                    <AvatarFallback className="bg-slate-50 text-slate-400 font-black text-xs uppercase">
+                                <Avatar className="h-10 w-10 border border-slate-100 shadow-xs">
+                                    <AvatarFallback className="bg-slate-50 text-slate-400 font-black text-[10px] uppercase italic">
                                         {c.name.slice(0, 2)}
                                     </AvatarFallback>
                                 </Avatar>
@@ -187,17 +186,17 @@ export default function CustomersPage() {
                     ) : detail && (
                         <>
                             {/* PANEL HEADER */}
-                            <div className="p-10 border-b border-slate-100 bg-slate-50/20 flex items-center justify-between">
-                                <div className="flex items-center gap-6">
-                                    <div className="h-20 w-20 bg-white rounded-[2rem] border-2 border-slate-100 shadow-xl flex items-center justify-center relative">
-                                        <User className="h-10 w-10 text-slate-300" />
-                                        <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-emerald-500 border-4 border-white rounded-full flex items-center justify-center shadow-lg">
-                                            <CheckCircle className="h-4 w-4 text-white" />
+                            <div className="p-4 border-b border-slate-100 bg-slate-50/20 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-14 w-14 bg-white rounded-lg border-2 border-slate-100 shadow-xl flex items-center justify-center relative">
+                                        <User className="h-8 w-8 text-slate-300" />
+                                        <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-lg">
+                                            <CheckCircle className="h-3 w-3 text-white" />
                                         </div>
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3 mb-1">
-                                            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{detail.name}</h2>
+                                            <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">{detail.name}</h2>
                                             <Badge className="bg-slate-900 text-[10px] font-black uppercase italic px-3 h-6">Cliente VIP</Badge>
                                         </div>
                                         <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -208,10 +207,10 @@ export default function CustomersPage() {
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
-                                    <Button variant="outline" className="h-12 px-6 rounded-2xl border-slate-200 font-black text-[10px] uppercase tracking-widest gap-2">
+                                    <Button variant="outline" className="h-9 px-4 rounded-lg border-slate-200 font-black text-[10px] uppercase tracking-widest gap-2">
                                         <Download className="h-4 w-4" /> Exportar
                                     </Button>
-                                    <Button className="h-12 px-8 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-xl shadow-slate-200">
+                                    <Button className="h-9 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-xl shadow-slate-200">
                                         <Plus className="h-4 w-4" /> Nuevo Pedido
                                     </Button>
                                 </div>
@@ -219,30 +218,30 @@ export default function CustomersPage() {
 
                             {/* PANEL CONTENT */}
                             <ScrollArea className="flex-1">
-                                <div className="p-12 space-y-16">
+                                <div className="p-4 space-y-4">
 
                                     {/* KPIS ROW */}
-                                    <div className="grid grid-cols-4 gap-6">
+                                    <div className="grid grid-cols-4 gap-4">
                                         {[
                                             { label: 'Ingreso Total', value: `€${detail.totalSpent.toFixed(2)}`, icon: TrendingUp, color: 'emerald' },
                                             { label: 'Pedidos', value: detail.totalOrders, icon: ShoppingBag, color: 'indigo' },
                                             { label: 'Ticket Medio', value: `€${detail.avgTicket.toFixed(2)}`, icon: CreditCard, color: 'amber' },
                                             { label: 'Antigüedad', value: '142 Días', icon: Calendar, color: 'slate' },
                                         ].map((kpi, i) => (
-                                            <Card key={i} className="p-8 border-slate-100 bg-slate-50/30 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border group">
-                                                <div className={cn("h-10 w-10 rounded-xl mb-4 flex items-center justify-center shadow-md transition-transform group-hover:scale-110", `bg-${kpi.color}-100 text-${kpi.color}-600`)}>
-                                                    <kpi.icon className="h-5 w-5" />
+                                            <Card key={i} className="p-3 border-slate-100 bg-slate-50/30 rounded-lg shadow-xs hover:shadow-md transition-all border group">
+                                                <div className={cn("h-8 w-8 rounded-lg mb-2 flex items-center justify-center shadow-xs transition-transform group-hover:scale-105", `bg-${kpi.color}-100 text-${kpi.color}-600`)}>
+                                                    <kpi.icon className="h-3.5 w-3.5" />
                                                 </div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{kpi.label}</p>
-                                                <p className="text-xl font-black text-slate-900 italic tracking-tight">{kpi.value}</p>
+                                                <p className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">{kpi.label}</p>
+                                                <p className="text-sm font-black text-slate-900 italic tracking-tight">{kpi.value}</p>
                                             </Card>
                                         ))}
                                     </div>
 
                                     {/* TABS: HISTORY VS CONVERSATIONS */}
-                                    <div className="flex gap-12">
+                                    <div className="flex gap-4">
                                         {/* ORDERS COLUMN */}
-                                        <div className="flex-1 space-y-8">
+                                        <div className="flex-1 space-y-4">
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.4em] flex items-center gap-3">
                                                     <History className="h-5 w-5 text-emerald-600" /> Historial de Compras
@@ -250,14 +249,14 @@ export default function CustomersPage() {
                                             </div>
                                             <div className="space-y-4">
                                                 {detail.orders.map((o: any) => (
-                                                    <div key={o.id} className="p-6 bg-white border border-slate-100 rounded-[2rem] hover:border-emerald-100 hover:shadow-xl transition-all group flex items-center justify-between">
+                                                    <div key={o.id} className="p-4 bg-white border border-slate-100 rounded-lg hover:border-emerald-100 hover:shadow-xl transition-all group flex items-center justify-between">
                                                         <div className="flex items-center gap-5">
-                                                            <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center font-black text-[10px] text-slate-400 uppercase italic">
+                                                            <div className="h-10 w-10 bg-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-400 uppercase italic">
                                                                 #{o.orderNumber}
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs font-black text-slate-900 uppercase">Pedido Confirmado</p>
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{new Date(o.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                                                <p className="text-[10px] font-black text-slate-900 uppercase italic leading-none mb-1">Pedido Confirmado</p>
+                                                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{new Date(o.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
                                                             </div>
                                                         </div>
                                                         <div className="text-right flex items-center gap-8">
@@ -275,14 +274,14 @@ export default function CustomersPage() {
                                         </div>
 
                                         {/* CONVERSATION COLUMN (Preview) */}
-                                        <div className="w-[450px] space-y-8">
+                                        <div className="w-[450px] space-y-4">
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.4em] flex items-center gap-3">
                                                     <MessageSquare className="h-5 w-5 text-indigo-600" /> Conversaciones Recientes
                                                 </h3>
                                                 <Button variant="link" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest gap-2">Ir al Inbox <ChevronRight className="h-3 w-3" /></Button>
                                             </div>
-                                            <div className="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-100 h-[500px] flex flex-col">
+                                            <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 h-[500px] flex flex-col">
                                                 <ScrollArea className="flex-1 pr-4">
                                                     <div className="space-y-6">
                                                         {detail.messages?.length > 0 ? detail.messages.map((m: any) => (
@@ -291,10 +290,10 @@ export default function CustomersPage() {
                                                                 m.sender === 'CUSTOMER' ? "self-start" : "self-end items-end ml-auto"
                                                             )}>
                                                                 <div className={cn(
-                                                                    "p-5 text-[11px] font-medium leading-relaxed shadow-sm",
+                                                                    "p-3 text-[10px] font-black leading-relaxed shadow-xs uppercase tracking-tight",
                                                                     m.sender === 'CUSTOMER'
-                                                                        ? "bg-white text-slate-700 rounded-[1.5rem] rounded-tl-sm border border-slate-200"
-                                                                        : "bg-indigo-600 text-white rounded-[1.5rem] rounded-tr-sm"
+                                                                        ? "bg-white text-slate-700 rounded-lg rounded-tl-none border border-slate-200"
+                                                                        : "bg-slate-900 text-emerald-400 rounded-lg rounded-tr-none italic"
                                                                 )}>
                                                                     {m.content}
                                                                 </div>
@@ -320,13 +319,13 @@ export default function CustomersPage() {
                                         <div className="relative group">
                                             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 blur opacity-0 group-focus-within:opacity-100 transition duration-1000" />
                                             <textarea
-                                                className="w-full h-[200px] bg-slate-50/50 border border-slate-100 rounded-[2.5rem] p-10 text-sm font-medium text-slate-600 italic leading-relaxed focus:bg-white focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/30 transition-all outline-none shadow-inner"
+                                                className="w-full h-[150px] bg-slate-50/50 border border-slate-100 rounded-lg p-4 text-sm font-medium text-slate-600 italic leading-relaxed focus:bg-white focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/30 transition-all outline-none shadow-inner"
                                                 placeholder="Añade notas sobre el perfil psicológico del cliente, incidencias previas o acuerdos especiales..."
                                                 defaultValue={detail.notes}
                                             />
                                         </div>
                                         <div className="flex justify-end">
-                                            <Button className="h-12 px-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-200 transition-all">
+                                            <Button className="h-9 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-200 transition-all">
                                                 Actualizar Ficha
                                             </Button>
                                         </div>
@@ -339,25 +338,25 @@ export default function CustomersPage() {
                     <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-20 text-center animate-in fade-in duration-1000">
                         <div className="relative mb-12 group">
                             <div className="absolute inset-0 bg-emerald-500/5 blur-[100px] rounded-full animate-pulse" />
-                            <div className="h-32 w-32 bg-slate-50 rounded-[3rem] flex items-center justify-center border border-slate-100 shadow-2xl relative z-10 group-hover:rotate-6 transition-transform duration-500">
-                                <User className="h-16 w-16 text-slate-200" />
-                                <div className="absolute -top-4 -right-4 h-12 w-12 bg-emerald-600 rounded-2xl shadow-xl flex items-center justify-center -rotate-12">
-                                    <ShoppingBag className="h-6 w-6 text-white" />
+                            <div className="h-24 w-24 bg-white rounded-lg flex items-center justify-center border border-slate-100 shadow-2xl relative z-10 group-hover:rotate-3 transition-transform duration-500">
+                                <User className="h-10 w-10 text-slate-200" />
+                                <div className="absolute -top-3 -right-3 h-8 w-8 bg-slate-900 rounded-lg shadow-xl flex items-center justify-center -rotate-12">
+                                    <ShoppingBag className="h-4 w-4 text-emerald-400" />
                                 </div>
                             </div>
                         </div>
-                        <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight mb-4">Mestría en <span className="text-emerald-600">Relación</span></h2>
+                        <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight mb-4">Mestría en <span className="text-emerald-600">Relación</span></h2>
                         <p className="max-w-md text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em] leading-loose">Selecciona un cliente de la lista para acceder a su perfil psicológico, historial de consumo y transmisiones interceptadas.</p>
 
-                        <div className="mt-16 grid grid-cols-3 gap-6 w-full max-w-2xl px-8">
+                        <div className="mt-12 grid grid-cols-3 gap-4 w-full max-w-2xl px-8">
                             {[
                                 { label: 'Visión 360º', icon: RefreshCw },
                                 { label: 'LTV Tracking', icon: TrendingUp },
                                 { label: 'WhatsApp Logs', icon: MessageSquare }
                             ].map((feat, i) => (
-                                <div key={i} className="p-6 bg-slate-50/50 rounded-[2rem] border border-slate-100 flex flex-col items-center gap-3">
-                                    <feat.icon className="h-5 w-5 text-slate-300" />
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{feat.label}</span>
+                                <div key={i} className="p-4 bg-white rounded-lg border border-slate-100 flex flex-col items-center gap-2 shadow-xs group hover:border-emerald-200 transition-all">
+                                    <feat.icon className="h-4 w-4 text-slate-300 group-hover:text-emerald-500" />
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{feat.label}</span>
                                 </div>
                             ))}
                         </div>

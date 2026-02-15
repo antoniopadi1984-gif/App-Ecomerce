@@ -10,7 +10,7 @@ import {
     Percent, CreditCard, AlertCircle, RotateCcw,
     Gauge, DollarSign, Activity, BarChart4
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,162 +44,135 @@ export default function PerformanceMasterPage() {
     );
 
     const KPICard = ({ label, value, subValue, icon: Icon, color, trend }: any) => (
-        <Card className="premium-card overflow-hidden group">
-            <CardContent className="p-5 flex items-center justify-between">
-                <div className="space-y-1">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{label}</p>
-                    <div className="flex items-baseline gap-2">
-                        <p className="text-xl font-black tracking-tighter text-slate-900 group-hover:text-primary transition-colors">{value}</p>
-                        {trend && <span className={cn("text-[9px] font-bold", trend > 0 ? "text-emerald-500" : "text-rose-500")}>
+        <Card className="bg-white border border-slate-100 shadow-xs rounded-lg overflow-hidden group">
+            <CardContent className="p-4 flex items-center justify-between">
+                <div className="space-y-0.5">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">{label}</p>
+                    <div className="flex items-baseline gap-1.5">
+                        <p className="text-lg font-black tracking-tighter text-slate-900 group-hover:text-indigo-600 transition-colors italic">{value}</p>
+                        {trend && <span className={cn("text-[8px] font-black", trend > 0 ? "text-emerald-500" : "text-rose-500")}>
                             {trend > 0 ? "+" : ""}{trend}%
                         </span>}
                     </div>
-                    {subValue && <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">{subValue}</p>}
+                    {subValue && <p className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">{subValue}</p>}
                 </div>
-                <div className={cn("p-2.5 rounded-xl", `bg-${color}/10`, `text-${color}`)}>
-                    <Icon className="h-4 w-4" />
+                <div className={cn("p-2 rounded-lg", `bg-${color}/10`, `text-${color}`)}>
+                    <Icon className="h-3.5 w-3.5" />
                 </div>
             </CardContent>
         </Card>
     );
 
     return (
-        <div className="w-full flex flex-col gap-6 animate-in fade-in duration-700 bg-slate-50/50 min-h-screen">
+        <div className="w-full flex flex-col gap-4 animate-in fade-in duration-700 bg-slate-50/50 min-h-screen">
             {/* STICKY PRECISION HEADER */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white border-b border-slate-100 shadow-sm sticky top-0 z-20">
-                <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg shadow-slate-200">
-                        <Gauge className="h-5 w-5 text-primary" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 py-2 bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20 shadow-xs">
+                <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-md shadow-slate-200">
+                        <Gauge className="h-4 w-4 text-indigo-400" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-black uppercase tracking-tighter text-slate-900 leading-none italic">
-                            KPI <span className="text-primary not-italic">COMMAND CENTER</span>
+                        <h1 className="text-sm font-black uppercase tracking-tighter text-slate-900 leading-none italic">
+                            KPI <span className="text-indigo-600 not-italic">COMMAND HUB</span>
                         </h1>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                            Análisis de Alta Precisión • Tiempo Real
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.1em] mt-1 shrink-0">
+                            SYSTEM ANALYTICS • HIGH FREQUENCY • RE-AL TIME
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="h-9 px-4 border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500 hidden lg:flex">
-                        Status: <span className="text-emerald-500 ml-1">Synced</span>
+                <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="h-7 px-3 border-slate-200 bg-slate-50 text-[8px] font-black uppercase tracking-widest text-slate-500 hidden lg:flex rounded-md">
+                        NODE: <span className="text-emerald-600 ml-1">STABLE</span>
                     </Badge>
                     <Select value={period} onValueChange={setPeriod}>
-                        <SelectTrigger className="w-[140px] h-9 bg-slate-50 border-none rounded-lg font-black text-[10px] uppercase tracking-widest focus:ring-0">
-                            <Calendar className="h-3 w-3 mr-2 text-primary" />
+                        <SelectTrigger className="w-[120px] h-7 bg-slate-100/50 border-slate-200 rounded-lg font-black text-[8px] uppercase tracking-widest focus:ring-0">
+                            <Calendar className="h-3 w-3 mr-1.5 text-indigo-500" />
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-white border-slate-100 rounded-xl">
-                            <SelectItem value="DAY" className="text-[10px] font-bold uppercase">Hoy</SelectItem>
-                            <SelectItem value="WEEK" className="text-[10px] font-bold uppercase">Semana</SelectItem>
-                            <SelectItem value="MONTH" className="text-[10px] font-bold uppercase">Mes</SelectItem>
-                            <SelectItem value="YEAR" className="text-[10px] font-bold uppercase">Año</SelectItem>
+                        <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl">
+                            <SelectItem value="DAY" className="text-[8px] font-black uppercase tracking-widest">Hoy</SelectItem>
+                            <SelectItem value="WEEK" className="text-[8px] font-black uppercase tracking-widest">Semana</SelectItem>
+                            <SelectItem value="MONTH" className="text-[8px] font-black uppercase tracking-widest">Mes</SelectItem>
+                            <SelectItem value="YEAR" className="text-[8px] font-black uppercase tracking-widest">Año</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg border-slate-200" onClick={() => loadKPIs(period)}>
-                        <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+                    <Button variant="outline" size="icon" className="h-7 w-7 rounded-lg border-slate-200" onClick={() => loadKPIs(period)}>
+                        <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
                     </Button>
                 </div>
             </div>
 
-            <div className="px-6 pb-20 space-y-8">
-
+            <div className="px-4 pb-20 space-y-6">
                 {/* 1. ADQUISICIÓN & TRÁFICO */}
-                <section className="space-y-4">
+                <section className="space-y-3">
                     <div className="flex items-center gap-2 px-1">
-                        <Users className="h-4 w-4 text-indigo-500" />
-                        <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Tráfico & Conversión</h2>
+                        <div className="h-1 w-3 bg-indigo-500 rounded-full" />
+                        <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Tráfico & Conversión Global</h2>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                         <KPICard label="Visitantes" value={data?.visitors?.toLocaleString()} icon={Users} color="indigo" />
                         <KPICard label="Tasa Conversión" value={`${data?.conversionRate?.toFixed(2)}%`} icon={TrendingUp} color="emerald" subValue="Store Sessions to Order" />
                         <KPICard label="Total Pedidos" value={data?.totalOrders} icon={ShoppingBag} color="amber" subValue={`${data?.totalProductUnits} Unidades`} />
-                        <KPICard label="Ticket Medio" value={`€${data?.averageTicket?.toFixed(2)}`} icon={CreditCard} color="primary" />
+                        <KPICard label="Ticket Medio" value={`€${data?.averageTicket?.toFixed(2)}`} icon={CreditCard} color="indigo" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <KPICard label="Pedidos con Tarjeta" value={data?.cardOrders} icon={CreditCard} color="indigo" subValue={`${data?.cardOrdersPercent?.toFixed(1)}% del Total`} />
                         <KPICard label="Facturación Tarjeta" value={`€${data?.cardRevenue?.toLocaleString()}`} icon={Zap} color="emerald" subValue={`${data?.cardRevenuePercent?.toFixed(1)}% del Revenue`} />
                     </div>
                 </section>
 
-                {/* 2. FINANCIAL PERFORMANCE: REAL VS ESTIMATED */}
-                <section className="space-y-4">
+                {/* 2. FINANCIAL PERFORMANCE */}
+                <section className="space-y-3">
                     <div className="flex items-center gap-2 px-1">
-                        <DollarSign className="h-4 w-4 text-emerald-500" />
-                        <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Rendimiento Financiero (Real vs Estimado)</h2>
+                        <div className="h-1 w-3 bg-emerald-500 rounded-full" />
+                        <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Rendimiento Financiero Node</h2>
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* REVENUE & PROFIT */}
-                        <Card className="premium-card col-span-1 lg:col-span-2 overflow-hidden">
-                            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-50">
-                                {/* ESTIMATED COLUMN */}
-                                <div className="p-6 space-y-6 bg-slate-50/30">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <Card className="bg-white border border-slate-200 shadow-xs rounded-lg overflow-hidden col-span-1 lg:col-span-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                                <div className="p-4 space-y-4 bg-slate-50/50">
                                     <div className="flex items-center justify-between">
-                                        <Badge className="bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest px-3">Escenario Estimado</Badge>
-                                        <span className="text-[10px] font-bold text-slate-400 italic">Basado en Proyecciones</span>
+                                        <Badge className="bg-slate-900 text-white text-[7px] font-black uppercase tracking-widest px-2 h-4 rounded-md">Estimación Proyectada</Badge>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Forecast</span>
                                     </div>
-                                    <div className="space-y-4">
+                                    <div className="space-y-3">
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Facturación Estimada</p>
-                                            <p className="text-3xl font-black tracking-tighter text-slate-900">€{data?.revenueEstimated?.toLocaleString()}</p>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Facturación Proyectada</p>
+                                            <p className="text-2xl font-black tracking-tighter text-slate-900 italic">€{data?.revenueEstimated?.toLocaleString()}</p>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Profit Estimado</p>
-                                                <p className="text-lg font-black text-emerald-600">€{data?.profitEstimated?.toLocaleString()}</p>
+                                                <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Profit Est.</p>
+                                                <p className="text-md font-black text-emerald-600 italic">€{data?.profitEstimated?.toLocaleString()}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ROI Estimado</p>
-                                                <p className="text-lg font-black text-indigo-600">{data?.roiEstimated?.toFixed(0)}%</p>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ROAS Estimado</p>
-                                                <p className="text-lg font-black text-slate-900">{data?.roasEstimated?.toFixed(2)}x</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">CPA Estimado</p>
-                                                <p className="text-lg font-black text-slate-900">€{data?.cpaEstimated?.toFixed(2)}</p>
+                                                <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">ROI Est.</p>
+                                                <p className="text-md font-black text-indigo-600 italic">{data?.roiEstimated?.toFixed(0)}%</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                {/* REAL COLUMN */}
-                                <div className="p-6 space-y-6 bg-white relative">
-                                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                                        <Activity className="h-32 w-32 text-primary" />
-                                    </div>
+                                <div className="p-4 space-y-4 bg-white relative">
                                     <div className="flex items-center justify-between relative z-10">
-                                        <Badge className="bg-primary text-slate-900 text-[9px] font-black uppercase tracking-widest px-3">Impacto Real</Badge>
-                                        <span className="text-[10px] font-bold text-emerald-500 italic flex items-center gap-1">
-                                            <ShieldCheck className="h-3 w-3" /> Verificado
+                                        <Badge className="bg-indigo-600 text-white text-[7px] font-black uppercase tracking-widest px-2 h-4 rounded-md">Auditoría Real</Badge>
+                                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest italic flex items-center gap-1">
+                                            <ShieldCheck className="h-2.5 w-2.5" /> Verificado
                                         </span>
                                     </div>
-                                    <div className="space-y-4 relative z-10">
+                                    <div className="space-y-3 relative z-10">
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Facturación Real (Delivered)</p>
-                                            <p className="text-3xl font-black tracking-tighter text-primary">€{data?.revenueReal?.toLocaleString()}</p>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Facturación Auditada</p>
+                                            <p className="text-2xl font-black tracking-tighter text-indigo-600 italic">€{data?.revenueReal?.toLocaleString()}</p>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Profit Real</p>
-                                                <p className="text-lg font-black text-emerald-600">€{data?.profitReal?.toLocaleString()}</p>
+                                                <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Profit Audit.</p>
+                                                <p className="text-md font-black text-emerald-600 italic">€{data?.profitReal?.toLocaleString()}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ROI Real</p>
-                                                <p className="text-lg font-black text-indigo-600">{data?.roiReal?.toFixed(0)}%</p>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ROAS Real</p>
-                                                <p className="text-lg font-black text-slate-900">{data?.roasReal?.toFixed(2)}x</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">CPA Real</p>
-                                                <p className="text-lg font-black text-slate-900">€{data?.cpaReal?.toFixed(2)}</p>
+                                                <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">ROI Audit.</p>
+                                                <p className="text-md font-black text-indigo-600 italic">{data?.roiReal?.toFixed(0)}%</p>
                                             </div>
                                         </div>
                                     </div>
@@ -207,90 +180,73 @@ export default function PerformanceMasterPage() {
                             </div>
                         </Card>
 
-                        {/* COST BREAKDOWN CARDS */}
                         <div className="space-y-4">
-                            <Card className="premium-card p-5 space-y-4">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gastos Operativos</p>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center text-xs font-bold">
-                                        <span className="text-slate-500 font-medium">Gasto Publicitario (AdSpend)</span>
-                                        <span className="text-rose-500">€{data?.adSpend?.toLocaleString()}</span>
+                            <Card className="bg-white border border-slate-200 shadow-xs rounded-lg p-4 space-y-3">
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Gastos Operativos Matrix</p>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center text-[9px] font-bold">
+                                        <span className="text-slate-500 uppercase tracking-widest">AdSpend</span>
+                                        <span className="text-rose-600 italic">€{data?.adSpend?.toLocaleString()}</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-xs font-bold">
-                                        <span className="text-slate-500 font-medium">Gasto Producto (COGS)</span>
-                                        <span className="text-rose-500">€{data?.cogs?.toLocaleString()}</span>
+                                    <div className="flex justify-between items-center text-[9px] font-bold">
+                                        <span className="text-slate-500 uppercase tracking-widest">COGS</span>
+                                        <span className="text-rose-600 italic">€{data?.cogs?.toLocaleString()}</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-xs font-bold">
-                                        <span className="text-slate-500 font-medium">Gastos Envío Real</span>
-                                        <span className="text-rose-500">€{(data?.totalOrders * 6.5).toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs font-bold border-t border-slate-50 pt-2">
-                                        <span className="text-slate-900">% Margen Real</span>
-                                        <span className="text-emerald-500 font-black">{data?.profitPercentReal?.toFixed(1)}%</span>
+                                    <div className="flex justify-between items-center text-[9px] font-black border-t border-slate-100 pt-2 italic">
+                                        <span className="text-slate-900 uppercase tracking-widest">Margen Real</span>
+                                        <span className="text-emerald-500">{data?.profitPercentReal?.toFixed(1)}%</span>
                                     </div>
                                 </div>
                             </Card>
 
-                            <Card className="premium-card p-5 bg-slate-900 text-white overflow-hidden relative group">
-                                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:rotate-12 transition-transform duration-700">
-                                    <Zap className="h-16 w-16 text-primary" />
-                                </div>
-                                <div className="space-y-1 relative z-10 transition-transform">
-                                    <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">Clowdbot Impact</p>
-                                    <p className="text-2xl font-black">€{data?.botPerformance?.assistedRevenue?.toLocaleString()}</p>
-                                    <p className="text-[10px] text-slate-400 font-medium">En pedidos recuperados</p>
-                                </div>
+                            <Card className="bg-slate-900 text-white rounded-lg p-4 bg-gradient-to-br from-slate-900 to-indigo-950 border-none shadow-xl overflow-hidden relative group">
+                                <Bot className="absolute top-0 right-0 p-6 opacity-10 h-16 w-16 text-indigo-400 group-hover:rotate-12 transition-transform duration-700" />
+                                <div className="space-y-0.5 relative z-10 text-[7.5px] font-black text-indigo-400 uppercase tracking-[0.3em]">IA Assisted Revenue</div>
+                                <div className="text-xl font-black italic tracking-tighter text-white relative z-10">€{data?.botPerformance?.assistedRevenue?.toLocaleString()}</div>
                             </Card>
                         </div>
                     </div>
                 </section>
 
                 {/* 3. LOGISTICS & QUALITY CONTROL */}
-                <section className="space-y-4">
+                <section className="space-y-3">
                     <div className="flex items-center gap-2 px-1">
-                        <Truck className="h-4 w-4 text-amber-500" />
-                        <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Logística & Calidad de Entrega</h2>
+                        <div className="h-1 w-3 bg-amber-500 rounded-full" />
+                        <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Logística & Calidad de Entrega</h2>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <KPICard label="Confirmados" value={data?.confirmedOrders} icon={CheckCircle2} color="indigo" subValue={`${data?.realShippingRate?.toFixed(1)}% Ship Rate`} />
-                        <KPICard label="Cancelados" value={data?.cancelledOrders} icon={XCircle} color="rose" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <KPICard label="Confirmados" value={data?.confirmedOrders} icon={ShieldCheck} color="indigo" subValue={`${data?.realShippingRate?.toFixed(1)}% Ship Rate`} />
+                        <KPICard label="Cancelados" value={data?.cancelledOrders} icon={AlertCircle} color="rose" />
                         <KPICard label="Enviados Real" value={data?.confirmedOrders} icon={Truck} color="amber" subValue="Ready to Deliver" />
-                        <KPICard label="Entregados Real" value={data?.deliveredOrders} icon={ShieldCheck} color="emerald" subValue={`${data?.realDeliveryRate?.toFixed(1)}% Delivery Rate`} />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <KPICard label="Incidencias" value={data?.incidenceOrders} icon={AlertCircle} color="rose" />
-                        <KPICard label="Recuperados" value={data?.recoveredOrders} icon={RotateCcw} color="emerald" subValue={`${data?.recoveryRate?.toFixed(1)}% Recuperación`} />
-                        <KPICard label="Devueltos" value={data?.returnedOrders} icon={RotateCcw} color="slate" />
-                        <KPICard label="Gasto Devolución" value={`€${data?.returnExpenses?.toLocaleString()}`} icon={DollarSign} color="rose" />
+                        <KPICard label="Entregados" value={data?.deliveredOrders} icon={ShieldCheck} color="emerald" subValue={`${data?.realDeliveryRate?.toFixed(1)}% Delivery Rate`} />
                     </div>
                 </section>
 
                 {/* 4. BREAKDOWN TABLES */}
-                <Tabs defaultValue="products" className="space-y-4">
-                    <TabsList className="bg-white border border-slate-100 p-1 h-11 rounded-xl shadow-sm">
-                        <TabsTrigger value="products" className="rounded-lg px-6 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-slate-900">Productos Top</TabsTrigger>
-                        <TabsTrigger value="carriers" className="rounded-lg px-6 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-slate-900">Logística</TabsTrigger>
-                        <TabsTrigger value="bots" className="rounded-lg px-6 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-slate-900">Clowdbot</TabsTrigger>
+                <Tabs defaultValue="products" className="space-y-3">
+                    <TabsList className="bg-slate-200/50 border border-slate-200 p-0.5 h-8 rounded-lg shadow-sm w-fit">
+                        <TabsTrigger value="products" className="rounded-md px-4 h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs transition-all">Top Items</TabsTrigger>
+                        <TabsTrigger value="carriers" className="rounded-md px-4 h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs transition-all">Logistics Flow</TabsTrigger>
+                        <TabsTrigger value="bots" className="rounded-md px-4 h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs transition-all">IA Automation</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="products">
-                        <Card className="premium-card overflow-hidden">
+                        <Card className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-50/50 border-b border-slate-100 italic">
-                                        <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Producto</th>
-                                        <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Unidades</th>
-                                        <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Revenue Bruto</th>
-                                        <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Impacto %</th>
+                                    <tr className="bg-slate-50 border-b border-slate-200 italic">
+                                        <th className="px-4 py-2 text-[8px] font-black uppercase tracking-widest text-slate-400">Producto</th>
+                                        <th className="px-4 py-2 text-[8px] font-black uppercase tracking-widest text-slate-400">Unidades</th>
+                                        <th className="px-4 py-2 text-[8px] font-black uppercase tracking-widest text-slate-400">Revenue Bruto</th>
+                                        <th className="px-4 py-2 text-[8px] font-black uppercase tracking-widest text-slate-400">Impacto %</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    <tr className="hover:bg-slate-50/30 transition-colors">
-                                        <td className="px-6 py-4 text-xs font-bold text-slate-900 italic uppercase">Carga de Datos Pendiente...</td>
-                                        <td className="px-6 py-4 text-xs">--</td>
-                                        <td className="px-6 py-4 text-xs">--</td>
-                                        <td className="px-6 py-4 text-xs">--</td>
+                                <tbody className="divide-y divide-slate-100">
+                                    <tr className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-4 py-2.5 text-[10px] font-black text-slate-900 italic uppercase">Carga de Datos Pendiente...</td>
+                                        <td className="px-4 py-2.5 text-[10px] font-black text-slate-400">--</td>
+                                        <td className="px-4 py-2.5 text-[10px] font-black text-slate-400">--</td>
+                                        <td className="px-4 py-2.5 text-[10px] font-black text-slate-400">--</td>
                                     </tr>
                                 </tbody>
                             </table>

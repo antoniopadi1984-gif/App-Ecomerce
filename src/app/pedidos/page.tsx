@@ -13,11 +13,11 @@ export default function ProductOrdersPage() {
     if (!productId) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center animate-in fade-in duration-700">
-                <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center">
-                    <AlertCircle className="w-10 h-10 text-indigo-500" />
+                <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center">
+                    <AlertCircle className="w-10 h-10 text-slate-400" />
                 </div>
                 <div className="space-y-2">
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight italic uppercase">Contexto Requerido</h2>
+                    <h2 className="text-lg font-black text-slate-900 tracking-tight italic uppercase">Contexto Requerido</h2>
                     <p className="text-slate-500 max-w-sm mx-auto font-medium">Por favor, selecciona un producto en el menú lateral para acceder a Pedidos & Logística.</p>
                 </div>
                 <div className="flex gap-4">

@@ -12,25 +12,32 @@ export async function GET(
         const page = parseInt(searchParams.get('page') || '1');
         const pageSize = parseInt(searchParams.get('pageSize') || '10');
 
-        const where: any = {
-            items: {
+        const where: any = {};
+
+        // Contexto Global Support (Priority 1 fix)
+        if (productId && productId !== 'ALL') {
+            where.items = {
                 some: {
                     productId: productId
                 }
-            }
-        };
+            };
+        }
 
         if (status && status !== 'ALL') {
-            where.logisticsStatus = status;
+            if (status === 'FRAUD') {
+                where.riskLevel = 'HIGH';
+            } else if (status === 'DRAFT') {
+                where.orderType = { in: ['DRAFT', 'ABANDONED'] };
+            } else {
+                where.status = status;
+            }
         }
 
         const [orders, total] = await Promise.all([
             prisma.order.findMany({
                 where,
                 include: {
-                    items: {
-                        where: { productId }
-                    }
+                    items: true
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * pageSize,

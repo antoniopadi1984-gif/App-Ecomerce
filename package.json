@@ -2,7 +2,8 @@
   "name": "ecombom-control",
   "version": "0.1.0",
   "prisma": {
-    "engineType": "library"
+    "engineType": "library",
+    "seed": "npx tsx prisma/seed.ts"
   },
   "private": true,
   "scripts": {

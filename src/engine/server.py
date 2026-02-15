@@ -37,7 +37,7 @@ else:
 
 # Initialize FastAPI
 app = FastAPI(
-    title="Nano Banana Local Engine",
+    title="EcomBoom Control Local Engine",
     description="Local Neural Engine for Video Generation & Avatars",
     version="0.5.5 (God Mode)"
 )
@@ -90,7 +90,7 @@ async def health_check():
 
     return {
         "status": "operational",
-        "engine": "Nano Banana Neural Bridge (God Mode)",
+        "engine": "EcomBoom Control Neural Bridge (God Mode)",
         "gpu_available": gpu_ok,
         "ffmpeg_available": is_ffmpeg_installed()
     }
@@ -246,7 +246,7 @@ async def generate_avatar_image(
             "preview_url": f"/static/avatars/{avatar_id}/avatar.png",
             "metadata": {
                 "name": name,
-                "provider": "Nano Banana Pro 3.5 (Enterprise AI)",
+                "provider": "EcomBoom Control Pro 3.5 (Enterprise AI)",
                 "prompt_used": prompt.strip()
             }
         }
@@ -494,7 +494,7 @@ async def train_avatar(file: UploadFile = File(...)):
 
 def start():
     """Start the server"""
-    print("🍌 Nano Banana Engine Starting on Port 8000...")
+    print("🚀 EcomBoom Control Engine Starting on Port 8000...")
     uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=False)
 
 if __name__ == "__main__":

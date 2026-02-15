@@ -40,15 +40,15 @@ export async function checkGeminiHealth(): Promise<ModuleHealth> {
     }
 }
 
-export async function checkAnthropicHealth(): Promise<ModuleHealth> {
-    if (!API_CONFIG.anthropic.apiKey) {
-        return { status: 'disabled', lastChecked: new Date().toISOString(), details: 'Anthropic Key not configured (Optional)' };
+export async function checkReplicateHealth(): Promise<ModuleHealth> {
+    if (!process.env.REPLICATE_API_TOKEN) {
+        return { status: 'disabled', lastChecked: new Date().toISOString(), details: 'Replicate Token not configured' };
     }
 
     return {
         status: 'operational',
         lastChecked: new Date().toISOString(),
-        details: `Claude Active. Model: ${API_CONFIG.anthropic.model}`
+        details: `Replicate Active (Claude, Flux, Luma)`
     };
 }
 
@@ -284,7 +284,7 @@ export async function getSystemHealth() {
         beeping: await checkBeepingHealth(),
         google: await checkGoogleHealth(),
         gemini: await checkGeminiHealth(),
-        anthropic: await checkAnthropicHealth(),
+        replicate: await checkReplicateHealth(),
         storage: await checkStorageHealth(),
         agents: {
             status: 'operational',

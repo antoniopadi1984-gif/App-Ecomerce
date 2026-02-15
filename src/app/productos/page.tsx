@@ -61,48 +61,48 @@ export default function ProductsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="text-left">
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('my_products')}</h1>
-                    <p className="text-slate-500 mt-1">{t('manage_scale_cat')}</p>
+                    <h1 className="text-xl font-black text-slate-900 tracking-tighter italic uppercase">Mis <span className="text-indigo-600 not-italic">Productos</span></h1>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">Factoría de Escala & Gestión de Catálogo</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" className="gap-2 border-slate-200">
-                        <Filter className="w-4 h-4" />
-                        {t('filter')}
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" className="h-8 px-3 text-[9px] font-black uppercase tracking-widest border-slate-200 rounded-lg shadow-xs">
+                        <Filter className="w-3.5 h-3.5 mr-2" />
+                        FILTRAR
                     </Button>
-                    <Button className="gap-2 bg-blue-600 hover:bg-blue-700 shadow-md">
-                        <Plus className="w-4 h-4" />
-                        {t('new_product')}
+                    <Button className="h-8 px-3 text-[9px] font-black uppercase tracking-widest bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-xl shadow-slate-200 transition-all">
+                        <Plus className="w-3.5 h-3.5 mr-2" />
+                        NUEVO PRODUCTO
                     </Button>
                 </div>
             </div>
 
             {/* Search & Stats Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="md:col-span-2 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                     <Input
-                        placeholder={t('search_name_id')}
-                        className="pl-10 bg-white border-slate-200 h-11 rounded-xl"
+                        placeholder="BUSCAR POR NOMBRE O ID..."
+                        className="pl-10 bg-white border-slate-200 h-10 rounded-lg text-[10px] font-black uppercase tracking-widest placeholder:text-slate-300 shadow-xs focus:ring-0"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                        <TrendingUp className="w-5 h-5" />
+                <div className="bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-lg flex items-center gap-3 shadow-xs">
+                    <div className="w-8 h-8 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                        <TrendingUp className="w-4 h-4" />
                     </div>
                     <div className="text-left">
-                        <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">{t('active_count')}</div>
-                        <div className="text-lg font-bold text-emerald-900">{products.filter(p => p.status === 'ACTIVE').length}</div>
+                        <div className="text-[7px] font-black text-emerald-600 uppercase tracking-widest">ACTIVOS</div>
+                        <div className="text-sm font-black text-emerald-900 italic leading-none mt-1">{products.filter(p => p.status === 'ACTIVE').length}</div>
                     </div>
                 </div>
-                <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600">
-                        <Package className="w-5 h-5" />
+                <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-lg flex items-center gap-3 shadow-xs">
+                    <div className="w-8 h-8 rounded-md bg-slate-900 flex items-center justify-center text-white">
+                        <Package className="w-4 h-4" />
                     </div>
                     <div className="text-left">
-                        <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Total</div>
-                        <div className="text-lg font-bold text-blue-900">{products.length}</div>
+                        <div className="text-[7px] font-black text-slate-400 uppercase tracking-widest">TOTAL</div>
+                        <div className="text-sm font-black text-slate-900 italic leading-none mt-1">{products.length}</div>
                     </div>
                 </div>
             </div>
@@ -120,52 +120,52 @@ export default function ProductsPage() {
                         <button
                             key={product.id}
                             onClick={() => handleSelectProduct(product.id)}
-                            className="group bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-300 overflow-hidden flex flex-col text-left active:scale-[0.98]"
+                            className="group bg-white rounded-lg border border-slate-200 shadow-xs hover:shadow-xl hover:border-indigo-200 transition-all duration-300 overflow-hidden flex flex-col text-left active:scale-[0.98] relative border"
                         >
-                            <div className="p-3 flex-1 flex flex-col items-start gap-2">
+                            <div className="p-3 flex-1 flex flex-col items-start gap-2.5">
                                 <div className="flex items-start justify-between w-full">
-                                    <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-all duration-300 overflow-hidden shadow-inner">
+                                    <div className="w-8 h-8 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all duration-300 overflow-hidden shadow-inner">
                                         {product.imageUrl ? (
                                             <img src={product.imageUrl} className="w-full h-full object-cover" alt="" />
                                         ) : (
-                                            <Package className="w-5 h-5" />
+                                            <Package className="w-4 h-4" />
                                         )}
                                     </div>
-                                    <Badge variant={product.status === 'ACTIVE' ? 'secondary' : 'outline'} className="rounded-md px-1.5 py-0 font-black text-[7px] uppercase tracking-widest border-none bg-slate-100 text-slate-500 group-hover:bg-blue-500 group-hover:text-white transition-colors h-4 flex items-center justify-center">
+                                    <Badge variant={product.status === 'ACTIVE' ? 'secondary' : 'outline'} className="rounded-md px-1.5 py-0 font-black text-[6px] uppercase tracking-[0.2em] border-none bg-slate-100 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors h-4 flex items-center justify-center">
                                         {product.status}
                                     </Badge>
                                 </div>
-                                <h3 className="text-[11px] font-black text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 italic uppercase tracking-tighter leading-tight">
+                                <h3 className="text-[10px] font-black text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-1 italic uppercase tracking-tighter leading-tight">
                                     {product.title}
                                 </h3>
-                                <div className="flex items-center gap-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                                    <span className="shrink-0">ID: {product.id.slice(0, 4)}</span>
+                                <div className="flex items-center gap-2 text-[7px] font-black text-slate-400 uppercase tracking-widest">
+                                    <span className="shrink-0 tracking-tighter">ID: {product.id.slice(0, 6)}</span>
                                     <span className="text-slate-200">•</span>
-                                    <span className="flex items-center gap-1 text-emerald-500 shrink-0">
-                                        <TrendingUp className="w-2.5 h-2.5" />
-                                        V4
+                                    <span className="flex items-center gap-1 text-indigo-500 shrink-0">
+                                        <TrendingUp className="w-2.5 h-2.5 text-indigo-400" />
+                                        V4.0
                                     </span>
                                 </div>
                             </div>
-                            <div className="px-3 py-2 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between group-hover:bg-blue-50/50 transition-colors">
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Dashboard</span>
-                                <ExternalLink className="w-2.5 h-2.5 text-slate-300 group-hover:text-blue-500 transition-all" />
+                            <div className="px-3 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between group-hover:bg-indigo-50/50 transition-colors">
+                                <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-indigo-600 transition-colors">ACCEDER DASHBOARD</span>
+                                <ExternalLink className="w-2.5 h-2.5 text-slate-300 group-hover:text-indigo-500 transition-all" />
                             </div>
                         </button>
                     ))}
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200 text-center">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
-                        <AlertCircle className="w-8 h-8" />
+                <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-lg border-2 border-dashed border-slate-200 text-center animate-in fade-in duration-700">
+                    <div className="w-12 h-12 rounded-lg bg-white shadow-xl flex items-center justify-center text-slate-200 mb-6 border border-slate-100">
+                        <Package className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900">{t('no_products_found')}</h3>
-                    <p className="text-slate-500 mt-1 max-w-sm text-center px-4">
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest italic leading-none">{t('no_products_found')}</h3>
+                    <p className="text-[9px] text-slate-400 mt-2 max-w-sm text-center px-4 font-black uppercase tracking-wider">
                         {searchQuery ? t('try_other_search') : t('no_products_desc')}
                     </p>
-                    <Button className="mt-6 gap-2 bg-blue-600 hover:bg-blue-700">
-                        <Plus className="w-4 h-4" />
-                        {t('new_product')}
+                    <Button className="mt-8 h-9 px-6 bg-slate-900 hover:bg-slate-800 text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-lg shadow-xl shadow-slate-200 transition-all active:scale-[0.98]">
+                        <Plus className="w-4 h-4 mr-2" />
+                        FACTORÍA DE ESCALA
                     </Button>
                 </div>
             )}

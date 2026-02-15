@@ -57,8 +57,14 @@ export function ProductProvider({ children, productId: initialProductId }: { chi
 
                 // Si no hay productId seleccionado pero hay productos, seleccionar el primero por defecto si no hay nada en localStorage
                 const savedId = typeof window !== 'undefined' ? localStorage.getItem('selectedProductId') : null;
-                if (!productId && !savedId && data.products?.length > 0) {
-                    setProductIdState(data.products[0].id);
+
+                if (!productId) {
+                    if (savedId) {
+                        setProductIdState(savedId);
+                    } else if (data.products?.length > 0) {
+                        // Default to GLOBAL if no selection (or first product as before, but GLOBAL is safer for data truth)
+                        setProductIdState('GLOBAL');
+                    }
                 }
             }
         } catch (err) {
@@ -71,25 +77,22 @@ export function ProductProvider({ children, productId: initialProductId }: { chi
         fetchAllProducts();
     }, [fetchAllProducts]);
 
-    // Persist and load from localStorage
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const savedId = localStorage.getItem('selectedProductId');
-            if (savedId && !productId) {
-                setProductIdState(savedId);
-            }
-        }
-    }, [productId]);
-
     const setProductId = useCallback((id: string) => {
         setProductIdState(id);
         if (typeof window !== 'undefined') {
-            localStorage.setItem('selectedProductId', id);
+            if (id === 'GLOBAL') {
+                localStorage.removeItem('selectedProductId');
+            } else {
+                localStorage.setItem('selectedProductId', id);
+            }
         }
     }, []);
 
     const fetchProduct = useCallback(async () => {
-        if (!productId) return;
+        if (!productId || productId === 'GLOBAL') {
+            setProduct(null);
+            return;
+        }
 
         setIsLoading(true);
         setError(null);
@@ -105,16 +108,13 @@ export function ProductProvider({ children, productId: initialProductId }: { chi
         } catch (err: any) {
             console.error('[ProductContext] Error:', err);
             setError(err.message);
-            // toast.error(err.message); // Omit toast for silent background refresh unless it's the first load
         } finally {
             setIsLoading(false);
         }
     }, [productId]);
 
     useEffect(() => {
-        if (productId) {
-            fetchProduct();
-        }
+        fetchProduct();
     }, [productId, fetchProduct]);
 
     return (

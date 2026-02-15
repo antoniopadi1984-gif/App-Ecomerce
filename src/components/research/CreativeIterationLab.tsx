@@ -83,12 +83,12 @@ export function CreativeIterationLab({
     };
 
     return (
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/50">
+        <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl shadow-slate-200/50">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
-            <div className="p-8">
-                <div className="flex items-center justify-between mb-8">
+            <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-50 rounded-xl">
+                        <div className="p-2 bg-blue-50 rounded-lg">
                             <Sparkles className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
@@ -103,7 +103,7 @@ export function CreativeIterationLab({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Avatar Generator */}
-                    <div className="group bg-slate-50 hover:bg-white p-5 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
+                    <div className="group bg-slate-50 hover:bg-white p-4 rounded-lg border border-slate-100 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
                                 <Users className="w-4 h-4" />
@@ -133,7 +133,7 @@ export function CreativeIterationLab({
                     </div>
 
                     {/* Angle Explorer */}
-                    <div className="group bg-slate-50 hover:bg-white p-5 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
+                    <div className="group bg-slate-50 hover:bg-white p-4 rounded-lg border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                                 <Target className="w-4 h-4" />
@@ -162,7 +162,7 @@ export function CreativeIterationLab({
                     </div>
 
                     {/* Copy Architect */}
-                    <div className="group bg-slate-50 hover:bg-white p-5 rounded-2xl border border-slate-100 hover:border-rose-200 hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-300">
+                    <div className="group bg-slate-50 hover:bg-white p-4 rounded-lg border border-slate-100 hover:border-rose-200 hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-300">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
                                 <FileText className="w-4 h-4" />
@@ -191,7 +191,7 @@ export function CreativeIterationLab({
                     </div>
 
                     {/* God-Tier Copy (V4) */}
-                    <div className="group bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-yellow-500/50 hover:shadow-2xl hover:shadow-yellow-500/10 transition-all duration-500 relative overflow-hidden">
+                    <div className="group bg-slate-900 p-4 rounded-lg border border-slate-800 hover:border-yellow-500/50 hover:shadow-2xl hover:shadow-yellow-500/10 transition-all duration-500 relative overflow-hidden">
                         <div className="absolute -top-4 -right-4 w-12 h-12 bg-yellow-500/10 rounded-full blur-xl group-hover:bg-yellow-500/20 transition-all" />
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500">
@@ -214,7 +214,7 @@ export function CreativeIterationLab({
 
                 {/* Results Area */}
                 {iterationResults && (
-                    <div className="mt-8 pt-8 border-t border-slate-100 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="mt-4 pt-4 border-t border-slate-100 animate-in slide-in-from-bottom-4 duration-500">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
                                 <Zap className="w-4 h-4 text-yellow-500 fill-current" />

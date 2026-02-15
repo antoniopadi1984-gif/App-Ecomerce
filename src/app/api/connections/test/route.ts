@@ -126,6 +126,7 @@ const TESTERS: Record<string, (conn: any) => Promise<TestResult>> = {
 export async function POST(req: NextRequest) {
     try {
         const { provider, connectionId } = await req.json();
+        const storeId = req.headers.get("X-Store-Id");
 
         if (!provider) {
             return NextResponse.json({ error: "provider es requerido" }, { status: 400 });
@@ -149,11 +150,11 @@ export async function POST(req: NextRequest) {
 
         const result = await tester(connection);
 
-        // Log the test in audit
-        const store = await prisma.store.findFirst();
-        if (store) {
+        // Log the test in audit with store context
+        const resolvedStoreId = storeId || (await prisma.store.findFirst())?.id;
+        if (resolvedStoreId) {
             await logAudit({
-                storeId: store.id,
+                storeId: resolvedStoreId,
                 action: "CONNECTION_TEST",
                 entity: "CONNECTION",
                 entityId: connectionId || provider,

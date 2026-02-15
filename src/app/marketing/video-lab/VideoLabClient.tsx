@@ -210,24 +210,24 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
             </div>
 
             {/* Header */}
-            <header className="relative flex flex-col md:flex-row items-center justify-between mb-8 z-20 gap-4">
+            <header className="relative flex flex-col md:flex-row items-center justify-between mb-6 z-20 gap-4">
                 <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                    <div className="flex items-center gap-4 group">
-                        <div className="h-14 w-14 bg-gradient-to-br from-indigo-500 to-indigo-800 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.4)] border border-indigo-400/50 group-hover:scale-110 transition-transform duration-500">
-                            <Clapperboard className="h-7 w-7 text-white" />
+                    <div className="flex items-center gap-3 group">
+                        <div className="h-10 w-10 bg-gradient-to-br from-indigo-500 to-indigo-800 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/50 group-hover:scale-105 transition-transform duration-500">
+                            <Clapperboard className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter flex items-center gap-3">
+                            <h1 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter flex items-center gap-2">
                                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-100 to-indigo-300">
                                     Video Lab
                                 </span>
                                 <span className="text-indigo-400">Maestro</span>
                             </h1>
-                            <div className="flex items-center gap-3 mt-1">
-                                <Badge className="bg-amber-400 text-black border-none px-2 py-0 font-black text-[9px] tracking-widest uppercase">
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <Badge className="bg-amber-400 text-black border-none px-1.5 py-0 font-black text-[8px] tracking-widest uppercase rounded-sm">
                                     God Mode v2.0
                                 </Badge>
-                                <p className="text-indigo-200/60 font-bold uppercase tracking-[0.3em] text-[10px]">
+                                <p className="text-indigo-200/60 font-bold uppercase tracking-[0.2em] text-[8px]">
                                     Engineered for Viral Dominance
                                 </p>
                             </div>
@@ -235,15 +235,15 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 bg-white/10 backdrop-blur-2xl p-2 rounded-2xl border border-white/20 shadow-2xl">
+                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-2xl p-1.5 rounded-lg border border-white/20 shadow-2xl">
                     {[1, 2, 3, 4].map(s => (
-                        <div key={s} className="flex flex-col items-center gap-2">
+                        <div key={s} className="flex flex-col items-center gap-1">
                             <div className={cn(
-                                "h-1.5 w-16 rounded-full transition-all duration-700",
-                                step >= s ? "bg-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.6)]" : "bg-white/10"
+                                "h-1 w-12 rounded-full transition-all duration-700",
+                                step >= s ? "bg-indigo-400 shadow-[0_0_10px_rgba(129,140,248,0.5)]" : "bg-white/10"
                             )} />
                             <span className={cn(
-                                "text-[8px] font-black uppercase tracking-widest",
+                                "text-[7px] font-black uppercase tracking-widest",
                                 step >= s ? "text-indigo-300" : "text-white/30"
                             )}>Fase {s}</span>
                         </div>
@@ -251,45 +251,45 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                 </div>
             </header>
 
-            <div className="grid grid-cols-12 gap-8 relative z-20">
+            <div className="grid grid-cols-12 gap-4 relative z-20">
                 <div className="col-span-12">
                     {step === 1 && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
-                            <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2rem] overflow-hidden group shadow-2xl transition-all hover:border-indigo-400/30">
-                                <CardContent className="p-6 space-y-6">
-                                    <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-                                        <div className="space-y-2">
+                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                            <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-lg overflow-hidden group shadow-2xl transition-all hover:border-indigo-400/30">
+                                <CardContent className="p-5 space-y-5">
+                                    <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                                        <div className="space-y-1.5">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 bg-indigo-500/30 rounded-xl flex items-center justify-center border border-indigo-400/50">
-                                                    <Wand2 className="h-5 w-5 text-indigo-300" />
+                                                <div className="h-8 w-8 bg-indigo-500/30 rounded-lg flex items-center justify-center border border-indigo-400/50">
+                                                    <Wand2 className="h-4 w-4 text-indigo-300" />
                                                 </div>
-                                                <h2 className="text-2xl md:text-3xl font-black uppercase italic text-white tracking-tight">
+                                                <h2 className="text-lg md:text-xl font-black uppercase italic text-white tracking-tight">
                                                     Configuración Creativa
                                                 </h2>
                                             </div>
-                                            <p className="text-indigo-200/40 font-bold uppercase tracking-widest text-[10px] ml-1">Clona el éxito de la competencia con ingeniería inversa por IA.</p>
+                                            <p className="text-indigo-200/40 font-bold uppercase tracking-widest text-[8px] ml-1">Ingeniería inversa por IA para dominar el feed.</p>
                                         </div>
-                                        <div className="flex gap-3">
+                                        <div className="flex gap-2">
                                             <Button
                                                 variant="outline"
                                                 onClick={() => { setImportSource("TikTok"); setImportModalOpen(true); }}
-                                                className="bg-white/10 border-white/20 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl h-11 px-5"
+                                                className="bg-white/10 border-white/20 hover:bg-white/20 text-white text-[8px] font-black uppercase tracking-widest rounded-lg h-8 px-3"
                                             >
-                                                <Share2 className="h-4 w-4 mr-2 text-indigo-300" /> TikTok Library
+                                                <Share2 className="h-3.5 w-3.5 mr-1.5 text-indigo-300" /> TikTok Library
                                             </Button>
                                             <Button
                                                 variant="outline"
                                                 onClick={() => { setImportSource("Meta"); setImportModalOpen(true); }}
-                                                className="bg-white/10 border-white/20 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl h-11 px-5"
+                                                className="bg-white/10 border-white/20 hover:bg-white/20 text-white text-[8px] font-black uppercase tracking-widest rounded-lg h-8 px-3"
                                             >
-                                                <Eye className="h-4 w-4 mr-2 text-indigo-300" /> Meta Library
+                                                <Eye className="h-3.5 w-3.5 mr-1.5 text-indigo-300" /> Meta Library
                                             </Button>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-3">
-                                            <label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Seleccionar Producto</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Seleccionar Producto</label>
                                             <div className="relative group">
                                                 <select
                                                     value={selectedProductId}
@@ -298,35 +298,35 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                                         setSelectedProductId(e.target.value);
                                                         if (p) setProductName(p.title);
                                                     }}
-                                                    className="w-full h-12 bg-white/5 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400/20 transition-all font-black text-white px-6 outline-none appearance-none hover:bg-white/10 cursor-pointer text-sm"
+                                                    className="w-full h-10 bg-white/5 border border-white/20 rounded-lg focus:ring-1 focus:ring-indigo-400/20 transition-all font-black text-white px-4 outline-none appearance-none hover:bg-white/10 cursor-pointer text-xs"
                                                 >
                                                     <option value="" disabled className="bg-[#0a0b14]">Inventario</option>
                                                     {dbProducts.map(p => (
                                                         <option key={p.id} value={p.id} className="bg-[#0a0b14] text-white">{p.title}</option>
                                                     ))}
                                                 </select>
-                                                <ChevronRight className="absolute right-6 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-300 pointer-events-none rotate-90" />
+                                                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-300 pointer-events-none rotate-90" />
                                             </div>
                                         </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Público Objetivo</label>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Público Objetivo</label>
                                             <Input
-                                                placeholder="Ej: Emprendedores apasionados por el lujo..."
-                                                className="h-12 bg-white/5 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400/20 text-white px-6 text-sm placeholder:text-white/20 font-bold"
+                                                placeholder="Ej: Emprendedores apasionados..."
+                                                className="h-10 bg-white/5 border border-white/20 rounded-lg focus:ring-1 focus:ring-indigo-400/20 text-white px-4 text-xs placeholder:text-white/20 font-bold"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-3">
-                                            <label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Plataforma</label>
-                                            <div className="grid grid-cols-2 gap-2 bg-black/40 p-1 rounded-xl border border-white/20 h-10">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Plataforma</label>
+                                            <div className="grid grid-cols-2 gap-1.5 bg-black/40 p-1 rounded-lg border border-white/20 h-9">
                                                 {["TikTok", "Instagram"].map((p) => (
                                                     <button
                                                         key={p}
                                                         onClick={() => setPlatform(p)}
                                                         className={cn(
-                                                            "rounded-xl font-black uppercase text-[10px] tracking-widest transition-all duration-300 flex items-center justify-center gap-2",
+                                                            "rounded-md font-black uppercase text-[9px] tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5",
                                                             platform === p ? "bg-indigo-500 text-white shadow-lg" : "text-white/40 hover:text-white"
                                                         )}
                                                     >
@@ -336,15 +336,15 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Duración Maestro</label>
-                                            <div className="grid grid-cols-4 gap-2 bg-black/40 p-1 rounded-xl border border-white/20 h-10">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-2">Duración Maestro</label>
+                                            <div className="grid grid-cols-4 gap-1.5 bg-black/40 p-1 rounded-lg border border-white/20 h-9">
                                                 {["15s", "30s", "50s", "Adaptar"].map((d) => (
                                                     <button
                                                         key={d}
                                                         onClick={() => setDuration(d === "Adaptar" ? "IA Optimized" : d)}
                                                         className={cn(
-                                                            "rounded-xl font-black uppercase text-[10px] tracking-widest transition-all duration-300",
+                                                            "rounded-md font-black uppercase text-[9px] tracking-widest transition-all duration-300",
                                                             duration === (d === "Adaptar" ? "IA Optimized" : d) ? "bg-amber-500 text-black shadow-lg" : "text-white/40 hover:text-white"
                                                         )}
                                                     >
@@ -355,19 +355,19 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                         </div>
                                     </div>
 
-                                    <div className="space-y-6">
+                                    <div className="space-y-4">
                                         <div className="flex justify-between items-center ml-2">
-                                            <label className="text-[10px] font-black uppercase text-amber-400 tracking-[0.2em]">Referencia Creativa</label>
-                                            <Badge className="bg-indigo-400/20 text-indigo-300 border-none text-[8px] font-black uppercase tracking-tighter">Gemini 3.5 Flash</Badge>
+                                            <label className="text-[9px] font-black uppercase text-amber-400 tracking-[0.2em]">Referencia Creativa</label>
+                                            <Badge className="bg-indigo-400/20 text-indigo-300 border-none text-[7px] font-black uppercase tracking-tighter">Gemini 3.5 Flash</Badge>
                                         </div>
 
                                         <Tabs defaultValue="upload" className="w-full">
-                                            <TabsList className="bg-black/60 p-1 rounded-xl h-10 border border-white/20 grid grid-cols-2 mb-4 shadow-inner">
-                                                <TabsTrigger value="upload" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black transition-all">
-                                                    <Upload className="h-4 w-4 mr-2" /> Subir Video
+                                            <TabsList className="bg-black/60 p-1 rounded-lg h-9 border border-white/20 grid grid-cols-2 mb-3 shadow-inner">
+                                                <TabsTrigger value="upload" className="rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black transition-all">
+                                                    <Upload className="h-3.5 w-3.5 mr-1.5" /> Subir Video
                                                 </TabsTrigger>
-                                                <TabsTrigger value="link" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black transition-all">
-                                                    <Type className="h-4 w-4 mr-2" /> Idea / Texto
+                                                <TabsTrigger value="link" className="rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black transition-all">
+                                                    <Type className="h-3.5 w-3.5 mr-1.5" /> Idea / Texto
                                                 </TabsTrigger>
                                             </TabsList>
 
@@ -379,7 +379,7 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                                     onDrop={onDrop}
                                                     onClick={() => fileInputRef.current?.click()}
                                                     className={cn(
-                                                        "h-[150px] border-2 border-dashed rounded-[1.5rem] flex flex-col items-center justify-center transition-all duration-500 relative cursor-pointer group",
+                                                        "h-[120px] border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-all duration-500 relative cursor-pointer group",
                                                         isDragging ? "border-indigo-400 bg-indigo-500/10 scale-[1.01]" : "border-white/20 bg-white/5 hover:border-indigo-400/50 hover:bg-white/10",
                                                         isAnalyzingVideo && "pointer-events-none"
                                                     )}
@@ -395,26 +395,25 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                                         }}
                                                     />
                                                     {isAnalyzingVideo ? (
-                                                        <div className="flex flex-col items-center gap-6 z-10 w-full px-20 text-center">
+                                                        <div className="flex flex-col items-center gap-4 z-10 w-full px-12 text-center">
                                                             <div className="relative">
-                                                                <RefreshCw className="h-14 w-14 text-amber-400 animate-spin" />
-                                                                <div className="absolute inset-0 bg-amber-400/20 blur-xl animate-pulse" />
+                                                                <RefreshCw className="h-10 w-10 text-amber-400 animate-spin" />
                                                             </div>
-                                                            <p className="text-[12px] font-black uppercase text-white tracking-[0.3em]">IA Analizando Neuro-Estructura...</p>
-                                                            <Progress value={analysisProgress} className="h-2 w-full bg-white/10 shadow-[0_0_10px_rgba(251,191,36,0.2)]" />
+                                                            <p className="text-[10px] font-black uppercase text-white tracking-[0.3em]">IA Analizando Estructura...</p>
+                                                            <Progress value={analysisProgress} className="h-1.5 w-full bg-white/10" />
                                                         </div>
                                                     ) : (
                                                         <>
                                                             <div className={cn(
-                                                                "p-6 rounded-3xl bg-indigo-500/10 border border-indigo-400/20 mb-4 transition-all duration-500",
-                                                                isDragging ? "scale-125 bg-indigo-500/20" : "group-hover:scale-110"
+                                                                "p-4 rounded-lg bg-indigo-500/10 border border-indigo-400/20 mb-3 transition-all duration-500",
+                                                                isDragging ? "scale-110 bg-indigo-500/20" : "group-hover:scale-105"
                                                             )}>
-                                                                <Upload className="h-10 w-10 text-indigo-300" />
+                                                                <Upload className="h-6 w-6 text-indigo-300" />
                                                             </div>
-                                                            <p className="text-sm font-black text-white uppercase tracking-widest text-center px-8">
+                                                            <p className="text-xs font-black text-white uppercase tracking-widest text-center px-8">
                                                                 {isDragging ? "Suelta para Analizar" : "Arrastra tu video referencia aquí"}
                                                             </p>
-                                                            <p className="text-[10px] font-bold text-white/30 uppercase mt-2 tracking-widest">o haz clic para buscar</p>
+                                                            <p className="text-[8px] font-bold text-white/30 uppercase mt-1 tracking-widest">o haz clic para buscar</p>
                                                         </>
                                                     )}
                                                 </div>
@@ -424,29 +423,29 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                                                 <Textarea
                                                     value={concept} onChange={e => setConcept(e.target.value)}
                                                     placeholder="Pega un enlace de TikTok o describe tu idea creativa..."
-                                                    className="min-h-[220px] rounded-[2rem] bg-white/5 border border-white/20 text-white p-8 font-bold text-base placeholder:text-white/20 focus:ring-2 focus:ring-indigo-400/30"
+                                                    className="min-h-[120px] rounded-lg bg-white/5 border border-white/20 text-white p-4 font-bold text-sm placeholder:text-white/20 focus:ring-1 focus:ring-indigo-400/30"
                                                 />
                                             </TabsContent>
                                         </Tabs>
                                     </div>
 
                                     {analysisResult && (
-                                        <div className="bg-indigo-400/10 border border-indigo-400/30 p-6 rounded-[2rem] flex gap-6 shadow-xl animate-in fade-in slide-in-from-left-4 duration-500">
-                                            <Zap className="h-7 w-7 text-amber-400 shrink-0" />
-                                            <div className="space-y-1">
-                                                <h4 className="text-xs font-black uppercase text-indigo-300">IA Insights Master</h4>
-                                                <p className="text-sm text-white/90 font-medium leading-relaxed">{analysisResult}</p>
+                                        <div className="bg-indigo-400/10 border border-indigo-400/30 p-4 rounded-lg flex gap-4 shadow-xl animate-in fade-in slide-in-from-left-4 duration-500">
+                                            <Zap className="h-5 w-5 text-amber-400 shrink-0" />
+                                            <div className="space-y-0.5">
+                                                <h4 className="text-[9px] font-black uppercase text-indigo-300">IA Insights Master</h4>
+                                                <p className="text-[11px] text-white/90 font-medium leading-tight">{analysisResult}</p>
                                             </div>
                                         </div>
                                     )}
 
-                                    <div className="flex justify-center pt-6">
+                                    <div className="flex justify-center pt-2">
                                         <Button
                                             onClick={handleGenerateScript}
                                             disabled={loading || !concept}
-                                            className="h-12 px-8 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-indigo-500/30 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                                            className="h-10 px-6 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[9px] shadow-xl shadow-indigo-500/20 active:scale-95 transition-all disabled:opacity-50"
                                         >
-                                            {loading ? <RefreshCw className="h-5 w-5 animate-spin mr-3" /> : <Sparkles className="h-5 w-5 mr-3" />}
+                                            {loading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
                                             {loading ? "Generando..." : "Generar Guion Maestro"}
                                         </Button>
                                     </div>
@@ -457,14 +456,14 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
 
                     {step === 2 && (
                         <div className="animate-in fade-in zoom-in duration-500">
-                            <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 space-y-8 shadow-2xl">
-                                <h2 className="text-2xl font-black uppercase italic text-white tracking-widest">Fase 2: Guion Perfecto</h2>
+                            <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-lg p-6 space-y-6 shadow-2xl">
+                                <h2 className="text-xl font-black uppercase italic text-white tracking-widest">Fase 2: Guion Perfecto</h2>
                                 <Textarea
                                     value={script} onChange={e => setScript(e.target.value)}
-                                    className="min-h-[400px] bg-black/60 border border-white/20 text-lg font-mono text-white p-8 rounded-[2rem] focus:ring-2 focus:ring-indigo-400/30 leading-relaxed"
+                                    className="min-h-[300px] bg-black/60 border border-white/20 text-sm font-mono text-white p-6 rounded-lg focus:ring-1 focus:ring-indigo-400/30 leading-relaxed"
                                 />
-                                <div className="flex justify-end gap-4">
-                                    <Button onClick={() => setStep(3)} className="h-14 px-10 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[11px] shadow-xl">Aprobar e Ir a Avatar</Button>
+                                <div className="flex justify-end gap-3">
+                                    <Button onClick={() => setStep(3)} className="h-10 px-6 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[10px] shadow-xl">Aprobar e Ir a Avatar</Button>
                                 </div>
                             </Card>
                         </div>
@@ -472,31 +471,31 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
 
                     {step === 3 && (
                         <div className="animate-in fade-in slide-in-from-right-10 duration-500">
-                            <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 space-y-10 shadow-2xl">
-                                <h2 className="text-2xl font-black uppercase italic text-white tracking-widest">Casting Digital</h2>
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                            <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-lg p-6 space-y-6 shadow-2xl">
+                                <h2 className="text-xl font-black uppercase italic text-white tracking-widest">Casting Digital</h2>
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                                         <div
                                             key={i}
                                             onClick={() => setSelectedAvatar(i)}
                                             className={cn(
-                                                "aspect-[9/16] rounded-[2rem] bg-white/5 border-2 relative cursor-pointer overflow-hidden transition-all duration-300",
+                                                "aspect-[9/16] rounded-lg bg-white/5 border-2 relative cursor-pointer overflow-hidden transition-all duration-300",
                                                 selectedAvatar === i ? "border-indigo-400 scale-[1.02] shadow-2xl shadow-indigo-500/20" : "border-white/10 hover:border-white/30"
                                             )}
                                         >
-                                            <div className="absolute inset-0 flex items-center justify-center font-black text-4xl text-white/5">
-                                                {i}
+                                            <div className="absolute inset-0 flex items-center justify-center font-black text-2xl text-white/5">
+                                                AVATAR {i}
                                             </div>
                                             {selectedAvatar === i && (
-                                                <div className="absolute top-6 right-6 bg-indigo-500 text-white p-2 rounded-full shadow-xl">
-                                                    <CheckCircle2 className="h-5 w-5" />
+                                                <div className="absolute top-3 right-3 bg-indigo-500 text-white p-1 rounded-full shadow-xl">
+                                                    <CheckCircle2 className="h-4 w-4" />
                                                 </div>
                                             )}
                                         </div>
                                     ))}
                                 </div>
                                 <div className="flex justify-center">
-                                    <Button onClick={handleRender} className="h-16 px-16 rounded-[2rem] bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-[0.4em] text-[12px] shadow-2xl">
+                                    <Button onClick={handleRender} className="h-12 px-12 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl">
                                         Renderizar Maestro
                                     </Button>
                                 </div>
@@ -505,31 +504,31 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                     )}
 
                     {step === 4 && (
-                        <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-16 flex flex-col items-center justify-center text-center space-y-10 min-h-[550px] shadow-2xl">
+                        <Card className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-lg p-10 flex flex-col items-center justify-center text-center space-y-8 min-h-[400px] shadow-2xl">
                             {renderProgress < 100 ? (
                                 <>
-                                    <div className="relative h-64 w-64 flex items-center justify-center">
+                                    <div className="relative h-48 w-48 flex items-center justify-center">
                                         <div className="absolute inset-0 rounded-full border-4 border-white/10" />
                                         <div className="absolute inset-0 rounded-full border-4 border-indigo-400 border-t-transparent animate-spin" />
-                                        <span className="text-6xl font-black text-white">{renderProgress}%</span>
+                                        <span className="text-4xl font-black text-white">{renderProgress}%</span>
                                     </div>
-                                    <div className="space-y-4">
-                                        <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Sincronizando IA...</h3>
-                                        <p className="text-indigo-200/40 font-bold uppercase tracking-widest text-xs">Modelando gesticulación y voz neural</p>
+                                    <div className="space-y-2">
+                                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Sincronizando IA...</h3>
+                                        <p className="text-indigo-200/40 font-bold uppercase tracking-widest text-[8px]">Modelando gesticulación y voz neural</p>
                                     </div>
                                 </>
                             ) : (
-                                <div className="space-y-10 animate-in zoom-in duration-500">
-                                    <div className="h-32 w-32 bg-emerald-500/20 rounded-full flex items-center justify-center border-4 border-emerald-500/50 shadow-2xl shadow-emerald-500/20 mx-auto">
-                                        <CheckCircle2 className="h-16 w-16 text-emerald-400" />
+                                <div className="space-y-8 animate-in zoom-in duration-500">
+                                    <div className="h-24 w-24 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-emerald-500/50 shadow-2xl shadow-emerald-500/20 mx-auto">
+                                        <CheckCircle2 className="h-10 w-10 text-emerald-400" />
                                     </div>
-                                    <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter">¡Master Ready!</h3>
-                                    <div className="flex flex-col md:flex-row gap-4">
-                                        <Button className="h-16 px-16 rounded-2xl bg-white text-black font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors shadow-2xl">
-                                            <Download className="h-5 w-5 mr-3" /> Descargar 4K
+                                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">¡Master Ready!</h3>
+                                    <div className="flex flex-col md:flex-row gap-3">
+                                        <Button className="h-12 px-10 rounded-lg bg-white text-black font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors shadow-2xl text-[10px]">
+                                            <Download className="h-4 w-4 mr-2" /> Descargar 4K
                                         </Button>
-                                        <Button onClick={() => setStep(1)} variant="outline" className="h-16 px-8 rounded-2xl border-white/20 text-white font-black uppercase tracking-widest hover:bg-white/5">
-                                            <RefreshCw className="h-5 w-5 mr-3" /> Crear Otro
+                                        <Button onClick={() => setStep(1)} variant="outline" className="h-12 px-6 rounded-lg border-white/20 text-white font-black uppercase tracking-widest hover:bg-white/5 text-[10px]">
+                                            <RefreshCw className="h-4 w-4 mr-2" /> Crear Otro
                                         </Button>
                                     </div>
                                 </div>
@@ -538,7 +537,6 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                     )}
                 </div>
 
-
                 {/* 
                    Space reserved for future modules or insights.
                    Previously Avatar Studio was here, now moved to /marketing/avatars-lab
@@ -546,51 +544,50 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
             </div>
 
             <Dialog open={importModalOpen} onOpenChange={setImportModalOpen}>
-                <DialogContent className="bg-[#0a0b14] border-white/10 text-white p-10 rounded-[2.5rem] backdrop-blur-3xl">
+                <DialogContent className="bg-[#0a0b14] border-white/10 text-white p-6 rounded-lg backdrop-blur-3xl max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="text-3xl font-black uppercase italic tracking-tighter flex items-center gap-4">
-                            <Download className="h-8 w-8 text-indigo-400" />
+                        <DialogTitle className="text-xl font-black uppercase italic tracking-tighter flex items-center gap-3">
+                            <Download className="h-5 w-5 text-indigo-400" />
                             Importar de {importSource}
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="py-8 space-y-4">
-                        <label className="text-[10px] font-black text-indigo-300 uppercase tracking-widest ml-1">Enlace de la Biblioteca de Anuncios</label>
+                    <div className="py-4 space-y-3">
+                        <label className="text-[9px] font-black text-indigo-300 uppercase tracking-widest ml-1">Enlace de la Biblioteca</label>
                         <Input
                             value={importUrl} onChange={e => setImportUrl(e.target.value)}
                             placeholder="Pega el enlace aquí..."
-                            className="h-16 bg-white/5 border-white/10 px-8 text-sm font-black rounded-2xl placeholder:text-white/20"
+                            className="h-10 bg-white/5 border-white/10 px-4 text-xs font-bold rounded-lg placeholder:text-white/20"
                         />
                     </div>
-                    <Button onClick={handleImport} className="w-full h-16 bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[12px] shadow-2xl">Activar Proceso Maestro</Button>
+                    <Button onClick={handleImport} className="w-full h-10 bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[10px] shadow-2xl rounded-lg">Activar Proceso Maestro</Button>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isAvatarModalOpen} onOpenChange={setIsAvatarModalOpen}>
-                <DialogContent className="bg-[#0a0b14] border-indigo-500/30 text-white p-10 rounded-[3rem] backdrop-blur-3xl sm:max-w-xl">
+                <DialogContent className="bg-[#0a0b14] border-indigo-500/30 text-white p-6 rounded-lg backdrop-blur-3xl sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="text-4xl font-black uppercase italic tracking-tighter flex items-center gap-4">
-                            <Sparkles className="h-10 w-10 text-indigo-400" />
+                        <DialogTitle className="text-xl font-black uppercase italic tracking-tighter flex items-center gap-3">
+                            <Sparkles className="h-5 w-5 text-indigo-400" />
                             Clonación Neural
                         </DialogTitle>
-                        <DialogDescription className="text-indigo-200/50 uppercase font-black tracking-widest text-[10px] pt-2">
-                            Entrena tu avatar realista con ingeniería de gesticulación avanzada.
+                        <DialogDescription className="text-indigo-200/50 uppercase font-black tracking-widest text-[8px] pt-1">
+                            Entrena tu avatar realista con ingeniería avanzada.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-10 space-y-8">
+                    <div className="py-6 space-y-6">
                         <div className="space-y-4 text-center">
-                            <div className="h-24 w-24 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto border-2 border-indigo-400/50 mb-4">
-                                <MonitorPlay className="h-12 w-12 text-indigo-400" />
+                            <div className="h-16 w-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto border border-indigo-400/50 mb-2">
+                                <MonitorPlay className="h-8 w-8 text-indigo-400" />
                             </div>
-                            <h3 className="text-xl font-bold">Procesando Video de Entrenamiento</h3>
-                            <p className="text-xs text-indigo-200/40 font-medium">Estamos analizando tu video de 30s para clonar tu voz, rostro y micro-gestos con precisión quirúrgica.</p>
-                            <div className="space-y-2 pt-4">
-                                <Progress value={avatarUploadProgress} className="h-2 bg-white/5" />
-                                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300">{avatarUploadProgress}% - Sincronizando capas neuronales</p>
+                            <h3 className="text-sm font-bold uppercase tracking-tight">Procesando Video Maestro</h3>
+                            <div className="space-y-1.5 pt-2">
+                                <Progress value={avatarUploadProgress} className="h-1.5 bg-white/5" />
+                                <p className="text-[8px] font-black uppercase tracking-widest text-indigo-300">{avatarUploadProgress}% - Sincronizando capas neuronales</p>
                             </div>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button className="w-full h-14 bg-white/5 border border-white/10 text-white/40 uppercase text-[10px] font-black tracking-widest rounded-2xl cursor-wait" disabled>
+                        <Button className="w-full h-10 bg-white/5 border border-white/10 text-white/40 uppercase text-[9px] font-black tracking-widest rounded-lg cursor-wait" disabled>
                             Esperando Finalización...
                         </Button>
                     </DialogFooter>
@@ -607,6 +604,6 @@ export default function VideoLabClient({ initialProducts }: VideoLabClientProps)
                     if (file) handleAvatarUpload(file);
                 }}
             />
-        </div>
+        </div >
     );
 }

@@ -141,8 +141,8 @@ export default function DashboardClient({ initialKpi, initialOrders, initialCamp
 
                 <TabsContent value="crm" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        <Card className="compact-card p-3 flex flex-col items-center justify-center text-center space-y-2 bg-white">
-                            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100/50">
+                        <Card className="compact-card p-3 flex flex-col items-center justify-center text-center space-y-2 bg-white rounded-lg">
+                            <div className="p-2 rounded-lg bg-blue-50 text-blue-600 border border-blue-100/50">
                                 <Package className="w-4 h-4" />
                             </div>
                             <h3 className="text-[9px] font-black uppercase tracking-tight italic text-left w-full">{t('logistic_status')}</h3>
@@ -199,7 +199,7 @@ function KpiCard({ label, value, trend, sub, icon: Icon, color, bg, alert, aura 
     return (
         <motion.div variants={item}>
             <Card className={cn(
-                "compact-card border-none bg-white rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5 overflow-hidden relative group",
+                "compact-card border-none bg-white rounded-lg transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5 overflow-hidden relative group",
                 alert && "bg-rose-50/20 ring-1 ring-rose-100/30",
                 aura && "before:absolute before:-top-4 before:-right-4 before:w-16 before:h-16 before:bg-indigo-500/10 before:rounded-full before:blur-2xl before:pointer-events-none"
             )}>
@@ -211,7 +211,7 @@ function KpiCard({ label, value, trend, sub, icon: Icon, color, bg, alert, aura 
                     <div className="space-y-0.5 text-left">
                         <p className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">{label}</p>
                         <div className="flex items-center gap-1.5">
-                            <h3 className={cn("text-[13px] font-black tracking-tighter italic leading-none", alert ? "text-rose-600" : "text-slate-950")}>{value}</h3>
+                            <h3 className={cn("text-[13px] font-black tracking-tighter italic leading-none uppercase", alert ? "text-rose-600" : "text-slate-950")}>{value}</h3>
                             {trend && (
                                 <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[7px] px-1 py-0 h-3 flex items-center gap-0.5 scale-90 origin-left">
                                     <ArrowUpRight className="h-1.5 w-1.5" />{trend}
@@ -220,7 +220,7 @@ function KpiCard({ label, value, trend, sub, icon: Icon, color, bg, alert, aura 
                         </div>
                         {sub && <p className="text-[7px] font-black text-slate-500 uppercase tracking-tighter mt-1 opacity-70 italic">{sub}</p>}
                     </div>
-                    <div className={cn("h-6 w-6 rounded-lg flex items-center justify-center shrink-0 shadow-sm", bg)}>
+                    <div className={cn("h-6 w-6 rounded-lg flex items-center justify-center shrink-0 shadow-sm transition-all group-hover:scale-110", bg)}>
                         <Icon className={cn("h-3 w-3", color)} />
                     </div>
                 </div>

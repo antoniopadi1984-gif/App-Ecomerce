@@ -52,9 +52,7 @@ export const MAIN_NAV = {
         }
     ],
 
-    ],
-
-// NIVEL PRODUCTO (OBSOLETO - Consolidation Refactor)
-// El contexto de producto ahora es global y no cambia las rutas del sidebar
-product: (productId: string) => []
+    // NIVEL PRODUCTO (OBSOLETO - Consolidation Refactor)
+    // El contexto de producto ahora es global y no cambia las rutas del sidebar
+    product: (productId: string) => []
 };

@@ -34,29 +34,29 @@ export default function NotificationsPage() {
     };
 
     return (
-        <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
+        <div className="max-w-[1200px] mx-auto p-4 space-y-6 animate-in fade-in duration-500 bg-white min-h-0">
             {/* Cabecera Ultra-Compacta */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
-                <div className="space-y-1">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-blue-700 text-white shadow-sm">
-                            <BellRing className="h-5 w-5" />
+                        <div className="p-1 px-2 rounded-lg bg-slate-900 shadow-lg shadow-slate-200">
+                            <BellRing className="h-4 w-4 text-indigo-400" />
                         </div>
-                        <h2 className="text-xl font-black tracking-tight text-slate-950 uppercase italic">
-                            Centro de Notificaciones
+                        <h2 className="text-lg font-black tracking-tighter text-slate-950 uppercase italic leading-none">
+                            Centro de Notificaciones <span className="text-indigo-600 not-italic ml-1">v4</span>
                         </h2>
                     </div>
-                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">
+                    <p className="text-slate-400 font-bold text-[8px] uppercase tracking-[0.2em] mt-1.5 opacity-80">
                         Automatizaciones inteligentes post-venta • WhatsApp & Email
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" className="button-compact border-slate-200 text-slate-600">
-                        <LayoutGrid className="h-3.5 w-3.5" /> Vista Grid
+                <div className="flex items-center gap-1.5">
+                    <Button variant="outline" className="h-7 px-2.5 rounded-lg border-slate-100 text-slate-500 font-black text-[9px] uppercase tracking-widest hover:bg-slate-50">
+                        <LayoutGrid className="h-3 w-3 mr-1.5" /> Vista Grid
                     </Button>
-                    <Button variant="outline" className="button-compact border-slate-200 text-slate-600">
-                        <Settings2 className="h-3.5 w-3.5" /> Configuración
+                    <Button variant="outline" className="h-7 px-2.5 rounded-lg border-slate-100 text-slate-500 font-black text-[9px] uppercase tracking-widest hover:bg-slate-50">
+                        <Settings2 className="h-3 w-3 mr-1.5" /> Configuración
                     </Button>
                 </div>
             </div>
@@ -136,21 +136,21 @@ export default function NotificationsPage() {
             </div>
 
             {/* Banner Informativo Compacto */}
-            <Card className="bg-slate-950 border-none rounded-xl p-6 shadow-xl relative overflow-hidden group">
+            <Card className="bg-slate-950 border-none rounded-lg p-5 shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500 grayscale brightness-200">
                     <Info className="h-24 w-24 text-white" />
                 </div>
                 <div className="flex items-center gap-6 relative z-10">
-                    <div className="h-12 w-12 rounded-lg bg-blue-700 flex items-center justify-center shrink-0 shadow-lg">
-                        <Zap className="h-6 w-6 text-white" />
+                    <div className="h-10 w-10 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0 shadow-lg">
+                        <Zap className="h-5 w-5 text-white" />
                     </div>
-                    <div className="space-y-1">
-                        <h4 className="text-sm font-black text-white uppercase italic">Sincronización Inteligente Beeping/Shopify</h4>
-                        <p className="text-slate-400 font-bold text-xs leading-relaxed max-w-xl">
+                    <div className="space-y-0.5">
+                        <h4 className="text-xs font-black text-white uppercase italic tracking-tight">Sincronización Inteligente Beeping/Shopify</h4>
+                        <p className="text-slate-400 font-bold text-[9px] leading-relaxed max-w-xl uppercase tracking-widest opacity-80">
                             El sistema detecta automáticamente cada cambio de estado y dispara estas plantillas. Asegúrate de que las variables esten correctamente configuradas.
                         </p>
                     </div>
-                    <Button variant="outline" className="ml-auto button-compact border-slate-800 text-white hover:bg-slate-900 border-2">
+                    <Button variant="outline" className="ml-auto h-7 px-3 rounded-lg border-slate-800 text-white font-black text-[9px] uppercase tracking-widest hover:bg-slate-900 transition-all">
                         Guía de Uso
                     </Button>
                 </div>

@@ -297,14 +297,14 @@ export default function FacebookAdsPage() {
                     )}
 
                     {/* TABS SELECTOR (Campaigns, Adsets, Ads) */}
-                    <div className="bg-white/60 backdrop-blur-sm px-4 border-b border-slate-200/50 shrink-0">
+                    <div className="bg-white/60 px-4 border-b border-slate-200/50 shrink-0">
                         <Tabs value={activeTab} onValueChange={(v) => {
                             setActiveTab(v);
                             // Auto-reset lower level filters if jumping up
                             if (v === 'campaigns') { setSelectedCampaignId(null); setSelectedAdsetId(null); }
                             if (v === 'adsets') { setSelectedAdsetId(null); }
                         }}>
-                            <TabsList className="bg-transparent h-10 p-0 gap-8">
+                            <TabsList className="bg-transparent h-10 p-0 gap-6">
                                 <TabsTrigger value="campaigns" className="h-10 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary text-[10px] font-black uppercase tracking-[0.15em]">
                                     Campañas
                                 </TabsTrigger>
@@ -328,7 +328,7 @@ export default function FacebookAdsPage() {
                                             key={col.id}
                                             className={cn(
                                                 "border-r border-b border-slate-200 px-2 text-[10px] font-black text-slate-500 uppercase tracking-tighter leading-none h-8",
-                                                col.sticky && "sticky left-0 bg-slate-50 z-30 shadow-[1px_0_0_0_#e2e8f0]",
+                                                col.sticky && "sticky left-0 bg-slate-50 z-30 shadow-[1px_0_0_0_var(--border)]",
                                                 col.align === 'right' && "text-right"
                                             )}
                                         >

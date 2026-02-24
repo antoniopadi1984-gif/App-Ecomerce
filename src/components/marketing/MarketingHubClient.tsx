@@ -23,7 +23,6 @@ import { CopyHubModule } from "./CopyHubModule";
 import { LandingLabModule } from "./LandingLabModule";
 import { VideoLabModule } from "./VideoLabModule";
 import { AdSpyModule } from "./AdSpyModule";
-import { AvatarsModule } from "./AvatarsLabModule";
 import { PerformanceModule } from "./PerformanceModule";
 import { ClowdbotLabModule } from "./ClowdbotLabModule";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,7 +44,7 @@ export function MarketingHubClient({ productId, productTitle, allProducts = [] }
     return (
         <div className="flex flex-col h-[calc(100vh-100px)]">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                <div className="px-4 py-2 bg-white/50 backdrop-blur-md border-b border-slate-200">
+                <div className="px-4 py-2 bg-white/50 border-b border-slate-200">
                     <TabsList className="bg-slate-100/50 p-1 rounded-lg border border-slate-200 h-10 w-fit gap-1">
                         <TabsTrigger value="assets" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <Grid3X3 className="w-3.5 h-3.5" /> Activos
@@ -61,9 +60,6 @@ export function MarketingHubClient({ productId, productTitle, allProducts = [] }
                         </TabsTrigger>
                         <TabsTrigger value="landings" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <Layout className="w-3.5 h-3.5" /> Landing Lab
-                        </TabsTrigger>
-                        <TabsTrigger value="avatars" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
-                            <Users className="w-3.5 h-3.5" /> Avatars Lab
                         </TabsTrigger>
                         <TabsTrigger value="performance" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <TrendingUp className="w-3.5 h-3.5" /> Rendimiento
@@ -109,10 +105,6 @@ export function MarketingHubClient({ productId, productTitle, allProducts = [] }
 
                             <TabsContent value="landings" className="m-0 animate-in fade-in duration-500">
                                 <LandingLabModule productId={productId} productTitle={productTitle} />
-                            </TabsContent>
-
-                            <TabsContent value="avatars" className="m-0 animate-in fade-in duration-500">
-                                <AvatarsModule />
                             </TabsContent>
 
                             <TabsContent value="performance" className="m-0 animate-in fade-in duration-500">

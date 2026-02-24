@@ -28,7 +28,10 @@ import { Input } from "@/components/ui/input";
 import { PageShell } from "@/components/ui/PageShell";
 import { ModuleHeader } from "@/components/ui/ModuleHeader";
 
+import { useStore } from "@/lib/store/store-context";
+
 export default function SupplyChainDashboard() {
+    const { activeStoreId } = useStore();
     const [stats, setStats] = useState<any>(null);
     const [matrix, setMatrix] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -58,7 +61,7 @@ export default function SupplyChainDashboard() {
         setLoading(true);
         try {
             const [statsData, matrixData] = await Promise.all([
-                getSupplyChainStats(),
+                getSupplyChainStats(activeStoreId!),
                 getDailyOperationsMatrix(selectedMonth, selectedYear)
             ]);
             setStats(statsData);
@@ -78,13 +81,16 @@ export default function SupplyChainDashboard() {
     };
 
     useEffect(() => {
-        loadData();
-    }, [selectedMonth, selectedYear]);
+        if (activeStoreId) {
+            loadData();
+        }
+    }, [selectedMonth, selectedYear, activeStoreId]);
 
     const handleSync = async () => {
+        if (!activeStoreId) return;
         setSyncing(true);
         const toastId = toast.loading("Sincronizando con proveedores...");
-        const res = await triggerLogisticsSync();
+        const res = await triggerLogisticsSync(activeStoreId);
         if (res.success) {
             toast.success(res.message, { id: toastId });
             loadData();
@@ -111,7 +117,8 @@ export default function SupplyChainDashboard() {
     };
 
     const handleUpdateFinance = async (dateStr: string, field: 'adSpend' | 'visitors', value: number) => {
-        const res = await updateDailyFinance(dateStr, { [field]: value });
+        if (!activeStoreId) return;
+        const res = await updateDailyFinance(activeStoreId, dateStr, { [field]: value });
         if (res.success) {
             setMatrix(prev => prev.map(r => r.date === dateStr ? { ...r, [field]: value } : r));
             loadData(); // To recalculate derived stats
@@ -121,13 +128,13 @@ export default function SupplyChainDashboard() {
 
     const handleUpdateGlobalCost = async (field: string, value: number) => {
         let success = false;
-        if (field === 'cogs') {
-            const res = await updateGlobalProductCost(value);
+        if (field === 'cogs' && activeStoreId) {
+            const res = await updateGlobalProductCost(activeStoreId, value);
             success = res.success;
         } else if (field === 'shipping' || field === 'return') {
-            if (stats?.rules?.[0]?.id) {
+            if (stats?.rules?.[0]?.id && activeStoreId) {
                 const update = field === 'shipping' ? { baseShippingCost: value } : { returnCost: value };
-                const res = await updateFulfillmentRule(stats.rules[0].id, update);
+                const res = await updateFulfillmentRule(activeStoreId, stats.rules[0].id, update);
                 success = res.success;
             }
         }
@@ -267,7 +274,7 @@ export default function SupplyChainDashboard() {
                                 </div>
 
                                 <div className="space-y-3 pt-2">
-                                    <div className="p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 space-y-3 shadow-inner">
+                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3 shadow-inner">
                                         <div className="flex items-center justify-between">
                                             <Label className="text-[7.5px] font-black uppercase text-slate-400 tracking-widest leading-none">Target ROAS</Label>
                                             <span className="text-[12px] font-black text-indigo-400 italic">x{targetROAS.toFixed(1)}</span>
@@ -314,7 +321,7 @@ export default function SupplyChainDashboard() {
                                 </div>
                             </div>
 
-                            <div className="p-4 bg-black/60 backdrop-blur-md border-t border-white/10">
+                            <div className="p-4 bg-black/60 border-t border-white/10">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Monthly Projection</span>
@@ -348,7 +355,7 @@ export default function SupplyChainDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-3 bg-white/50 backdrop-blur-xl px-3 py-1.5 rounded-xl border border-white/60 shadow-inner group">
+                                <div className="flex items-center gap-3 glass-card px-3 py-1.5 rounded-xl shadow-inner group">
                                     <DetailMetric label="COGS" value={`€${globalConfig.avgCogs}`} edit={editingGlobal === 'cogs'} onEdit={() => setEditingGlobal('cogs')} onUpdate={(val: number) => handleUpdateGlobalCost('cogs', val)} />
                                     <div className="h-4 w-px bg-slate-200" />
                                     <DetailMetric label="ENVÍO" value={`€${globalConfig.shipping}`} edit={editingGlobal === 'shipping'} onEdit={() => setEditingGlobal('shipping')} onUpdate={(val: number) => handleUpdateGlobalCost('shipping', val)} />
@@ -359,7 +366,7 @@ export default function SupplyChainDashboard() {
                                 <div className="overflow-x-auto overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-slate-200">
                                     <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
                                         <thead>
-                                            <tr className="bg-slate-900/95 backdrop-blur-xl text-[7px] font-black uppercase tracking-[0.2em] text-white/50 border-b border-indigo-500/10">
+                                            <tr className="bg-slate-900/95 text-[7px] font-black uppercase tracking-[0.2em] text-white/50 border-b border-indigo-500/10">
                                                 <th className="p-2.5 w-14 sticky left-0 bg-slate-900 z-50 text-center border-r border-white/5">DATE</th>
                                                 <th className="p-2.5 w-24 text-center">TRAFFIC</th>
                                                 <th className="p-2.5 w-24 text-center">REVENUE</th>
@@ -446,8 +453,8 @@ export default function SupplyChainDashboard() {
                                                             <div className="flex flex-col items-center justify-center gap-1">
                                                                 <div className="relative h-10 w-10">
                                                                     <svg className="h-full w-full rotate-[-90deg]">
-                                                                        <circle cx="20" cy="20" r="16" fill="transparent" stroke="#F1F5F9" strokeWidth="4" />
-                                                                        <circle cx="20" cy="20" r="16" fill="transparent" stroke={row.deliveryRate > 80 ? "#10B981" : "#F59E0B"} strokeWidth="4"
+                                                                        <circle cx="20" cy="20" r="16" fill="transparent" stroke="var(--slate-100)" strokeWidth="4" />
+                                                                        <circle cx="20" cy="20" r="16" fill="transparent" stroke={row.deliveryRate > 80 ? "var(--alert-ok)" : "var(--alert-warning)"} strokeWidth="4"
                                                                             strokeDasharray={`${(row.deliveryRate / 100) * 100} 100`} strokeLinecap="round" />
                                                                     </svg>
                                                                     <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[9px] font-black">{row.deliveryRate.toFixed(0)}%</span>

@@ -23,25 +23,24 @@ export async function syncKnowledgeGraph(productId: string) {
         // 2. Map existing data to KnowledgeNodes (Idempotent)
         // This is a complex logic that would normally involve an Agent to "extract" wisdom.
         // For now, we sync established entities.
-
         const brainPrompt = `
-            Actúa como el Arquitecto de Conocimiento de Ecombom.
-            Analiza estas entidades y define RELACIONES lógicas entre ellas para un Knowledge Graph.
-            
-            ÁNGULOS: ${JSON.stringify(angles.map((a: any) => ({ id: a.id, title: a.title, hook: a.hook })))}
-            CONTRATOS: ${JSON.stringify(contracts.map((c: any) => ({ id: c.id, angle: c.mainAngle })))}
-            PROYECTOS: ${JSON.stringify(projects.map((p: any) => ({ id: p.id, name: p.name })))}
-            
-            NECESITO RELACIONES (JSON):
-            {
-               "nodes": [
-                  { "externalId": "...", "type": "ANGLE/CONTRACT/PROJECT", "label": "..." }
-               ],
-               "links": [
-                  { "sourceId": "...", "targetId": "...", "type": "USES/RESPONDS_TO/CONVERTS", "explanation": "..." }
-               ]
-            }
-        `;
+ Actúa como el Arquitecto de Conocimiento de Ecombom.
+ Analiza estas entidades y define RELACIONES lógicas entre ellas para un Knowledge Graph.
+ 
+ ÁNGULOS: ${JSON.stringify(angles.map((a: any) => ({ id: a.id, title: a.title, hook: a.hook })))}
+ CONTRATOS: ${JSON.stringify(contracts.map((c: any) => ({ id: c.id, angle: c.mainAngle })))}
+ PROYECTOS: ${JSON.stringify(projects.map((p: any) => ({ id: p.id, name: p.name })))}
+ 
+ NECESITO RELACIONES (JSON):
+ {
+ "nodes": [
+ { "externalId": "...", "type": "ANGLE/CONTRACT/PROJECT", "label": "..." }
+ ],
+ "links": [
+ { "sourceId": "...", "targetId": "...", "type": "USES/RESPONDS_TO/CONVERTS", "explanation": "..." }
+ ]
+ }
+ `;
 
         const res = await askGemini(brainPrompt, "Eres el cerebro del sistema.");
         const data = JSON.parse((res.text || "").match(/\{[\s\S]*\}/)?.[0] || "{}");
@@ -73,7 +72,8 @@ export async function syncKnowledgeGraph(productId: string) {
 
         revalidatePath(`/marketing/product-brain`);
         return { success: true };
-    } catch (e: any) {
+    }
+    catch (e: any) {
         console.error("Brain Sync Error:", e);
         return { success: false, error: e.message };
     }

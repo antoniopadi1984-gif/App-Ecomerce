@@ -6,7 +6,7 @@ import {
     Users, Plus, Sparkles, Loader2, Trash2, Video,
     User, Zap, Wand2, Play, Save, Settings, CheckCircle2,
     MessageSquare, Volume2, Mic2, Globe, ChevronRight, AlertCircle, Eye, Download,
-    Fingerprint, ShieldCheck, Database
+    Fingerprint, ShieldCheck, Database, Beaker, FileVideo, History, Radio, RefreshCw, ExternalLink
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PageShell } from "@/components/ui/PageShell";
+import { ModuleHeader } from "@/components/ui/ModuleHeader";
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from "@/lib/styles/tokens";
 import {
     saveAvatarProfile,
     getAvatarProfiles,
@@ -30,18 +33,22 @@ import {
     createEvolutionPair,
     cleanupLegacyAvatars,
     createAvatarFromResearchAction,
-    getProductDriveFolder
+    getProductDriveFolder,
+    generateAvatarMotion,
+    generateScientificSimulation,
+    getAvatarAssets
 } from "./actions";
+import { CreativeFactoryPanel } from "@/components/creative/CreativeFactoryPanel";
 
-export default function AvatarStudioPage() {
+export default function AvatarStudioPage({ isEmbedded = false }: { isEmbedded?: boolean }) {
     return (
         <Suspense fallback={<div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-rose-500" /></div>}>
-            <AvatarStudioContent />
+            <AvatarStudioContent isEmbedded={isEmbedded} />
         </Suspense>
     );
 }
 
-function AvatarStudioContent() {
+function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
     const [storeId, setStoreId] = useState<string | null>(null);
     const [avatars, setAvatars] = useState<any[]>([]);
     const [voices, setVoices] = useState<any[]>([]);
@@ -50,6 +57,8 @@ function AvatarStudioContent() {
     const [activeTab, setActiveTab] = useState("profiles");
     const [qualityTier, setQualityTier] = useState<'balanced' | 'premium'>('premium');
     const [engineStatus, setEngineStatus] = useState<"online" | "offline" | "checking">("checking");
+    const [isSimulating, setIsSimulating] = useState<string | null>(null);
+    const [avatarAssets, setAvatarAssets] = useState<{ creatives: any[], assets: any[] }>({ creatives: [], assets: [] });
     const searchParams = useSearchParams();
 
     // Profile Form State
@@ -86,11 +95,9 @@ function AvatarStudioContent() {
         checkHealth();
         loadDriveInfo();
 
-        // Polling interval for generating avatars
         const interval = setInterval(() => {
             const hasGenerating = avatars.some(a => ['DRAFT', 'GENERATING_IMAGE'].includes(a.status));
             if (hasGenerating) {
-                console.log("🔄 [Studio] Polling for updates...");
                 loadData();
             }
         }, 8000);
@@ -125,8 +132,12 @@ function AvatarStudioContent() {
     const loadDriveInfo = async () => {
         const pid = searchParams.get("productId");
         if (pid) {
-            const res = await getProductDriveFolder(pid);
-            if (res.success) setDriveFolder(res.data);
+            const [driveRes, assetsRes] = await Promise.all([
+                getProductDriveFolder(pid),
+                getAvatarAssets(pid)
+            ]);
+            if (driveRes.success) setDriveFolder(driveRes.data);
+            if (assetsRes.success) setAvatarAssets({ creatives: assetsRes.creatives || [], assets: assetsRes.assets || [] });
         } else {
             setDriveFolder(null);
         }
@@ -149,7 +160,7 @@ function AvatarStudioContent() {
             } as any);
 
             if (res.success) {
-                toast.success(qualityTier === 'premium' ? "Misión de Identidad de Máximo Nivel Iniciada" : "Avatar guardado correctamente");
+                toast.success(qualityTier === 'premium' ? "Misión Iniciada" : "Avatar guardado");
                 setIsAdding(false);
                 setEditingAvatarId(null);
                 setFormData({
@@ -215,13 +226,44 @@ function AvatarStudioContent() {
     const handleGenerateVideo = async () => {
         if (!selectedAvatar || !script) return;
         setLoading(true);
-        toast.info("Iniciando síntesis de video... Esto tardará unos minutos.");
-        // Simulated local trigger
-        setTimeout(() => {
+        toast.info("Lanzando motor de Lipsync de alta fidelidad...");
+
+        try {
+            const res = await generateAvatarMotion(selectedAvatar.id, "", script);
+            if (res.success && res.videoUrl) {
+                setGeneratedVideoUrl(res.videoUrl);
+                toast.success("Producción UGC completada");
+                loadData();
+            } else {
+                toast.error(res.error || "Error en la síntesis");
+            }
+        } catch (e: any) {
+            toast.error("Error crítico: " + e.message);
+        } finally {
             setLoading(false);
-            setGeneratedVideoUrl("https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4");
-            toast.success("Video Generado con Éxito");
-        }, 3000);
+        }
+    };
+
+    const handleRunSimulation = async (mode: string) => {
+        if (!selectedAvatar) {
+            toast.error("Selecciona un avatar primero");
+            return;
+        }
+        setIsSimulating(mode);
+        toast.info(`Iniciando simulación ${mode}...`);
+
+        try {
+            const res = await generateScientificSimulation(selectedAvatar.id, mode);
+            if (res.success) {
+                toast.success("Simulación encolada. Revisa la sección de Activos en unos segundos.");
+            } else {
+                toast.error(res.error);
+            }
+        } catch (e: any) {
+            toast.error("Error: " + e.message);
+        } finally {
+            setIsSimulating(null);
+        }
     };
 
     const handleGenerateScript = async () => {
@@ -231,7 +273,7 @@ function AvatarStudioContent() {
         setLoading(false);
         if (res.success && res.script) {
             setScript(res.script);
-            toast.success("Guion generado por Gemini Vision");
+            toast.success("Guion generado");
         }
     };
 
@@ -249,7 +291,6 @@ function AvatarStudioContent() {
     const handleCreateFromResearch = async () => {
         if (!storeId) return;
         setLoading(true);
-        // Getting productId from URL if possible
         const urlParams = new URLSearchParams(window.location.search);
         const pid = urlParams.get("productId") || "";
 
@@ -263,299 +304,327 @@ function AvatarStudioContent() {
         }
     };
 
-    return (
-        <div className="min-h-screen bg-slate-50/50 p-6 md:p-12 font-sans selection:bg-rose-500/30">
-            {/* Header Area */}
-            <div className="max-w-7xl mx-auto space-y-12">
-                <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-slate-200">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                            <div className="h-12 w-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-2xl">
-                                <Users className="h-6 w-6 text-white" />
+    const content = (
+        <div className="flex flex-col h-full bg-slate-50">
+            {!isEmbedded && (
+                <ModuleHeader
+                    title="Avatar Studio"
+                    subtitle="PROTOCOLO DE ALTA FIDELIDAD"
+                    icon={Users}
+                    actions={
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 bg-slate-50 px-3 h-8 rounded-lg border border-slate-200">
+                                <div className={cn("w-1.5 h-1.5 rounded-full", engineStatus === "online" ? "bg-emerald-500 animate-pulse" : "bg-rose-500")} />
+                                <span className="text-[8px] font-black uppercase tracking-tight text-slate-500">{engineStatus === "online" ? "ENGINE: ONLINE" : "ENGINE: OFFLINE"}</span>
                             </div>
-                            <div>
-                                <h1 className="text-xl font-black uppercase tracking-tight text-slate-900 leading-none">Avatar <span className="text-rose-500">Studio</span></h1>
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2 flex items-center gap-2">
-                                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> PROTOCOLO DE ALTA FIDELIDAD ACTIVO
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 bg-white px-4 h-12 rounded-2xl border border-slate-200 shadow-sm mr-2">
-                            <div className={cn("w-2 h-2 rounded-full", engineStatus === "online" ? "bg-emerald-500 animate-pulse" : "bg-rose-500")} />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{engineStatus === "online" ? "LOCAL ENGINE: ONLINE" : "LOCAL ENGINE: OFFLINE"}</span>
-                        </div>
-                        {driveFolder?.driveFolderId && (
-                            <Button
-                                onClick={() => window.open(`https://drive.google.com/drive/folders/${driveFolder.driveFolderId}`, '_blank')}
-                                variant="outline"
-                                className="h-12 border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 rounded-2xl font-black px-6 text-[10px] uppercase tracking-widest gap-2"
-                            >
-                                <Globe className="w-4 h-4" /> DRIVE PRODUCTO
+                            <Button onClick={handleCleanup} variant="ghost" className="h-8 px-2 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500">
+                                <Trash2 className="w-3.5 h-3.5" />
                             </Button>
-                        )}
-                        <Button onClick={handleCleanup} variant="ghost" className="h-12 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500">
-                            <Trash2 className="w-4 h-4 mr-2" /> LIMPIAR HISTORIAL
-                        </Button>
-                        <Button onClick={handleCreateFromResearch} variant="outline" className="h-12 border-rose-500/30 text-rose-500 hover:bg-rose-50 rounded-2xl font-black px-6 text-[10px] uppercase tracking-widest gap-2">
-                            <Database className="w-4 h-4" /> IMPORTAR RESEARCH
-                        </Button>
-                        <Button onClick={() => setIsAdding(true)} className="bg-slate-900 text-white rounded-2xl font-black px-8 h-12 shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest gap-3">
-                            <Plus className="w-4 h-4 text-rose-500" /> RECLUTAR AVATAR
-                        </Button>
-                    </div>
-                </header>
+                            <Button onClick={handleCreateFromResearch} variant="outline" className="h-8 border-rose-100 text-rose-500 hover:bg-rose-50 rounded-lg font-black px-3 text-[9px] uppercase tracking-widest gap-2">
+                                <Database className="w-3.5 h-3.5" /> RESEARCH
+                            </Button>
+                            <Button onClick={() => setIsAdding(true)} className="bg-slate-900 text-white rounded-lg font-black px-4 h-8 shadow-sm hover:scale-[1.02] transition-all text-[9px] uppercase tracking-widest gap-2">
+                                <Plus className="w-3.5 h-3.5 text-rose-500" /> RECLUTAR
+                            </Button>
+                        </div>
+                    }
+                />
+            )}
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-                    <TabsList className="bg-slate-900/5 p-1 rounded-2xl border border-slate-200 w-fit">
-                        <TabsTrigger value="profiles" className="rounded-xl px-8 py-2 text-xs font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">BIBLIOTECA</TabsTrigger>
-                        <TabsTrigger value="studio" className="rounded-xl px-8 py-2 text-xs font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">SUPER VIDEO LAB</TabsTrigger>
+            <main className={cn("flex-1", isEmbedded ? "p-0 space-y-4" : "p-4 space-y-6")}>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                    <TabsList className="bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit flex gap-1">
+                        <TabsTrigger value="profiles" className="rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
+                            <Users className="w-3 h-3" /> BIBLIOTECA
+                        </TabsTrigger>
+                        <TabsTrigger value="creative_factory" className="rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
+                            <Zap className="w-3 h-3 text-rose-500" /> FÁBRICA UGC
+                        </TabsTrigger>
+                        <TabsTrigger value="studio" className="rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
+                            <Radio className="w-3 h-3 text-emerald-500" /> ESTUDIO EN VIVO
+                        </TabsTrigger>
+                        <TabsTrigger value="science" className="rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
+                            <Beaker className="w-3 h-3 text-indigo-500" /> CIENCIA
+                        </TabsTrigger>
+                        <TabsTrigger value="assets" className="rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
+                            <History className="w-3 h-3" /> HISTORIAL
+                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="profiles" className="outline-none">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-10 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8 gap-3">
                             {avatars.map((a) => (
-                                <div key={a.id} className="group relative rounded-3xl border border-white/60 overflow-hidden hover:shadow-xl transition-all duration-500 bg-white/40 backdrop-blur-md flex flex-col ring-1 ring-black/[0.03]">
+                                <div key={a.id} className="group relative rounded-xl border border-slate-200 overflow-hidden hover:border-rose-300 transition-all duration-300 bg-white flex flex-col shadow-sm">
                                     <div className="aspect-square bg-slate-50 relative overflow-hidden">
-                                        {a.imageUrl ? <img src={a.imageUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" /> : <User className="w-8 h-8 text-slate-200 absolute inset-0 m-auto" />}
+                                        {a.imageUrl ? <img src={a.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" /> : <User className="w-6 h-6 text-slate-300 absolute inset-0 m-auto" />}
 
-                                        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 gap-1.5 backdrop-blur-[2px]">
-                                            <Button size="sm" className="w-full rounded-lg text-[8px] font-black bg-white text-slate-900 h-7" onClick={() => handleEditProfile(a)}>CONFIGURAR</Button>
-                                            <Button size="sm" className="w-full rounded-lg text-[8px] font-black bg-rose-600 text-white gap-1.5 h-7 shadow-lg shadow-rose-600/20" onClick={() => createEvolutionPair(a.id).then(loadData)}>
-                                                <Zap className="w-2.5 h-2.5 fill-white" /> EVOLUCIÓN
+                                        <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center items-center p-3 gap-2">
+                                            <Button size="sm" className="w-full rounded-md text-[8px] font-black bg-white text-slate-900 h-6" onClick={() => handleEditProfile(a)}>EDITAR</Button>
+                                            <Button size="sm" className="w-full rounded-md text-[8px] font-black bg-rose-500 text-white gap-1 h-6" onClick={() => createEvolutionPair(a.id).then(loadData)}>
+                                                <Zap className="w-2 h-2 fill-white" /> EVOLUCIÓN
                                             </Button>
                                         </div>
 
                                         <Badge className={cn(
-                                            "absolute top-2 left-2 text-[6px] font-black uppercase tracking-widest px-1.5 h-4.5 border-none",
+                                            "absolute top-1.5 left-1.5 text-[6px] font-black uppercase tracking-tight px-1.5 h-4 border-none",
                                             a.status === 'GENERATING_IMAGE' ? "bg-amber-400 text-slate-900 animate-pulse" : "bg-emerald-500 text-white"
                                         )}>
-                                            {a.status === 'GENERATING_IMAGE' ? 'SINTETIZANDO' : (a.evolutionStage ? a.evolutionStage : 'LISTO')}
+                                            {a.status === 'GENERATING_IMAGE' ? 'SYNC' : (a.evolutionStage || 'READY')}
                                         </Badge>
                                     </div>
-                                    <div className="p-3 bg-white/20">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <h3 className="text-[9px] font-black text-slate-900 uppercase italic truncate tracking-tight">{a.name}</h3>
-                                            {(() => {
-                                                const meta = JSON.parse(a.metadataJson || "{}");
-                                                const pId = meta.replicatePredictionId || meta.predictionId;
-                                                if (pId) return <Badge variant="outline" className="text-[5px] h-3 px-1 border-slate-200 text-slate-400 bg-slate-50 font-black uppercase tracking-tighter">REPLICATE</Badge>;
-                                                return null;
-                                            })()}
-                                        </div>
-                                        <div className="flex items-center justify-between mt-0.5">
-                                            <p className="text-[6px] text-slate-400 font-bold uppercase tracking-widest">{a.region} • {a.ageRange}</p>
-                                            {(() => {
-                                                const meta = JSON.parse(a.metadataJson || "{}");
-                                                const pId = meta.replicatePredictionId || meta.predictionId;
-                                                if (pId) return <span className="text-[5px] text-rose-500 font-black tracking-tighter">ID: {pId.substring(0, 8)}...</span>;
-                                                return null;
-                                            })()}
-                                        </div>
+                                    <div className="p-2">
+                                        <h3 className="text-[9px] font-black text-slate-900 uppercase truncate leading-tight">{a.name}</h3>
+                                        <p className="text-[7px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{a.region} • {a.ageRange}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="studio" className="outline-none">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            <div className="lg:col-span-4 space-y-6">
-                                <Card className="rounded-[2.5rem] border-white/50 overflow-hidden shadow-sm bg-white/20 backdrop-blur-xl">
-                                    <CardHeader className="bg-white/40 border-b border-white/20">
-                                        <CardTitle className="text-sm font-black uppercase italic tracking-widest flex items-center gap-3">
-                                            <Wand2 className="w-5 h-5 text-rose-500" /> SÍNTESIS AGENTICA
+                    <TabsContent value="creative_factory" className="outline-none mt-4">
+                        <CreativeFactoryPanel
+                            productId={searchParams.get("productId") || ""}
+                            productName="Producto"
+                            onBatchCreated={() => setActiveTab("assets")}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="studio" className="outline-none mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+                            <div className="lg:col-span-4 space-y-3">
+                                <Card className="rounded-3xl border-slate-200 overflow-hidden shadow-xl glass-card border-dashed">
+                                    <CardHeader className="p-5 border-b border-slate-100/50 bg-slate-50/30">
+                                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Radio className="w-4 h-4 text-emerald-500 animate-pulse" /> SÍNTESIS UGC
+                                            </div>
+                                            <Badge variant="outline" className="text-[7px] border-emerald-100 text-emerald-600 bg-emerald-50/30">V.4.2</Badge>
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="p-8 space-y-6">
-                                        <FormGroup label="AVATAR SELECCIONADO">
+                                    <CardContent className="p-5 space-y-6">
+                                        <div className="space-y-2">
+                                            <Label className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                                                <User className="w-3 h-3" /> SUJETO DE PRUEBA
+                                            </Label>
                                             <Select value={selectedAvatar?.id || ""} onValueChange={(id) => setSelectedAvatar(avatars.find(a => a.id === id))}>
-                                                <SelectTrigger className="rounded-xl h-12 bg-white/40 font-bold"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                                                <SelectContent>
-                                                    {avatars.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                                                <SelectTrigger className="rounded-2xl h-11 bg-slate-50 border-slate-100 text-[11px] font-black uppercase tracking-widest shadow-inner px-4">
+                                                    <SelectValue placeholder="SELECCIONAR..." />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-2xl border-slate-200 shadow-2xl">
+                                                    {avatars.map(a => <SelectItem key={a.id} value={a.id} className="text-[10px] font-bold uppercase tracking-widest py-3">{a.name} ({a.region})</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
-                                        </FormGroup>
+                                        </div>
 
-                                        <FormGroup label="GUION DEL ANUNCIO">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between px-1">
+                                                <Label className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                    <MessageSquare className="w-3 h-3" /> GUION DE VENTA
+                                                </Label>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="h-5 px-2 text-[7px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-full"
+                                                    onClick={handleGenerateScript}
+                                                >
+                                                    AUTO-GEN
+                                                </Button>
+                                            </div>
                                             <Textarea
                                                 value={script}
                                                 onChange={(e) => setScript(e.target.value)}
-                                                className="min-h-[200px] rounded-2xl bg-white/40 p-4 text-xs font-medium"
-                                                placeholder="Escribe el guion persuasivo..."
+                                                className="min-h-[160px] rounded-2xl bg-slate-50/50 border-slate-100 p-4 text-[11px] font-medium leading-relaxed focus:bg-white transition-all shadow-inner"
+                                                placeholder="Escribe el guion aquí..."
                                             />
-                                        </FormGroup>
+                                        </div>
 
-                                        <Button onClick={handleGenerateVideo} disabled={loading || !script || !selectedAvatar} className="w-full bg-slate-900 h-16 rounded-2xl font-black uppercase text-xs tracking-widest text-white shadow-xl">
-                                            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6 text-rose-500 fill-rose-500" />}
-                                            <div className="flex flex-col items-start ml-4">
-                                                <span>GENERAR VIDEO</span>
-                                                <span className="text-[8px] text-white/40 font-bold tracking-[0.3em]">NEURAL ENGINE LOCAL</span>
-                                            </div>
+                                        <Button
+                                            onClick={handleGenerateVideo}
+                                            disabled={loading || !script || !selectedAvatar}
+                                            className="w-full bg-slate-900 hover:bg-black h-12 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] text-white shadow-xl shadow-slate-900/10 active:scale-[0.98] transition-all gap-3"
+                                        >
+                                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 text-emerald-400 fill-emerald-400" />}
+                                            LANZAR PRODUCCIÓN
                                         </Button>
                                     </CardContent>
                                 </Card>
                             </div>
 
                             <div className="lg:col-span-8">
-                                <div className="bg-slate-950 aspect-video rounded-[3rem] border border-white/10 shadow-2xl flex items-center justify-center overflow-hidden group relative">
+                                <div className="bg-slate-900 aspect-video rounded-[2.5rem] border border-slate-800 shadow-2xl flex items-center justify-center overflow-hidden h-full min-h-[450px] relative">
                                     {generatedVideoUrl ? (
                                         <video src={generatedVideoUrl} controls className="w-full h-full object-contain" autoPlay />
                                     ) : (
-                                        <div className="flex flex-col items-center gap-6 opacity-30">
-                                            <div className="w-20 h-20 bg-white/5 rounded-[2.5rem] flex items-center justify-center border border-white/10">
-                                                <Video className="w-10 h-10 text-rose-500" />
+                                        <div className="flex flex-col items-center gap-4 group">
+                                            <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-500">
+                                                <Video className="w-8 h-8 text-slate-600 group-hover:text-rose-500 transition-colors" />
                                             </div>
-                                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60 text-center">Esperando Generación<br />Master 4K Output Ready</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600 animate-pulse">SALA DE PROYECCIÓN • STANDBY</p>
                                         </div>
                                     )}
+                                    <div className="absolute top-4 right-4 flex gap-2">
+                                        <Badge className="bg-black/40 border border-white/10 text-[7px] font-black uppercase tracking-widest text-emerald-400 py-1 px-3 rounded-full">LIVE PREVIEW</Badge>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </TabsContent>
-                </Tabs>
-            </div>
 
-            {/* Modal de Reclutamiento / Edición */}
-            {isAdding && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md animate-in fade-in duration-300">
-                    <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] shadow-2xl border-white/40 bg-white/90 backdrop-blur-2xl p-8 space-y-8 scrollbar-hide">
-                        <header className="flex items-center justify-between border-b border-slate-100 pb-6">
-                            <div className="flex items-center gap-4">
-                                <div className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
-                                    <Fingerprint className="h-5 w-5 text-rose-500" />
-                                </div>
+                    <TabsContent value="science" className="outline-none mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                            {[
+                                { id: 'COLLAGEN', label: 'Producción de Colágeno', desc: 'Simulación médica de regeneración dérmica', icon: Sparkles, color: 'rose' },
+                                { id: 'HAIR_GROWTH', label: 'Estimulación Capilar', desc: 'Timelapse de crecimiento folicular 8k', icon: Zap, color: 'amber' },
+                                { id: 'WRINKLE_REDUCTION', label: 'Efecto Rejuvenecimiento', desc: 'Dermatología láser y alisado de finas líneas', icon: ShieldCheck, color: 'emerald' },
+                                { id: 'BLOODSTREAM', label: 'Flujo Sanguíneo', desc: 'Viaje macroscópico por el sistema arterial', icon: Radio, color: 'indigo' },
+                                { id: 'PRODUCT_USAGE', label: 'Interacción de Producto', desc: 'Efecto de aura y absorción celular', icon: Wand2, color: 'purple' }
+                            ].map((sim) => (
+                                <Card key={sim.id} className="rounded-3xl border-slate-100 hover:border-rose-300 transition-all cursor-pointer group shadow-sm bg-white hover:shadow-xl hover:-translate-y-1">
+                                    <CardContent className="p-6 space-y-4">
+                                        <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center transition-all", `bg-${sim.color}-500/10 group-hover:bg-${sim.color}-500 group-hover:scale-110`)}>
+                                            <sim.icon className={cn("w-6 h-6", `text-${sim.color}-500 group-hover:text-white`)} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">{sim.label}</h3>
+                                            <p className="text-[9px] text-slate-400 font-bold leading-relaxed">{sim.desc}</p>
+                                        </div>
+                                        <Button
+                                            onClick={() => handleRunSimulation(sim.id)}
+                                            disabled={!!isSimulating || !selectedAvatar}
+                                            className="w-full h-9 rounded-xl border border-slate-100 bg-slate-50 group-hover:bg-slate-900 group-hover:text-white text-[9px] font-black uppercase tracking-widest transition-all shadow-sm"
+                                        >
+                                            {isSimulating === sim.id ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Play className="w-3 h-3 mr-2" />}
+                                            LANZAR SIMULACIÓN
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="assets" className="outline-none mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <Card className="rounded-[2.5rem] border-slate-100 glass-panel shadow-xl overflow-hidden min-h-[500px]">
+                            <CardHeader className="p-8 border-b border-slate-100/50 flex flex-row items-center justify-between">
                                 <div>
-                                    <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Configuración Bio-Métrica</h2>
-                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Personalización de Identidad Híbrida</p>
+                                    <CardTitle className="text-sm font-black uppercase tracking-tight italic">Biblioteca de Activos Generados</CardTitle>
+                                    <CardDescription className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-1">Historial completo de síntesis y simulaciones</CardDescription>
                                 </div>
+                                <Button variant="outline" className="h-8 rounded-xl text-[9px] font-black uppercase tracking-widest gap-2" onClick={loadDriveInfo}>
+                                    <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} /> ACTUALIZAR
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="p-8">
+                                {avatarAssets.creatives.length === 0 && avatarAssets.assets.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center opacity-40 min-h-[300px]">
+                                        <div className="p-6 bg-slate-100 rounded-[2rem] border border-slate-200 mb-4">
+                                            <Database className="w-12 h-12 text-slate-300" />
+                                        </div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Sin activos recientes para este producto</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                                        {avatarAssets.creatives.map((c: any) => (
+                                            <div key={c.id} className="group relative aspect-[9/16] bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-lg transition-all hover:scale-[1.02] hover:shadow-rose-500/10 hover:border-rose-500/30">
+                                                {c.videoUrl && <video src={c.videoUrl} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" />}
+                                                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent">
+                                                    <Badge className="bg-rose-500 text-white text-[6px] font-black mb-1">VIDEO UGC</Badge>
+                                                    <p className="text-[8px] font-black text-white truncate uppercase tracking-tighter">{c.concept || 'Video Generado'}</p>
+                                                </div>
+                                                <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => window.open(c.videoUrl, '_blank')}>
+                                                    <ExternalLink className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                        {avatarAssets.assets.map((a: any) => (
+                                            <div key={a.id} className="group relative aspect-square bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden shadow-sm transition-all hover:border-indigo-300">
+                                                <div className="w-full h-full flex items-center justify-center bg-slate-50">
+                                                    <Beaker className="w-8 h-8 text-indigo-500/20" />
+                                                </div>
+                                                <div className="absolute inset-x-0 bottom-0 p-3 bg-white/90 border-t border-slate-100">
+                                                    <Badge variant="outline" className="border-indigo-100 text-indigo-600 text-[6px] font-black mb-1 bg-indigo-50/30 uppercase">{a.mime || 'SIMULACIÓN'}</Badge>
+                                                    <p className="text-[8px] font-black text-slate-900 truncate uppercase tracking-tighter">ID: {a.pathLocal.substring(0, 8)}</p>
+                                                    <p className="text-[6px] text-slate-400 font-bold uppercase mt-0.5">{a.avatarProfile?.name}</p>
+                                                </div>
+                                                <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <Button size="sm" variant="secondary" className="text-[8px] font-black rounded-lg h-7 px-3">VER STATUS</Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
+            </main>
+
+            {isAdding && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40">
+                    <Card className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl shadow-xl border border-slate-200 bg-white p-5 space-y-5">
+                        <header className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div className="flex items-center gap-3">
+                                <Fingerprint className="h-5 w-5 text-rose-500" />
+                                <h2 className="text-sm font-black uppercase tracking-tight">Bio-Métrica</h2>
                             </div>
-                            <div className="flex bg-slate-100 p-1.5 rounded-[1.5rem] border border-slate-200">
-                                <button
-                                    onClick={() => setQualityTier('balanced')}
-                                    className={cn("px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", qualityTier === 'balanced' ? "bg-white shadow-sm text-slate-900" : "text-slate-400")}
-                                >ESTÁNDAR</button>
-                                <button
-                                    onClick={() => setQualityTier('premium')}
-                                    className={cn("px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", qualityTier === 'premium' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400")}
-                                >MÁXIMO NIVEL (FLUX PRO)</button>
+                            <div className="flex bg-slate-100 p-1 rounded-lg">
+                                <button onClick={() => setQualityTier('balanced')} className={cn("px-4 py-1.5 rounded-md text-[8px] font-black uppercase tracking-tight transition-all", qualityTier === 'balanced' ? "bg-white shadow-sm text-slate-900" : "text-slate-400")}>BALANCED</button>
+                                <button onClick={() => setQualityTier('premium')} className={cn("px-4 py-1.5 rounded-md text-[8px] font-black uppercase tracking-tight transition-all", qualityTier === 'premium' ? "bg-slate-900 text-white shadow-sm" : "text-slate-400")}>PREMIUM</button>
                             </div>
                         </header>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                            <div className="space-y-6">
-                                <FormGroup label="Identidad / Nombre">
-                                    <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Ej: Alejandra García" className="rounded-xl border-slate-200 h-10 font-bold" />
-                                </FormGroup>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormGroup label="Género Base">
-                                        <Select value={formData.sex} onValueChange={(v) => setFormData({ ...formData, sex: v })}>
-                                            <SelectTrigger className="rounded-xl border-slate-200 h-10 font-bold"><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="FEMALE" className="font-bold">FEMENINO</SelectItem>
-                                                <SelectItem value="MALE" className="font-bold">MASCULINO</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </FormGroup>
-                                    <FormGroup label="Rango de Edad">
-                                        <Select value={formData.ageRange} onValueChange={(v) => setFormData({ ...formData, ageRange: v })}>
-                                            <SelectTrigger className="rounded-xl border-slate-200 h-10 font-bold"><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                {['18-25', '25-35', '35-45', '45-55', '55-65', '65+'].map(r => (
-                                                    <SelectItem key={r} value={r} className="font-bold">{r} AÑOS</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </FormGroup>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <Label className="text-[9px] font-black uppercase text-slate-400">Nombre</Label>
+                                    <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="rounded-lg border-slate-200 h-9 text-[11px] font-bold" />
                                 </div>
-
-                                <FormGroup label="Región / Acento">
-                                    <Input value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} placeholder="Ej: España, Madrid" className="rounded-xl border-slate-200 h-10 font-bold" />
-                                </FormGroup>
-
-                                <div className="space-y-4">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rasgos Visuales Avanzados</Label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <TraitToggle label="Canas" active={formData.hasGreyHair} onClick={() => setFormData({ ...formData, hasGreyHair: !formData.hasGreyHair })} />
-                                        <TraitToggle label="Arrugas" active={formData.hasWrinkles} onClick={() => setFormData({ ...formData, hasWrinkles: !formData.hasWrinkles })} />
-                                        <TraitToggle label="Acné" active={formData.hasAcne} onClick={() => setFormData({ ...formData, hasAcne: !formData.hasAcne })} />
-                                        <TraitToggle label="Calvicie" active={formData.hasHairLoss} onClick={() => setFormData({ ...formData, hasHairLoss: !formData.hasHairLoss })} />
-                                    </div>
-                                    <FormGroup label="Tono de Piel">
-                                        <Select value={formData.skinTone} onValueChange={(v) => setFormData({ ...formData, skinTone: v })}>
-                                            <SelectTrigger className="rounded-xl border-slate-200 h-10 font-bold"><SelectValue /></SelectTrigger>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-[9px] font-black uppercase text-slate-400">Género</Label>
+                                        <Select value={formData.sex} onValueChange={(v) => setFormData({ ...formData, sex: v })}>
+                                            <SelectTrigger className="rounded-lg h-9 text-[11px] font-bold"><SelectValue /></SelectTrigger>
                                             <SelectContent>
-                                                {['CLARO', 'MEDIO', 'OSCURO', 'BRONCEADO'].map(t => (
-                                                    <SelectItem key={t} value={t} className="font-bold uppercase tracking-widest">{t}</SelectItem>
-                                                ))}
+                                                <SelectItem value="FEMALE">FEM</SelectItem>
+                                                <SelectItem value="MALE">MALE</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                    </FormGroup>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-[9px] font-black uppercase text-slate-400">Edad</Label>
+                                        <Select value={formData.ageRange} onValueChange={(v) => setFormData({ ...formData, ageRange: v })}>
+                                            <SelectTrigger className="rounded-lg h-9 text-[11px] font-bold"><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                {['18-25', '25-35', '35-45', '45-55', '55+'].map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[9px] font-black uppercase text-slate-400">Región</Label>
+                                    <Input value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} className="rounded-lg border-slate-200 h-9 text-[11px] font-bold" />
                                 </div>
                             </div>
 
-                            <div className="space-y-8 bg-slate-50/50 p-6 rounded-[2.5rem] border border-slate-100">
-                                <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-                                    <Volume2 className="h-4 w-4 text-rose-500" />
-                                    <h3 className="text-xs font-black uppercase tracking-tight">Síntesis Vocal (ElevenLabs)</h3>
-                                </div>
-
-                                <FormGroup label="ID de Voz Maestra">
+                            <div className="bg-slate-50/50 p-4 rounded-2xl space-y-4">
+                                <div className="space-y-1">
+                                    <Label className="text-[9px] font-black uppercase text-slate-400">Voz Maestro</Label>
                                     <Select value={formData.voiceId} onValueChange={(v) => setFormData({ ...formData, voiceId: v })}>
-                                        <SelectTrigger className="rounded-xl border-slate-200 h-10 font-bold bg-white text-xs uppercase"><SelectValue placeholder="Seleccionar Voz..." /></SelectTrigger>
+                                        <SelectTrigger className="rounded-lg h-9 bg-white text-[10px] uppercase font-bold"><SelectValue placeholder="..." /></SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none" className="font-bold italic">NINGUNA (SOLO IMAGEN)</SelectItem>
-                                            {voices.map(v => (
-                                                <SelectItem key={v.voice_id} value={v.voice_id} className="font-bold flex items-center justify-between">
-                                                    {v.name.toUpperCase()} <span className="ml-4 text-[8px] text-slate-400">({v.category})</span>
-                                                </SelectItem>
-                                            ))}
+                                            {voices.map(v => <SelectItem key={v.voice_id} value={v.voice_id}>{v.name}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
-                                </FormGroup>
-
-                                <div className="space-y-6">
-                                    <VoiceSlider
-                                        label="Estabilidad (Stability)"
-                                        value={formData.voiceStability}
-                                        onChange={(v) => setFormData({ ...formData, voiceStability: v })}
-                                        description="Menor = Más emotivo/impredecible. Mayor = Más monótono."
-                                    />
-                                    <VoiceSlider
-                                        label="Fidelidad (Similarity Boost)"
-                                        value={formData.voiceSimilarity}
-                                        onChange={(v) => setFormData({ ...formData, voiceSimilarity: v })}
-                                        description="Fuerza del parecido con la muestra original."
-                                    />
-                                    <VoiceSlider
-                                        label="Exageración de Estilo (Style Exaggeration)"
-                                        value={formData.voiceStyle}
-                                        onChange={(v) => setFormData({ ...formData, voiceStyle: v })}
-                                        description="Aumenta la dramatización del estilo vocal."
-                                    />
                                 </div>
-
-                                <div className="pt-4 border-t border-slate-200">
-                                    <FormGroup label="Instrucciones Adicionales (Prompt IA)">
-                                        <Textarea
-                                            value={formData.customPrompt}
-                                            onChange={(e) => setFormData({ ...formData, customPrompt: e.target.value })}
-                                            placeholder="Detalla vestimenta, fondo o iluminación específica..."
-                                            className="h-24 rounded-2xl resize-none text-xs bg-white"
-                                        />
-                                    </FormGroup>
+                                <div className="space-y-1">
+                                    <Label className="text-[9px] font-black uppercase text-slate-400">Prompt IA</Label>
+                                    <Textarea value={formData.customPrompt} onChange={(e) => setFormData({ ...formData, customPrompt: e.target.value })} className="h-20 rounded-xl text-[10px] bg-white" />
                                 </div>
                             </div>
                         </div>
 
-                        <footer className="flex gap-4 pt-4">
-                            <Button onClick={() => { setIsAdding(false); setEditingAvatarId(null); }} variant="outline" className="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">Cancelar</Button>
-                            <Button onClick={handleCreateProfile} disabled={loading} className="flex-[2] bg-slate-900 hover:bg-black text-white h-12 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl gap-3">
-                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 text-rose-500" />}
-                                {editingAvatarId ? "ACTUALIZAR IDENTIDAD" : (qualityTier === 'premium' ? "INICIAR SÍNTESIS AGÉNTICA" : "GUARDAR IDENTIDAD")}
+                        <footer className="flex gap-3 pt-4">
+                            <Button onClick={() => { setIsAdding(false); setEditingAvatarId(null); }} variant="outline" className="flex-1 h-10 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-400">Cancelar</Button>
+                            <Button onClick={handleCreateProfile} disabled={loading} className="flex-[2] bg-slate-900 text-white h-10 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg">
+                                {loading ? '...' : (editingAvatarId ? 'ACTUALIZAR' : 'GUARDAR')}
                             </Button>
                         </footer>
                     </Card>
@@ -563,51 +632,6 @@ function AvatarStudioContent() {
             )}
         </div>
     );
-}
 
-function FormGroup({ label, children }: { label: string, children: React.ReactNode }) {
-    return (
-        <div className="space-y-2 w-full">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{label}</Label>
-            {children}
-        </div>
-    );
-}
-
-function TraitToggle({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
-    return (
-        <button
-            onClick={onClick}
-            className={cn(
-                "flex items-center justify-between px-4 h-11 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all",
-                active
-                    ? "bg-slate-900 border-slate-900 text-white shadow-lg scale-105"
-                    : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
-            )}
-        >
-            {label}
-            {active && <CheckCircle2 className="w-4 h-4 text-rose-500 ml-2" />}
-        </button>
-    );
-}
-
-function VoiceSlider({ label, value, onChange, description }: { label: string, value: number, onChange: (v: number) => void, description: string }) {
-    return (
-        <div className="space-y-3">
-            <div className="flex justify-between items-center">
-                <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{label}</label>
-                <span className="text-[11px] font-black text-rose-500">{Math.round(value * 100)}%</span>
-            </div>
-            <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={value}
-                onChange={(e) => onChange(parseFloat(e.target.value))}
-                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
-            />
-            <p className="text-[8px] font-medium text-slate-400 uppercase tracking-tighter leading-none">{description}</p>
-        </div>
-    );
+    return isEmbedded ? content : <PageShell>{content}</PageShell>;
 }

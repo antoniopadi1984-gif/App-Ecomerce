@@ -44,7 +44,7 @@ export function StructuredDataViewer({
     if (data.mecanismo_real || data.core_identity) {
         return (
             <div className="space-y-4 animate-in fade-in duration-500">
-                <div className="bg-slate-900/95 backdrop-blur-xl p-5 rounded-xl border border-white/10 shadow-2xl relative overflow-hidden">
+                <div className="bg-slate-900/95 p-5 rounded-xl border border-white/10 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
                     <h4 className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.3em] mb-4 flex items-center gap-2 relative z-10 italic">
                         <Database className="w-3.5 h-3.5" /> Core Product DNA <span className="text-white/20 ml-2">v4.2</span>
@@ -62,15 +62,15 @@ export function StructuredDataViewer({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <Card className="p-4 bg-white/60 backdrop-blur-md border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+                    <Card className="p-4 bg-white/60 border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
                         <span className="text-[8px] font-black text-slate-400 uppercase block mb-2 tracking-widest">Problema Raíz</span>
                         <p className="text-[11px] font-bold text-slate-800 leading-snug">{data.root_problem || 'N/A'}</p>
                     </Card>
-                    <Card className="p-4 bg-white/60 backdrop-blur-md border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+                    <Card className="p-4 bg-white/60 border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
                         <span className="text-[8px] font-black text-slate-400 uppercase block mb-2 tracking-widest">Diferenciación</span>
                         <p className="text-[11px] font-bold text-slate-800 leading-snug">{data.diferenciacion || 'N/A'}</p>
                     </Card>
-                    <Card className="p-4 bg-white/60 backdrop-blur-md border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+                    <Card className="p-4 bg-white/60 border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
                         <span className="text-[8px] font-black text-slate-400 uppercase block mb-2 tracking-widest">Oportunidad</span>
                         <p className="text-[11px] font-bold text-slate-800 leading-snug">{data.opportunity || 'N/A'}</p>
                     </Card>
@@ -99,7 +99,7 @@ export function StructuredDataViewer({
                     </div>
                     <div className="grid gap-2">
                         {(data.desires || []).map((d: any, idx: number) => (
-                            <div key={idx} className="p-3.5 rounded-xl bg-white/80 backdrop-blur-sm border border-slate-100 shadow-xs hover:border-indigo-200 transition-all group/item">
+                            <div key={idx} className="p-3.5 rounded-xl bg-white/80 border border-slate-100 shadow-xs hover:border-indigo-200 transition-all group/item">
                                 <div className="flex items-start gap-4">
                                     <div className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-black shrink-0 shadow-lg group-hover/item:bg-indigo-600 transition-colors italic">
                                         {idx + 1}

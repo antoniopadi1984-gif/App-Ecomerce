@@ -46,8 +46,11 @@ export function Sidebar({
       )}
     >
       {/* Logo Section */}
-      <div className="px-3 border-b border-white/20 flex items-center justify-between shrink-0 h-[var(--header-height)] bg-transparent">
-        <div className="flex items-center gap-2.5 overflow-hidden">
+      <div className={cn(
+        "border-b border-white/20 flex items-center shrink-0 h-[var(--header-height)] bg-transparent transition-all",
+        isOpen ? "px-3 justify-between" : "justify-center"
+      )}>
+        <div className={cn("flex items-center overflow-hidden", isOpen ? "gap-2.5" : "gap-0")}>
           <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-rose-200/50">
             <Rocket className="w-3.5 h-3.5 text-white" />
           </div>
@@ -89,20 +92,23 @@ export function Sidebar({
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-slate-100/50 shrink-0 bg-transparent">
-        <div className="flex items-center gap-3">
+      <div className={cn(
+        "border-t border-slate-100/50 shrink-0 bg-transparent flex items-center transition-all",
+        isOpen ? "p-3 justify-start" : "py-3 justify-center"
+      )}>
+        <div className={cn("flex items-center", isOpen ? "gap-3" : "gap-0")}>
           <div className="w-7 h-7 rounded-lg bg-white border border-slate-200/50 flex items-center justify-center shrink-0 shadow-sm overflow-hidden group">
             <UserCircle className="w-4 h-4 text-slate-400" />
           </div>
           {isOpen && (
             <div className="flex flex-col min-w-0">
               <span className="text-[10px] font-bold text-slate-900 truncate tracking-tight uppercase">Administrador</span>
-              <Badge variant="outline" className="text-[8px] h-3 px-1 mt-0.5 border-slate-200/50 text-slate-500 w-fit bg-white/50 backdrop-blur-sm">PRO</Badge>
+              <Badge variant="outline" className="text-[8px] h-3 px-1 mt-0.5 border-slate-200/50 text-slate-500 w-fit bg-white/70">PRO</Badge>
             </div>
           )}
         </div>
       </div>
-    </aside>
+    </aside >
   );
 }
 

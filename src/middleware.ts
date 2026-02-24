@@ -11,13 +11,14 @@ export async function middleware(request: NextRequest) {
             return NextResponse.next();
         }
 
-        // 1. Intentar obtener storeId de cookies
-        let activeStoreId = request.cookies.get('activeStoreId')?.value;
+        // 1. Intentar obtener storeId del header enviado explícitamente, de query params, o de las cookies
+        const searchParams = request.nextUrl.searchParams;
+        let activeStoreId = request.headers.get('x-store-id') || searchParams.get('storeId') || request.cookies.get('activeStoreId')?.value;
 
         // 2. Si no hay storeId, usar store-main por defecto (Absolute Zero V15.0 logic)
         if (!activeStoreId) {
             activeStoreId = 'store-main';
-            console.log("⚠️ [Middleware] No activeStoreId cookie, using fallback: store-main");
+            console.log("⚠️ [Middleware] No activeStoreId header or cookie, using fallback: store-main");
         }
 
         // 3. Inyectar header x-store-id

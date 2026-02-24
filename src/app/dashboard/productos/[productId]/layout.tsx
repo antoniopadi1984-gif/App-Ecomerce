@@ -53,7 +53,7 @@ export default function ProductDashboardLayout({ children }: { children: React.R
                 </nav>
 
                 {/* Sub-Navigation Tabs */}
-                <div className="flex items-center gap-1 bg-white/50 backdrop-blur-sm p-1 rounded-xl border border-slate-200 w-fit">
+                <div className="flex items-center gap-1 bg-white/50 p-1 rounded-xl border border-slate-200 w-fit">
                     {navItems.map((item) => {
                         const href = item.isGlobal ? item.href : getBaseHref() + item.href;
                         const isActive = pathname === href || (item.href !== "" && pathname.startsWith(href));

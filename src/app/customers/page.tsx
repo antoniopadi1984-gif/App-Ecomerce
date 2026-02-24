@@ -255,7 +255,7 @@ export default function CustomersPage() {
                                                                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{new Date(o.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="text-right flex items-center gap-8">
+                                                            <div className="text-right flex items-center gap-6">
                                                                 <div>
                                                                     <p className="text-xs font-black text-slate-900 italic">€{o.totalPrice}</p>
                                                                     <Badge variant="outline" className="text-[7px] font-black border-slate-100 text-slate-400 mt-1 uppercase">COD</Badge>

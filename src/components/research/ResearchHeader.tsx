@@ -43,7 +43,7 @@ export function ResearchHeader({
     activeVersionId
 }: ResearchHeaderProps) {
     return (
-        <div className="flex items-center justify-between gap-4 px-4 py-2.5 bg-white/70 backdrop-blur-xl rounded-xl border border-slate-200/60 shadow-sm relative overflow-hidden">
+        <div className="flex items-center justify-between gap-4 px-4 py-2.5 bg-white/70 rounded-xl border border-slate-200/60 shadow-sm relative overflow-hidden glass-header">
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-100 shrink-0">
@@ -102,7 +102,7 @@ export function ResearchHeader({
                             <MoreVertical className="w-4 h-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44 bg-white/95 backdrop-blur-md border-slate-200 rounded-xl shadow-2xl p-1">
+                    <DropdownMenuContent align="end" className="w-44 bg-white/95 border-slate-200 rounded-xl shadow-2xl p-1">
                         <DropdownMenuItem className="gap-2 focus:bg-indigo-50 focus:text-indigo-600 cursor-pointer rounded-lg py-2 text-[9px] font-black uppercase tracking-widest">
                             <Activity className="w-3.5 h-3.5" />
                             <span>{t('history_logs')}</span>

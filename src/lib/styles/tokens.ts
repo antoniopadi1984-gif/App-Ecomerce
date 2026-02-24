@@ -6,7 +6,7 @@
 export const COLORS = {
     // Primary / Brand
     primary: 'var(--primary)',
-    primaryStrong: 'var(--alert-critical)',
+    primaryStrong: 'var(--primary)',
     primaryPastel: '#fff1f2',
 
     // Backgrounds & Surfaces
@@ -80,7 +80,7 @@ export const TYPOGRAPHY = {
 
 export const SHADOWS = {
     sm: 'shadow-sm',
-    premium: 'var(--shadow-sm)',
+    premium: 'var(--shadow-premium)',
     glass: 'var(--glass-shadow)',
 };
 
@@ -95,9 +95,9 @@ export const RADIUS = {
  * Utility to generate standard component classes
  */
 export const ui = {
-    card: "bg-white/70 border border-white/40 shadow-sm rounded-xl glass-card",
-    cardCompact: "bg-white/70 border border-white/40 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] rounded-lg p-2 gap-1.5 glass-card",
+    card: "glass-card rounded-xl shadow-sm",
+    cardCompact: "glass-card rounded-lg p-2 gap-1.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]",
     button: "h-6 px-2 rounded bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50",
-    input: "h-6 px-2 bg-white/40 border border-slate-200/50 rounded text-[11px] font-medium outline-none focus:border-rose-400/50 transition-all glass-input",
+    input: "glass-input h-6 px-2 rounded text-[11px] font-medium",
     label: "text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5 block",
 };

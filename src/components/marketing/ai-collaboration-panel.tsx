@@ -100,8 +100,8 @@ export function AiCollaborationPanel({
     };
 
     return (
-        <Card className="rounded-[2rem] border-border bg-card shadow-2xl overflow-hidden border-2 border-primary/20">
-            <CardHeader className="p-8 border-b border-border bg-muted/30">
+        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
+            <CardHeader className="p-3 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-lg font-black uppercase italic tracking-tighter flex items-center gap-2">
@@ -111,30 +111,30 @@ export function AiCollaborationPanel({
                             Ahorro de API Mode: Generación Externa & Sincronización
                         </CardDescription>
                     </div>
-                    <Badge className="bg-primary/10 text-primary border-none font-black text-[9px] px-3">
-                        MASTER PROTOCOL v.4.2
+                    <Badge className="bg-rose-50 text-rose-600 border border-rose-100 font-black text-[8px] px-2 py-0.5 rounded-lg shadow-sm">
+                        MASTER v.4.2
                     </Badge>
                 </div>
             </CardHeader>
-            <CardContent className="p-8 space-y-8">
+            <CardContent className="p-4 space-y-5">
                 {/* EXPORT SECTION */}
                 <div className="space-y-4">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest px-1">1. Exportar a Cerebro Externo</Label>
-                    <div className="grid grid-cols-2 gap-4">
+                    <Label className="text-[9px] font-black uppercase text-slate-500 tracking-widest px-1">1. Exportar a Cerebro</Label>
+                    <div className="grid grid-cols-2 gap-3">
                         <Button
                             onClick={() => handleCopyAndOpen('gemini')}
-                            className="h-16 rounded-2xl bg-[#1a73e8] hover:bg-[#1557b0] text-white flex flex-col items-center justify-center gap-1 group transition-all active:scale-95"
+                            className="h-12 rounded-xl bg-[#1a73e8] hover:bg-[#1557b0] text-white flex flex-col items-center justify-center gap-0.5 transition-all shadow-sm"
                         >
-                            <span className="text-[10px] font-black uppercase tracking-widest group-hover:scale-110 transition-transform">Copiar + Gemini</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest">Gemini</span>
                             <div className="flex items-center gap-2 text-[8px] opacity-70">
                                 <ExternalLink className="h-3 w-3" /> Abrir gemini.google.com
                             </div>
                         </Button>
                         <Button
                             onClick={() => handleCopyAndOpen('claude')}
-                            className="h-16 rounded-2xl bg-[#d97757] hover:bg-[#bf6a4d] text-white flex flex-col items-center justify-center gap-1 group transition-all active:scale-95"
+                            className="h-12 rounded-xl bg-[#d97757] hover:bg-[#bf6a4d] text-white flex flex-col items-center justify-center gap-0.5 transition-all shadow-sm"
                         >
-                            <span className="text-[10px] font-black uppercase tracking-widest group-hover:scale-110 transition-transform">Copiar + Claude</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest">Claude</span>
                             <div className="flex items-center gap-2 text-[8px] opacity-70">
                                 <ExternalLink className="h-3 w-3" /> Abrir claude.ai
                             </div>
@@ -143,12 +143,12 @@ export function AiCollaborationPanel({
                 </div>
 
                 {/* IMPORT SECTION */}
-                <div className="space-y-4">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest px-1">2. Importar Respuesta</Label>
+                <div className="space-y-3 flex-1 flex flex-col">
+                    <Label className="text-[9px] font-black uppercase text-slate-500 tracking-widest px-1">2. Importar Respuesta</Label>
                     <div className="relative">
                         <Textarea
-                            placeholder="Pega aquí la respuesta completa de la IA (Markdown o JSON)..."
-                            className="min-h-[200px] rounded-[1.5rem] bg-muted/50 border-border p-6 text-xs font-medium leading-relaxed focus:ring-primary/20 resize-none transition-all"
+                            placeholder="Pega respuesta IA JSON/MD..."
+                            className="min-h-[140px] rounded-xl bg-slate-50/80 border-slate-200 p-3 text-xs font-medium focus:ring-rose-500/20 resize-none"
                             value={importValue}
                             onChange={(e) => setImportValue(e.target.value)}
                         />
@@ -164,14 +164,14 @@ export function AiCollaborationPanel({
                         )}
                     </div>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2 mt-auto">
                         <Button
                             onClick={handleProcessImport}
                             disabled={!importValue || isSaving}
-                            className="w-full h-14 rounded-2xl bg-foreground text-background font-black uppercase tracking-[0.2em] shadow-xl hover:bg-foreground/90 transition-all active:scale-95 flex items-center justify-center gap-3"
+                            className="w-full h-10 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest shadow-md hover:bg-black transition-all flex items-center justify-center gap-2 text-[9px]"
                         >
-                            {isSaving ? <Wand2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-                            Guardar & Procesar Investigación
+                            {isSaving ? <Wand2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            Guardar Data
                         </Button>
 
                         {onGenerateNext && (
@@ -185,15 +185,13 @@ export function AiCollaborationPanel({
                     </div>
                 </div>
 
-                <div className="p-6 bg-primary/5 rounded-[1.5rem] border border-primary/10">
-                    <div className="flex gap-4">
-                        <AlertCircle className="h-5 w-5 text-primary shrink-0" />
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-wider text-primary">Sincronización Inteligente</p>
-                            <p className="text-[10px] text-muted-foreground leading-relaxed font-bold">
-                                El sistema reconocerá automáticamente los campos de <b>Eugene Schwartz</b> y los inyectará en tu base de datos central para generar piezas creativas.
-                            </p>
-                        </div>
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 flex gap-3 items-start hidden">
+                    <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                        <p className="text-[9px] font-black uppercase tracking-wider text-amber-700">Auto-Sincronización</p>
+                        <p className="text-[9px] text-amber-600/80 font-bold leading-tight">
+                            El sistema inyectará a Schwartz en la base.
+                        </p>
                     </div>
                 </div>
             </CardContent>
@@ -206,10 +204,10 @@ function QuickTool({ icon: Icon, label, onClick }: any) {
         <Button
             variant="outline"
             onClick={onClick}
-            className="flex flex-col h-16 rounded-xl border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all gap-1 p-2"
+            className="flex flex-col h-12 rounded-lg border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition-all gap-1 p-1"
         >
-            <Icon className="h-4 w-4 text-primary" />
-            <span className="text-[8px] font-black uppercase tracking-tighter">{label}</span>
+            <Icon className="h-3 w-3 text-slate-500" />
+            <span className="text-[7px] font-black uppercase tracking-tighter text-slate-600">{label}</span>
         </Button>
     );
 }

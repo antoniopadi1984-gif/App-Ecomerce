@@ -1,6 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from "@/lib/styles/tokens";
 
 interface ModuleHeaderProps {
     title: string;
@@ -13,31 +14,41 @@ interface ModuleHeaderProps {
 
 export function ModuleHeader({ title, subtitle, icon: Icon, actions, badges, className }: ModuleHeaderProps) {
     return (
-        <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 px-6 bg-white border-b border-slate-100 shadow-sm relative z-20", className)}>
-            <div className="flex items-center gap-4">
-                {Icon && (
-                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100/50">
-                        <Icon className="w-5 h-5" />
+        <div className={cn(
+            "glass-header min-h-[48px] flex items-center justify-center",
+            className
+        )}>
+            <div className="flex items-center justify-between w-full max-w-[1900px] mx-auto px-3 md:px-6 2xl:px-8 py-2 gap-2">
+                <div className="flex items-center gap-3">
+                    {Icon && (
+                        <div className={cn(
+                            "p-1.5 bg-primary text-white shadow-sm",
+                            RADIUS.sm
+                        )}>
+                            <Icon className="w-4 h-4" />
+                        </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                        <h1 className={cn("text-[18px] md:text-[20px]", TYPOGRAPHY.weights.black, TYPOGRAPHY.tracking.tight, "uppercase italic text-foreground leading-none")}>
+                            {title}
+                        </h1>
+                        {badges && <div className="flex items-center gap-1">{badges}</div>}
+                        {subtitle && (
+                            <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
+                                <p className={cn("text-[10px]", "text-muted-foreground font-bold uppercase tracking-widest leading-none")}>
+                                    {subtitle}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {actions && (
+                    <div className="flex items-center gap-1.5">
+                        {actions}
                     </div>
                 )}
-                <div>
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic">{title}</h1>
-                        {badges && <div className="flex items-center gap-2">{badges}</div>}
-                    </div>
-                    {subtitle && (
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
-                            {subtitle}
-                        </p>
-                    )}
-                </div>
             </div>
-
-            {actions && (
-                <div className="flex items-center gap-2">
-                    {actions}
-                </div>
-            )}
         </div>
     );
 }

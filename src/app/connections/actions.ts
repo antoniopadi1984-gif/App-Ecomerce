@@ -9,29 +9,46 @@ import {
     getConnectionMeta
 } from "@/lib/server/connections";
 
+import { PROVIDER_REGISTRY } from "@/lib/providers/registry";
+import * as fs from "fs";
+import * as path from "path";
+
 /**
  * Guarda o actualiza una conexión utilizando el sistema de cifrado canonical.
  */
 export async function saveConnection(formData: FormData, storeId?: string) {
-    const providerId = formData.get("provider") as string;
+    const rawProviderId = formData.get("provider") as string;
+    const providerId = rawProviderId?.toUpperCase() || "";
 
-    // Lazy load registry to avoid issues if used on client? No, actions are server.
-    const { PROVIDER_REGISTRY } = await import("@/lib/providers/registry");
+    const logPath = path.join(process.cwd(), 'actions-debug.log');
+    const logMsg = `[${new Date().toISOString()}] ACTION saveConnection: raw="${rawProviderId}" normalized="${providerId}" keys=[${Array.from(formData.keys()).join(",")}]\n`;
+    fs.appendFileSync(logPath, logMsg);
+
+    console.log(`[ACTION saveConnection] Provider received: "${rawProviderId}" -> Normalized: "${providerId}"`);
+    console.log(`[ACTION saveConnection] FormData keys:`, Array.from(formData.keys()));
+
     const config = PROVIDER_REGISTRY[providerId];
 
     if (!config) {
-        return { success: false, message: "Provedor no válido" };
+        return { success: false, message: "Proveedor no válido" };
     }
 
     try {
+        const editingId = formData.get("editingId") as string;
         let secret = "";
         let extraConfig: any = {};
+
+        // 1. Resolve Canonical Provider (if child, use parent)
+        let targetProviderId = providerId.toUpperCase();
+        if (config.parentProviderId) {
+            targetProviderId = config.parentProviderId.toUpperCase();
+        }
 
         // Parse fields dynamically
         for (const field of config.fields) {
             const value = formData.get(field.key) as string;
             if (field.type === 'password') {
-                if (!secret || ['apiKey', 'accessToken', 'apiSecret', 'apiToken', 'SHOPIFY_ACCESS_TOKEN'].includes(field.key)) {
+                if (value && (!secret || ['apiKey', 'accessToken', 'apiSecret', 'apiToken', 'SHOPIFY_ACCESS_TOKEN', 'REPLICATE_API_TOKEN', 'GOOGLE_SERVICE_ACCOUNT_KEY'].includes(field.key))) {
                     secret = value;
                 }
             } else {
@@ -39,8 +56,8 @@ export async function saveConnection(formData: FormData, storeId?: string) {
             }
         }
 
-        // ─── LÓGICA DE TIENDA DINÁMICA V14.0 ───
-        let resolvedStoreId = storeId;
+        // ─── LÓGICA DE TIENDA DINÁMICA ───
+        let resolvedStoreId = 'store-main';
 
         if (providerId === 'SHOPIFY') {
             const shopName = formData.get("SHOP_NAME") as string;
@@ -48,55 +65,58 @@ export async function saveConnection(formData: FormData, storeId?: string) {
 
             if (!shopName || !shopDomain) throw new Error("Nombre y Dominio de tienda son obligatorios para Shopify");
 
-            // Upsert store by domain
             const store = await prisma.store.upsert({
                 where: { id: (await prisma.store.findFirst({ where: { domain: shopDomain } }))?.id || 'NEW_STORE' },
-                create: {
-                    name: shopName,
-                    domain: shopDomain,
-                    currency: "EUR"
-                },
-                update: {
-                    name: shopName
-                }
+                create: { name: shopName, domain: shopDomain, currency: "EUR" },
+                update: { name: shopName }
             });
             resolvedStoreId = store.id;
         }
 
-        if (!resolvedStoreId) {
-            resolvedStoreId = (await prisma.store.findFirst())?.id;
+        if (resolvedStoreId === 'store-main') {
+            await prisma.store.upsert({
+                where: { id: 'store-main' },
+                create: { id: 'store-main', name: 'Workspace Global', currency: 'EUR' },
+                update: {}
+            });
         }
 
-        if (!resolvedStoreId) throw new Error("No hay tienda disponible para vincular el servicio");
+        // Special handling for Service Accounts
+        const jsonKey = formData.get('GOOGLE_SERVICE_ACCOUNT_KEY') as string;
+        if (jsonKey && jsonKey.includes('{')) {
+            secret = jsonKey;
+        }
 
-        // Special handling for Service Accounts (Textarea) which are secrets but maybe too large?
-        if (config.id.startsWith('GOOGLE') || config.id === 'GA4') {
-            const jsonKey = formData.get('serviceAccountJson') as string;
-            if (jsonKey) {
-                secret = jsonKey;
+        const dbProviderId = targetProviderId;
+
+        // If we have an editingId, we target that specific row
+        if (editingId) {
+            const updateData: any = {
+                extraConfig: JSON.stringify(extraConfig),
+                updatedAt: new Date()
+            };
+            if (secret) {
+                // We need to re-encrypt if secret is provided
+                const { encryptSecret } = await import("@/lib/server/crypto");
+                const { enc, iv, tag } = encryptSecret(secret);
+                updateData.secretEnc = enc;
+                updateData.secretIv = iv;
+                updateData.secretTag = tag;
             }
-        }
 
-        // If secret is empty, check if we want to preserve existing
-        if (!secret) {
-            const existing = await getConnectionMeta(resolvedStoreId, providerId);
-            if (existing) {
-                // Only update extraConfig
-                await (prisma as any).connection.update({
-                    where: { storeId_provider: { storeId: resolvedStoreId, provider: providerId } },
-                    data: { extraConfig: JSON.stringify(extraConfig) }
-                });
-                revalidatePath("/connections");
-                return { success: true, message: "Configuración actualizada (secreto preservado)" };
-            }
+            await (prisma as any).connection.update({
+                where: { id: editingId },
+                data: updateData
+            });
+        } else {
+            // New or Upsert by store/provider
+            await saveConnectionSecret({
+                storeId: resolvedStoreId,
+                provider: dbProviderId,
+                secret: secret || "",
+                extraConfig
+            });
         }
-
-        await saveConnectionSecret({
-            storeId: resolvedStoreId,
-            provider: providerId,
-            secret: secret || "",
-            extraConfig
-        });
 
         // ─── AUTO-TRIGGER DEEP SYNC V15.0 ───
         if (providerId === 'SHOPIFY') {

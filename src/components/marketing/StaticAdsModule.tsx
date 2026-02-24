@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { CreativeAgentPanel } from "@/components/creative/CreativeAgentPanel";
 import {
     Image as ImageIcon, Sparkles, Wand2, RefreshCw,
     Layout, Smartphone, Monitor, Square, Copy as CopyIcon,
@@ -13,15 +14,16 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { generateStaticConcepts, getProducts } from "@/app/marketing/static-ads/actions";
-import { AiCollaborationPanel } from "@/components/marketing/ai-collaboration-panel";
 import { STATIC_ADS_PROTOCOL } from "@/lib/static-ads-protocol";
+import { CREATIVE_CONCEPTS } from "@/lib/creative/spencer-knowledge";
 
 interface StaticAdsModuleProps {
     productId: string;
     productTitle?: string;
+    storeId?: string;
 }
 
-export function StaticAdsModule({ productId, productTitle }: StaticAdsModuleProps) {
+export function StaticAdsModule({ productId, productTitle, storeId = '' }: StaticAdsModuleProps) {
     const [targetAudience, setTargetAudience] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
     const [concepts, setConcepts] = useState<any[]>([]);
@@ -51,11 +53,11 @@ export function StaticAdsModule({ productId, productTitle }: StaticAdsModuleProp
 
     return (
         <div className="flex flex-col gap-4 animate-in fade-in duration-700 pt-2">
-            <div className="grid grid-cols-12 gap-5">
+            <div className="grid grid-cols-12 gap-3">
                 {/* 1. MANDO DE CONFIGURACIÓN */}
-                <div className="col-span-12 lg:col-span-4 xl:col-span-3 space-y-4">
-                    <Card className="bg-white/40 backdrop-blur-md border-slate-100/50 rounded-[2rem] p-5 space-y-6 shadow-sm">
-                        <div className="space-y-5">
+                <div className="col-span-12 lg:col-span-4 xl:col-span-3 space-y-3 flex flex-col min-h-full">
+                    <Card className="bg-white border-slate-200 rounded-xl p-4 space-y-5 shadow-sm">
+                        <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-1 flex items-center gap-2">
                                     <BrainIcon className="w-3 h-3 text-rose-500" />
@@ -73,7 +75,7 @@ export function StaticAdsModule({ productId, productTitle }: StaticAdsModuleProp
                                 <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-1">Estilos Visuales Nano</h3>
                                 <div className="grid grid-cols-2 gap-2">
                                     {['Premium', 'Direct Response', 'Editorial', 'Orgánico'].map((style) => (
-                                        <Button key={style} variant="outline" className="h-9 rounded-2xl border-slate-100 bg-white/40 text-[9px] font-black uppercase tracking-widest hover:border-rose-300 hover:bg-white hover:text-rose-500 transition-all shadow-sm">
+                                        <Button key={style} variant="outline" className="h-8 rounded-lg border-slate-200 bg-white text-[9px] font-black uppercase tracking-widest hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 transition-all shadow-sm focus:ring-rose-500">
                                             {style}
                                         </Button>
                                     ))}
@@ -83,7 +85,7 @@ export function StaticAdsModule({ productId, productTitle }: StaticAdsModuleProp
                             <Button
                                 onClick={handleGenerateConcepts}
                                 disabled={isGenerating}
-                                className="w-full h-11 bg-slate-900 hover:bg-black text-rose-500 font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95 group"
+                                className="w-full h-10 bg-slate-900 hover:bg-black text-rose-500 font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 group"
                             >
                                 {isGenerating ? (
                                     <RefreshCw className="h-4 w-4 animate-spin shrink-0" />
@@ -95,104 +97,126 @@ export function StaticAdsModule({ productId, productTitle }: StaticAdsModuleProp
                         </div>
                     </Card>
 
-                    <AiCollaborationPanel
-                        productId={productId || "temp"}
-                        productName={productTitle || "Nuevo Producto"}
-                        context={{
-                            customPrompt: STATIC_ADS_PROTOCOL.AD_CONCEPT(productTitle || "", targetAudience)
-                        }}
-                        onImport={async (data) => {
-                            if (Array.isArray(data)) setConcepts(data);
-                            else if (data.concepts) setConcepts(data.concepts);
-                        }}
-                        onGenerateNext={(type) => {
-                            toast.success(`Protocolo ${type} activado.`);
-                        }}
-                    />
+                    {/* C1-C7 Concept Filter */}
+                    <Card className="bg-white border-slate-200 rounded-xl p-3 shadow-sm">
+                        <label className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em]">
+                            Concepto C1-C7
+                        </label>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                            {CREATIVE_CONCEPTS.map(c => (
+                                <button
+                                    key={c.id}
+                                    className="px-2 py-1 rounded-lg text-[9px] font-bold bg-white border border-slate-200 text-slate-600 hover:border-purple-300 hover:bg-purple-50 transition-all"
+                                >
+                                    {c.code}
+                                </button>
+                            ))}
+                        </div>
+                    </Card>
+
+                    {/* Agent IA (Replaces AiCollaborationPanel) */}
+                    {storeId && (
+                        <CreativeAgentPanel
+                            storeId={storeId}
+                            productId={productId}
+                            productTitle={productTitle}
+                            agentRole="STATIC_AGENT"
+                            agentName="Ads Estáticos IA"
+                            onImport={(data) => {
+                                try {
+                                    const parsed = JSON.parse(data);
+                                    if (Array.isArray(parsed)) setConcepts(parsed);
+                                    else if (parsed.concepts) setConcepts(parsed.concepts);
+                                } catch {
+                                    // Not JSON, ignore
+                                }
+                            }}
+                        />
+                    )}
                 </div>
 
                 {/* 2. TABLERO DE RESULTADOS */}
                 <div className="col-span-12 lg:col-span-8 xl:col-span-9">
                     {!concepts.length && !isGenerating ? (
-                        <div className="h-[500px] border-2 border-dashed border-slate-100 rounded-[3rem] bg-white/20 backdrop-blur-sm flex flex-col items-center justify-center text-center p-12 group transition-all hover:bg-white/30 hover:border-rose-100">
-                            <div className="relative mb-6">
-                                <div className="absolute inset-0 bg-rose-500/10 blur-3xl rounded-full scale-150 animate-pulse" />
-                                <ImageIcon className="h-16 w-16 text-slate-200 relative z-10 group-hover:text-rose-200 transition-colors" />
+                        <div className="h-full min-h-[400px] border border-dashed border-slate-200 rounded-xl bg-slate-50/50 flex flex-col items-center justify-center text-center p-8 group transition-all hover:bg-white hover:border-slate-300">
+                            <div className="relative mb-5">
+                                <div className="absolute inset-0 bg-rose-500/10 blur-[40px] rounded-full animate-pulse" />
+                                <ImageIcon className="h-12 w-12 text-slate-300 relative z-10 group-hover:text-rose-300 transition-colors" />
                             </div>
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.3em] mb-2">Nano Intelligence Visual Hub</h3>
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest max-w-[300px] leading-relaxed">
-                                Define la audiencia y deja que nuestro motor de diseño estratégico genere conceptos de alta conversión.
+                            <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-[0.3em] mb-2">Nano Intelligence Visual Hub</h3>
+                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest max-w-[260px] leading-relaxed">
+                                Define la audiencia y deja que nuestro motor estratégico genere conceptos de alta conversión.
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-6 duration-1000">
                             {concepts.map((concept, idx) => (
-                                <Card key={idx} className="bg-white/40 backdrop-blur-md border-slate-100/50 rounded-[2.5rem] overflow-hidden group hover:border-rose-300 hover:shadow-2xl hover:shadow-rose-500/5 transition-all duration-700 shadow-sm flex flex-col">
+                                <Card key={idx} className="bg-white border-slate-200 rounded-xl overflow-hidden group hover:border-rose-300 hover:shadow-xl hover:shadow-rose-500/5 transition-all shadow-sm flex flex-col p-0">
                                     {/* Ad Canvas Section */}
-                                    <div className="aspect-[4/5] bg-slate-50/30 relative overflow-hidden flex flex-col">
-                                        <div className="absolute top-4 inset-x-4 flex justify-between items-start z-10">
-                                            <Badge className="bg-rose-500 text-white font-black uppercase text-[9px] tracking-widest rounded-xl px-3 py-1 shadow-lg shadow-rose-500/20 border-none">
+                                    <div className="aspect-[4/5] bg-slate-100/50 relative overflow-hidden flex flex-col">
+                                        <div className="absolute top-3 inset-x-3 flex justify-between items-start z-10">
+                                            <Badge className="bg-rose-500 text-white font-black uppercase text-[8px] tracking-widest rounded-lg px-2 py-0.5 shadow-md border-none">
                                                 ID: {idx + 1}
                                             </Badge>
-                                            <Badge className="bg-white/90 backdrop-blur-md text-slate-900 border border-slate-100 font-black uppercase text-[8px] tracking-widest rounded-xl px-3 py-1 shadow-sm">
+                                            <Badge className="bg-white/90 text-slate-800 border border-slate-200 font-black uppercase text-[8px] tracking-widest rounded-lg px-2 py-0.5 shadow-sm">
                                                 {concept.angle || "ÁNGULO ESTRATÉGICO"}
                                             </Badge>
                                         </div>
 
-                                        <div className="flex-1 flex items-center justify-center p-16 opacity-5">
-                                            <Sparkles className="h-40 w-40 text-slate-900" />
+                                        <div className="flex-1 flex items-center justify-center opacity-5">
+                                            <Sparkles className="h-24 w-24 text-slate-900" />
                                         </div>
 
-                                        <div className="p-6 bg-gradient-to-t from-white via-white/90 to-transparent">
-                                            <h4 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter leading-[1.1] group-hover:text-rose-600 transition-colors">
+                                        <div className="p-4 bg-gradient-to-t from-white via-white/90 to-transparent">
+                                            <h4 className="text-[13px] font-black text-slate-900 uppercase italic tracking-tighter leading-tight group-hover:text-rose-600 transition-colors">
                                                 {concept.headline}
                                             </h4>
                                         </div>
                                     </div>
 
                                     {/* Copy & Strategy Section */}
-                                    <CardContent className="p-6 space-y-5 border-t border-white/50 flex-1 flex flex-col">
+                                    <CardContent className="p-4 space-y-4 border-t border-slate-100 flex-1 flex flex-col">
                                         <div className="space-y-4">
-                                            <div className="space-y-1.5">
-                                                <p className="text-[9px] font-black uppercase text-rose-500 tracking-[0.2em] font-mono flex items-center gap-2">
-                                                    <Zap className="w-3 h-3 fill-rose-500" /> Gancho Visual
+                                            <div className="space-y-1">
+                                                <p className="text-[8px] font-black uppercase text-rose-500 tracking-[0.2em] font-mono flex items-center gap-1.5">
+                                                    <Zap className="w-2.5 h-2.5 fill-rose-500" /> Gancho Visual
                                                 </p>
-                                                <p className="text-xs font-bold text-slate-600 leading-relaxed bg-rose-50/30 p-2.5 rounded-2xl border border-rose-100/30">
+                                                <p className="text-[10px] font-bold text-slate-700 leading-snug bg-rose-50/50 p-2 rounded-lg border border-rose-100">
                                                     {concept.hook}
                                                 </p>
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] font-mono flex items-center gap-2">
-                                                    <CopyIcon className="w-3 h-3" /> Micro Copy
+                                            <div className="space-y-1">
+                                                <p className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em] font-mono flex items-center gap-1.5">
+                                                    <CopyIcon className="w-2.5 h-2.5" /> Micro Copy
                                                 </p>
-                                                <p className="text-xs text-slate-700 font-black italic uppercase tracking-tight leading-relaxed">
+                                                <p className="text-[10px] text-slate-700 font-bold italic uppercase tracking-tight leading-snug">
                                                     "{concept.copy}"
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="pt-5 border-t border-slate-100/50 space-y-4 mt-auto">
+                                        <div className="pt-3 border-t border-slate-100 space-y-3 mt-auto">
                                             <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center">
-                                                        <BrainIcon className="h-3 w-3 text-rose-500" />
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center">
+                                                        <BrainIcon className="h-2.5 w-2.5 text-rose-500" />
                                                     </div>
-                                                    <p className="text-[9px] font-black uppercase text-slate-900 tracking-widest">Image Prompt</p>
+                                                    <p className="text-[8px] font-black uppercase text-slate-800 tracking-widest">Image Prompt</p>
                                                 </div>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-7 text-[8px] font-black uppercase tracking-widest hover:bg-rose-50 text-rose-600 rounded-xl px-3 transition-all border border-transparent hover:border-rose-100"
+                                                    className="h-6 text-[7px] font-black uppercase tracking-widest hover:bg-rose-50 text-rose-600 rounded-lg px-2"
                                                     onClick={() => copyToClipboard(concept.prompt, "Midjourney Prompt")}
                                                 >
-                                                    <CopyIcon className="h-3 w-3 mr-2" /> Copiar
+                                                    <CopyIcon className="h-2.5 w-2.5 mr-1" /> Copiar
                                                 </Button>
                                             </div>
-                                            <div className="p-4 rounded-[1.5rem] bg-slate-50/50 border border-slate-100 font-mono text-[9px] text-slate-500 leading-relaxed break-words line-clamp-3 italic opacity-60 group-hover:opacity-100 transition-opacity">
+                                            <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[8.5px] text-slate-500 leading-relaxed break-words line-clamp-3 italic opacity-60 group-hover:opacity-100 transition-opacity">
                                                 {concept.prompt}
                                             </div>
-                                            <Button className="w-full h-11 bg-slate-900 text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl hover:bg-black transition-all flex items-center justify-center gap-3 mt-1 shadow-lg active:scale-95">
-                                                <Sparkles className="h-4 w-4 text-rose-500" /> Generar Imagen Pro
+                                            <Button className="w-full h-9 bg-slate-900 text-white font-black uppercase text-[9px] tracking-widest rounded-lg hover:bg-black transition-all flex items-center justify-center gap-2 shadow-md">
+                                                <Sparkles className="h-3 w-3 text-rose-500" /> Generar Imagen Pro
                                             </Button>
                                         </div>
                                     </CardContent>

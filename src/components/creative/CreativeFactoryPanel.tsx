@@ -99,7 +99,7 @@ export function CreativeFactoryPanel({ productId, productName, onBatchCreated }:
     };
 
     return (
-        <Card className="bg-white/40 backdrop-blur-md border border-slate-100/50 rounded-3xl overflow-hidden shadow-sm group">
+        <Card className="bg-white/40 border border-slate-100/50 rounded-3xl overflow-hidden shadow-sm group glass-panel">
             <CardContent className="p-0">
                 {/* Header Section */}
                 <div className="bg-slate-900 px-5 py-3.5 flex items-center justify-between border-b border-slate-800">

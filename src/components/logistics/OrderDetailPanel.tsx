@@ -393,30 +393,30 @@ function getStatusStyles(status: string) {
     switch (normalized) {
         case 'DELIVERED':
         case 'ENTREGADO':
-            return 'bg-[#16a34a] text-white';
+            return 'bg-emerald-600 text-white';
         case 'SHIPPED':
         case 'EN TRANSITO':
         case 'ENVIADO':
-            return 'bg-[#2563eb] text-white';
+            return 'bg-blue-600 text-white';
         case 'OUT_FOR_DELIVERY':
         case 'EN REPARTO':
-            return 'bg-[#f97316] text-white';
+            return 'bg-orange-500 text-white';
         case 'INCIDENCE':
         case 'ERROR':
         case 'INCIDENCIA':
         case 'SINIESTRO':
-            return 'bg-[#7c2d12] text-white';
+            return 'bg-rose-900 text-white';
         case 'PENDING':
         case 'PROCESSING':
         case 'PREPARACION':
-            return 'bg-[#9333ea] text-white';
+            return 'bg-purple-600 text-white';
         case 'CANCELLED':
         case 'CANCELADO':
-            return 'bg-[#dc2626] text-white';
+            return 'bg-red-600 text-white';
         case 'RETURNED':
         case 'DEVUELTO':
-            return 'bg-[#000000] text-white';
+            return 'bg-slate-950 text-white';
         default:
-            return 'bg-[#64748b] text-white';
+            return 'bg-slate-500 text-white';
     }
 }

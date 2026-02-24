@@ -86,7 +86,7 @@ export default function StaticAdsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fcfcfd] p-8">
+        <div className="min-h-screen bg-[var(--bg)] p-6">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
                 <div>
@@ -117,9 +117,9 @@ export default function StaticAdsPage() {
 
             {view === 'generator' ? (
                 /* GENERATOR VIEW */
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Template-Based */}
-                    <div className="bg-white rounded-xl shadow-sm border p-8">
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
                         <div className="flex items-center gap-3 mb-6">
                             <Palette className="text-indigo-600" size={24} />
                             <h2 className="text-xl font-semibold">Template-Based</h2>
@@ -181,7 +181,7 @@ export default function StaticAdsPage() {
                     </div>
 
                     {/* Nano Banana Style */}
-                    <div className="bg-white rounded-xl shadow-sm border p-8">
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
                         <div className="flex items-center gap-3 mb-6">
                             <ImageIcon className="text-pink-600" size={24} />
                             <h2 className="text-xl font-semibold">Nano Banana AI</h2>

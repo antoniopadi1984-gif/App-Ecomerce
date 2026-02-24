@@ -148,7 +148,7 @@ export function AlertConfigPanel({ storeId, isOpen, onClose, onSave }: AlertConf
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <Card className="w-full max-w-2xl bg-white shadow-2xl rounded-2xl max-h-[90vh] overflow-hidden">
                 <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 px-6">
                     <div className="flex items-center justify-between">

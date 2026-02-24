@@ -10,7 +10,7 @@ interface FraudModuleProps {
 export function FraudModule({ productId }: FraudModuleProps) {
     return (
         <div className="space-y-4 animate-in fade-in duration-500">
-            <div className="bg-white/50 backdrop-blur-sm p-4 rounded-lg border border-slate-100 shadow-xl shadow-slate-200/40">
+            <div className="bg-white/50 p-4 rounded-lg border border-slate-100 shadow-xl shadow-slate-200/40">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-lg bg-rose-600 flex items-center justify-center shadow-lg shadow-rose-100">
                         <Shield className="w-6 h-6 text-white" />

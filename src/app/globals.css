@@ -26,23 +26,34 @@
   --radius-sm: 6px;
 
   --shadow-premium: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
 :root {
-  /* Premium Glassmorphism & High-Density Palette */
-  --bg: #F0F2F5;
-  /* Slightly grayer to make white glass pop */
-  --surface: rgba(255, 255, 255, 0.75);
-  --surface-opaque: #FFFFFF;
-  --surface-2: rgba(241, 245, 249, 0.5);
+  /* Glass performance levels */
+  --glass-blur-xs: 4px;
+  --glass-blur-sm: 8px;
+  --glass-blur-md: 12px;
+  --glass-blur-lg: 16px;
 
-  --border: rgba(226, 232, 240, 0.6);
-  --border-highlight: rgba(255, 255, 255, 0.8);
+  /* Default blur (desktop) */
+  --glass-blur: 10px;
+
+  /* Premium Glassmorphism & High-Density Palette */
+  --bg: #f6f8fc;
+  /* Slightly grayer to make white glass pop */
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-opaque: #ffffff;
+  --surface-2: rgba(255, 255, 255, 0.55);
+
+  --border: rgba(15, 23, 42, 0.10);
+  --border-highlight: rgba(109, 40, 217, 0.20);
 
   --text: #0f172a;
   --muted-text: #475569;
 
-  --primary: #fb7185;
+  --primary: #6d28d9;
+  /* violeta premium */
   --primary-foreground: #ffffff;
   --accent-pastel: #fff1f2;
   --accent-strong: #e11d48;
@@ -55,32 +66,72 @@
   --radius: 10px;
   /* Slightly tighter radius for professional feel */
 
-  /* High-Density System */
+  /* High-Density System - Extreme Mode Phase 1.3 */
   --header-height: 48px;
-  /* Tighter header */
-  --sidebar-width: 200px;
-  --sidebar-collapsed: 54px;
-  --row-height: 32px;
-  /* Compact rows */
-  --input-height: 30px;
-  /* Compact inputs */
-  --card-padding: 0.75rem;
-  /* Compact card padding */
-
-  /* God-Tier Density Tokens */
-  --section-gap: 1rem;
-  --item-gap: 0.5rem;
+  /* Ultra tight header */
+  --sidebar-width: 180px;
+  /* Narrower sidebar */
+  --sidebar-collapsed: 48px;
+  --row-height: 24px;
+  /* Professional list height */
+  --input-height: 24px;
+  /* Professional input height */
+  --card-padding: 0.25rem;
+  /* 4px - Extreme */
+  --card-padding-tight: 0.125rem;
+  /* 2px - Micro */
+  --section-gap: 0.375rem;
+  /* 6px */
+  --section-gap-tight: 0.25rem;
+  /* 4px */
+  --item-gap: 0.125rem;
+  /* 2px */
+  --item-gap-tight: 0.0625rem;
+  /* 1px */
+  --kpi-height-sm: auto;
   --font-heading: 'Outfit', sans-serif;
 
   /* Glassmorphism Presets */
   --glass-bg: rgba(255, 255, 255, 0.45);
   --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-blur: 24px;
-  --glass-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.04);
+  /* Shadow Presets */
+  --primary-shadow: rgba(251, 113, 133, 0.25);
+  --info-shadow: rgba(59, 130, 246, 0.25);
+  --warning-shadow: rgba(217, 119, 6, 0.25);
+  --glass-shadow: 0 2px 12px -1px rgba(0, 0, 0, 0.03);
+
+  /* Phase 2.1: Structural Density (Typography Restoration + Radical Layout) (IN PROGRESS)
+
+- [ ] Restore Typography Legibility:
+    - [ ] h1 -> 18px-20px (italic, bold).
+    - [ ] Subtitle -> 12px-13px.
+- [ ] Radical Container Squashing:
+    - [ ] Card Paddings: Fixed at 4px.
+    - [ ] Section Gaps: Fixed at 2px-4px.
+- [ ] Module Optimization (No Dead Space):
+    - [ ] Dashboard: Remove internal card margins.
+    - [ ] Research Lab: Re-align phases to use 100% width/height efficienty.
+    - [ ] Centro Creativo: Fix tab alignment.
+- [ ] Final Hard-Lock Verification.
+*/
+
+  /* Typography Hierarchy - Phase 1.1 */
+  --text-h1: 1.25rem;
+  /* 20px */
+  --text-subtitle: 0.8125rem;
+  /* 13px */
+  --text-label: 0.6875rem;
+  /* 11px */
+  --text-micro: 0.625rem;
+  /* 10px */
+  --text-muted-foreground: #64748b;
+  /* text-slate-500 */
 }
 
 @media (max-width: 768px) {
   :root {
+    --glass-blur: 0px;
+
     --header-height: 56px;
     /* Taller header for mobile touch targets */
     --sidebar-width: 0px;
@@ -100,97 +151,236 @@
       radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.05), transparent 400px),
       var(--bg);
     color: var(--text);
-    @apply font-sans antialiased text-[11px] font-medium tracking-tight;
+    font-family: inherit;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
   }
 
   h1 {
-    @apply text-lg font-extrabold tracking-tight mb-3 text-slate-900;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.75rem;
+    color: var(--color-foreground);
   }
 
   h2 {
-    @apply text-base font-bold tracking-tight mb-2 text-slate-800;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
+    color: var(--color-foreground);
   }
 }
 
 @layer utilities {
+
+  /* ✅ Standard Glass - FAST */
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+    background-color: rgb(255 255 255 / 0.75);
+    border: 1px solid rgb(255 255 255 / 0.5);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .glass-panel {
-    @apply bg-white/80 backdrop-blur-2xl border border-white/50 shadow-sm;
+    background-color: rgb(255 255 255 / 0.8);
+    border: 1px solid rgb(255 255 255 / 0.55);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .glass-header {
-    @apply bg-white/50 backdrop-blur-3xl border-b border-slate-200/40 sticky top-0 z-50;
+    background-color: rgb(255 255 255 / 0.7);
+    border-bottom: 1px solid rgb(226 232 240 / 0.4);
+    position: sticky;
+    top: 0px;
+    z-index: 50;
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .glass-input {
-    @apply bg-white/40 backdrop-blur-md border border-slate-200/50 focus:border-rose-400/50 focus:ring-0 transition-all outline-none;
+    background-color: rgb(255 255 255 / 0.6);
+    border: 1px solid rgb(226 232 240 / 0.5);
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    backdrop-filter: blur(var(--glass-blur-xs));
+    -webkit-backdrop-filter: blur(var(--glass-blur-xs));
+  }
+
+  .glass-input:focus {
+    border-color: rgb(251 113 133 / 0.5);
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  }
+
+  /* ✅ Fallback rápido si el blur causa lag */
+  .no-glass {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 }
 
 ::selection {
-  @apply bg-rose-100 text-rose-900;
+  background-color: #ffe4e6;
+  color: #881337;
 }
 
 /* COMPACT UTILITIES */
 
 /* Standard Text Styles */
 .text-label {
-  @apply text-[10px] font-bold uppercase tracking-wider text-slate-400;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
 }
 
 @media (max-width: 768px) {
   .text-label {
-    @apply text-[11px];
+    font-size: 11px;
   }
 }
 
 .text-value {
-  @apply text-xs font-semibold text-slate-900;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 @media (max-width: 768px) {
   .text-value {
-    @apply text-sm;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 }
 
 /* Compact Inputs & Buttons */
 .btn-compact {
-  @apply h-8 px-3 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5;
+  height: 2rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.btn-compact:active {
+  transform: scale(0.95);
 }
 
 .input-compact {
-  @apply h-8 px-2.5 bg-white border-slate-200 rounded-md text-xs font-medium focus:ring-1 focus:ring-slate-900/20 focus:border-slate-900 transition-all placeholder:text-slate-300;
+  height: 2rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.input-compact::placeholder {
+  color: #cbd5e1;
+}
+
+.input-compact:focus {
+  border-color: #0f172a;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) rgb(15 23 42 / 0.2);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
 
 /* DATA TABLE STANDARD (Sticky, Compact, Monochrome) */
 .data-table-container {
-  @apply w-full overflow-auto rounded-xl border border-slate-200/60 bg-white/80 backdrop-blur-sm shadow-sm;
+  width: 100%;
+  overflow: auto;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(226 232 240 / 0.6);
+  background-color: rgb(255 255 255 / 0.8);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .data-table {
-  @apply w-full caption-bottom text-xs;
+  width: 100%;
+  caption-side: bottom;
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 .data-table thead th {
-  @apply h-9 px-3 text-left align-middle font-bold text-slate-500 uppercase tracking-wider text-[10px] bg-slate-50/50 backdrop-blur sticky top-0 z-10 border-b border-slate-200/50;
+  height: 2rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+  background-color: rgb(248 250 252 / 0.5);
+  position: sticky;
+  top: 0px;
+  z-index: 10;
+  border-bottom: 1px solid rgb(226 232 240 / 0.5);
 }
 
 .data-table tbody tr {
-  @apply border-b border-slate-100/50 transition-colors hover:bg-rose-50/30 data-[state=selected]:bg-rose-50 h-[36px];
-  /* Fixed compact height */
+  border-bottom: 1px solid rgb(241 245 249 / 0.5);
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  height: var(--row-height);
+}
+
+.data-table tbody tr:hover {
+  background-color: rgb(255 241 242 / 0.3);
+}
+
+.data-table tbody tr[data-state="selected"] {
+  background-color: #fff1f2;
 }
 
 .data-table td {
-  @apply p-2.5 align-middle font-medium text-slate-700;
+  padding: 0.5rem;
+  vertical-align: middle;
+  font-weight: 500;
+  color: #334155;
 }
 
 /* Layout Hacks */
 .sidebar-active {
-  @apply bg-slate-900 text-white shadow-sm font-semibold;
+  background-color: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  font-weight: 600;
 }
 
 /* Scrollbar Hide */

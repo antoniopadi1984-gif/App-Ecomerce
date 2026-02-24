@@ -1,4 +1,5 @@
 import Replicate from 'replicate';
+import { getConnectionSecret } from '@/lib/server/connections';
 
 export interface VideoAnimationOptions {
     imageUrl: string;
@@ -7,18 +8,25 @@ export interface VideoAnimationOptions {
 }
 
 export class VideoAnimator {
-    private replicate: Replicate;
+    private replicate!: Replicate;
+    private isInitialized = false;
 
-    constructor() {
-        const token = process.env.REPLICATE_API_TOKEN;
+    constructor() { }
+
+    private async initClients() {
+        if (this.isInitialized) return;
+
+        const token = await getConnectionSecret('store-main', 'REPLICATE') || process.env.REPLICATE_API_TOKEN;
 
         if (!token) {
-            throw new Error('REPLICATE_API_TOKEN not configured');
+            throw new Error('REPLICATE_API_TOKEN not configured in Database nor env vars');
         }
 
         this.replicate = new Replicate({
             auth: token
         });
+
+        this.isInitialized = true;
     }
 
     /**
@@ -28,6 +36,8 @@ export class VideoAnimator {
         console.log('[VideoAnimator] 🎬 Animando video con Replicate LivePortrait...');
 
         try {
+            await this.initClients();
+
             const output = await this.replicate.run(
                 "fofr/live-portrait:89629de4f370173b28ccf588d19540a7c349cf3cc9a1935b22cd45f9b2b55a11",
                 {

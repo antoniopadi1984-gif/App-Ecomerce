@@ -46,14 +46,41 @@ export async function saveConnectionSecret({
 
 /**
  * getConnectionSecret — Recupera y desencripta el secreto.
+ * Soporta ALIAS de proveedores maestros para alimentar múltiples servicios.
  */
 export async function getConnectionSecret(storeId: string, provider: string): Promise<string | null> {
-    const conn = await (prisma as any).connection.findFirst({
-        where: { storeId, provider: provider.toUpperCase() }
+    const canonicalProvider = (provider: string) => {
+        const p = provider.toUpperCase();
+        if (['ANTHROPIC'].includes(p)) return 'REPLICATE';
+        if (['VERTEX', 'GA4', 'GCP', 'GOOGLE', 'GOOGLE_MAPS', 'GOOGLE_SERVICE_ACCOUNT'].includes(p)) return 'GOOGLE_CLOUD';
+        if (['META_ADS', 'FACEBOOK', 'FACEBOOK_ADS', 'FB'].includes(p)) return 'META';
+        return p;
+    };
+
+    const targetProvider = canonicalProvider(provider);
+
+    let conn = await (prisma as any).connection.findFirst({
+        where: { storeId, provider: targetProvider }
     });
 
-    if (!conn || !conn.secretEnc || !conn.secretIv || !conn.secretTag) {
-        return null;
+    const isolatedProviders = ['BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
+    const isIsolated = isolatedProviders.includes(targetProvider);
+
+    // FALLBACK TO GLOBAL/MAIN STORE if not found for the specific store
+    if (!conn && storeId !== 'store-main' && !isIsolated) {
+        conn = await (prisma as any).connection.findFirst({
+            where: { storeId: 'store-main', provider: targetProvider }
+        });
+    }
+
+    if (!conn) return null;
+
+    // Handle JSON keys (Google) differently if needed? No, encryptSecret handles strings.
+    // If the provider is GOOGLE_CLOUD, the secret is usually the Service Account JSON.
+
+    if (!conn.secretEnc || !conn.secretIv || !conn.secretTag) {
+        // Fallback to legacy fields if migration hasn't run
+        return (conn.apiKey || conn.accessToken || conn.apiSecret || null);
     }
 
     try {
@@ -72,7 +99,7 @@ export async function getConnectionSecret(storeId: string, provider: string): Pr
  * getConnectionMeta — Recupera metadata pública de una conexión.
  */
 export async function getConnectionMeta(storeId: string, provider: string) {
-    return await (prisma as any).connection.findFirst({
+    let meta = await (prisma as any).connection.findFirst({
         where: { storeId, provider: provider.toUpperCase() },
         select: {
             id: true,
@@ -83,6 +110,25 @@ export async function getConnectionMeta(storeId: string, provider: string) {
             extraConfig: true
         }
     });
+
+    const isolatedProviders = ['BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
+    const isIsolated = isolatedProviders.includes(provider.toUpperCase());
+
+    if (!meta && storeId !== 'store-main' && !isIsolated) {
+        meta = await (prisma as any).connection.findFirst({
+            where: { storeId: 'store-main', provider: provider.toUpperCase() },
+            select: {
+                id: true,
+                provider: true,
+                isActive: true,
+                lastSyncedAt: true,
+                updatedAt: true,
+                extraConfig: true
+            }
+        });
+    }
+
+    return meta;
 }
 
 /**
@@ -149,11 +195,27 @@ export async function getStoreConnectionsWithSecrets(storeId: string) {
  * hasActiveConnection — Verifica si el store tiene configurada una conexión específica.
  */
 export async function hasActiveConnection(storeId: string, provider: string): Promise<boolean> {
+    const canonicalProvider = (provider: string) => {
+        const p = provider.toUpperCase();
+        if (['ANTHROPIC'].includes(p)) return 'REPLICATE';
+        if (['VERTEX', 'GA4', 'GCP', 'GOOGLE', 'GOOGLE_MAPS', 'GOOGLE_SERVICE_ACCOUNT'].includes(p)) return 'GOOGLE_CLOUD';
+        if (['META_ADS', 'FACEBOOK', 'FACEBOOK_ADS', 'FB'].includes(p)) return 'META';
+        return p;
+    };
+
+    const targetProvider = canonicalProvider(provider);
+
     const conn = await (prisma as any).connection.findFirst({
-        where: { storeId, provider: provider.toUpperCase() },
-        select: { isActive: true, secretEnc: true }
+        where: {
+            OR: [
+                { storeId, provider: targetProvider },
+                { storeId: 'store-main', provider: targetProvider }
+            ]
+        },
+        select: { isActive: true, secretEnc: true, apiKey: true, accessToken: true }
     });
-    return !!(conn?.isActive && conn?.secretEnc);
+
+    return !!(conn?.isActive && (conn?.secretEnc || conn?.apiKey || conn?.accessToken));
 }
 
 /**

@@ -122,7 +122,7 @@ export class MetaAdsService {
  * Helper to get a Meta service instance for a store
  */
 export async function getMetaAdsService(prisma: any, storeId: string): Promise<MetaAdsService> {
-    const token = await getConnectionSecret(storeId, 'META_ADS');
+    const token = await getConnectionSecret(storeId, 'META');
 
     if (token) {
         return new MetaAdsService(token);

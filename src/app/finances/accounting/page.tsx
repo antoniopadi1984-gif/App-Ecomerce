@@ -169,7 +169,7 @@ export default function ExpensesPage() {
                         </Table>
 
                         {expenses.length === 0 && (
-                            <div className="p-8 text-center text-xs text-muted-foreground">
+                            <div className="p-6 text-center text-xs text-muted-foreground">
                                 No hay gastos registrados para este mes.
                             </div>
                         )}
@@ -190,7 +190,7 @@ export default function ExpensesPage() {
                         </div>
                     </div>
 
-                    <div className="flex gap-8">
+                    <div className="flex gap-6">
                         <div className="text-right">
                             <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 block mb-0.5">Coste Fijo / Día</span>
                             <span className="text-sm font-black text-white italic tracking-tighter leading-none">€{(totalMonthly / 30).toFixed(2)}</span>

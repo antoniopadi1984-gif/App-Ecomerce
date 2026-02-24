@@ -1,17 +1,18 @@
 import Replicate from "replicate";
 import { AIProvider, TextOptions, VisionOptions, AIResponse } from "./interfaces";
+import { getConnectionSecret } from '@/lib/server/connections';
 
 export class ReplicateProvider implements AIProvider {
     name = "REPLICATE";
     capabilities: ("TEXT" | "VISION" | "IMAGE" | "VIDEO" | "EMBEDDINGS")[] = ["TEXT", "VISION"];
-    private replicate: Replicate;
 
-    constructor() {
-        if (!process.env.REPLICATE_API_TOKEN) {
-            console.warn("⚠️ REPLICATE_API_TOKEN is missing");
+    private async getClient(): Promise<Replicate> {
+        const token = await getConnectionSecret('store-main', 'REPLICATE') || process.env.REPLICATE_API_TOKEN;
+        if (!token) {
+            throw new Error("REPLICATE_API_TOKEN is missing in Database Connections");
         }
-        this.replicate = new Replicate({
-            auth: process.env.REPLICATE_API_TOKEN || "",
+        return new Replicate({
+            auth: token,
         });
     }
 
@@ -43,9 +44,11 @@ export class ReplicateProvider implements AIProvider {
                 input.system_prompt = options.systemPrompt;
             }
 
+            const client = await this.getClient();
+
             // For Claude models on Replicate, they often use a specific schema
             // We use the run method which is standard
-            const output: any = await this.replicate.run(
+            const output: any = await client.run(
                 model as `${string}/${string}` | `${string}/${string}:${string}`,
                 { input }
             );

@@ -234,7 +234,7 @@ export default function AIAgentsPage() {
 
                     {/* FOOTER STATS */}
                     <div className="p-4 bg-slate-900 border-t border-indigo-500/10 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em] text-white/50">
-                        <div className="flex gap-8">
+                        <div className="flex gap-6">
                             <div className="flex items-center gap-2">
                                 <Activity className="h-3 w-3 text-emerald-500" />
                                 <span>System Health: Nominal</span>

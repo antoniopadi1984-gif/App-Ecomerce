@@ -34,7 +34,7 @@ import { getFirstStoreId as getMaestroStoreId } from "../avatars/actions";
 import BibliotecaPanel from "./BibliotecaPanel";
 import { CreativeFactoryPanel } from "@/components/creative/CreativeFactoryPanel";
 import { EspiaPanel } from "./panels/EspiaPanel";
-import { IdentidadPanel } from "./panels/IdentidadPanel";
+import AvatarStudioPage from "../avatars/page";
 import { DirectorPanel } from "./panels/DirectorPanel";
 
 interface MaestroWorkspaceProps {
@@ -213,7 +213,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
     return (
         <div className="flex-1 bg-transparent text-slate-900 font-sans selection:bg-rose-500/30 overflow-x-hidden flex flex-col">
             {/* 1. MAESTRO HEADER */}
-            <header className="border-b border-white/40 bg-white/20 backdrop-blur-xl sticky top-0 z-30 shadow-sm px-4 h-12 flex items-center justify-between gap-4">
+            <header className="glass-header border-b border-white/40 sticky top-0 z-30 shadow-sm px-3 sm:px-4 h-10 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-lg">
                         <Wand2 className="w-4 h-4 text-white" />
@@ -237,7 +237,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                             <SelectTrigger className="w-[160px] h-7 bg-transparent border-none text-[9px] font-black uppercase tracking-widest focus:ring-0">
                                 <SelectValue placeholder="Producto" />
                             </SelectTrigger>
-                            <SelectContent className="bg-white/90 backdrop-blur-2xl border border-slate-100 shadow-2xl rounded-2xl">
+                            <SelectContent className="bg-white/95 border border-slate-100 shadow-xl rounded-2xl">
                                 {initialProducts.map(p => (
                                     <SelectItem key={p.id} value={p.id} className="text-[9px] font-black uppercase tracking-widest">{p.title}</SelectItem>
                                 ))}
@@ -254,7 +254,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                                 <SelectValue />
                             </div>
                         </SelectTrigger>
-                        <SelectContent className="bg-white/90 backdrop-blur-2xl border border-slate-100 shadow-2xl rounded-2xl">
+                        <SelectContent className="glass-panel border-slate-100 shadow-2xl rounded-2xl">
                             <SelectItem value="TIKTOK" className="text-[9px] font-black uppercase tracking-widest">TikTok</SelectItem>
                             <SelectItem value="META" className="text-[9px] font-black uppercase tracking-widest">Meta Ads</SelectItem>
                             <SelectItem value="YOUTUBE" className="text-[9px] font-black uppercase tracking-widest">YouTube</SelectItem>
@@ -270,7 +270,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                                 <span>Avatar Studio</span>
                             </div>
                         </SelectTrigger>
-                        <SelectContent className="bg-white/90 backdrop-blur-2xl border border-slate-100 shadow-2xl rounded-2xl">
+                        <SelectContent className="glass-panel border-slate-100 shadow-2xl rounded-2xl">
                             <SelectItem value="default" className="text-[9px] font-black uppercase tracking-widest">SARA V2 (Global)</SelectItem>
                         </SelectContent>
                     </Select>
@@ -288,10 +288,10 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
             </header>
 
             {/* 2. MAESTRO TABS */}
-            <div className="flex-1 max-w-[1800px] mx-auto w-full p-4 overflow-hidden flex flex-col pt-0">
+            <div className="flex-1 max-w-[1800px] mx-auto w-full p-3 overflow-hidden flex flex-col pt-0">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                     <div className="flex items-center justify-between border-b border-slate-100/50 py-1 mb-4">
-                        <TabsList className="bg-transparent h-9 gap-0">
+                        <TabsList className="bg-transparent h-8 gap-0">
                             <MaestroTabTrigger value="espia" icon={Eye} label="ESPÍA" />
                             <MaestroTabTrigger value="cerebro" icon={BrainCircuit} label="CEREBRO" />
                             <MaestroTabTrigger value="escritor" icon={FileText} label="ESCRITOR" />
@@ -320,7 +320,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                     {/* CONTENT PANELS */}
                     <div className="flex-1 min-h-0 relative">
                         {/* 🕵️ ESPÍA: Ingesta Foreplay Style */}
-                        <TabsContent value="espia" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <TabsContent value="espia" className="h-full m-0 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <EspiaPanel onSelect={(item) => {
                                 toast.success("Anuncio seleccionado para análisis.");
                                 setActiveTab("cerebro");
@@ -328,20 +328,36 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                         </TabsContent>
 
                         {/* 🧠 CEREBRO: Análisis y Visión */}
-                        <TabsContent value="cerebro" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <IngestPanel onIngest={handleIngest} isIngesting={isIngesting} />
-                                <AnalyzePanel
-                                    onAnalyze={handleAnalyze}
-                                    isAnalyzing={isAnalyzing}
-                                    result={analysisResult}
-                                    hasAsset={!!currentAssetId}
-                                />
-                            </div>
+                        <TabsContent value="assets" className="outline-none mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <Card className="rounded-[2.5rem] border-slate-100 glass-panel shadow-xl overflow-hidden min-h-[500px]">
+                                <CardHeader className="p-8 border-b border-slate-100/50 flex flex-row items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center border border-rose-100">
+                                            <BrainCircuit className="w-5 h-5 text-rose-500" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <h3 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">Cerebro Maestro</h3>
+                                            <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Análisis de Inteligencia Visual</p>
+                                        </div>
+                                    </div>
+                                    <Badge className="bg-rose-50 text-rose-600 border border-rose-100 font-black h-6 px-3 rounded-lg text-[8px] tracking-widest shadow-sm">
+                                        V.4.2
+                                    </Badge>
+                                </CardHeader>
+                                <CardContent className="p-8 grid grid-cols-12 gap-6">
+                                    <IngestPanel onIngest={handleIngest} isIngesting={isIngesting} />
+                                    <AnalyzePanel
+                                        onAnalyze={handleAnalyze}
+                                        isAnalyzing={isAnalyzing}
+                                        result={analysisResult}
+                                        hasAsset={!!currentAssetId}
+                                    />
+                                </CardContent>
+                            </Card>
                         </TabsContent>
 
                         {/* ✍️ ESCRITOR: Editor de Guiones */}
-                        <TabsContent value="escritor" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <TabsContent value="escritor" className="h-full m-0 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <ScriptPanel
                                 isGenerating={isGeneratingScript}
                                 onGenerate={handleGenerateScript}
@@ -352,13 +368,13 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                         {/* 👤 IDENTIDAD: Avatars & Voice */}
                         <TabsContent value="identidad" className="h-full m-0 flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-rose-500" /></div>}>
-                                <IdentidadPanel />
+                                <AvatarStudioPage isEmbedded={true} />
                             </Suspense>
                         </TabsContent>
 
                         {/* 🏭 FÁBRICA: Producción Masiva */}
                         <TabsContent value="fabrica" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div className="space-y-6">
+                            <div className="space-y-4">
                                 <CreativeFactoryPanel
                                     productId={selectedProduct}
                                     productName={initialProducts.find(p => p.id === selectedProduct)?.title || "Producto"}
@@ -393,7 +409,7 @@ function MaestroTabTrigger({ value, icon: Icon, label }: { value: string, icon: 
     return (
         <TabsTrigger
             value={value}
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-rose-500 data-[state=active]:bg-rose-500/5 px-6 h-10 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 data-[state=active]:text-slate-900 transition-all gap-2"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-rose-500 data-[state=active]:bg-rose-500/5 px-4 h-8 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 data-[state=active]:text-slate-900 transition-all gap-2"
         >
             <Icon className="w-3.5 h-3.5 opacity-70" />
             {label}
@@ -411,32 +427,32 @@ function IngestPanel({ onIngest, isIngesting }: { onIngest: (f: File) => void, i
     }
 
     return (
-        <div className="grid grid-cols-12 gap-4 h-full">
-            <div className="col-span-4 bg-white/20 backdrop-blur-xl rounded-[2rem] border border-white/40 p-5 flex flex-col gap-5 shadow-sm">
-                <div className="space-y-1 border-b border-white/20 pb-4">
+        <div className="grid grid-cols-12 gap-3 h-full">
+            <div className="col-span-4 bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-4 shadow-sm">
+                <div className="space-y-1 border-b border-slate-100 pb-3">
                     <h3 className="text-[10px] font-black text-slate-900 uppercase italic tracking-widest">Referencia Maestra</h3>
-                    <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.2em]">Ingesta de Inteligencia Visual</p>
+                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em]">Ingesta de Inteligencia Visual</p>
                 </div>
 
                 <input type="file" ref={fileInput} className="hidden" accept="video/*" onChange={handleFile} />
 
                 <div
                     onClick={() => fileInput.current?.click()}
-                    className="bg-white/40 border-slate-200 border-dashed border-2 hover:border-rose-500 hover:bg-white transition-all cursor-pointer group rounded-3xl overflow-hidden"
+                    className="bg-slate-50 border-slate-200 border-dashed border hover:border-rose-300 hover:bg-slate-100 transition-all cursor-pointer group rounded-xl overflow-hidden"
                 >
-                    <div className="flex flex-col items-center justify-center h-44 gap-4 p-5">
+                    <div className="flex flex-col items-center justify-center h-32 gap-3 p-4">
                         {isIngesting ? (
                             <div className="flex flex-col items-center gap-3">
-                                <RefreshCw className="w-10 h-10 text-rose-500 animate-spin" />
+                                <RefreshCw className="w-8 h-8 text-rose-500 animate-spin" />
                                 <span className="text-[9px] text-rose-500 font-black uppercase tracking-widest animate-pulse">Analizando Activo...</span>
                             </div>
                         ) : (
                             <>
-                                <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center shadow-xl group-hover:scale-110 transition-all duration-500">
-                                    <Upload className="w-6 h-6 text-white" />
+                                <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center shadow-md group-hover:scale-105 transition-all duration-300">
+                                    <Upload className="w-5 h-5 text-white" />
                                 </div>
                                 <div className="text-center space-y-1">
-                                    <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Sincronizar Video</p>
+                                    <p className="text-[9px] font-black text-slate-900 uppercase tracking-widest">Sincronizar Video</p>
                                     <p className="text-[7px] text-slate-400 font-bold uppercase tracking-[0.15em]">MP4, MOV • Máx 500MB</p>
                                 </div>
                             </>
@@ -444,39 +460,39 @@ function IngestPanel({ onIngest, isIngesting }: { onIngest: (f: File) => void, i
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" className="border-white/40 bg-white/60 hover:bg-rose-50 text-slate-900 h-10 text-[9px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm">
+                <div className="grid grid-cols-2 gap-2 mt-auto">
+                    <Button variant="outline" className="border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-800 h-9 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm">
                         <Play className="w-3 h-3 mr-2 text-rose-500 fill-rose-500" /> TikTok
                     </Button>
-                    <Button variant="outline" className="border-white/40 bg-white/60 hover:bg-rose-50 text-slate-900 h-10 text-[9px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm">
+                    <Button variant="outline" className="border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-800 h-9 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm">
                         <MonitorPlay className="w-3 h-3 mr-2 text-rose-500 fill-rose-500" /> Meta Ads
                     </Button>
                 </div>
             </div>
 
-            <div className="col-span-8 bg-white/20 backdrop-blur-xl rounded-[2rem] border border-white/40 p-6 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between mb-8">
+            <div className="col-span-8 bg-white rounded-xl border border-slate-200 p-4 shadow-sm overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center border border-rose-100">
                             <Layers className="w-4 h-4 text-rose-500" />
                         </div>
                         <div>
-                            <h3 className="text-xs font-black text-slate-900 uppercase italic tracking-tight">Cola de Procesamiento</h3>
-                            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Estado del Renderizado Híbrido</p>
+                            <h3 className="text-[11px] font-black text-slate-900 uppercase italic tracking-tight">Cola de Procesamiento</h3>
+                            <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Estado del Renderizado Híbrido</p>
                         </div>
                     </div>
-                    <Badge className="bg-rose-500 text-white border-none font-black h-6 px-4 rounded-full text-[9px] tracking-widest">
+                    <Badge className="bg-rose-50 text-rose-600 border border-rose-100 font-black h-6 px-3 rounded-lg text-[8px] tracking-widest shadow-sm">
                         {isIngesting ? "1 ACTIVO" : "0 ACTIVOS"}
                     </Badge>
                 </div>
 
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-5 border-2 border-dashed border-white/40 rounded-[2.5rem] bg-slate-50/10 min-h-[300px]">
-                    <Database className="w-12 h-12 opacity-10" />
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-3 border border-dashed border-slate-200 rounded-xl bg-slate-50 min-h-[200px]">
+                    <Database className="w-10 h-10 opacity-20" />
                     <div className="text-center">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
                             {isIngesting ? "Procesando flujo de datos..." : "Cola de Trabajo Vacía"}
                         </p>
-                        {!isIngesting && <p className="text-[8px] font-bold text-slate-200 uppercase tracking-widest mt-2">Los activos aparecerán aquí tras la ingesta</p>}
+                        {!isIngesting && <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Los activos aparecerán aquí tras la ingesta</p>}
                     </div>
                 </div>
             </div>
@@ -486,30 +502,30 @@ function IngestPanel({ onIngest, isIngesting }: { onIngest: (f: File) => void, i
 
 function AnalyzePanel({ onAnalyze, isAnalyzing, result, hasAsset }: any) {
     return (
-        <div className="grid grid-cols-12 gap-5 h-full">
-            <div className="col-span-12 md:col-span-8 lg:col-span-9 space-y-4">
-                <div className="bg-white/20 backdrop-blur-xl border border-white/40 shadow-sm text-slate-900 h-[520px] flex items-center justify-center relative overflow-hidden rounded-[2.5rem]">
+        <div className="grid grid-cols-12 gap-3 h-full">
+            <div className="col-span-12 md:col-span-8 lg:col-span-9 space-y-3">
+                <div className="bg-white border border-slate-200 shadow-sm text-slate-900 h-[450px] flex items-center justify-center relative overflow-hidden rounded-xl">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rose-500/20 to-transparent" />
 
                     {result ? (
-                        <div className="text-center p-12 animate-in fade-in zoom-in duration-700">
-                            <div className="w-20 h-20 rounded-[2rem] bg-emerald-500 text-white flex items-center justify-center mx-auto mb-8 shadow-[0_20px_50px_rgba(16,185,129,0.3)]">
-                                <CheckCircle2 className="w-10 h-10" />
+                        <div className="text-center p-8 animate-in fade-in zoom-in duration-700">
+                            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-sm border border-emerald-100">
+                                <CheckCircle2 className="w-8 h-8" />
                             </div>
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic leading-none">Análisis Maestro Completado</h3>
-                            <div className="flex flex-col items-center gap-3 mt-6">
-                                <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-black px-4 py-1 text-[10px] tracking-widest rounded-full">INTELIGENCIA CONFIRMADA</Badge>
-                                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-[0.15em] max-w-[400px]">Se han detectado {result.hooks.length} Ganchos Virales de alta retención optimizados para el algoritmo.</p>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase italic leading-none">Análisis Maestro Completado</h3>
+                            <div className="flex flex-col items-center gap-3 mt-4">
+                                <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-100 font-black px-3 py-1 text-[9px] tracking-widest rounded-lg">INTELIGENCIA CONFIRMADA</Badge>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em] max-w-[400px]">Se han detectado {result.hooks.length} Ganchos Virales de alta retención optimizados para el algoritmo.</p>
                             </div>
                         </div>
                     ) : (
-                        <div className="text-center space-y-8 z-10 px-8">
-                            <div className="w-16 h-16 rounded-[1.5rem] bg-white flex items-center justify-center mx-auto border border-white shadow-2xl">
-                                {isAnalyzing ? <RefreshCw className="w-7 h-7 text-rose-500 animate-spin" /> : <Brain className="w-7 h-7 text-rose-500" />}
+                        <div className="text-center space-y-6 z-10 px-6">
+                            <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center mx-auto border border-slate-200 shadow-sm">
+                                {isAnalyzing ? <RefreshCw className="w-6 h-6 text-rose-500 animate-spin" /> : <Brain className="w-6 h-6 text-rose-500" />}
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black tracking-widest uppercase italic leading-none">Gemini 3.5 <span className="text-rose-500">Vision</span> Ready</h3>
-                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-4 max-w-[360px] mx-auto leading-relaxed opacity-80">
+                                <h3 className="text-xl font-black tracking-widest uppercase italic leading-none text-slate-900">Gemini 3.5 <span className="text-rose-500">Vision</span> Ready</h3>
+                                <p className="text-slate-500 text-[9px] font-bold uppercase tracking-[0.2em] mt-3 max-w-[360px] mx-auto leading-relaxed">
                                     {hasAsset ? "El activo visual ha sido sincronizado correctamente. El Agente Maestro procederá a la extracción de triggers psicológicos." : "Sincroniza un activo visual en la pestaña de Ingesta para iniciar el protocolo."}
                                 </p>
                             </div>
@@ -517,10 +533,10 @@ function AnalyzePanel({ onAnalyze, isAnalyzing, result, hasAsset }: any) {
                                 <Button
                                     onClick={onAnalyze}
                                     disabled={isAnalyzing}
-                                    className="bg-slate-900 hover:bg-black text-white shadow-[0_20px_40px_rgba(0,0,0,0.2)] h-12 px-10 font-black uppercase text-[10px] tracking-[0.3em] rounded-[1.5rem] transition-all group gap-3"
+                                    className="bg-slate-900 hover:bg-black text-white shadow-md h-10 px-8 font-black uppercase text-[9px] tracking-widest rounded-xl transition-all group gap-2"
                                 >
                                     {isAnalyzing ? "PROCESANDO MATRIZ..." : "INICIAR ANÁLISIS PROFUNDO"}
-                                    {!isAnalyzing && <Sparkles className="w-4 h-4 text-rose-500 group-hover:animate-pulse" />}
+                                    {!isAnalyzing && <Sparkles className="w-3.5 h-3.5 text-rose-500 group-hover:animate-pulse" />}
                                 </Button>
                             )}
                         </div>
@@ -528,30 +544,30 @@ function AnalyzePanel({ onAnalyze, isAnalyzing, result, hasAsset }: any) {
                 </div>
             </div>
 
-            <div className="col-span-12 md:col-span-4 lg:col-span-3 space-y-4">
-                <div className="bg-white/20 backdrop-blur-xl border border-white/40 p-6 shadow-sm rounded-[2rem] flex flex-col h-full border-l-rose-500/20">
-                    <div className="flex items-center justify-between mb-8 border-b border-white/20 pb-4">
+            <div className="col-span-12 md:col-span-4 lg:col-span-3 space-y-3">
+                <div className="bg-white border border-slate-200 p-4 shadow-sm rounded-xl flex flex-col h-full border-t-rose-500">
+                    <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
                         <div className="flex flex-col">
                             <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">Ganchos Mágicos</h4>
-                            <span className="text-[7px] text-slate-400 font-bold uppercase tracking-widest">Score de Retención IA</span>
+                            <span className="text-[7px] text-slate-500 font-bold uppercase tracking-widest">Score de Retención IA</span>
                         </div>
-                        <Badge className="bg-slate-900 text-white border-none text-[8px] font-black tracking-widest px-2 h-5">V.1.0</Badge>
+                        <Badge className="bg-slate-100 text-slate-600 border-none text-[8px] font-black tracking-widest px-2 h-5 rounded-lg">V.1.0</Badge>
                     </div>
 
                     <ScrollArea className="flex-1 -mr-2 pr-2">
                         <div className="space-y-3">
                             {result ? result.hooks.map((h: any) => (
-                                <div key={h.id} className="p-4 bg-white/40 border border-white transform transition-all hover:translate-x-1 hover:border-rose-500/30 rounded-2xl group cursor-pointer shadow-sm">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <Badge className="h-5 px-2 bg-rose-500 text-[9px] font-black shadow-lg shadow-rose-200/50 italic tracking-widest">+{h.score}</Badge>
-                                        <Badge className="text-[8px] font-black text-emerald-500 bg-emerald-50 border border-emerald-100 uppercase tracking-widest">GANADOR</Badge>
+                                <div key={h.id} className="p-3 bg-slate-50 border border-slate-200 transform transition-all hover:-translate-y-0.5 hover:border-rose-300 rounded-xl group cursor-pointer shadow-sm">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <Badge className="h-4 px-1.5 bg-rose-50/80 text-rose-600 border border-rose-100 text-[8px] font-black shadow-sm italic tracking-widest">+{h.score}</Badge>
+                                        <Badge className="text-[7px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 uppercase tracking-widest px-1.5 h-4 rounded-md">GANADOR</Badge>
                                     </div>
-                                    <p className="text-[11px] text-slate-800 font-bold leading-relaxed italic uppercase tracking-tight">"{h.text}"</p>
+                                    <p className="text-[10px] text-slate-700 font-bold leading-relaxed italic uppercase tracking-tight">"{h.text}"</p>
                                 </div>
                             )) : (
                                 [1, 2, 3, 4].map(i => (
-                                    <div key={i} className="h-24 bg-slate-50/20 rounded-2xl border border-white/20 border-dashed animate-pulse flex items-center justify-center">
-                                        <div className="w-2 h-2 bg-slate-100 rounded-full" />
+                                    <div key={i} className="h-20 bg-slate-50 rounded-xl border border-slate-200 border-dashed animate-pulse flex items-center justify-center group">
+                                        <div className="w-2 h-2 bg-slate-200 rounded-full group-hover:bg-rose-200 transition-colors" />
                                     </div>
                                 ))
                             )}
@@ -565,31 +581,31 @@ function AnalyzePanel({ onAnalyze, isAnalyzing, result, hasAsset }: any) {
 
 function ScriptPanel({ isGenerating, onGenerate, script }: any) {
     return (
-        <div className="grid grid-cols-12 gap-5 h-full">
-            <div className="col-span-8 space-y-4">
-                <div className="bg-white/20 backdrop-blur-xl border border-white/40 shadow-sm text-slate-900 h-[580px] flex flex-col p-6 rounded-[2.5rem]">
-                    <div className="flex items-center justify-between mb-6 border-b border-white/20 pb-4">
+        <div className="grid grid-cols-12 gap-3 h-full">
+            <div className="col-span-8 space-y-3">
+                <div className="bg-white border border-slate-200 shadow-sm text-slate-900 h-[500px] flex flex-col p-4 rounded-xl">
+                    <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-lg">
-                                <FileText className="w-4 h-4 text-white" />
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-200">
+                                <FileText className="w-4 h-4 text-slate-600" />
                             </div>
                             <div className="flex flex-col">
                                 <h3 className="text-[11px] font-black uppercase italic text-slate-900 tracking-tight">Guion Maestro</h3>
-                                <p className="text-[7px] text-slate-400 font-bold uppercase tracking-widest">Protocolo de Conversión V.4</p>
+                                <p className="text-[7px] text-slate-500 font-bold uppercase tracking-widest">Protocolo de Conversión V.4</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Badge className="bg-rose-500/10 text-rose-600 border border-rose-500/20 font-black text-[9px] px-3 h-6 tracking-widest rounded-full uppercase">VERSIÓN BETA</Badge>
+                        <div className="flex items-center gap-2">
+                            <Badge className="bg-rose-50 text-rose-600 border border-rose-100 font-black text-[8px] px-2 h-5 tracking-widest rounded-md uppercase shadow-sm">BETA</Badge>
                             {script ? (
-                                <Button size="sm" variant="outline" className="h-8 text-[9px] font-black border-rose-500/30 text-rose-700 bg-rose-50/50 hover:bg-rose-100 rounded-xl px-4 uppercase tracking-widest transition-all">Generar Variaciones (3)</Button>
+                                <Button size="sm" variant="outline" className="h-7 text-[8px] font-black border-slate-200 text-slate-700 bg-white hover:bg-slate-50 rounded-lg px-3 uppercase tracking-widest transition-all shadow-sm">Variaciones (3)</Button>
                             ) : (
                                 <Button
                                     size="sm"
                                     onClick={onGenerate}
                                     disabled={isGenerating}
-                                    className="h-8 text-[9px] font-black bg-slate-900 hover:bg-black text-white rounded-xl px-5 uppercase tracking-[0.2em] transition-all shadow-lg"
+                                    className="h-8 text-[9px] font-black bg-slate-900 hover:bg-black text-white rounded-lg px-4 uppercase tracking-[0.1em] transition-all shadow-md"
                                 >
-                                    {isGenerating ? "REDACTANDO..." : "GENERAR GUION MAESTRO"}
+                                    {isGenerating ? "REDACTANDO..." : "GENERAR GUION"}
                                 </Button>
                             )}
                         </div>
@@ -597,7 +613,7 @@ function ScriptPanel({ isGenerating, onGenerate, script }: any) {
                     <ScrollArea className="flex-1">
                         <Textarea
                             placeholder="El guion magistral aparecerá aquí tras el análisis..."
-                            className="w-full bg-transparent border-none resize-none focus:ring-0 text-[14px] font-medium leading-relaxed font-mono text-slate-800 placeholder:text-slate-300 p-0 selection:bg-rose-500/20"
+                            className="w-full bg-slate-50/50 border-none resize-none focus:ring-1 focus:ring-rose-500/20 text-[13px] font-medium leading-relaxed font-mono text-slate-800 placeholder:text-slate-400 p-3 rounded-lg selection:bg-rose-500/20 h-full"
                             value={script}
                             readOnly
                         />
@@ -605,26 +621,26 @@ function ScriptPanel({ isGenerating, onGenerate, script }: any) {
                 </div>
             </div>
 
-            <div className="col-span-4 space-y-5">
-                <div className="bg-rose-500/5 border border-rose-500/10 p-6 rounded-[2rem] shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
+            <div className="col-span-4 space-y-3">
+                <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
                         <Zap className="w-4 h-4 text-rose-500 fill-rose-500" />
                         <h4 className="text-[10px] font-black text-rose-900 uppercase tracking-[0.2em] italic">Estructura de Retención</h4>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         <StructureStep label="GANCHO VIRAL (0-3s)" active />
                         <StructureStep label="CUERPO DEL MENSAJE (3-15s)" />
                         <StructureStep label="CTA / CIERRE (15-20s)" />
                     </div>
                 </div>
 
-                <div className="bg-slate-900 p-6 rounded-[2rem] shadow-xl text-white overflow-hidden relative group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-700">
-                        <Sparkles className="w-20 h-20" />
+                <div className="bg-slate-900 p-4 rounded-xl shadow-md text-white overflow-hidden relative group border border-slate-800">
+                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                        <Sparkles className="w-16 h-16" />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-2 text-rose-400">Optimización Pro</h4>
-                    <p className="text-[11px] font-bold leading-relaxed text-slate-300">Este guion ha sido optimizado para la psicología de recompensa dopaminérgica.</p>
-                    <Button variant="link" className="p-0 text-rose-400 text-[9px] font-black uppercase tracking-widest mt-4 h-auto hover:text-rose-300">Ver Detalles Técnicos <ChevronRight className="w-3 h-3 ml-1" /></Button>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-1.5 text-rose-400">Optimización Pro</h4>
+                    <p className="text-[11px] font-medium leading-relaxed text-slate-300 relative z-10">Este guion ha sido optimizado para la psicología de recompensa dopaminérgica.</p>
+                    <Button variant="link" className="p-0 text-rose-400 text-[9px] font-black uppercase tracking-widest mt-2 h-auto hover:text-rose-300 relative z-10">Ver Detalles Técnicos <ChevronRight className="w-3 h-3 ml-1" /></Button>
                 </div>
             </div>
         </div>
@@ -653,44 +669,44 @@ function VariantsPanel({ variants, onGenerate, onAddCaptions, isGenerating, defa
     }, [defaultScript]);
 
     return (
-        <div className="grid grid-cols-12 gap-5 h-full">
-            <div className="col-span-12 lg:col-span-4 space-y-4">
-                <div className="bg-white/20 backdrop-blur-xl border border-white/40 p-6 shadow-sm rounded-[2.5rem] space-y-6">
-                    <div className="space-y-1 border-b border-white/20 pb-4">
+        <div className="grid grid-cols-12 gap-3 h-full">
+            <div className="col-span-12 lg:col-span-4 space-y-3">
+                <div className="bg-white border border-slate-200 p-4 shadow-sm rounded-xl space-y-5">
+                    <div className="space-y-1 border-b border-slate-100 pb-3">
                         <h3 className="text-xs font-black text-slate-900 uppercase italic tracking-tight">Clonación Maestra</h3>
-                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Motor de Síntesis Avatar + Lip-Sync</p>
+                        <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Motor de Síntesis Avatar + Lip-Sync</p>
                     </div>
 
-                    <div className="space-y-5">
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Concepto del Activo</label>
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Concepto del Activo</label>
                             <Input
                                 value={concept}
                                 onChange={(e) => setConcept(e.target.value)}
-                                className="h-10 text-[11px] font-bold bg-white/40 border-white/40 rounded-2xl px-4 focus:bg-white transition-all shadow-sm uppercase tracking-widest"
+                                className="h-9 text-[11px] font-bold bg-slate-50 border-slate-200 rounded-lg px-3 focus:bg-white transition-all shadow-sm uppercase tracking-widest text-slate-900"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Instrucciones Visuales (Prompt)</label>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Instrucciones Visuales (Prompt)</label>
                             <Textarea
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
-                                className="min-h-[100px] text-[11px] font-medium bg-white/40 border-white/40 rounded-2xl resize-none p-4 focus:bg-white transition-all shadow-sm"
+                                className="min-h-[80px] text-[11px] font-medium bg-slate-50 border-slate-200 rounded-lg resize-none p-3 focus:bg-white transition-all shadow-sm text-slate-900"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Guion Maquinado</label>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Guion Maquinado</label>
                             <Textarea
                                 value={script}
                                 onChange={(e) => setScript(e.target.value)}
-                                className="min-h-[120px] text-[11px] font-medium bg-white/40 border-white/40 rounded-2xl resize-none p-4 focus:bg-white transition-all shadow-sm"
+                                className="min-h-[100px] text-[11px] font-medium bg-slate-50 border-slate-200 rounded-lg resize-none p-3 focus:bg-white transition-all shadow-sm text-slate-900"
                             />
                         </div>
 
                         <Button
-                            className="w-full h-12 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-[0.25em] text-[10px] rounded-2xl shadow-xl transition-all gap-3 active:scale-95"
+                            className="w-full h-10 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[9px] rounded-lg shadow-md transition-all gap-2 active:scale-95"
                             disabled={isGenerating}
                             onClick={() => onGenerate({ concept, avatarPrompt: prompt, script })}
                         >
@@ -710,67 +726,67 @@ function VariantsPanel({ variants, onGenerate, onAddCaptions, isGenerating, defa
                 </div>
             </div>
 
-            <div className="col-span-12 lg:col-span-8 flex flex-col gap-5">
-                <div className="flex items-center justify-between px-2">
+            <div className="col-span-12 lg:col-span-8 flex flex-col gap-3">
+                <div className="flex items-center justify-between px-1">
                     <div className="flex items-center gap-3">
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-tighter italic">Biblioteca de Variantes</h3>
-                        <Badge className="bg-rose-500/10 text-rose-600 border border-rose-500/20 font-black px-3 h-6 rounded-lg text-[9px] tracking-widest">{variants.length} ARCHIVOS</Badge>
+                        <Badge className="bg-rose-50 text-rose-600 border border-rose-100 font-black px-2 h-5 rounded-md text-[8px] tracking-widest">{variants.length} ARCHIVOS</Badge>
                     </div>
                     <div className="flex gap-2">
-                        <Badge className="h-6 text-[8px] font-black uppercase tracking-widest bg-white border border-white/60 text-slate-400 px-3 flex items-center gap-2">
-                            <div className="w-1 h-1 bg-rose-500 rounded-full" /> FILTRO: TODOS
+                        <Badge className="h-5 text-[8px] font-black uppercase tracking-widest bg-white border border-slate-200 text-slate-500 px-2 flex items-center gap-1.5 rounded-md shadow-sm">
+                            <div className="w-1.5 h-1.5 bg-rose-500 rounded-full" /> FILTRO: TODOS
                         </Badge>
                     </div>
                 </div>
 
-                <ScrollArea className="flex-1 -m-2 p-2">
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
+                <ScrollArea className="flex-1 -m-1 p-1">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                         {variants.length === 0 ? (
-                            <div className="col-span-full h-[400px] border-2 border-dashed border-white/60 rounded-[3rem] flex flex-col items-center justify-center text-slate-300 gap-6 bg-white/10 backdrop-blur-sm">
-                                <div className="p-6 bg-white/40 rounded-[2rem] shadow-sm">
-                                    <Clapperboard className="w-12 h-12 opacity-20" />
+                            <div className="col-span-full h-[400px] border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400 gap-4 bg-slate-50/50">
+                                <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100">
+                                    <Clapperboard className="w-8 h-8 opacity-40 text-slate-400" />
                                 </div>
-                                <div className="text-center space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">Cola de Variantes Vacía</p>
-                                    <p className="text-[8px] font-bold uppercase tracking-widest opacity-60">Inicia una clonación para ver resultados aquí</p>
+                                <div className="text-center space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Cola de Variantes Vacía</p>
+                                    <p className="text-[8px] font-bold uppercase tracking-widest opacity-60 text-slate-400">Inicia una clonación para ver resultados aquí</p>
                                 </div>
                             </div>
                         ) : (
                             variants.map((v: any) => (
-                                <div key={v.id} className="bg-white/20 backdrop-blur-xl border border-white/40 shadow-sm group hover:border-rose-500/30 transition-all overflow-hidden rounded-[2.5rem] flex flex-col">
-                                    <div className="aspect-[9/16] bg-slate-100/30 relative overflow-hidden">
+                                <div key={v.id} className="bg-white border border-slate-200 shadow-sm group hover:border-rose-300 transition-all overflow-hidden rounded-xl flex flex-col">
+                                    <div className="aspect-[9/16] bg-slate-100 relative overflow-hidden">
                                         <img
                                             src={v.thumbnailUrl || "/api/placeholder/400/711"}
                                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                             alt={v.name}
                                         />
-                                        <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
-                                            <Button size="icon" variant="secondary" className="rounded-full w-12 h-12 shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500" onClick={() => window.open(v.videoUrl, '_blank')}>
-                                                <Play className="w-6 h-6 fill-slate-900 text-slate-900" />
+                                        <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
+                                            <Button size="icon" variant="secondary" className="rounded-full w-10 h-10 shadow-lg scale-75 group-hover:scale-100 transition-transform duration-300" onClick={() => window.open(v.videoUrl, '_blank')}>
+                                                <Play className="w-5 h-5 fill-slate-900 text-slate-900" />
                                             </Button>
-                                            <span className="text-[9px] font-black text-white uppercase tracking-[0.2em] translate-y-4 group-hover:translate-y-0 transition-transform duration-500">Previsualizar</span>
+                                            <span className="text-[8px] font-black text-white uppercase tracking-[0.2em] translate-y-2 group-hover:translate-y-0 transition-transform duration-300">Previsualizar</span>
                                         </div>
-                                        <div className="absolute top-4 right-4 flex flex-col gap-2">
-                                            <Badge className="bg-black/60 backdrop-blur-md border border-white/20 px-3 h-6 text-[8px] font-black uppercase tracking-[0.2em] rounded-full">
+                                        <div className="absolute top-3 right-3 flex flex-col gap-2">
+                                            <Badge className="bg-slate-900/80 border border-slate-700 px-2 h-5 text-[7px] font-black text-white uppercase tracking-[0.2em] rounded-md shadow-sm">
                                                 {v.status === 'COMPLETED' ? 'FINALIZADO' : 'PROCESANDO'}
                                             </Badge>
                                         </div>
                                     </div>
-                                    <div className="p-5 space-y-4">
+                                    <div className="p-3 space-y-3 bg-white">
                                         <div className="space-y-1">
-                                            <h4 className="text-[11px] font-black text-slate-900 truncate uppercase tracking-tight italic">{v.name}</h4>
-                                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{new Date(v.createdAt).toLocaleDateString()}</p>
+                                            <h4 className="text-[10px] font-black text-slate-900 truncate uppercase tracking-tight italic">{v.name}</h4>
+                                            <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">{new Date(v.createdAt).toLocaleDateString()}</p>
                                         </div>
-                                        <div className="flex items-center gap-2 pt-4 border-t border-white/20">
-                                            <Button variant="outline" className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-widest gap-2 bg-white/40 border-white/40 transition-all hover:bg-white shadow-sm">
+                                        <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                                            <Button variant="outline" className="flex-1 h-8 rounded-lg text-[8px] font-black uppercase tracking-widest gap-2 bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm transition-all md:flex-none md:w-10 md:px-0 justify-center">
                                                 <Download className="w-3.5 h-3.5" />
                                             </Button>
                                             <Button
                                                 variant="outline"
-                                                className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-widest gap-2 bg-rose-500/10 border-rose-500/20 text-rose-600 hover:bg-rose-500/20 transition-all shadow-sm"
+                                                className="flex-1 h-8 rounded-lg text-[8px] font-black uppercase tracking-widest gap-1.5 bg-rose-50 border-rose-100 text-rose-600 hover:bg-rose-100 transition-all shadow-sm"
                                                 onClick={() => onAddCaptions(v.id)}
                                             >
-                                                <Wand2 className="w-3.5 h-3.5" /> SUBTÍTULOS
+                                                <Wand2 className="w-3 h-3" /> SUBTÍTULOS
                                             </Button>
                                         </div>
                                     </div>

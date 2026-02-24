@@ -105,7 +105,7 @@ export default function AgentManager({ storeId }: { storeId: string }) {
                 <TabsContent value="agents">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {agents.map((agent) => (
-                            <Card key={agent.id} className="group overflow-hidden border-slate-200/60 hover:border-indigo-200 transition-all hover:shadow-2xl hover:shadow-indigo-500/10 rounded-3xl bg-white/50 backdrop-blur-sm">
+                            <Card key={agent.id} className="group overflow-hidden border-slate-200/60 hover:border-indigo-200 transition-all hover:shadow-2xl hover:shadow-indigo-500/10 rounded-3xl bg-white/50">
                                 <CardHeader className="pb-3 flex-row justify-between items-start space-y-0">
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-2xl shadow-sm ${agent.role === 'MEDIA_BUYING' ? 'bg-amber-50 text-amber-600' :
@@ -227,9 +227,9 @@ export default function AgentManager({ storeId }: { storeId: string }) {
 
             {/* Editing Sidebar Placeholder (Simplified) */}
             {isSidebarOpen && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-50 flex justify-end animate-in fade-in slide-in-from-right duration-300">
-                    <Card className="w-full max-w-xl h-full rounded-none rounded-l-[40px] shadow-2xl border-l border-white/20 bg-white/95 backdrop-blur-xl overflow-y-auto">
-                        <CardHeader className="p-8 border-b border-slate-100">
+                <div className="fixed inset-0 bg-slate-900/40 z-50 flex justify-end animate-in fade-in slide-in-from-right duration-300">
+                    <Card className="w-full max-w-xl h-full rounded-none rounded-l-[40px] shadow-2xl border-l border-white/20 bg-white/95 overflow-y-auto">
+                        <CardHeader className="p-6 border-b border-slate-100">
                             <div className="flex justify-between items-center">
                                 <CardTitle className="text-2xl font-black italic tracking-tighter text-indigo-600 uppercase">
                                     {editingAgent?.id ? 'CONFIGURAR AGENTE' : 'NUEVO ESPECIALISTA'}
@@ -237,7 +237,7 @@ export default function AgentManager({ storeId }: { storeId: string }) {
                                 <Button variant="ghost" className="rounded-full" onClick={() => setIsSidebarOpen(false)}>×</Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-8 space-y-6">
+                        <CardContent className="p-6 space-y-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-black uppercase tracking-widest text-slate-400">Nombre del Agente</label>
                                 <Input

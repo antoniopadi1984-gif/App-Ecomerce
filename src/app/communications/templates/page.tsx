@@ -100,7 +100,7 @@ export default function TemplatesPage() {
     };
 
     return (
-        <div className="p-8 h-full bg-slate-50/50">
+        <div className="p-6 h-full bg-slate-50/50">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* HEADER */}
                 <div className="flex items-center justify-between">
@@ -179,8 +179,8 @@ export default function TemplatesPage() {
                     </div>
 
                     {/* RIGHT: EDITOR */}
-                    <div className="lg:col-span-7 flex flex-col gap-8 bg-white border border-slate-100 rounded-[3rem] p-10 shadow-2xl shadow-slate-900/5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 opacity-5">
+                    <div className="lg:col-span-7 flex flex-col gap-6 bg-white border border-slate-100 rounded-[3rem] p-10 shadow-2xl shadow-slate-900/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-6 opacity-5">
                             <Bot className="h-32 w-32" />
                         </div>
 
@@ -252,7 +252,7 @@ export default function TemplatesPage() {
                                 <textarea
                                     value={formData.body}
                                     onChange={e => setFormData({ ...formData, body: e.target.value })}
-                                    className="w-full h-48 bg-slate-50 border border-slate-100 rounded-[2rem] p-8 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500/30 transition-all resize-none shadow-inner leading-relaxed"
+                                    className="w-full h-48 bg-slate-50 border border-slate-100 rounded-[2rem] p-6 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500/30 transition-all resize-none shadow-inner leading-relaxed"
                                     placeholder="Hola {customer_name}, tu pedido #{order_number} está listo..."
                                 />
                                 <div className="absolute right-6 bottom-6 flex gap-2">

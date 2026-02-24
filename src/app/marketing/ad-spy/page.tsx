@@ -77,15 +77,15 @@ export default function AdSpyPage() {
 
             {/* MAIN CONTENT: MASONRY-LIKE GRID */}
             <ScrollArea className="flex-1 bg-slate-50/10 min-h-[600px]">
-                <div className="p-8">
+                <div className="p-6">
                     {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {Array.from({ length: 8 }).map((_, i) => (
                                 <div key={i} className="h-96 rounded-[2.5rem] bg-slate-100 animate-pulse" />
                             ))}
                         </div>
                     ) : filtered.length > 0 ? (
-                        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-8 space-y-8">
+                        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-8">
                             {filtered.map((item) => (
                                 <AdCard key={item.id} item={item} />
                             ))}
@@ -149,7 +149,7 @@ function AdCard({ item }: { item: any }) {
 
             {/* ACTION MENU */}
             <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-xl text-slate-900">
+                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 shadow-xl text-slate-900">
                     <MoreVertical className="h-4 w-4" />
                 </Button>
             </div>

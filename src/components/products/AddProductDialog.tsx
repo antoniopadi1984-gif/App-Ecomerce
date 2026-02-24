@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { startResearchV3Action } from "@/app/research/actions/research-actions";
 
 
 export function AddProductDialog() {
@@ -128,10 +129,19 @@ export function AddProductDialog() {
             const data = await response.json();
 
             if (data.success) {
-                toast.success("Producto creado con éxito");
+                toast.success("Producto creado. Iniciando secuencias forenses automáticas...");
                 await refreshAllProducts();
                 setProductId(data.product.id);
                 setOpen(false);
+
+                // Auto-start research pipeline immediately behind the scenes
+                try {
+                    await startResearchV3Action(data.product.id);
+                } catch (e) {
+                    console.error("Failed to auto-start research", e);
+                    toast.error("El producto se creó, pero la IA requerirá inicio manual.");
+                }
+
             } else {
                 throw new Error(data.error || "Error al crear");
             }
@@ -146,7 +156,7 @@ export function AddProductDialog() {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button className="h-9 px-4 bg-slate-900 hover:bg-black text-white rounded-xl shadow-lg border border-slate-700/50 flex items-center gap-2 transition-all">
-                    <Plus className="w-4 h-4 text-[#fb7185]" />
+                    <Plus className="w-4 h-4 text-[var(--primary)]" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Añadir Producto</span>
                 </Button>
             </DialogTrigger>
@@ -154,7 +164,7 @@ export function AddProductDialog() {
                 <DialogHeader className="px-6 py-4 bg-white border-b border-slate-100 flex flex-row items-center justify-between">
                     <div>
                         <DialogTitle className="text-lg font-black uppercase italic tracking-tighter text-slate-900 flex items-center gap-2">
-                            <Box className="w-5 h-5 text-[#fb7185]" /> Master <span className="text-[#fb7185] not-italic">Config</span>
+                            <Box className="w-5 h-5 text-[var(--primary)]" /> Master <span className="text-[var(--primary)] not-italic">Config</span>
                         </DialogTitle>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">
                             Inicialización en Neural DB
@@ -274,11 +284,11 @@ export function AddProductDialog() {
                             <div className="space-y-1.5 pt-2">
                                 <div className="flex items-center justify-between ml-1">
                                     <label className="text-[9px] font-black uppercase tracking-widest text-slate-900">Precio Venta (€)</label>
-                                    <button type="button" onClick={handleAutoPrice} className="text-[8px] font-black uppercase tracking-widest text-[#fb7185] flex items-center gap-1 hover:underline">
+                                    <button type="button" onClick={handleAutoPrice} className="text-[8px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-1 hover:underline">
                                         <Sparkles className="w-3 h-3" /> Auto IA
                                     </button>
                                 </div>
-                                <Input required type="number" step="0.01" value={formData.sellingPrice} onChange={e => setFormData({ ...formData, sellingPrice: e.target.value })} className="h-10 text-sm font-black bg-rose-50/50 border-[#fb7185]/30 rounded-xl focus-visible:ring-[#fb7185]" />
+                                <Input required type="number" step="0.01" value={formData.sellingPrice} onChange={e => setFormData({ ...formData, sellingPrice: e.target.value })} className="h-10 text-sm font-black bg-rose-50/50 border-[var(--primary)]/30 rounded-xl focus-visible:ring-[var(--primary)]" />
                             </div>
 
                             {/* Live AI Metrics */}
@@ -347,7 +357,7 @@ export function AddProductDialog() {
 
                     <div className="col-span-full pt-4 mt-2 border-t border-slate-200 flex justify-end gap-3">
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl">Cancelar</Button>
-                        <Button type="submit" disabled={loading} className="h-10 px-8 bg-[#fb7185] hover:bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-200 font-black uppercase tracking-widest text-[10px] transition-all">
+                        <Button type="submit" disabled={loading} className="h-10 px-8 bg-[var(--primary)] hover:bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-200 font-black uppercase tracking-widest text-[10px] transition-all">
                             {loading ? "Iniciando..." : "Crear & Iniciar Research"}
                         </Button>
                     </div>

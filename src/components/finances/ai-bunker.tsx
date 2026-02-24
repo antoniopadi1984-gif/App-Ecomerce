@@ -80,7 +80,7 @@ export function FinanceAiBunker() {
                 </div>
 
                 {advice ? (
-                    <div className="animate-in slide-in-from-bottom duration-500 bg-white/5 border border-white/10 rounded-[2rem] p-8 space-y-6">
+                    <div className="animate-in slide-in-from-bottom duration-500 bg-white/5 border border-white/10 rounded-[2rem] p-6 space-y-6">
                         <div className="flex items-center justify-between border-b border-white/5 pb-4">
                             <div className="flex items-center gap-2">
                                 <Sparkles className="h-4 w-4 text-primary" />

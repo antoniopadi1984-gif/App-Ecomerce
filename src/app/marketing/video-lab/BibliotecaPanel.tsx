@@ -174,7 +174,7 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
                     </nav>
                 </div>
 
-                <div className="mt-auto p-4 bg-white/40 backdrop-blur-md rounded-2xl border border-slate-100/50 space-y-3 shadow-sm mx-1">
+                <div className="mt-auto p-4 bg-white/40 rounded-2xl border border-slate-100/50 space-y-3 shadow-sm mx-1">
                     <div className="flex items-center gap-2 text-rose-500 font-black text-[9px] uppercase tracking-widest">
                         <Zap className="w-3 h-3 fill-rose-500" />
                         ESPACIO DRIVE
@@ -195,7 +195,7 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
             </div>
 
             {/* 2. MAIN CONTENT AREA */}
-            <div className="flex-1 flex flex-col gap-4 min-w-0 bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-slate-100/50 shadow-sm p-4 overflow-hidden relative">
+            <div className="flex-1 flex flex-col gap-4 min-w-0 bg-white/40 rounded-[2.5rem] border border-slate-100/50 shadow-sm p-4 overflow-hidden relative">
                 {/* Header & Controls */}
                 <div className="flex items-center justify-between gap-4 shrink-0 px-2">
                     <div className="flex items-center gap-3">
@@ -283,7 +283,7 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
                                     key={file.id}
                                     onClick={() => file.isFolder ? handleFolderClick(file.id) : null}
                                     className={cn(
-                                        "group relative transition-all duration-500 cursor-pointer overflow-hidden backdrop-blur-sm",
+                                        "group relative transition-all duration-500 cursor-pointer overflow-hidden",
                                         viewMode === "grid"
                                             ? "aspect-[4/5] bg-white/40 rounded-2xl border border-slate-100/50 hover:border-rose-300 hover:shadow-xl hover:shadow-rose-500/5 hover:-translate-y-1"
                                             : "flex items-center gap-4 p-2 rounded-xl hover:bg-white/60 border border-transparent hover:border-slate-100"
@@ -337,10 +337,10 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
                                             {/* Action Buttons Overlay - Smaller */}
                                             {!file.isFolder && (
                                                 <div className="absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 flex flex-col gap-1.5 z-20">
-                                                    <Button size="icon" className="w-8 h-8 rounded-xl bg-slate-900/90 text-rose-500 hover:text-rose-400 hover:bg-slate-900 shadow-xl backdrop-blur-md">
+                                                    <Button size="icon" className="w-8 h-8 rounded-xl bg-slate-900/90 text-rose-500 hover:text-rose-400 hover:bg-slate-900 shadow-xl">
                                                         <Wand2 className="w-4 h-4" />
                                                     </Button>
-                                                    <Button size="icon" className="w-8 h-8 rounded-xl bg-white/90 text-rose-500 hover:text-rose-600 hover:bg-white shadow-xl backdrop-blur-md border border-slate-100">
+                                                    <Button size="icon" className="w-8 h-8 rounded-xl bg-white/95 text-rose-500 hover:text-rose-600 hover:bg-white shadow-xl border border-slate-100">
                                                         <Eye className="w-4 h-4" />
                                                     </Button>
                                                 </div>
@@ -385,7 +385,7 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
 
                 {/* BULK ACTION BAR - Real Implementation */}
                 {selectedFiles.size > 0 && (
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-6 animate-in slide-in-from-bottom-8 duration-500 z-[60] backdrop-blur-xl">
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-6 animate-in slide-in-from-bottom-8 duration-300 z-[60]">
                         <div className="flex flex-col">
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 ml-0.5">{selectedFiles.size} SELECCIONADOS</span>
                             <span className="text-[8px] text-white/40 font-bold italic uppercase tracking-widest">Acciones rápidas en lote</span>

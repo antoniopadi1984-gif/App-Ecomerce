@@ -322,7 +322,7 @@ export function CreativeAgentPanel({
                             <Button
                                 onClick={handleGenerate}
                                 disabled={generating}
-                                className="w-full h-10 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-black uppercase tracking-wider text-xs shadow-sm hover:shadow-sm transition-all"
+                                className="w-full h-10 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-black uppercase tracking-wider text-xs shadow-md hover:shadow-lg transition-all"
                             >
                                 {generating ? (
                                     <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generando...</>

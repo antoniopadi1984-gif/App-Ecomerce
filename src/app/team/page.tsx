@@ -65,7 +65,7 @@ export default function TeamPage() {
                 }
             />
 
-            <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto w-full">
+            <div className="p-6 md:p-6 space-y-6 max-w-[1600px] mx-auto w-full">
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                     <TabsList className="bg-white border border-slate-200 p-1 h-auto rounded-xl inline-flex">

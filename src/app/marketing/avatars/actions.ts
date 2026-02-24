@@ -332,3 +332,83 @@ export async function generateAvatarLocal(prompt: string, style: string, gender:
         return { success: false, error: "Motor Local No Detectado" };
     }
 }
+
+/**
+ * SCIENTIFIC SIMULATION (Collagen, Hair Growth, etc.)
+ */
+export async function generateScientificSimulation(avatarId: string, mode: string) {
+    const { AvatarEngine } = await import("@/lib/avatar-engine");
+    const { getConnectionSecret } = await import("@/lib/server/connections");
+    const token = await getConnectionSecret("store-main", "REPLICATE") || process.env.REPLICATE_API_TOKEN;
+
+    if (!token) return { success: false, error: "Replicate Master Engine no configurado. Ve a Canales e Infraestructura." };
+
+    try {
+        const avatar = await prisma.avatarProfile.findUnique({ where: { id: avatarId } });
+        if (!avatar || !avatar.imageUrl) return { success: false, error: "Avatar sin imagen base" };
+
+        const engine = new AvatarEngine(token);
+        const res = await engine.generateScientificRecreation(mode as any, avatar.imageUrl);
+
+        // Create an asset for this simulation
+        await prisma.avatarAsset.create({
+            data: {
+                avatarProfileId: avatarId,
+                type: 'SCIENTIFIC_SIMULATION',
+                pathLocal: res.id, // Store prediction ID
+                mime: mode // Store mode in mime as a workaround
+            }
+        });
+
+        return { success: true, predictionId: res.id };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+/**
+ * REAL LIPSYNC / MOTION GENERATION
+ */
+export async function generateAvatarMotion(avatarId: string, audioUrl: string, script: string) {
+    const { VideoAdOrchestrator } = await import("@/lib/creative/orchestrators/video-ad-orchestrator");
+    const avatar = await prisma.avatarProfile.findUnique({ where: { id: avatarId } });
+    if (!avatar || !avatar.imageUrl) return { success: false, error: "Avatar sin imagen base" };
+
+    try {
+        const orchestrator = new VideoAdOrchestrator();
+        const res = await orchestrator.generateSingle({
+            avatarPrompt: avatar.name || "avatar",
+            script: script,
+            voiceId: JSON.parse(avatar.metadataJson || "{}").voiceId || undefined,
+            concept: `LIPSYNC_${avatar.name}`,
+            cropFactor: 1.7
+        });
+
+        return { success: true, videoUrl: res.videoUrl };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+/**
+ * GET ALL ASSETS FOR AVATARS (Videos, Simulations, etc.)
+ */
+export async function getAvatarAssets(productId: string) {
+    try {
+        const [creatives, assets] = await Promise.all([
+            prisma.generatedCreative.findMany({
+                where: { productId, type: 'VIDEO' },
+                orderBy: { createdAt: 'desc' }
+            }),
+            prisma.avatarAsset.findMany({
+                where: { avatarProfile: { productId } },
+                include: { avatarProfile: true },
+                orderBy: { createdAt: 'desc' }
+            })
+        ]);
+
+        return { success: true, creatives, assets };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}

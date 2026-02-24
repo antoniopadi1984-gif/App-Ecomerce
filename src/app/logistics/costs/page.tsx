@@ -22,8 +22,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useStore } from "@/lib/store/store-context";
 
 export default function LogisticsFinanceManager() {
+    const { activeStoreId } = useStore();
     const [rules, setRules] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -34,7 +36,8 @@ export default function LogisticsFinanceManager() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const stats = await getSupplyChainStats();
+            if (!activeStoreId) return;
+            const stats = await getSupplyChainStats(activeStoreId);
 
             if (stats?.error) {
                 toast.error("Error servidor: " + stats.error);
@@ -58,13 +61,16 @@ export default function LogisticsFinanceManager() {
 
     useEffect(() => {
         setBaseUrl(window.location.origin);
-        loadData();
-    }, []);
+        if (activeStoreId) {
+            loadData();
+        }
+    }, [activeStoreId]);
 
     const handleUpdateRule = async (ruleId: string, field: string, value: number) => {
+        if (!activeStoreId) return;
         const loadingToast = toast.loading("Sincronizando con base de datos...");
         try {
-            const res = await updateFulfillmentRule(ruleId, { [field]: value });
+            const res = await updateFulfillmentRule(activeStoreId, ruleId, { [field]: value });
             if (res.success) {
                 setRules(prev => prev.map(r => r.id === ruleId ? { ...r, [field]: value } : r));
                 toast.success("Parámetro actualizado", { id: loadingToast });
@@ -80,7 +86,8 @@ export default function LogisticsFinanceManager() {
         if (!confirm("¿Estás seguro de que deseas eliminar este proveedor?")) return;
         const loadingToast = toast.loading("Eliminando proveedor...");
         try {
-            const res = await deleteFulfillmentRule(ruleId);
+            if (!activeStoreId) return;
+            const res = await deleteFulfillmentRule(activeStoreId, ruleId);
             if (res.success) {
                 setRules(prev => prev.filter(r => r.id !== ruleId));
                 toast.success("Proveedor eliminado", { id: loadingToast });
@@ -150,8 +157,9 @@ export default function LogisticsFinanceManager() {
                 <div className="flex items-center gap-2">
                     <Button
                         onClick={async () => {
+                            if (!activeStoreId) return;
                             const tid = toast.loading("Sincronizando Shopify...");
-                            const res = await syncShopifyProducts();
+                            const res = await syncShopifyProducts(activeStoreId);
                             if (res.success) {
                                 toast.success(`${res.count} productos sincronizados`, { id: tid });
                                 loadData();
@@ -188,10 +196,11 @@ export default function LogisticsFinanceManager() {
                         <div
                             className="bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center gap-4 group hover:border-indigo-400 hover:bg-indigo-50/10 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
                             onClick={async () => {
+                                if (!activeStoreId) return;
                                 const name = prompt("Nombre del proveedor logístico (ej: DHL, Correos):");
                                 if (name) {
                                     const toastId = toast.loading("Registrando nuevo proveedor...");
-                                    const result = await createFulfillmentRule(name);
+                                    const result = await createFulfillmentRule(activeStoreId, name);
                                     if (result?.success) {
                                         toast.success(`${name} registrado correctamente`, { id: toastId });
                                         loadData();
@@ -666,10 +675,10 @@ export default function LogisticsFinanceManager() {
                                         <div
                                             key={product.id}
                                             onClick={async () => {
-                                                if (!selectingProvider) return;
+                                                if (!selectingProvider || !activeStoreId) return;
                                                 const tid = toast.loading(`Asignando...`);
                                                 try {
-                                                    const res = await setProductProvider(product.id, selectingProvider);
+                                                    const res = await setProductProvider(activeStoreId, product.id, selectingProvider);
                                                     if (res.success) {
                                                         toast.success("Producto asignado", { id: tid });
                                                         loadData();
@@ -716,8 +725,9 @@ export default function LogisticsFinanceManager() {
                                         <p className="text-slate-400 font-black text-[9px] uppercase tracking-[0.2em] italic">No Match Found</p>
                                         <Button
                                             onClick={async () => {
+                                                if (!activeStoreId) return;
                                                 const tid = toast.loading("Sincronizando Shopify...");
-                                                const res = await syncShopifyProducts();
+                                                const res = await syncShopifyProducts(activeStoreId);
                                                 if (res.success) {
                                                     toast.success(`${res.count} productos sync`, { id: tid });
                                                     loadData();

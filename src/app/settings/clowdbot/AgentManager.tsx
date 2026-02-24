@@ -77,7 +77,7 @@ export default function AgentManager({ storeId }: { storeId: string }) {
             <header className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-                        <div className="p-2 bg-rose-600 rounded-xl text-white shadow-sm">
+                        <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-indigo-200 shadow-xl">
                             <Bot className="w-8 h-8" />
                         </div>
                         CLOWDBOT MULTI-ROL
@@ -86,14 +86,14 @@ export default function AgentManager({ storeId }: { storeId: string }) {
                 </div>
                 <Button
                     onClick={() => { setEditingAgent({ name: '', role: 'ATT', tone: 'neutral', instructions: '', isActive: true }); setIsSidebarOpen(true); }}
-                    className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-6 rounded-xl shadow-sm transition-all hover:scale-105 active:scale-95 py-6"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 rounded-xl shadow-lg shadow-indigo-100 transition-all hover:scale-105 active:scale-95 py-6"
                 >
                     <Plus className="w-5 h-5 mr-2" /> NUEVO AGENTE
                 </Button>
             </header>
 
             <Tabs defaultValue="agents" className="w-full">
-                <TabsList className="bg-slate-100 p-1.5 rounded-2xl mb-8 w-fit border border-slate-200/60 shadow-sm">
+                <TabsList className="bg-slate-100 p-1.5 rounded-2xl mb-8 w-fit border border-slate-200/60 shadow-inner">
                     <TabsTrigger value="agents" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl px-6 font-bold py-2.5">
                         <Bot className="w-4 h-4 mr-2" /> GESTIÓN DE AGENTES
                     </TabsTrigger>
@@ -105,14 +105,14 @@ export default function AgentManager({ storeId }: { storeId: string }) {
                 <TabsContent value="agents">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {agents.map((agent) => (
-                            <Card key={agent.id} className="group overflow-hidden border-slate-200/60 hover:border-rose-200 transition-all hover:shadow-sm hover:shadow-sm rounded-3xl bg-white/50">
+                            <Card key={agent.id} className="group overflow-hidden border-slate-200/60 hover:border-indigo-200 transition-all hover:shadow-2xl hover:shadow-indigo-500/10 rounded-3xl bg-white/50 backdrop-blur-sm">
                                 <CardHeader className="pb-3 flex-row justify-between items-start space-y-0">
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-2xl shadow-sm ${agent.role === 'MEDIA_BUYING' ? 'bg-amber-50 text-amber-600' :
                                             agent.role === 'MODERACION' ? 'bg-rose-50 text-rose-600' :
-                                                agent.role === 'ATT' ? 'bg-rose-50 text-rose-600' :
+                                                agent.role === 'ATT' ? 'bg-indigo-50 text-indigo-600' :
                                                     agent.role === 'EDUCATOR' ? 'bg-emerald-50 text-emerald-600' :
-                                                        agent.role === 'CREATIVE_DIRECTOR' ? 'bg-rose-50 text-rose-600' :
+                                                        agent.role === 'CREATIVE_DIRECTOR' ? 'bg-indigo-50 text-indigo-600' :
                                                             agent.role === 'VIDEO_EDITOR' ? 'bg-purple-50 text-purple-600' :
                                                                 agent.role === 'LANDING_DESIGNER' ? 'bg-blue-50 text-blue-600' :
                                                                     'bg-slate-50 text-slate-600'
@@ -163,14 +163,14 @@ export default function AgentManager({ storeId }: { storeId: string }) {
                 <TabsContent value="performance">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {/* Summary Cards */}
-                        <Card className="rounded-3xl border-slate-100 shadow-sm bg-rose-600 text-white">
+                        <Card className="rounded-3xl border-slate-100 shadow-sm bg-indigo-600 text-white">
                             <CardContent className="pt-6">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <p className="font-bold text-rose-100 text-xs tracking-widest uppercase">Ejecuciones IA</p>
+                                        <p className="font-bold text-indigo-100 text-xs tracking-widest uppercase">Ejecuciones IA</p>
                                         <h3 className="text-4xl font-black mt-1">{performance?.ia?.runs || 0}</h3>
                                     </div>
-                                    <Zap className="w-8 h-8 text-rose-300 opacity-50" />
+                                    <Zap className="w-8 h-8 text-indigo-300 opacity-50" />
                                 </div>
                             </CardContent>
                         </Card>
@@ -209,7 +209,7 @@ export default function AgentManager({ storeId }: { storeId: string }) {
                         </Card>
                         {/* More summary cards and chart placeholder */}
                         <div className="col-span-full">
-                            <Card className="rounded-3xl border-slate-200/60 shadow-sm overflow-hidden">
+                            <Card className="rounded-3xl border-slate-200/60 shadow-xl shadow-indigo-500/5 overflow-hidden">
                                 <CardHeader className="bg-slate-50/50 border-b border-slate-100">
                                     <CardTitle className="text-xl font-black text-slate-800">TABLA DE COMPARATIVA</CardTitle>
                                 </CardHeader>
@@ -227,24 +227,24 @@ export default function AgentManager({ storeId }: { storeId: string }) {
 
             {/* Editing Sidebar Placeholder (Simplified) */}
             {isSidebarOpen && (
-                <div className="fixed inset-0 bg-slate-900/40 z-50 flex justify-end animate-in fade-in slide-in-from-right duration-300">
-                    <Card className="w-full max-w-xl h-full rounded-none rounded-l-[40px] shadow-sm border-l border-white/20 bg-white/95 overflow-y-auto">
-                        <CardHeader className="p-6 border-b border-slate-100">
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-50 flex justify-end animate-in fade-in slide-in-from-right duration-300">
+                    <Card className="w-full max-w-xl h-full rounded-none rounded-l-[40px] shadow-2xl border-l border-white/20 bg-white/95 backdrop-blur-xl overflow-y-auto">
+                        <CardHeader className="p-8 border-b border-slate-100">
                             <div className="flex justify-between items-center">
-                                <CardTitle className="text-2xl font-black italic tracking-tighter text-rose-600 uppercase">
+                                <CardTitle className="text-2xl font-black italic tracking-tighter text-indigo-600 uppercase">
                                     {editingAgent?.id ? 'CONFIGURAR AGENTE' : 'NUEVO ESPECIALISTA'}
                                 </CardTitle>
                                 <Button variant="ghost" className="rounded-full" onClick={() => setIsSidebarOpen(false)}>×</Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-6">
+                        <CardContent className="p-8 space-y-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-black uppercase tracking-widest text-slate-400">Nombre del Agente</label>
                                 <Input
                                     value={editingAgent?.name}
                                     onChange={(e) => setEditingAgent({ ...editingAgent, name: e.target.value })}
                                     placeholder="Ej: Clowdbot ATT"
-                                    className="rounded-2xl border-slate-200 focus:ring-4 focus:ring-rose-100 py-6"
+                                    className="rounded-2xl border-slate-200 focus:ring-4 focus:ring-indigo-100 py-6"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -288,10 +288,10 @@ export default function AgentManager({ storeId }: { storeId: string }) {
                                     value={editingAgent?.instructions}
                                     onChange={(e) => setEditingAgent({ ...editingAgent, instructions: e.target.value })}
                                     placeholder="Escribe el prompt del sistema aqu..."
-                                    className="rounded-2xl border-slate-200 min-h-[200px] focus:ring-4 focus:ring-rose-100"
+                                    className="rounded-2xl border-slate-200 min-h-[200px] focus:ring-4 focus:ring-indigo-100"
                                 />
                             </div>
-                            <Button onClick={handleSave} className="w-full bg-rose-600 hover:bg-rose-700 py-8 rounded-2xl font-black text-lg shadow-sm mt-4 transition-all hover:scale-105">
+                            <Button onClick={handleSave} className="w-full bg-indigo-600 hover:bg-indigo-700 py-8 rounded-2xl font-black text-lg shadow-xl shadow-indigo-200 mt-4 transition-all hover:scale-105">
                                 GUARDAR AGENTE ESPECIALISTA
                             </Button>
                         </CardContent>

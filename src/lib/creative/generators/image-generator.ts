@@ -1,6 +1,5 @@
 import { GoogleAuth } from 'google-auth-library';
 import { Storage } from '@google-cloud/storage';
-import { getConnectionSecret, getConnectionMeta } from '@/lib/server/connections';
 
 export interface ImageGenerationOptions {
     prompt: string;
@@ -10,41 +9,24 @@ export interface ImageGenerationOptions {
 }
 
 export class ImageGenerator {
-    private projectId!: string;
-    private location!: string;
-    private auth!: GoogleAuth;
-    private storage!: Storage;
-    private bucketName!: string;
-    private isInitialized = false;
+    private projectId: string;
+    private location: string;
+    private auth: GoogleAuth;
+    private storage: Storage;
+    private bucketName: string;
 
-    constructor() { }
-
-    private async initClients() {
-        if (this.isInitialized) return;
-
-        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-        const meta = await getConnectionMeta('store-main', 'GCP');
-
-        let jsonKey: any = {};
-        if (saKey) {
-            try { jsonKey = JSON.parse(saKey); } catch (e) { }
-        }
-
-        this.projectId = meta?.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT_ID || jsonKey.project_id || '';
-        this.location = meta?.GOOGLE_CLOUD_LOCATION || process.env.GOOGLE_CLOUD_LOCATION || 'eu';
-        this.bucketName = meta?.GCS_BUCKET_NAME || process.env.GCS_BUCKET_NAME || '';
+    constructor() {
+        this.projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || '';
+        this.location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
+        this.bucketName = process.env.GCS_BUCKET_NAME || '';
 
         this.auth = new GoogleAuth({
-            credentials: saKey ? JSON.parse(saKey) : undefined,
             scopes: ['https://www.googleapis.com/auth/cloud-platform']
         });
 
         this.storage = new Storage({
-            projectId: this.projectId,
-            credentials: saKey ? JSON.parse(saKey) : undefined
+            projectId: this.projectId
         });
-
-        this.isInitialized = true;
     }
 
     /**
@@ -54,7 +36,6 @@ export class ImageGenerator {
         console.log('[ImageGenerator] 🎨 Generando imagen con Vertex AI...');
 
         try {
-            await this.initClients();
             const client = await this.auth.getClient();
             const token = await client.getAccessToken();
 

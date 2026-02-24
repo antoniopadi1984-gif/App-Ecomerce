@@ -86,7 +86,7 @@ export default function RendimientoPage() {
                         <p className="text-slate-500 max-w-sm mx-auto font-medium text-sm">Debes vincular tu tienda oficial de Shopify para ver las analíticas globales.</p>
                     </div>
                     <Link href="/connections">
-                        <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-sm">
+                        <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-lg shadow-rose-500/20">
                             <Link2 className="w-4 h-4 mr-2" />
                             Ir a Conexiones
                         </Button>
@@ -102,7 +102,7 @@ export default function RendimientoPage() {
                 <div className="space-y-0.5">
                     <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">{label}</p>
                     <div className="flex items-baseline gap-1.5">
-                        <p className="text-lg font-black tracking-tighter text-slate-900 group-hover:text-rose-600 transition-colors italic">{value}</p>
+                        <p className="text-lg font-black tracking-tighter text-slate-900 group-hover:text-indigo-600 transition-colors italic">{value}</p>
                         {trend && <span className={cn("text-[8px] font-black", trend > 0 ? "text-emerald-500" : "text-rose-500")}>
                             {trend > 0 ? "+" : ""}{trend}%
                         </span>}
@@ -120,13 +120,13 @@ export default function RendimientoPage() {
         const colors: any = {
             blue: "bg-blue-50 text-blue-600",
             emerald: "bg-emerald-50 text-emerald-600",
-            rose: "bg-rose-50 text-rose-600",
+            indigo: "bg-indigo-50 text-indigo-600",
             amber: "bg-amber-50 text-amber-600"
         };
         return (
             <PremiumCard hover className="group p-4 rounded-xl">
                 <div className="flex items-center justify-between mb-3">
-                    <div className={cn("p-2 rounded-lg", colors[color] || "bg-rose-50 text-rose-600")}>
+                    <div className={cn("p-2 rounded-lg", colors[color] || "bg-indigo-50 text-indigo-600")}>
                         <Icon className="h-3.5 w-3.5" />
                     </div>
                     {trend && (
@@ -148,7 +148,7 @@ export default function RendimientoPage() {
     function StatCircle({ label, value }: any) {
         return (
             <div className="flex flex-col items-center text-center space-y-1.5">
-                <div className="w-14 h-14 rounded-full border-2 border-slate-50 flex items-center justify-center bg-white shadow-sm">
+                <div className="w-14 h-14 rounded-full border-2 border-slate-50 flex items-center justify-center bg-white shadow-inner">
                     <span className="text-base font-black text-slate-900">{value}</span>
                 </div>
                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{label}</span>
@@ -174,10 +174,10 @@ export default function RendimientoPage() {
                                 "w-[130px] h-9 rounded-xl font-bold text-[9px] uppercase tracking-widest focus:ring-0 shadow-sm",
                                 productId ? "bg-white/5 border-slate-700 text-slate-300" : "bg-slate-100/50 border-slate-200"
                             )}>
-                                <Calendar className={cn("h-3 w-3 mr-2", productId ? "text-blue-500" : "text-rose-500")} />
+                                <Calendar className={cn("h-3 w-3 mr-2", productId ? "text-blue-500" : "text-indigo-500")} />
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className={cn("rounded-xl shadow-sm", productId ? "border-slate-800 bg-slate-900 text-slate-300" : "bg-white border-slate-200")}>
+                            <SelectContent className={cn("rounded-xl shadow-xl", productId ? "border-slate-800 bg-slate-900 text-slate-300" : "bg-white border-slate-200")}>
                                 <SelectItem value="DAY" className="text-[9px] font-black uppercase tracking-widest">Hoy</SelectItem>
                                 <SelectItem value="WEEK" className="text-[9px] font-black uppercase tracking-widest">Semana</SelectItem>
                                 <SelectItem value="MONTH" className="text-[9px] font-black uppercase tracking-widest">Mes</SelectItem>
@@ -198,7 +198,7 @@ export default function RendimientoPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <KPICardProduct label="REVENUE" value={`€${data.revenue?.toLocaleString() || 0}`} trend={+12} icon={ShoppingBag} color="blue" />
                             <KPICardProduct label="ROAS" value={`${data.roas || 0}x`} trend={+0.5} icon={TrendingUp} color="emerald" />
-                            <KPICardProduct label="CVR" value={`${data.conversionRate || 0}%`} trend={-0.2} icon={Activity} color="rose" />
+                            <KPICardProduct label="CVR" value={`${data.conversionRate || 0}%`} trend={-0.2} icon={Activity} color="indigo" />
                             <KPICardProduct label="PROFIT" value={`€${data.profit?.toLocaleString() || 0}`} trend={+8} icon={Zap} color="amber" />
                         </div>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -246,14 +246,14 @@ export default function RendimientoPage() {
                     <div className="space-y-6 animate-in fade-in duration-500">
                         <section className="space-y-3">
                             <div className="flex items-center gap-2 px-1">
-                                <div className="h-1 w-3 bg-rose-500 rounded-full" />
+                                <div className="h-1 w-3 bg-indigo-500 rounded-full" />
                                 <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Tráfico & Conversión Global</h2>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                                <KPICardMaster label="Visitantes" value={data?.visitors?.toLocaleString()} icon={Users} color="rose" />
+                                <KPICardMaster label="Visitantes" value={data?.visitors?.toLocaleString()} icon={Users} color="indigo" />
                                 <KPICardMaster label="Tasa Conversión" value={`${data?.conversionRate?.toFixed(2)}%`} icon={TrendingUp} color="emerald" subValue="Store Sessions to Order" />
                                 <KPICardMaster label="Total Pedidos" value={data?.totalOrders} icon={ShoppingBag} color="amber" subValue={`${data?.totalProductUnits} Unidades`} />
-                                <KPICardMaster label="Ticket Medio" value={`€${data?.averageTicket?.toFixed(2)}`} icon={CreditCard} color="rose" />
+                                <KPICardMaster label="Ticket Medio" value={`€${data?.averageTicket?.toFixed(2)}`} icon={CreditCard} color="indigo" />
                             </div>
                         </section>
 
@@ -282,14 +282,14 @@ export default function RendimientoPage() {
                                                     </div>
                                                     <div>
                                                         <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">ROI Est.</p>
-                                                        <p className="text-md font-black text-rose-600 italic">{data?.roiEstimated?.toFixed(0)}%</p>
+                                                        <p className="text-md font-black text-indigo-600 italic">{data?.roiEstimated?.toFixed(0)}%</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="p-4 space-y-4 bg-white relative">
                                             <div className="flex items-center justify-between relative z-10">
-                                                <Badge className="bg-rose-600 text-white text-[7px] font-black uppercase tracking-widest px-2 h-4 rounded-md">Auditoría Real</Badge>
+                                                <Badge className="bg-indigo-600 text-white text-[7px] font-black uppercase tracking-widest px-2 h-4 rounded-md">Auditoría Real</Badge>
                                                 <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest italic flex items-center gap-1">
                                                     <ShieldCheck className="h-2.5 w-2.5" /> Verificado
                                                 </span>
@@ -297,7 +297,7 @@ export default function RendimientoPage() {
                                             <div className="space-y-3 relative z-10">
                                                 <div>
                                                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Facturación Auditada</p>
-                                                    <p className="text-2xl font-black tracking-tighter text-rose-600 italic">€{data?.revenueReal?.toLocaleString()}</p>
+                                                    <p className="text-2xl font-black tracking-tighter text-indigo-600 italic">€{data?.revenueReal?.toLocaleString()}</p>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div>
@@ -306,7 +306,7 @@ export default function RendimientoPage() {
                                                     </div>
                                                     <div>
                                                         <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">ROI Audit.</p>
-                                                        <p className="text-md font-black text-rose-600 italic">{data?.roiReal?.toFixed(0)}%</p>
+                                                        <p className="text-md font-black text-indigo-600 italic">{data?.roiReal?.toFixed(0)}%</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -332,9 +332,9 @@ export default function RendimientoPage() {
                                             </div>
                                         </div>
                                     </Card>
-                                    <Card className="bg-slate-900 text-white rounded-lg p-4 bg-gradient-to-br from-slate-900 to-rose-950 border-none shadow-sm overflow-hidden relative group">
-                                        <Bot className="absolute top-0 right-0 p-6 opacity-10 h-16 w-16 text-rose-400 group-hover:rotate-12 transition-transform duration-700" />
-                                        <div className="space-y-0.5 relative z-10 text-[7.5px] font-black text-rose-400 uppercase tracking-[0.3em]">IA Assisted Revenue</div>
+                                    <Card className="bg-slate-900 text-white rounded-lg p-4 bg-gradient-to-br from-slate-900 to-indigo-950 border-none shadow-xl overflow-hidden relative group">
+                                        <Bot className="absolute top-0 right-0 p-6 opacity-10 h-16 w-16 text-indigo-400 group-hover:rotate-12 transition-transform duration-700" />
+                                        <div className="space-y-0.5 relative z-10 text-[7.5px] font-black text-indigo-400 uppercase tracking-[0.3em]">IA Assisted Revenue</div>
                                         <div className="text-xl font-black italic tracking-tighter text-white relative z-10">€{data?.botPerformance?.assistedRevenue?.toLocaleString()}</div>
                                     </Card>
                                 </div>
@@ -347,7 +347,7 @@ export default function RendimientoPage() {
                                 <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Logística & Calidad de Entrega</h2>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                                <KPICardMaster label="Confirmados" value={data?.confirmedOrders} icon={ShieldCheck} color="rose" subValue={`${data?.realShippingRate?.toFixed(1)}% Ship Rate`} />
+                                <KPICardMaster label="Confirmados" value={data?.confirmedOrders} icon={ShieldCheck} color="indigo" subValue={`${data?.realShippingRate?.toFixed(1)}% Ship Rate`} />
                                 <KPICardMaster label="Cancelados" value={data?.cancelledOrders} icon={AlertCircle} color="rose" />
                                 <KPICardMaster label="Enviados Real" value={data?.confirmedOrders} icon={Truck} color="amber" subValue="Ready to Deliver" />
                                 <KPICardMaster label="Entregados" value={data?.deliveredOrders} icon={ShieldCheck} color="emerald" subValue={`${data?.realDeliveryRate?.toFixed(1)}% Delivery Rate`} />
@@ -356,9 +356,9 @@ export default function RendimientoPage() {
 
                         <Tabs defaultValue="products" className="space-y-3">
                             <TabsList className="bg-slate-200/50 border border-slate-200 p-0.5 h-8 rounded-lg shadow-sm w-fit">
-                                <TabsTrigger value="products" className="rounded-md px-4 h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-xs transition-all">Top Items</TabsTrigger>
-                                <TabsTrigger value="carriers" className="rounded-md px-4 h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-xs transition-all">Logistics Flow</TabsTrigger>
-                                <TabsTrigger value="bots" className="rounded-md px-4 h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-xs transition-all">IA Automation</TabsTrigger>
+                                <TabsTrigger value="products" className="rounded-md px-4 h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs transition-all">Top Items</TabsTrigger>
+                                <TabsTrigger value="carriers" className="rounded-md px-4 h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs transition-all">Logistics Flow</TabsTrigger>
+                                <TabsTrigger value="bots" className="rounded-md px-4 h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs transition-all">IA Automation</TabsTrigger>
                             </TabsList>
                             <TabsContent value="products">
                                 <Card className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">

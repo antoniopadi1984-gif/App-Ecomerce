@@ -7,9 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { PageShell } from "@/components/ui/PageShell";
-import { ModuleHeader } from "@/components/ui/ModuleHeader";
 
 interface AuditEntry {
     id: string;
@@ -25,12 +22,12 @@ interface AuditEntry {
 }
 
 const ENTITY_COLORS: Record<string, string> = {
-    CONNECTION: "bg-blue-50 text-blue-600",
-    PRODUCT: "bg-emerald-50 text-emerald-600",
-    ORDER: "bg-amber-50 text-amber-600",
-    SYSTEM: "bg-purple-50 text-purple-600",
-    DIAGNOSTICO: "bg-pink-50 text-pink-600",
-    AGENT_ACTION: "bg-orange-50 text-orange-600",
+    CONNECTION: "bg-blue-100 text-blue-800",
+    PRODUCT: "bg-emerald-100 text-emerald-800",
+    ORDER: "bg-amber-100 text-amber-800",
+    SYSTEM: "bg-purple-100 text-purple-800",
+    DIAGNOSTICO: "bg-pink-100 text-pink-800",
+    AGENT_ACTION: "bg-orange-100 text-orange-800",
 };
 
 const ACTION_ICONS: Record<string, string> = {
@@ -93,122 +90,144 @@ export default function AuditPage() {
     };
 
     return (
-        <PageShell>
-            <ModuleHeader
-                title="Historial de Auditoría"
-                subtitle="LOG DE ACCIONES AGÉNTICAS & SISTEMA"
-                icon={Database}
-                actions={
-                    <Button variant="outline" size="sm" className="h-8 rounded-lg font-black text-[9px] uppercase tracking-widest" onClick={fetchAudit}>
-                        <RefreshCw className="w-3.5 h-3.5 mr-2" /> RECARGAR
-                    </Button>
-                }
-            />
+        <div className="p-6 space-y-6 max-w-7xl mx-auto">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                        <Database className="w-6 h-6" />
+                        Historial de Auditoría
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Registro de todas las acciones críticas del sistema
+                    </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={fetchAudit}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Actualizar
+                </Button>
+            </div>
 
-            <main className="p-4 space-y-4">
-                <Card className="border-slate-100 shadow-sm rounded-xl">
-                    <CardContent className="p-3">
-                        <div className="flex gap-3 items-center flex-wrap">
-                            <div className="flex items-center gap-2">
-                                <Filter className="w-3.5 h-3.5 text-slate-400" />
-                                <Select value={entityFilter} onValueChange={setEntityFilter}>
-                                    <SelectTrigger className="w-[150px] h-8 text-[11px] font-bold uppercase rounded-lg">
-                                        <SelectValue placeholder="Entidad" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ALL">TODAS</SelectItem>
-                                        <SelectItem value="CONNECTION">CONEXIONES</SelectItem>
-                                        <SelectItem value="PRODUCT">PRODUCTOS</SelectItem>
-                                        <SelectItem value="ORDER">PEDIDOS</SelectItem>
-                                        <SelectItem value="DIAGNOSTICO">DIAGNÓSTICO</SelectItem>
-                                        <SelectItem value="SYSTEM">SISTEMA</SelectItem>
-                                        <SelectItem value="AGENT_ACTION">AGENTES IA</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                                <Search className="w-3.5 h-3.5 text-slate-400" />
-                                <Input
-                                    placeholder="Buscar..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && fetchAudit()}
-                                    className="h-8 text-[11px] font-bold uppercase rounded-lg max-w-xs"
-                                />
-                            </div>
-                            <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest h-6 px-3 bg-slate-50 border-none">
-                                {entries.length} LOGS
-                            </Badge>
+            {/* Filters */}
+            <Card>
+                <CardContent className="p-4">
+                    <div className="flex gap-4 items-center flex-wrap">
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-muted-foreground" />
+                            <Select value={entityFilter} onValueChange={setEntityFilter}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Filtrar por entidad" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">Todas las entidades</SelectItem>
+                                    <SelectItem value="CONNECTION">Conexiones</SelectItem>
+                                    <SelectItem value="PRODUCT">Productos</SelectItem>
+                                    <SelectItem value="ORDER">Pedidos</SelectItem>
+                                    <SelectItem value="DIAGNOSTICO">Diagnóstico</SelectItem>
+                                    <SelectItem value="SYSTEM">Sistema</SelectItem>
+                                    <SelectItem value="AGENT_ACTION">Agentes IA</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
-                    </CardContent>
-                </Card>
+                        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                            <Search className="w-4 h-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Buscar por acción o entidad..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && fetchAudit()}
+                                className="max-w-xs"
+                            />
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                            {entries.length} registros
+                        </Badge>
+                    </div>
+                </CardContent>
+            </Card>
 
-                <Card className="border-slate-100 shadow-sm rounded-xl overflow-hidden">
-                    <CardContent className="p-0">
-                        {loading ? (
-                            <div className="p-12 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest animate-pulse italic">
-                                Sincronizando logs...
-                            </div>
-                        ) : entries.length === 0 ? (
-                            <div className="p-12 text-center text-slate-300">
-                                <span className="text-[10px] font-black uppercase tracking-widest italic opacity-60">No hay registros</span>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="border-b bg-slate-50/50">
-                                            <th className="p-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha</th>
-                                            <th className="p-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Acción</th>
-                                            <th className="p-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Entidad</th>
-                                            <th className="p-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Actor</th>
-                                            <th className="p-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Detalles</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {entries.map((entry) => (
-                                            <tr key={entry.id} className="hover:bg-slate-50/30 transition-colors">
-                                                <td className="p-3 whitespace-nowrap">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Clock className="w-3 h-3 text-slate-300" />
-                                                        <span className="text-[10px] font-bold text-slate-500">{formatDate(entry.createdAt)}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-3">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="text-xs">{ACTION_ICONS[entry.action] || "📋"}</span>
-                                                        <span className="text-[11px] font-black uppercase tracking-tight text-slate-700">{entry.action}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-3">
-                                                    <Badge variant="outline" className={cn("text-[9px] font-black uppercase tracking-tight border-none", ENTITY_COLORS[entry.entity] || "bg-slate-50")}>
-                                                        {entry.entity}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-3 text-[9px] font-black uppercase tracking-widest text-slate-400">
+            {/* Table */}
+            <Card>
+                <CardContent className="p-0">
+                    {loading ? (
+                        <div className="p-8 text-center text-muted-foreground">
+                            Cargando registros...
+                        </div>
+                    ) : entries.length === 0 ? (
+                        <div className="p-8 text-center text-muted-foreground">
+                            No hay registros de auditoría.{" "}
+                            {entityFilter !== "ALL" && (
+                                <button
+                                    className="text-primary underline"
+                                    onClick={() => setEntityFilter("ALL")}
+                                >
+                                    Quitar filtro
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b bg-muted/50">
+                                        <th className="text-left p-3 font-medium">Fecha</th>
+                                        <th className="text-left p-3 font-medium">Acción</th>
+                                        <th className="text-left p-3 font-medium">Entidad</th>
+                                        <th className="text-left p-3 font-medium">ID Entidad</th>
+                                        <th className="text-left p-3 font-medium">Actor</th>
+                                        <th className="text-left p-3 font-medium">Detalles</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {entries.map((entry) => (
+                                        <tr key={entry.id} className="border-b hover:bg-muted/30 transition-colors">
+                                            <td className="p-3 whitespace-nowrap flex items-center gap-1.5">
+                                                <Clock className="w-3 h-3 text-muted-foreground" />
+                                                <span className="text-xs">{formatDate(entry.createdAt)}</span>
+                                            </td>
+                                            <td className="p-3">
+                                                <span className="text-sm">
+                                                    {ACTION_ICONS[entry.action] || "📋"}{" "}
+                                                    {entry.action}
+                                                </span>
+                                            </td>
+                                            <td className="p-3">
+                                                <Badge
+                                                    variant="secondary"
+                                                    className={`text-xs ${ENTITY_COLORS[entry.entity] || "bg-gray-100"}`}
+                                                >
+                                                    {entry.entity}
+                                                </Badge>
+                                            </td>
+                                            <td className="p-3">
+                                                <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                                                    {entry.entityId}
+                                                </code>
+                                            </td>
+                                            <td className="p-3">
+                                                <Badge variant="outline" className="text-xs">
                                                     {entry.actorType}
-                                                </td>
-                                                <td className="p-3">
-                                                    {entry.newValue && (
-                                                        <details className="cursor-pointer group">
-                                                            <summary className="text-[9px] font-black uppercase tracking-widest text-slate-300 group-hover:text-slate-900 transition-colors">
-                                                                DATA
-                                                            </summary>
-                                                            <pre className="text-[9px] mt-2 bg-slate-950 text-slate-300 p-3 rounded-lg overflow-auto max-h-32 shadow-sm border border-white/10">
-                                                                {formatValue(entry.newValue)}
-                                                            </pre>
-                                                        </details>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </main>
-        </PageShell>
+                                                </Badge>
+                                            </td>
+                                            <td className="p-3 max-w-xs">
+                                                {entry.newValue && (
+                                                    <details className="cursor-pointer">
+                                                        <summary className="text-xs text-muted-foreground hover:text-foreground">
+                                                            Ver detalles
+                                                        </summary>
+                                                        <pre className="text-[10px] mt-1 bg-muted p-2 rounded overflow-auto max-h-32">
+                                                            {formatValue(entry.newValue)}
+                                                        </pre>
+                                                    </details>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
     );
 }

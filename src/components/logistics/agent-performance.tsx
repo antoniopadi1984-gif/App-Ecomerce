@@ -19,13 +19,13 @@ export function AgentPerformance() {
         });
     }, []);
 
-    if (loading) return <div className="p-6 text-center text-xs uppercase animate-pulse">Calculando Rendimiento...</div>;
+    if (loading) return <div className="p-8 text-center text-xs uppercase animate-pulse">Calculando Rendimiento...</div>;
 
     return (
-        <Card className="bg-gradient-to-br from-slate-900 to-black border-white/10 shadow-sm">
+        <Card className="bg-gradient-to-br from-slate-900 to-black border-white/10 shadow-2xl">
             <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-black uppercase italic tracking-tighter flex items-center gap-2">
-                    <Users className="h-5 w-5 text-rose-500" /> Ranking de Agentes
+                    <Users className="h-5 w-5 text-indigo-500" /> Ranking de Agentes
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -67,7 +67,7 @@ export function AgentPerformance() {
                                 <TableCell className="text-right">
                                     <div className="flex items-center justify-end gap-1">
                                         {i === 0 && <TrendingUp className="h-3 w-3 text-emerald-400" />}
-                                        <span className="text-xs font-black italic text-rose-300">
+                                        <span className="text-xs font-black italic text-indigo-300">
                                             {((agent.deliveryRate * 1) - (agent.returnRate * 2)).toFixed(0)} pts
                                         </span>
                                     </div>

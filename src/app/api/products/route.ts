@@ -3,8 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url);
-        const storeId = request.headers.get('X-Store-Id') || searchParams.get('storeId');
+        const storeId = request.headers.get('X-Store-Id');
 
         const products = await prisma.product.findMany({
             where: storeId ? { storeId } : {},

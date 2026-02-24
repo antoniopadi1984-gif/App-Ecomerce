@@ -100,24 +100,24 @@ export default function TemplatesPage() {
     };
 
     return (
-        <div className="p-6 h-full bg-slate-50/50">
+        <div className="p-8 h-full bg-slate-50/50">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* HEADER */}
                 <div className="flex items-center justify-between">
                     <div className="space-y-1">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-rose-600 rounded-2xl flex items-center justify-center shadow-sm">
+                            <div className="h-10 w-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100">
                                 <Zap className="h-5 w-5 text-white fill-white" />
                             </div>
                             <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">
-                                GESTIÓN DE <span className="text-rose-600">PLANTILLAS</span>
+                                GESTIÓN DE <span className="text-indigo-600">PLANTILLAS</span>
                             </h1>
                         </div>
                         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 ml-1">Automated Lifecycle Communications</p>
                     </div>
                     <Button
                         onClick={handleNew}
-                        className="h-14 px-8 bg-rose-600 hover:bg-rose-700 text-white rounded-[1.5rem] shadow-sm font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex gap-3"
+                        className="h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] shadow-xl shadow-indigo-100 font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex gap-3"
                     >
                         <Plus className="h-5 w-5" /> Nueva Plantilla
                     </Button>
@@ -127,10 +127,10 @@ export default function TemplatesPage() {
                     {/* LEFT: LIST */}
                     <div className="lg:col-span-5 flex flex-col gap-6">
                         <div className="relative group">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                             <Input
                                 placeholder="BUSCAR PLANTILLA..."
-                                className="h-14 pl-12 bg-white border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-sm focus:ring-4 focus:ring-rose-500/5 transition-all"
+                                className="h-14 pl-12 bg-white border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-sm focus:ring-4 focus:ring-indigo-500/5 transition-all"
                             />
                         </div>
 
@@ -146,14 +146,14 @@ export default function TemplatesPage() {
                                         onClick={() => handleEdit(tmpl)}
                                         className={cn(
                                             "p-6 rounded-[2rem] bg-white border transition-all cursor-pointer group relative overflow-hidden",
-                                            editingId === tmpl.id ? "border-rose-600 shadow-sm" : "border-slate-100 hover:border-rose-200 hover:shadow-sm hover:shadow-sm"
+                                            editingId === tmpl.id ? "border-indigo-600 shadow-2xl shadow-indigo-900/10" : "border-slate-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-slate-900/5"
                                         )}
                                     >
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={cn(
                                                     "h-10 w-10 rounded-xl flex items-center justify-center transition-colors",
-                                                    tmpl.channel === 'WHATSAPP' ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                                                    tmpl.channel === 'WHATSAPP' ? "bg-emerald-50 text-emerald-600" : "bg-indigo-50 text-indigo-600"
                                                 )}>
                                                     {PLATFORM_ICONS[tmpl.channel as keyof typeof PLATFORM_ICONS]}
                                                 </div>
@@ -162,7 +162,7 @@ export default function TemplatesPage() {
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5 italic">{TRIGGER_LABELS[tmpl.trigger] || tmpl.trigger}</p>
                                                 </div>
                                             </div>
-                                            <Switch checked={tmpl.isEnabled} className="scale-75 data-[state=checked]:bg-rose-600" />
+                                            <Switch checked={tmpl.isEnabled} className="scale-75 data-[state=checked]:bg-indigo-600" />
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest border-slate-100 text-slate-400 py-1 px-3">
@@ -179,8 +179,8 @@ export default function TemplatesPage() {
                     </div>
 
                     {/* RIGHT: EDITOR */}
-                    <div className="lg:col-span-7 flex flex-col gap-6 bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-6 opacity-5">
+                    <div className="lg:col-span-7 flex flex-col gap-8 bg-white border border-slate-100 rounded-[3rem] p-10 shadow-2xl shadow-slate-900/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-5">
                             <Bot className="h-32 w-32" />
                         </div>
 
@@ -195,7 +195,7 @@ export default function TemplatesPage() {
                                         <Input
                                             value={formData.name}
                                             onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                            className="h-14 bg-slate-50 border-slate-100 rounded-2xl font-bold text-xs shadow-sm focus:bg-white transition-all"
+                                            className="h-14 bg-slate-50 border-slate-100 rounded-2xl font-bold text-xs shadow-inner focus:bg-white transition-all"
                                             placeholder="Ej: Confirmación de Pedido VIP"
                                         />
                                     </div>
@@ -208,7 +208,7 @@ export default function TemplatesPage() {
                                                     onClick={() => setFormData({ ...formData, channel: c })}
                                                     className={cn(
                                                         "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                                        formData.channel === c ? "bg-white text-rose-600 shadow-sm" : "text-slate-400"
+                                                        formData.channel === c ? "bg-white text-indigo-600 shadow-md" : "text-slate-400"
                                                     )}
                                                 >
                                                     {c}
@@ -230,13 +230,13 @@ export default function TemplatesPage() {
                                             onClick={() => setFormData({ ...formData, trigger: val })}
                                             className={cn(
                                                 "p-4 rounded-xl border flex items-center justify-between group transition-all",
-                                                formData.trigger === val ? "bg-rose-50 border-rose-200" : "bg-white border-slate-100 hover:border-slate-200"
+                                                formData.trigger === val ? "bg-indigo-50 border-indigo-200" : "bg-white border-slate-100 hover:border-slate-200"
                                             )}
                                         >
-                                            <span className={cn("text-[11px] font-black uppercase tracking-tight", formData.trigger === val ? "text-rose-600" : "text-slate-500")}>{label}</span>
+                                            <span className={cn("text-[11px] font-black uppercase tracking-tight", formData.trigger === val ? "text-indigo-600" : "text-slate-500")}>{label}</span>
                                             <div className={cn(
                                                 "h-5 w-5 rounded-full border flex items-center justify-center transition-all",
-                                                formData.trigger === val ? "bg-rose-600 border-rose-600" : "border-slate-200 group-hover:border-slate-300"
+                                                formData.trigger === val ? "bg-indigo-600 border-indigo-600" : "border-slate-200 group-hover:border-slate-300"
                                             )}>
                                                 {formData.trigger === val && <CheckCircle2 className="h-3 w-3 text-white" />}
                                             </div>
@@ -252,7 +252,7 @@ export default function TemplatesPage() {
                                 <textarea
                                     value={formData.body}
                                     onChange={e => setFormData({ ...formData, body: e.target.value })}
-                                    className="w-full h-48 bg-slate-50 border border-slate-100 rounded-[2rem] p-6 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-8 focus:ring-rose-500/5 focus:border-rose-500/30 transition-all resize-none shadow-sm leading-relaxed"
+                                    className="w-full h-48 bg-slate-50 border border-slate-100 rounded-[2rem] p-8 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500/30 transition-all resize-none shadow-inner leading-relaxed"
                                     placeholder="Hola {customer_name}, tu pedido #{order_number} está listo..."
                                 />
                                 <div className="absolute right-6 bottom-6 flex gap-2">
@@ -265,7 +265,7 @@ export default function TemplatesPage() {
                         <div className="pt-8 flex gap-4 mt-auto">
                             <Button
                                 onClick={handleSave}
-                                className="h-16 flex-1 bg-rose-600 hover:bg-rose-700 text-white rounded-[1.5rem] shadow-sm font-extrabold text-[11px] uppercase tracking-widest transition-all active:scale-95 flex gap-4"
+                                className="h-16 flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] shadow-2xl shadow-indigo-100 font-extrabold text-[11px] uppercase tracking-widest transition-all active:scale-95 flex gap-4"
                             >
                                 <Save className="h-6 w-6" /> Guardar Cambios Permanentes
                             </Button>

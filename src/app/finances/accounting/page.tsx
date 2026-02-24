@@ -81,7 +81,7 @@ export default function ExpensesPage() {
                         {syncing ? "Sincronizando..." : "Sincronización Total"}
                     </Button>
 
-                    <Card className="bg-slate-900 border-none px-3 py-1.5 flex items-center gap-2.5 rounded-lg shadow-sm">
+                    <Card className="bg-slate-900 border-none px-3 py-1.5 flex items-center gap-2.5 rounded-lg shadow-xl">
                         <Calculator className="h-3.5 w-3.5 text-slate-400" />
                         <div className="flex flex-col">
                             <span className="text-[7px] text-slate-500 uppercase font-black leading-none tracking-widest">Total Fijos / Mes</span>
@@ -114,7 +114,7 @@ export default function ExpensesPage() {
                                     <SelectTrigger className="h-8 text-[11px] font-bold bg-slate-50 border-slate-100 rounded-lg px-3">
                                         <SelectValue placeholder="Tipo..." />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-white border-slate-100 rounded-lg shadow-sm">
+                                    <SelectContent className="bg-white border-slate-100 rounded-lg shadow-xl">
                                         {expenseCategories.map(cat => (
                                             <SelectItem key={cat.id} value={cat.id} className="text-[11px] font-bold">{cat.name}</SelectItem>
                                         ))}
@@ -169,7 +169,7 @@ export default function ExpensesPage() {
                         </Table>
 
                         {expenses.length === 0 && (
-                            <div className="p-6 text-center text-xs text-muted-foreground">
+                            <div className="p-8 text-center text-xs text-muted-foreground">
                                 No hay gastos registrados para este mes.
                             </div>
                         )}
@@ -178,10 +178,10 @@ export default function ExpensesPage() {
             </div>
 
             {/* Real-time Impact Card */}
-            <Card className="bg-slate-900 border-none overflow-hidden rounded-lg shadow-sm">
+            <Card className="bg-slate-900 border-none overflow-hidden rounded-lg shadow-xl shadow-slate-200/50">
                 <div className="p-3 px-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-400">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
                             <Calculator className="h-4 w-4" />
                         </div>
                         <div>
@@ -190,7 +190,7 @@ export default function ExpensesPage() {
                         </div>
                     </div>
 
-                    <div className="flex gap-6">
+                    <div className="flex gap-8">
                         <div className="text-right">
                             <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 block mb-0.5">Coste Fijo / Día</span>
                             <span className="text-sm font-black text-white italic tracking-tighter leading-none">€{(totalMonthly / 30).toFixed(2)}</span>

@@ -1,6 +1,5 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { COLORS, SPACING, TYPOGRAPHY } from "@/lib/styles/tokens";
 
 interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {
     children: React.ReactNode;
@@ -11,11 +10,9 @@ interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {
 export function PageShell({ children, className, loading, loadingMessage = "CARGANDO DATOS...", ...props }: PageShellProps) {
     if (loading) {
         return (
-            <div className={cn("flex flex-col items-center justify-center min-h-[60vh] gap-3 w-full h-full bg-slate-50/30")}>
-                <div className="w-8 h-8 border-3 border-slate-200 border-t-rose-500 rounded-full animate-spin" />
-                <p className={cn(TYPOGRAPHY.sizes.compact, TYPOGRAPHY.weights.black, TYPOGRAPHY.tracking.widest, "text-slate-400 uppercase")}>
-                    {loadingMessage}
-                </p>
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 w-full h-full bg-slate-50/30">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{loadingMessage}</p>
             </div>
         );
     }
@@ -23,13 +20,14 @@ export function PageShell({ children, className, loading, loadingMessage = "CARG
     return (
         <div
             className={cn(
-                "flex flex-col min-h-[calc(100vh-var(--header-height))] w-full",
+                "flex flex-col min-h-[calc(100vh-80px)] bg-slate-50/30 overflow-hidden w-full",
                 className
             )}
             {...props}
         >
-            <main className="flex-1 w-full">
-                <div className="w-full max-w-[1400px] mx-auto px-[var(--page-px)] py-[var(--page-py)]">
+            {/* The outer shell standardizes scrolling and maximum width constraints if needed */}
+            <main className="flex-1 overflow-auto w-full pb-20">
+                <div className="max-w-[1600px] mx-auto w-full">
                     {children}
                 </div>
             </main>

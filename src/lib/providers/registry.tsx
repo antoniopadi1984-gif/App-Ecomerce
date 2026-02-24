@@ -1,5 +1,6 @@
+"use client";
+
 import React from "react";
-import { BRAND_COLORS } from "@/lib/design-tokens";
 
 export interface ProviderField {
     key: string;
@@ -11,7 +12,6 @@ export interface ProviderField {
 
 export interface ProviderConfig {
     id: string;
-    parentProviderId?: string; // ID del nodo maestro que provee las credenciales
     name: string;
     description: string;
     icon: React.ComponentType<any>;
@@ -19,7 +19,6 @@ export interface ProviderConfig {
     category: 'AI' | 'ECOMMERCE' | 'MARKETING' | 'INFRA' | 'LOGISTICS' | 'TOOLS';
     fields: ProviderField[];
     allowMultiple?: boolean;
-    unlockedFeatures?: string[];
 }
 
 /**
@@ -70,7 +69,9 @@ const VertexAIIcon = (props: any) => (
 );
 
 const GoogleCloudIcon = (props: any) => (
-    <img src="https://www.google.com/s2/favicons?domain=cloud.google.com&sz=128" alt="GCP" {...props} />
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M12.19 2.38a9.344 9.344 0 0 0-9.234 6.893c.053-.02-.055.013 0 0-3.875 2.551-3.922 8.11-.247 10.941l.006-.007-.007.03a6.717 6.717 0 0 0 4.077 1.356h5.173l.03.03h5.192c6.687.053 9.376-8.605 3.835-12.35a9.365 9.365 0 0 0-2.821-4.552l-.043.043.006-.05A9.344 9.344 0 0 0 12.19 2.38zm-.358 4.146c1.244-.04 2.518.368 3.486 1.15a5.186 5.186 0 0 1 1.862 4.078v.518c3.53-.07 3.53 5.262 0 5.193h-5.193l-.008.009v-.04H6.785a2.59 2.59 0 0 1-1.067-.23h.001a2.597 2.597 0 1 1 3.437-3.437l3.013-3.012A6.747 6.747 0 0 0 8.11 8.24c.018-.01.04-.026.054-.023a5.186 5.186 0 0 1 3.67-1.69z" />
+    </svg>
 );
 
 const GoogleAnalyticsIcon = (props: any) => (
@@ -80,156 +81,134 @@ const GoogleAnalyticsIcon = (props: any) => (
 );
 
 const BeepingIcon = (props: any) => (
-    <img src="https://www.google.com/s2/favicons?domain=gobeeping.com&sz=128" alt="Beeping" {...props} />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
+        <path d="M2 10h20" />
+        <path d="M12 14h.01" />
+    </svg>
 );
 
 const DropeaIcon = (props: any) => (
-    <img src="https://www.google.com/s2/favicons?domain=dropea.com&sz=128" alt="Dropea" {...props} />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
+    </svg>
 );
 
 const DropiIcon = (props: any) => (
-    <img src="https://www.google.com/s2/favicons?domain=dropi.co&sz=128" alt="Dropi" {...props} />
+    <svg viewBox="0 0 24 24" fill="currentColor" opacity="0.9" {...props}>
+        <path d="M12 22s8-5.5 8-11A8 8 0 1 0 4 11c0 5.5 8 11 8 11zm0-16a5 5 0 1 1 0 10 5 5 0 0 1 0-10z" />
+    </svg>
 );
 
 export const PROVIDER_REGISTRY: Record<string, ProviderConfig> = {
     SHOPIFY: {
         id: 'SHOPIFY',
-        name: 'Shopify Master',
-        description: 'Sincronización total: Pedidos, Productos, Clientes y Analítica.',
+        name: 'Shopify Core',
+        description: 'Gestión de tienda oficial.',
         icon: ShopifyIcon,
-        color: BRAND_COLORS.SHOPIFY,
+        color: '#95bf47',
         category: 'ECOMMERCE',
         allowMultiple: true,
-        unlockedFeatures: ['Sync Automática de Pedidos', 'Gestión de Catálogo Completo', 'Perfiles de Clientes & Retención'],
         fields: [
-            { key: 'SHOP_NAME', label: 'Nombre de la Tienda', type: 'text', required: true },
+            { key: 'SHOP_NAME', label: 'Nombre de la Tienda (Ej: Aleessence)', type: 'text', required: true },
             { key: 'SHOPIFY_SHOP_DOMAIN', label: 'Dominio (.myshopify.com)', type: 'text', required: true },
-            { key: 'SHOPIFY_ACCESS_TOKEN', label: 'Admin API Token (Scopes Completos)', type: 'password', required: true }
+            { key: 'SHOPIFY_ACCESS_TOKEN', label: 'Admin API Token', type: 'password', required: true }
         ]
     },
     META: {
         id: 'META',
-        name: 'Meta Ads Suite',
-        description: 'Gestión integral de Publicidad, Comentarios y Catálogos.',
+        name: 'Meta Ads Manager',
+        description: 'Publicidad oficial Meta.',
         icon: MetaIcon,
-        color: BRAND_COLORS.META,
+        color: '#0668E1',
         category: 'MARKETING',
-        unlockedFeatures: ['Lectura de Campañas Ads', 'Tracker de ROAS Real', 'Moderación IA de Comentarios', 'Sync de Catálogo'],
         fields: [
             { key: 'META_ACCESS_TOKEN', label: 'User Token Principal', type: 'password', required: true },
-            { key: 'META_AD_ACCOUNT_ID', label: 'ID Cuenta Publicitaria', type: 'text', required: true },
-            { key: 'META_APP_ID', label: 'ID Aplicación Meta', type: 'text', required: true }
-        ]
-    },
-    REPLICATE: {
-        id: 'REPLICATE',
-        name: 'Replicate Master Engine',
-        description: 'Motor de Video y Avatares PRO (Heygen/CapCut Level).',
-        icon: ReplicateIcon,
-        color: BRAND_COLORS.ELEVENLABS,
-        category: 'AI',
-        unlockedFeatures: ['SyncLabs Lip-Sync (Squeezed)', 'Análisis de Video Temporal (Clip a Clip)', 'Conversión Masiva WebM/WebP (FFmpeg)', 'Avatares con Producto Real'],
-        fields: [
-            { key: 'REPLICATE_API_TOKEN', label: 'Replicate API Token (Master)', type: 'password', required: true }
+            { key: 'META_AD_ACCOUNT_ID', label: 'ID Cuenta Publicitaria', type: 'text', required: true }
         ]
     },
     ANTHROPIC: {
         id: 'ANTHROPIC',
-        parentProviderId: 'REPLICATE',
-        name: 'Claude 3.5 Sonnet',
-        description: 'IA de razonamiento superior (vía Replicate).',
+        name: 'Claude AI',
+        description: 'Claude 3.5 Sonnet via Replicate.',
         icon: ClaudeIcon,
-        color: BRAND_COLORS.ANTHROPIC,
+        color: '#D97757',
         category: 'AI',
-        unlockedFeatures: ['Análisis de Avatar (Research)', 'Generación de Copys Premium', 'Refinamiento de Landing pages'],
-        fields: [] // Inherited from REPLICATE
-    },
-    GOOGLE_CLOUD: {
-        id: 'GOOGLE_CLOUD',
-        name: 'Google Cloud Platform',
-        description: 'Nodo Maestro de Infraestructura y Datos.',
-        icon: GoogleCloudIcon,
-        color: BRAND_COLORS.GOOGLE,
-        category: 'INFRA',
-        unlockedFeatures: ['Google Maps & Places', 'Google Sheets', 'Google Drive', 'GA4 Analytics', 'Gmail API', 'Cloud Storage (GCS)', 'BigQuery', 'Vertex AI'],
         fields: [
-            { key: 'GOOGLE_CLOUD_PROJECT_ID', label: 'Project ID', type: 'text', required: true },
-            { key: 'GOOGLE_CLOUD_LOCATION', label: 'Cloud Location (ej. eu)', type: 'text', required: true },
-            { key: 'GCS_BUCKET_NAME', label: 'GCS Bucket Name', type: 'text', required: false },
-            { key: 'GOOGLE_SERVICE_ACCOUNT_KEY', label: 'Service Account JSON (Key Maestro)', type: 'password', required: true }
+            { key: 'REPLICATE_API_TOKEN', label: 'Replicate API Token (Usado por Claude)', type: 'password', required: true }
         ]
-    },
-    VERTEX: {
-        id: 'VERTEX',
-        parentProviderId: 'GOOGLE_CLOUD',
-        name: 'Vertex AI',
-        description: 'IA Generativa Enterprise sobre Google Cloud.',
-        icon: VertexAIIcon,
-        color: BRAND_COLORS.GOOGLE,
-        category: 'AI',
-        unlockedFeatures: ['Inferencia Enterprise Segura', 'LLMs Avanzados GCP', 'Auto-Traducción Masiva'],
-        fields: [] // Inherited from GOOGLE_CLOUD
     },
     GEMINI: {
         id: 'GEMINI',
-        name: 'Gemini Pro (Studio)',
-        description: 'Google Multimodal AI (vía API Key).',
+        name: 'Gemini Pro AI',
+        description: 'Google Multimodal AI.',
         icon: GeminiIcon,
-        color: BRAND_COLORS.GOOGLE,
+        color: '#4285F4',
         category: 'AI',
-        unlockedFeatures: ['Agente Chat Operativo', 'Diagnóstico de Landing Pages', 'Extracción de Datos de Video'],
         fields: [
-            { key: 'GEMINI_API_KEY', label: 'API Key (AI Studio)', type: 'password', required: true }
-        ]
-    },
-    GA4: {
-        id: 'GA4',
-        parentProviderId: 'GOOGLE_CLOUD',
-        name: 'Google Analytics 4',
-        description: 'Medición avanzada de eventos y BigQuery.',
-        icon: GoogleAnalyticsIcon,
-        color: BRAND_COLORS.GA4,
-        category: 'TOOLS',
-        unlockedFeatures: ['Atribución de Tráfico Web', 'Medición de Conversiones', 'Audiencias para Ads'],
-        fields: [
-            { key: 'GA4_PROPERTY_ID', label: 'GA4 Property ID', type: 'text', required: true }
-        ]
-    },
-    GOOGLE_MAPS: {
-        id: 'GOOGLE_MAPS',
-        parentProviderId: 'GOOGLE_CLOUD',
-        name: 'Google Maps & Places',
-        description: 'Geocodificación y validación de direcciones.',
-        icon: (props: any) => <img src="https://www.google.com/s2/favicons?domain=maps.google.com&sz=128" alt="Maps" {...props} />,
-        color: BRAND_COLORS.GOOGLE,
-        category: 'TOOLS',
-        unlockedFeatures: ['Autocompletado de Direcciones', 'Validación de Cobertura Logística'],
-        fields: [
-            { key: 'GOOGLE_MAPS_API_KEY', label: 'API Key de Maps', type: 'password', required: true }
-        ]
-    },
-    CLARITY: {
-        id: 'CLARITY',
-        name: 'Microsoft Clarity',
-        description: 'Grabaciones de sesión y mapas de calor (Heatmaps).',
-        icon: (props: any) => <img src="https://www.google.com/s2/favicons?domain=clarity.microsoft.com&sz=128" alt="Clarity" {...props} />,
-        color: '#0078D4',
-        category: 'TOOLS',
-        unlockedFeatures: ['Grabación de Sesiones', 'Análisis de Rabia (Rage Clicks)', 'Heatmaps por Dispositivo'],
-        fields: [
-            { key: 'CLARITY_PROJECT_ID', label: 'Project ID', type: 'text', required: true }
+            { key: 'GEMINI_API_KEY', label: 'Google Gemini API Key', type: 'password', required: true }
         ]
     },
     ELEVENLABS: {
         id: 'ELEVENLABS',
-        name: 'ElevenLabs Audio',
-        description: 'Voz e hilos de audio hiperrealistas.',
+        name: 'ElevenLabs',
+        description: 'Audio AI Hiperrealista.',
         icon: ElevenLabsIcon,
-        color: BRAND_COLORS.ELEVENLABS,
+        color: '#000000',
         category: 'AI',
-        unlockedFeatures: ['Locución de Videos', 'Voces Clonadas (V3)', 'Doblaje Multilingüe'],
         fields: [
             { key: 'ELEVENLABS_API_KEY', label: 'ElevenLabs API Key', type: 'password', required: true }
+        ]
+    },
+    REPLICATE: {
+        id: 'REPLICATE',
+        name: 'Replicate',
+        description: 'Inferencia de modelos.',
+        icon: ReplicateIcon,
+        color: '#000000',
+        category: 'AI',
+        fields: [
+            { key: 'REPLICATE_API_TOKEN', label: 'Replicate API Token', type: 'password', required: true }
+        ]
+    },
+    VERTEX: {
+        id: 'VERTEX',
+        name: 'Vertex AI',
+        description: 'Enterprise AI on GCP.',
+        icon: VertexAIIcon,
+        color: '#4285F4',
+        category: 'AI',
+        fields: [
+            { key: 'VERTEX_PROJECT_ID', label: 'Project ID', type: 'text', required: true },
+            { key: 'VERTEX_LOCATION', label: 'Location (us-central1)', type: 'text', required: true }
+        ]
+    },
+    GCP: {
+        id: 'GCP',
+        name: 'Google Cloud Platform',
+        description: 'Infraestructura, Storage y APIs.',
+        icon: GoogleCloudIcon,
+        color: '#4285F4',
+        category: 'INFRA',
+        fields: [
+            { key: 'GOOGLE_CLOUD_PROJECT_ID', label: 'Project ID', type: 'text', required: true },
+            { key: 'GCS_BUCKET_NAME', label: 'Bucket Name', type: 'text', required: true },
+            { key: 'GOOGLE_SERVICE_ACCOUNT_KEY', label: 'Service Account JSON (Key)', type: 'password', required: true }
+        ]
+    },
+    GA4: {
+        id: 'GA4',
+        name: 'Google Analytics 4',
+        description: 'Medición de eventos y conversiones.',
+        icon: GoogleAnalyticsIcon,
+        color: '#F4B400',
+        category: 'TOOLS',
+        fields: [
+            { key: 'GA4_PROPERTY_ID', label: 'Property ID', type: 'text', required: true },
+            { key: 'GA4_MEASUREMENT_ID', label: 'Measurement ID', type: 'text', required: true },
+            { key: 'GA4_API_SECRET', label: 'API Secret', type: 'password', required: true }
         ]
     },
     BEEPING: {
@@ -237,10 +216,9 @@ export const PROVIDER_REGISTRY: Record<string, ProviderConfig> = {
         name: 'Beeping Logistics',
         description: '3PL Fulfillment Engine.',
         icon: BeepingIcon,
-        color: BRAND_COLORS.BEEPING,
+        color: '#E11D48',
         category: 'LOGISTICS',
         allowMultiple: true,
-        unlockedFeatures: ['Fulfillment Automático 3PL', 'Stock en Tiempo Real', 'Tracker de Envíos Externo'],
         fields: [
             { key: 'BEEPING_API_URL', label: 'API Base URL', type: 'text', required: true, placeholder: 'https://app.gobeeping.com/api' },
             { key: 'BEEPING_API_KEY', label: 'API Key', type: 'password', required: true }
@@ -249,25 +227,23 @@ export const PROVIDER_REGISTRY: Record<string, ProviderConfig> = {
     DROPEA: {
         id: 'DROPEA',
         name: 'Dropea',
-        description: 'Gestión logística regional.',
+        description: 'Gestión logística alternativa.',
         icon: DropeaIcon,
-        color: BRAND_COLORS.DROPEA,
+        color: '#8A2BE2',
         category: 'LOGISTICS',
         allowMultiple: true,
-        unlockedFeatures: ['Gestión de Pedidos COD', 'Rutado Logístico Básico'],
         fields: [
             { key: 'DROPEA_API_KEY', label: 'Dropea API Key', type: 'password', required: true }
         ]
     },
     DROPI: {
         id: 'DROPI',
-        name: 'Dropi PRO',
-        description: 'Dropshipping y fulfillment masivo.',
+        name: 'Dropi',
+        description: 'Dropshipping y fulfillment regional.',
         icon: DropiIcon,
-        color: BRAND_COLORS.DROPI,
+        color: '#00C853',
         category: 'LOGISTICS',
         allowMultiple: true,
-        unlockedFeatures: ['Catálogo Dropshipping', 'Envío Automático a Proveedor', 'Tracker de Pagos'],
         fields: [
             { key: 'DROPI_API_KEY', label: 'Dropi API Key', type: 'password', required: true }
         ]

@@ -34,18 +34,18 @@ export function AssetDetailModal({ asset, onClose, onAudit, onClip, isLoading }:
     if (!asset) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 flex items-center justify-center p-4 animate-in fade-in duration-300">
-            <div className="bg-white rounded-[3rem] shadow-sm w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden border border-white shadow-sm">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden border border-white shadow-indigo-900/10">
                 {/* Modal Header */}
                 <div className="px-10 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center shadow-sm">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-100">
                             <Clapperboard className="w-6 h-6 text-white" />
                         </div>
                         <div>
                             <div className="flex items-center gap-3">
                                 <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{asset.name}</h3>
-                                <Badge className="bg-rose-50 text-rose-700 border-rose-100 text-[9px] font-black uppercase tracking-widest">{asset.nomenclatura}</Badge>
+                                <Badge className="bg-indigo-50 text-indigo-700 border-indigo-100 text-[9px] font-black uppercase tracking-widest">{asset.nomenclatura}</Badge>
                             </div>
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 flex items-center gap-2">
                                 <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
@@ -55,7 +55,7 @@ export function AssetDetailModal({ asset, onClose, onAudit, onClip, isLoading }:
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white hover:shadow-sm transition-all text-slate-400 hover:text-slate-900 active:scale-95"
+                        className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white hover:shadow-lg transition-all text-slate-400 hover:text-slate-900 active:scale-95"
                     >
                         <XCircle className="w-7 h-7" />
                     </button>
@@ -63,7 +63,7 @@ export function AssetDetailModal({ asset, onClose, onAudit, onClip, isLoading }:
 
                 <div className="flex-1 flex overflow-hidden">
                     {/* Left Side: Video Preview */}
-                    <div className="w-[45%] bg-slate-900 flex flex-col p-6">
+                    <div className="w-[45%] bg-slate-900 flex flex-col p-8">
                         <div className="relative flex-1 rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50 bg-black group">
                             {asset.driveUrl ? (
                                 <video
@@ -81,11 +81,11 @@ export function AssetDetailModal({ asset, onClose, onAudit, onClip, isLoading }:
 
                         <div className="grid grid-cols-2 gap-3 mt-6">
                             <button className="h-12 flex items-center justify-center gap-2 rounded-2xl bg-white/10 text-white font-bold text-xs hover:bg-white/20 transition-all active:scale-95">
-                                <Download className="w-4 h-4 text-rose-400" />
+                                <Download className="w-4 h-4 text-indigo-400" />
                                 Descargar
                             </button>
                             <button className="h-12 flex items-center justify-center gap-2 rounded-2xl bg-white/10 text-white font-bold text-xs hover:bg-white/20 transition-all active:scale-95">
-                                <ExternalLink className="w-4 h-4 text-rose-400" />
+                                <ExternalLink className="w-4 h-4 text-indigo-400" />
                                 Abrir Drive
                             </button>
                         </div>
@@ -113,7 +113,7 @@ export function AssetDetailModal({ asset, onClose, onAudit, onClip, isLoading }:
                                             <button
                                                 onClick={() => onAudit(asset.id)}
                                                 disabled={isLoading}
-                                                className="h-12 px-8 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] shadow-sm transition-all active:scale-95 flex items-center gap-3"
+                                                className="h-12 px-8 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-slate-200 transition-all active:scale-95 flex items-center gap-3"
                                             >
                                                 <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
                                                 Correr Auditoria AI
@@ -144,7 +144,7 @@ export function AssetDetailModal({ asset, onClose, onAudit, onClip, isLoading }:
                                     <button
                                         onClick={() => onClip(asset.id)}
                                         disabled={isLoading}
-                                        className="h-12 px-8 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] shadow-sm transition-all active:scale-95 flex items-center gap-3"
+                                        className="h-12 px-8 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-slate-200 transition-all active:scale-95 flex items-center gap-3"
                                     >
                                         <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
                                         Split AI Clips
@@ -168,10 +168,10 @@ function TabButton({ active, onClick, icon: Icon, label }: { active: boolean, on
                 active ? "text-slate-900" : "text-slate-400 hover:text-slate-600"
             )}
         >
-            <Icon className={cn("w-4 h-4 transition-colors", active ? "text-rose-600" : "text-slate-300")} />
+            <Icon className={cn("w-4 h-4 transition-colors", active ? "text-indigo-600" : "text-slate-300")} />
             <span className="text-xs font-black uppercase tracking-widest">{label}</span>
             {active && (
-                <div className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-rose-600 rounded-full animate-in zoom-in" />
+                <div className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-indigo-600 rounded-full animate-in zoom-in" />
             )}
         </button>
     );
@@ -195,8 +195,8 @@ function MetricBox({ label, value, trend, icon: Icon }: { label: string, value: 
 function AuditResults({ data }: { data: any }) {
     return (
         <div className="space-y-6">
-            <div className="bg-rose-50/50 p-6 rounded-[2rem] border border-rose-100">
-                <h5 className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100">
+                <h5 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3 flex items-center gap-2">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Marketing Alignment
                 </h5>

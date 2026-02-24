@@ -33,15 +33,14 @@ export class AutoConnectionService {
             console.log("✅ [AutoConnection] Shopify linked.");
         }
 
-        // 2. META (link even without AD_ACCOUNT_ID — user can add it later)
-        if (process.env.META_ACCESS_TOKEN) {
+        // 2. META
+        if (process.env.META_ACCESS_TOKEN && process.env.META_AD_ACCOUNT_ID) {
             await saveConnectionSecret({
                 storeId,
                 provider: 'META',
                 secret: process.env.META_ACCESS_TOKEN,
                 extraConfig: {
-                    META_AD_ACCOUNT_ID: process.env.META_AD_ACCOUNT_ID || '',
-                    META_APP_ID: process.env.META_APP_ID || ''
+                    META_AD_ACCOUNT_ID: process.env.META_AD_ACCOUNT_ID
                 }
             });
             console.log("✅ [AutoConnection] Meta linked.");
@@ -99,28 +98,46 @@ export class AutoConnectionService {
             console.log("✅ [AutoConnection] Beeping linked.");
         }
 
-        // 7. ANTHROPIC — REMOVED: Claude is a child of REPLICATE (parentProviderId)
-        //    It shows as a sub-icon on the Replicate card, no separate DB row needed.
+        // 7. ANTHROPIC (Using Replicate token as per registry)
+        if (process.env.REPLICATE_API_TOKEN) {
+            await saveConnectionSecret({
+                storeId,
+                provider: 'ANTHROPIC',
+                secret: process.env.REPLICATE_API_TOKEN,
+                extraConfig: {
+                    REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN
+                }
+            });
+            console.log("✅ [AutoConnection] Anthropic (via Replicate) linked.");
+        }
 
-        // 8. GOOGLE_CLOUD (Master Node — includes Maps, Sheets, Drive, GA4, BigQuery as children)
+        // 8. GCP
         if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY && process.env.GOOGLE_CLOUD_PROJECT_ID) {
             await saveConnectionSecret({
                 storeId,
-                provider: 'GOOGLE_CLOUD',
+                provider: 'GCP',
                 secret: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
                 extraConfig: {
                     GOOGLE_CLOUD_PROJECT_ID: process.env.GOOGLE_CLOUD_PROJECT_ID,
-                    GCS_BUCKET_NAME: process.env.GCS_BUCKET_NAME || '',
-                    GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-                    GA4_PROPERTY_ID: process.env.GA4_PROPERTY_ID || '',
-                    GOOGLE_CLOUD_LOCATION: process.env.GOOGLE_CLOUD_LOCATION || 'eu'
+                    GCS_BUCKET_NAME: process.env.GCS_BUCKET_NAME || ''
                 }
             });
-            console.log("✅ [AutoConnection] Google Cloud Platform linked (Maps, Sheets, Drive, GA4 included).");
+            console.log("✅ [AutoConnection] GCP linked.");
         }
 
-        // 9. GA4 — REMOVED: GA4 is a child of GOOGLE_CLOUD (parentProviderId)
-        //    Property ID is stored in GOOGLE_CLOUD's extraConfig above.
+        // 9. GA4
+        if (process.env.GA4_MEASUREMENT_ID && process.env.GA4_API_SECRET) {
+            await saveConnectionSecret({
+                storeId,
+                provider: 'GA4',
+                secret: process.env.GA4_API_SECRET,
+                extraConfig: {
+                    GA4_MEASUREMENT_ID: process.env.GA4_MEASUREMENT_ID,
+                    GA4_PROPERTY_ID: process.env.GA4_PROPERTY_ID || ''
+                }
+            });
+            console.log("✅ [AutoConnection] GA4 linked.");
+        }
 
         // 10. DROPEA
         if (process.env.DROPEA_API_KEY) {

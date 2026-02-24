@@ -11,14 +11,15 @@ import { recordOrderEvent, calculateOrderProfit, normalizeLogisticsStatus, calcu
 import { MetricsSnapshotService } from "@/lib/services/metrics-snapshot-service";
 import { AttributionService } from "@/lib/services/attribution";
 import { getConnectionSecret, getConnectionMeta } from "@/lib/server/connections";
-import { getStoreOrThrow } from "@/lib/server/store-context";
+// getProductMasterData removed as it was unused and pointing to non-existent file
 
 /**
  * Syncs products from Shopify to local database
  */
-export async function syncShopifyProducts(storeId: string) {
+export async function syncShopifyProducts() {
     try {
-        const store = await getStoreOrThrow(storeId);
+        const store = await (prisma as any).store.findFirst();
+        if (!store) throw new Error("No store found");
 
         const secret = await getConnectionSecret(store.id, "SHOPIFY");
         const meta = await getConnectionMeta(store.id, "SHOPIFY");
@@ -78,16 +79,22 @@ export async function syncShopifyProducts(storeId: string) {
             }
         }
 
-        try { revalidatePath("/logistics/costs"); } catch (e) { }
+        revalidatePath("/logistics/costs");
         return { success: true, count: shopifyProducts.length };
     } catch (e: any) {
         console.error("Shopify Product Sync Error:", e);
         return { success: false, message: e.message };
     }
 }
-export async function setProductProvider(storeId: string, productId: string, providerName: string) {
+export async function setProductProvider(productId: string, providerName: string) {
     try {
-        let store = await getStoreOrThrow(storeId);
+        let store = await (prisma as any).store.findFirst();
+        if (!store) {
+            console.error("No store found to link provider. Please create a store first.");
+            throw new Error("No store found. Provider linking aborted.");
+        }
+
+        if (!store) throw new Error("No valid store found or created.");
 
         // Find or Create Supplier (Insensitive)
         let supplier = await (prisma as any).supplier.findFirst({
@@ -120,19 +127,17 @@ export async function setProductProvider(storeId: string, productId: string, pro
 /**
  * Repairs missing line items for a specific month with high-precision per-day logic
  */
-export async function repairMonthOrderItems(storeId: string, month: string | number, year: string | number) {
+export async function repairMonthOrderItems(month: number, year: number) {
     try {
-        const store = await getStoreOrThrow(storeId);
-
-        const m = typeof month === 'string' ? parseInt(month) : month;
-        const y = typeof year === 'string' ? parseInt(year) : year;
+        const store = await (prisma as any).store.findFirst();
+        if (!store) throw new Error("No store found");
 
         const secret = await getConnectionSecret(store.id, "SHOPIFY");
         const meta = await getConnectionMeta(store.id, "SHOPIFY");
         if (!secret || !meta?.extraConfig) throw new Error("No Shopify connection");
 
-        const start = startOfDay(new Date(y, m - 1, 1));
-        const end = endOfDay(new Date(y, m, 0));
+        const start = startOfDay(new Date(year, month - 1, 1));
+        const end = endOfDay(new Date(year, month, 0));
 
         const shopify = new ShopifyClient(meta.extraConfig as string, secret);
         const storeIdToUse = store.id;
@@ -165,7 +170,7 @@ export async function repairMonthOrderItems(storeId: string, month: string | num
             }
         }
 
-        try { revalidatePath("/finances"); } catch (e) { }
+        revalidatePath("/finances");
         return {
             success: true,
             message: `Reconstrucción total completada para ${format(start, 'MMMM yyyy')}. Se procesaron ${repaired} pedidos y se recalcularon ${days.length} días.`
@@ -334,6 +339,25 @@ export async function upsertShopifyOrder(shopifyOrder: any, storeId: string) {
     return mainOrder;
 }
 
+
+/**
+ * Ensures a store exists and returns its ID. 
+ * Prevents foreign key errors during sync.
+ */
+async function getOrCreateStoreId(preferredId?: string) {
+    // 1. Try to find the preferred ID if provided
+    if (preferredId) {
+        const exists = await (prisma as any).store.findUnique({ where: { id: preferredId } });
+        if (exists) return preferredId;
+    }
+
+    // 2. Try to find the first available store
+    const first = await (prisma as any).store.findFirst();
+    if (first) return first.id;
+
+    // 3. Last resort: Fail
+    throw new Error(`Store context missing. Tried preferred ${preferredId} but not found, and no other store exists.`);
+}
 
 /**
  * Advanced UTM extraction inspired by the provided n8n logic
@@ -505,7 +529,7 @@ export async function exportOrderToBeeping(orderId: string) {
             payload: payload
         });
 
-        try { revalidatePath("/pedidos"); } catch (e) { }
+        revalidatePath("/pedidos");
         return { success: true, message: "Pedido enviado a Beeping correctamente." };
 
     } catch (e: any) {
@@ -523,7 +547,7 @@ export async function exportOrderToBeeping(orderId: string) {
  */
 export async function syncBeepingHistory(storeId: string) {
     // Consolidated into syncBeepingStatuses(0) which is optimized and paginated
-    return syncBeepingStatuses(storeId, 0);
+    return syncBeepingStatuses(0);
 }
 
 /**
@@ -621,7 +645,7 @@ export async function syncShopifyHistory(storeId: string) {
 
         // --- 0. SYNC PRODUCTS FIRST ---
         console.log(`[Shopify Sync] Syncing products and variants...`);
-        await syncShopifyProducts(storeId);
+        await syncShopifyProducts();
 
         // --- 1. SYNC COMPLETED ORDERS (Historical Backfill - Start of time) ---
         // Setting minDate to a very old date to ensure TOTAL history ingest as requested
@@ -696,7 +720,7 @@ export async function syncShopifyHistory(storeId: string) {
             }
         });
 
-        try { revalidatePath("/pedidos"); } catch (e) { }
+        revalidatePath("/pedidos");
 
         // --- 4. UPDATE ACCOUNTING SNAPSHOTS (FULL HISTORICAL BACKFILL) ---
         try {
@@ -729,10 +753,9 @@ export async function syncShopifyHistory(storeId: string) {
 /**
  * Force run geocoding on all pending orders
  */
-export async function autoGeocodeAllPending(storeId: string, limit = 0) {
+export async function autoGeocodeAllPending(limit = 0) {
     // FORCE UPDATE: Fetch last N orders regardless of status to apply new Rules
     const whereCondition = {
-        storeId: storeId,
         addressLine1: { not: null }
     };
     const totalCount = await (prisma as any).order.count({ where: whereCondition });
@@ -768,21 +791,20 @@ export async function autoGeocodeAllPending(storeId: string, limit = 0) {
         if (processed < effectiveLimit) await new Promise(r => setTimeout(r, 200));
     }
 
-    if (count > 0) {
-        try { revalidatePath("/pedidos"); } catch (e) { }
-    }
+    if (count > 0) revalidatePath("/pedidos");
     return { success: true, count };
 }
 
 /**
  * Syncs only the most recent orders from Shopify
  */
-export async function syncRecentShopifyOrders(storeId: string, limit = 250) {
+export async function syncRecentShopifyOrders(limit = 250) {
     try {
-        if (!storeId) return { success: false, message: "No storeId" };
+        const store = await (prisma as any).store.findFirst();
+        if (!store) return { success: false, message: "No store" };
 
-        const secret = await getConnectionSecret(storeId, "SHOPIFY");
-        const meta = await getConnectionMeta(storeId, "SHOPIFY");
+        const secret = await getConnectionSecret(store.id, "SHOPIFY");
+        const meta = await getConnectionMeta(store.id, "SHOPIFY");
 
         if (!secret || !meta?.extraConfig) return { success: false, message: "No connection" };
 
@@ -799,7 +821,7 @@ export async function syncRecentShopifyOrders(storeId: string, limit = 250) {
         const shopify = new ShopifyClient(shopDomain, secret);
         const { orders } = await shopify.getOrders(limit);
 
-        const storeIdToUse = storeId;
+        const storeIdToUse = store.id;
 
         let count = 0;
         for (const shopifyOrder of orders) {
@@ -807,16 +829,16 @@ export async function syncRecentShopifyOrders(storeId: string, limit = 250) {
             count++;
         }
 
-        // Parallel Beeping sync (ONLY IF CONNECTED FOR THIS STORE)
-        const beepingSecret = await getConnectionSecret(storeIdToUse, "BEEPING");
-        if (beepingSecret) {
-            const ordersToSync = await (prisma as any).order.findMany({
-                where: {
-                    shopifyId: { in: orders.map((o: any) => o.id.toString()) },
-                    status: { notIn: ["CANCELLED", "ABANDONED"] }
-                },
-                select: { id: true }
-            });
+        // Parallel Beeping sync
+        const ordersToSync = await (prisma as any).order.findMany({
+            where: {
+                shopifyId: { in: orders.map((o: any) => o.id.toString()) },
+                status: { notIn: ["CANCELLED", "ABANDONED"] }
+            },
+            select: { id: true }
+        });
+
+        if (process.env.BEEPING_API_KEY) {
             Promise.allSettled(ordersToSync.map((o: any) => syncSingleOrderBeeping(o.id)));
         }
 
@@ -865,10 +887,9 @@ export async function updateBeepingOrderDetails(orderId: string, shippingData: a
 /**
  * Syncs ALL Draft Orders from Shopify
  */
-export async function syncDraftOrders(storeId: string) {
+export async function syncDraftOrders() {
     try {
-        const store = await getStoreOrThrow(storeId);
-        const connection = await (prisma as any).connection.findUnique({ where: { storeId_provider: { storeId: store.id, provider: "SHOPIFY" } } });
+        const connection = await (prisma as any).connection.findFirst({ where: { provider: "SHOPIFY" } });
         if (!connection) return { success: false, message: "No connection" };
 
         const shopify = new ShopifyClient(connection.extraConfig, connection.apiKey);
@@ -924,10 +945,9 @@ export async function syncDraftOrders(storeId: string) {
 /**
  * Syncs ALL Abandoned Checkouts from Shopify
  */
-export async function syncAbandonedCheckouts(storeId: string) {
+export async function syncAbandonedCheckouts() {
     try {
-        const store = await getStoreOrThrow(storeId);
-        const connection = await (prisma as any).connection.findUnique({ where: { storeId_provider: { storeId: store.id, provider: "SHOPIFY" } } });
+        const connection = await (prisma as any).connection.findFirst({ where: { provider: "SHOPIFY" } });
         if (!connection) return { success: false, message: "No connection" };
 
         const shopify = new ShopifyClient(connection.extraConfig, connection.apiKey);
@@ -984,17 +1004,17 @@ export async function syncAbandonedCheckouts(storeId: string) {
 /**
  * Master Sync: Orders + Drafts + Abandoned
  */
-export async function masterShopifySync(storeId: string) {
+export async function masterShopifySync() {
     console.log("[Master Sync] Starting full Shopify synchronization...");
 
     // 1. Sync Recent Orders
-    const resOrders = await syncRecentShopifyOrders(storeId);
+    const resOrders = await syncRecentShopifyOrders();
 
     // 2. Sync Drafts
-    const resDrafts = await syncDraftOrders(storeId);
+    const resDrafts = await syncDraftOrders();
 
     // 3. Sync Abandoned
-    const resAbandoned = await syncAbandonedCheckouts(storeId);
+    const resAbandoned = await syncAbandonedCheckouts();
 
     // 4. Geocode and Risk Analysis
     const pendingAnalysis = await (prisma as any).order.findMany({
@@ -1071,13 +1091,9 @@ export async function getLocalOrders(skip = 0, take = 100, sortDirection: 'asc' 
  */
 export async function importCRMFile(formData: FormData) {
     const file = formData.get("file") as File;
-    const storeId = formData.get("storeId") as string;
-
     if (!file) return { success: false, message: "No se ha seleccionado ningún archivo" };
-    if (!storeId) return { success: false, message: "No se ha especificado la tienda" };
 
     try {
-        const store = await getStoreOrThrow(storeId);
         const text = await file.text();
         const firstLine = text.split("\n")[0];
         const separator = firstLine.includes(";") ? ";" : ",";
@@ -1173,6 +1189,7 @@ export async function importCRMFile(formData: FormData) {
             if (existing) {
                 await (prisma as any).order.update({ where: { id: existing.id }, data: commonData });
             } else {
+                const storeId = await getOrCreateStoreId();
                 await (prisma as any).order.create({
                     data: {
                         ...commonData,
@@ -1183,7 +1200,7 @@ export async function importCRMFile(formData: FormData) {
                         city: "Ciudad",
                         zip: "00000",
                         countryCode: "ES",
-                        storeId: store.id,
+                        storeId: storeId,
                         orderType: "REGULAR",
                         createdAt: dateRaw ? new Date(dateRaw) : new Date(),
                         totalPrice: commonData.totalPrice || 0,
@@ -1362,9 +1379,10 @@ export async function importLogisticsUpdate(formData: FormData) {
     return { success: true };
 }
 
-export async function syncDailyPerformance(storeId: string) {
+export async function syncDailyPerformance() {
     try {
-        const store = await getStoreOrThrow(storeId);
+        const store = await (prisma as any).store.findFirst();
+        if (!store) return;
 
         // Sync last 14 days
         for (let i = 0; i < 14; i++) {
@@ -1559,7 +1577,7 @@ async function processBeepingOrderUpdate(bo: any) {
     return { updated: false };
 }
 
-export async function syncBeepingStatuses(storeId: string, limit = 0, priority = false, segment: 'ACTIVE' | 'TRANSIT' | 'FINAL' = 'FINAL') {
+export async function syncBeepingStatuses(limit = 0, priority = false, segment: 'ACTIVE' | 'TRANSIT' | 'FINAL' = 'FINAL') {
     try {
         const apiKey = process.env.BEEPING_API_KEY;
         if (!apiKey) return { success: false, message: "BEEPING API KEY missing" };
@@ -1569,7 +1587,7 @@ export async function syncBeepingStatuses(storeId: string, limit = 0, priority =
         let processed = 0;
 
         // Determine which orders to sync based on segment
-        const where: any = { logisticsProvider: "BEEPING", storeId };
+        const where: any = { logisticsProvider: "BEEPING" };
 
         if (segment === 'ACTIVE') {
             where.logisticsStatus = { in: ["PENDING", "PROCESSING", "PREPARACION"] };
@@ -1648,9 +1666,9 @@ async function updateCreativePerformance(order: any) {
     }
 }
 
-export async function updateLogisticsStatus(storeId: string, orderId: string, newStatus: string, trackingCode?: string) {
+export async function updateLogisticsStatus(orderId: string, newStatus: string, trackingCode?: string) {
     await (prisma as any).order.update({ where: { id: orderId }, data: { logisticsStatus: newStatus, trackingCode } });
-    await syncDailyPerformance(storeId); // Update stats
+    await syncDailyPerformance(); // Update stats
     return { success: true };
 }
 
@@ -1740,19 +1758,17 @@ export async function updateOrderAddress(orderId: string, data: any) {
 /**
  * Updates a fulfillment rule (shipping costs per provider)
  */
-export async function updateFulfillmentRule(storeId: string, ruleId: string, data: any) {
+export async function updateFulfillmentRule(ruleId: string, data: any) {
     try {
-        const store = await getStoreOrThrow(storeId);
         // If the ruleId is 'default', we might need to find a real one or create it
         if (ruleId === 'default') {
-            const firstRule = await (prisma as any).fulfillmentRule.findFirst({ where: { storeId } });
+            const firstRule = await (prisma as any).fulfillmentRule.findFirst();
             if (firstRule) {
                 ruleId = firstRule.id;
             } else {
                 // Create a basic rule if none exists
                 const newRule = await (prisma as any).fulfillmentRule.create({
                     data: {
-                        storeId: store.id,
                         provider: 'GENERIC',
                         baseShippingCost: 6.5,
                         ...data
@@ -1805,12 +1821,9 @@ export async function updateProductFinance(productId: string, data: any) {
 /**
  * Helper to update many products at once (Global COGS)
  */
-export async function updateGlobalProductCost(storeId: string, unitCost: number) {
+export async function updateGlobalProductCost(unitCost: number) {
     try {
-        const products = await (prisma as any).product.findMany({
-            where: { storeId },
-            select: { id: true }
-        });
+        const products = await (prisma as any).product.findMany({ select: { id: true } });
         for (const p of products) {
             await (prisma as any).productFinance.upsert({
                 where: { productId: p.id },
@@ -1953,49 +1966,47 @@ export async function updateOrderAddressMaster(orderId: string, addressData: any
 
 // --- SUPPLY CHAIN DASHBOARD ACTIONS ---
 
-export async function getSupplyChainStats(storeId: string) {
+export async function getSupplyChainStats() {
     try {
-        const store = await getStoreOrThrow(storeId);
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
         const stats = await (prisma as any).order.groupBy({
             by: ['logisticsStatus'],
             where: {
-                storeId: store.id,
                 status: { not: 'ABANDONED' },
                 createdAt: { gte: thirtyDaysAgo }
             },
             _count: { id: true }
         });
 
-        const totalConfirmed = await (prisma as any).order.count({ where: { storeId: store.id, status: 'CONFIRMED', createdAt: { gte: thirtyDaysAgo } } });
+        const totalConfirmed = await (prisma as any).order.count({ where: { status: 'CONFIRMED', createdAt: { gte: thirtyDaysAgo } } });
 
         const inTransit = await (prisma as any).order.count({
-            where: { storeId: store.id, logisticsStatus: { in: ['IN_TRANSIT', 'OUT_FOR_DELIVERY', 'PICKUP_POINT'] } }
+            where: { logisticsStatus: { in: ['IN_TRANSIT', 'OUT_FOR_DELIVERY', 'PICKUP_POINT'] } }
         });
 
         const delivered = await (prisma as any).order.count({
-            where: { storeId: store.id, logisticsStatus: 'DELIVERED', createdAt: { gte: thirtyDaysAgo } }
+            where: { logisticsStatus: 'DELIVERED', createdAt: { gte: thirtyDaysAgo } }
         });
 
         const incidences = await (prisma as any).order.count({
-            where: { storeId: store.id, logisticsStatus: { in: ['INCIDENCE', 'DELIVERY_FAILED', 'ACCIDENT'] } }
+            where: { logisticsStatus: { in: ['INCIDENCE', 'DELIVERY_FAILED', 'ACCIDENT'] } }
         });
 
         const returns = await (prisma as any).order.count({
-            where: { storeId: store.id, logisticsStatus: { in: ['RETURNED', 'RETURN_TO_SENDER'] }, createdAt: { gte: thirtyDaysAgo } }
+            where: { logisticsStatus: { in: ['RETURNED', 'RETURN_TO_SENDER'] }, createdAt: { gte: thirtyDaysAgo } }
         });
 
         const recentIncidences = await (prisma as any).order.findMany({
-            where: { storeId: store.id, logisticsStatus: 'INCIDENCE' },
+            where: { logisticsStatus: 'INCIDENCE' },
             take: 10,
             orderBy: { updatedAt: 'desc' },
             select: { id: true, orderNumber: true, customerName: true, incidenceResult: true, updatedAt: true }
         });
 
         // FETCH & SEED RULES SAFELY
-        let rules = await (prisma as any).fulfillmentRule.findMany({ where: { storeId: store.id }, orderBy: { provider: 'asc' } });
+        let rules = await (prisma as any).fulfillmentRule.findMany({ orderBy: { provider: 'asc' } });
 
         try {
             // 1. Hardcoded Defaults
@@ -2009,7 +2020,7 @@ export async function getSupplyChainStats(storeId: string) {
 
             // 2. Auto-Discovery from Orders
             const distinctProviders = await (prisma as any).order.findMany({
-                where: { storeId: store.id, logisticsProvider: { not: null } },
+                where: { logisticsProvider: { not: null } },
                 select: { logisticsProvider: true },
                 distinct: ['logisticsProvider']
             });
@@ -2025,6 +2036,14 @@ export async function getSupplyChainStats(storeId: string) {
             const missing = requiredProviders.filter(p => !existingNames.includes(p.name));
 
             if (missing.length > 0) {
+                let storeId = (await (prisma as any).store.findFirst())?.id;
+                if (!storeId) {
+                    try {
+                        const newStore = await (prisma as any).store.create({ data: { name: 'Default Store', currency: 'EUR' } });
+                        storeId = newStore.id;
+                    } catch (e) { console.error("Auto-store creation failed", e); }
+                }
+
                 if (storeId) {
                     for (const m of missing) {
                         try {
@@ -2042,7 +2061,7 @@ export async function getSupplyChainStats(storeId: string) {
                         }
                     }
                     // Refetch rules
-                    rules = await (prisma as any).fulfillmentRule.findMany({ where: { storeId: store.id }, orderBy: { provider: 'asc' } });
+                    rules = await (prisma as any).fulfillmentRule.findMany({ orderBy: { provider: 'asc' } });
                 }
             }
         } catch (ruleErr) {
@@ -2052,7 +2071,6 @@ export async function getSupplyChainStats(storeId: string) {
         // 3. FETCH PRODUCTS & REAL AVG SALES PRICE & INFERRED PROVIDER
         // Optimized: Use groupBy for pricing to avoid fetching all items
         const productsRaw = await (prisma as any).product.findMany({
-            where: { storeId: store.id },
             include: {
                 finance: true,
                 supplier: true
@@ -2068,7 +2086,7 @@ export async function getSupplyChainStats(storeId: string) {
                 quantity: true
             },
             where: {
-                order: { storeId: store.id, status: { notIn: ['CANCELLED', 'ABANDONED'] } }
+                order: { status: { notIn: ['CANCELLED', 'ABANDONED'] } }
             }
         });
 
@@ -2079,7 +2097,6 @@ export async function getSupplyChainStats(storeId: string) {
         const providerItems = await (prisma as any).orderItem.findMany({
             where: {
                 order: {
-                    storeId: store.id,
                     status: { notIn: ['CANCELLED', 'ABANDONED'] },
                     logisticsProvider: { not: null }
                 }
@@ -2374,15 +2391,15 @@ export async function getLogisticsAIAdvice(matrixData: any[], targetROAS: number
     }
 }
 
-export async function triggerLogisticsSync(storeId: string) {
+export async function triggerLogisticsSync() {
     try {
         console.log("[Manual Sync] Triggering FULL Sync (Shopify + Beeping)...");
         // 1. Sync from Shopify first to get new orders (up to 250 recent)
-        const shopifyRes = await syncRecentShopifyOrders(storeId, 250);
+        const shopifyRes = await syncRecentShopifyOrders(250);
         console.log(`[Manual Sync] Shopify added/updated ${shopifyRes.count} orders.`);
 
         // 2. Sync logistics status from Beeping for all non-cancelled orders
-        const beepingRes = await syncBeepingStatuses(storeId);
+        const beepingRes = await syncBeepingStatuses();
 
         revalidatePath("/logistics/dashboard");
         revalidatePath("/pedidos");
@@ -2485,9 +2502,10 @@ export async function updateOrderNotes(orderId: string, notes: string) {
     }
 }
 
-export async function updateDailyFinance(storeId: string, dateStr: string, data: { adSpend?: number, visitors?: number }) {
+export async function updateDailyFinance(dateStr: string, data: { adSpend?: number, visitors?: number }) {
     try {
-        const store = await getStoreOrThrow(storeId);
+        const store = await (prisma as any).store.findFirst();
+        if (!store) return { success: false };
 
         // Force UTC Day to match getDailyOperationsMatrix logic
         const inputDate = new Date(dateStr);
@@ -2511,9 +2529,10 @@ export async function updateDailyFinance(storeId: string, dateStr: string, data:
 
 }
 
-export async function createFulfillmentRule(storeId: string, providerName: string) {
+export async function createFulfillmentRule(providerName: string) {
     try {
-        const store = await getStoreOrThrow(storeId);
+        const store = await (prisma as any).store.findFirst();
+        if (!store) throw new Error("No store found");
 
         const normalizedProvider = providerName.toUpperCase().trim();
 
@@ -2554,9 +2573,8 @@ export async function createFulfillmentRule(storeId: string, providerName: strin
     }
 }
 
-export async function deleteFulfillmentRule(storeId: string, ruleId: string) {
+export async function deleteFulfillmentRule(ruleId: string) {
     try {
-        await getStoreOrThrow(storeId);
         if (!ruleId || ruleId === 'default') {
             return { success: true };
         }

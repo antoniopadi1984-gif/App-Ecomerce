@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { useStore } from "@/lib/store/store-context";
 
 export interface Product {
     id: string;
@@ -43,7 +42,6 @@ interface ProductContextType {
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export function ProductProvider({ children, productId: initialProductId }: { children: React.ReactNode; productId?: string }) {
-    const { activeStoreId } = useStore();
     const [productId, setProductIdState] = useState<string | null>(initialProductId || null);
     const [product, setProduct] = useState<Product | null>(null);
     const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -51,24 +49,20 @@ export function ProductProvider({ children, productId: initialProductId }: { chi
     const [error, setError] = useState<string | null>(null);
 
     const fetchAllProducts = useCallback(async () => {
-        // Fallback to store-main if no activeStoreId is provided yet
-        const effectiveStoreId = activeStoreId || 'store-main';
-
         try {
-            const response = await fetch(`/api/products?storeId=${effectiveStoreId}&_t=${Date.now()}`, {
-                headers: { 'X-Store-Id': effectiveStoreId },
-                cache: 'no-store'
-            });
+            const response = await fetch('/api/products');
             const data = await response.json();
             if (response.ok && data.success) {
                 setAllProducts(data.products || []);
 
-                const savedId = typeof window !== 'undefined' ? localStorage.getItem(`selectedProductId_${effectiveStoreId}`) : null;
+                // Si no hay productId seleccionado pero hay productos, seleccionar el primero por defecto si no hay nada en localStorage
+                const savedId = typeof window !== 'undefined' ? localStorage.getItem('selectedProductId') : null;
 
-                if (!productId || (savedId && productId !== savedId && productId === 'GLOBAL')) {
+                if (!productId) {
                     if (savedId) {
                         setProductIdState(savedId);
                     } else {
+                        // Default to GLOBAL to avoid "Context Required" screens
                         setProductIdState('GLOBAL');
                     }
                 }
@@ -76,31 +70,25 @@ export function ProductProvider({ children, productId: initialProductId }: { chi
         } catch (err) {
             console.error('[ProductContext] Error fetching all products:', err);
         }
-    }, [activeStoreId, productId]);
+    }, [productId]);
 
-    // Reset product selection when store changes
+    // Load initial data
     useEffect(() => {
-        const effectiveStoreId = activeStoreId || 'store-main';
-        const savedId = typeof window !== 'undefined' ? localStorage.getItem(`selectedProductId_${effectiveStoreId}`) : null;
-        setProductIdState(savedId || 'GLOBAL');
-        setProduct(null);
         fetchAllProducts();
-    }, [activeStoreId]);
+    }, [fetchAllProducts]);
 
     const setProductId = useCallback((id: string) => {
-        const effectiveStoreId = activeStoreId || 'store-main';
         setProductIdState(id);
         if (typeof window !== 'undefined') {
             if (id === 'GLOBAL') {
-                localStorage.removeItem(`selectedProductId_${effectiveStoreId}`);
+                localStorage.removeItem('selectedProductId');
             } else {
-                localStorage.setItem(`selectedProductId_${effectiveStoreId}`, id);
+                localStorage.setItem('selectedProductId', id);
             }
         }
-    }, [activeStoreId]);
+    }, []);
 
     const fetchProduct = useCallback(async () => {
-        const effectiveStoreId = activeStoreId || 'store-main';
         if (!productId || productId === 'GLOBAL') {
             setProduct(null);
             return;
@@ -109,9 +97,7 @@ export function ProductProvider({ children, productId: initialProductId }: { chi
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/products/${productId}`, {
-                headers: { 'X-Store-Id': effectiveStoreId }
-            });
+            const response = await fetch(`/api/products/${productId}`);
             const data = await response.json();
 
             if (!response.ok || !data.success) {
@@ -125,11 +111,11 @@ export function ProductProvider({ children, productId: initialProductId }: { chi
         } finally {
             setIsLoading(false);
         }
-    }, [productId, activeStoreId]);
+    }, [productId]);
 
     useEffect(() => {
         fetchProduct();
-    }, [productId, activeStoreId, fetchProduct]);
+    }, [productId, fetchProduct]);
 
     const value = React.useMemo(() => ({
         product,
@@ -156,4 +142,3 @@ export function useProduct() {
     }
     return context;
 }
-

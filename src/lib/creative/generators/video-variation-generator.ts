@@ -1,6 +1,5 @@
 import Replicate from 'replicate';
 import { Storage } from '@google-cloud/storage';
-import { getConnectionSecret, getConnectionMeta } from '@/lib/server/connections';
 import ffmpeg from 'fluent-ffmpeg';
 import { createWriteStream, createReadStream, unlinkSync } from 'fs';
 import { join } from 'path';
@@ -11,32 +10,20 @@ import { tmpdir } from 'os';
  * Toma un video existente y genera múltiples variaciones con diferentes avatares
  */
 export class VideoVariationGenerator {
-    private replicate!: Replicate;
-    private storage!: Storage;
-    private bucketName!: string;
+    private replicate: Replicate;
+    private storage: Storage;
+    private bucketName: string;
 
-    private isInitialized = false;
-
-    constructor() { }
-
-    private async initClients() {
-        if (this.isInitialized) return;
-
-        const replicateToken = await getConnectionSecret('store-main', 'REPLICATE') || process.env.REPLICATE_API_TOKEN;
-        const meta = await getConnectionMeta('store-main', 'GCP');
-
-        this.bucketName = meta?.GCS_BUCKET_NAME || process.env.GCS_BUCKET_NAME || '';
-        const projectId = meta?.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT_ID || '';
-
+    constructor() {
         this.replicate = new Replicate({
-            auth: replicateToken || ''
+            auth: process.env.REPLICATE_API_TOKEN || ''
         });
 
         this.storage = new Storage({
-            projectId: projectId
+            projectId: process.env.GOOGLE_CLOUD_PROJECT_ID
         });
 
-        this.isInitialized = true;
+        this.bucketName = process.env.GCS_BUCKET_NAME || '';
     }
 
     /**
@@ -44,7 +31,6 @@ export class VideoVariationGenerator {
      */
     async extractAudio(videoUrl: string): Promise<string> {
         console.log('[VideoVariations] Extrayendo audio del video...');
-        await this.initClients();
 
         return new Promise(async (resolve, reject) => {
             const tempVideo = join(tmpdir(), `video_${Date.now()}.mp4`);

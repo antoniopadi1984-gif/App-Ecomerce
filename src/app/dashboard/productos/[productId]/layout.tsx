@@ -53,7 +53,7 @@ export default function ProductDashboardLayout({ children }: { children: React.R
                 </nav>
 
                 {/* Sub-Navigation Tabs */}
-                <div className="flex items-center gap-1 bg-white/50 p-1 rounded-xl border border-slate-200 w-fit">
+                <div className="flex items-center gap-1 bg-white/50 backdrop-blur-sm p-1 rounded-xl border border-slate-200 w-fit">
                     {navItems.map((item) => {
                         const href = item.isGlobal ? item.href : getBaseHref() + item.href;
                         const isActive = pathname === href || (item.href !== "" && pathname.startsWith(href));
@@ -65,11 +65,11 @@ export default function ProductDashboardLayout({ children }: { children: React.R
                                 className={cn(
                                     "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200",
                                     isActive
-                                        ? "bg-white text-rose-600 shadow-sm border border-slate-200"
+                                        ? "bg-white text-indigo-600 shadow-lg shadow-indigo-100/50 border border-slate-200"
                                         : "text-slate-600 hover:text-slate-900 hover:bg-white"
                                 )}
                             >
-                                <item.icon className={cn("w-4 h-4", isActive ? "text-rose-500" : "text-slate-400")} />
+                                <item.icon className={cn("w-4 h-4", isActive ? "text-indigo-500" : "text-slate-400")} />
                                 {item.name}
                             </Link>
                         );

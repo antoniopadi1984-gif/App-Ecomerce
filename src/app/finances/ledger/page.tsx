@@ -114,22 +114,22 @@ export default function LedgerPage() {
             {/* HEADER AREA */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                    <Link href="/finances" className="flex items-center gap-1.5 text-rose-600 font-black text-[9px] uppercase tracking-widest hover:opacity-70 mb-2 transition-all">
+                    <Link href="/finances" className="flex items-center gap-1.5 text-indigo-600 font-black text-[9px] uppercase tracking-widest hover:opacity-70 mb-2 transition-all">
                         <ArrowLeft className="h-3 w-3" /> Dashboard Global
                     </Link>
-                    <h1 className="text-3xl font-black tracking-tighter italic uppercase text-slate-950 leading-none">Master <span className="text-rose-600">Ledger</span></h1>
+                    <h1 className="text-3xl font-black tracking-tighter italic uppercase text-slate-950 leading-none">Master <span className="text-indigo-600">Ledger</span></h1>
                     <p className="text-slate-400 font-bold uppercase text-[8px] tracking-[0.3em] ml-0.5 mt-1">Daily Micro-Accounting & Financial Evidence</p>
                 </div>
                 <div className="flex gap-2">
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
-                            <Button className="h-10 px-6 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-lg shadow-sm transition-all active:scale-95 flex items-center gap-2 text-[10px] tracking-widest uppercase">
+                            <Button className="h-10 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-lg shadow-xl shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2 text-[10px] tracking-widest uppercase">
                                 <Plus className="h-4 w-4" /> MOVIMIENTO
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md rounded-lg border-none shadow-sm p-6 bg-white overflow-hidden">
-                            <div className="absolute top-0 right-0 p-6 opacity-5">
-                                <Wallet className="h-40 w-40 text-rose-600" />
+                        <DialogContent className="sm:max-w-md rounded-lg border-none shadow-2xl p-6 bg-white overflow-hidden">
+                            <div className="absolute top-0 right-0 p-8 opacity-5">
+                                <Wallet className="h-40 w-40 text-indigo-600" />
                             </div>
                             <DialogHeader>
                                 <DialogTitle className="text-xl font-black italic uppercase tracking-tight">Registrar Operación</DialogTitle>
@@ -143,7 +143,7 @@ export default function LedgerPage() {
                                             <SelectTrigger className="h-10 rounded-lg border-slate-100 bg-slate-50 font-bold text-xs">
                                                 <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent className="rounded-lg border-none shadow-sm">
+                                            <SelectContent className="rounded-lg border-none shadow-2xl">
                                                 <SelectItem value="EXPENSE" className="font-bold text-xs text-rose-600">Gasto 🔻</SelectItem>
                                                 <SelectItem value="INCOME" className="font-bold text-xs text-emerald-600">Ingreso 🔼</SelectItem>
                                             </SelectContent>
@@ -155,7 +155,7 @@ export default function LedgerPage() {
                                             <SelectTrigger className="h-10 rounded-lg border-slate-100 bg-slate-50 font-bold text-xs">
                                                 <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent className="rounded-lg border-none shadow-sm">
+                                            <SelectContent className="rounded-lg border-none shadow-2xl">
                                                 <SelectItem value="AD_SPEND" className="font-bold text-xs">Marketing Ads</SelectItem>
                                                 <SelectItem value="LOGISTICS" className="font-bold text-xs">Logística</SelectItem>
                                                 <SelectItem value="COGS" className="font-bold text-xs">Producto/COGS</SelectItem>
@@ -171,7 +171,7 @@ export default function LedgerPage() {
                                     <Input
                                         type="number"
                                         placeholder="0.00"
-                                        className="h-10 rounded-lg border-slate-100 bg-slate-50 font-black text-lg px-4 focus:ring-rose-500/20"
+                                        className="h-10 rounded-lg border-slate-100 bg-slate-50 font-black text-lg px-4 focus:ring-indigo-500/20"
                                         value={newEntry.amount}
                                         onChange={(e) => setNewEntry({ ...newEntry, amount: e.target.value })}
                                     />
@@ -225,7 +225,7 @@ export default function LedgerPage() {
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1.5 italic">Consolidated Deductions</p>
                     </div>
                 </Card>
-                <Card className="rounded-lg border-none bg-slate-900 shadow-sm p-6 space-y-3 relative overflow-hidden group">
+                <Card className="rounded-lg border-none bg-slate-900 shadow-xl p-6 space-y-3 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
                         <Receipt className="h-16 w-16 text-white" />
                     </div>
@@ -234,7 +234,7 @@ export default function LedgerPage() {
                             <div className="h-10 w-10 rounded-lg bg-white/10 flex items-center justify-center text-white">
                                 <Wallet className="h-5 w-5" />
                             </div>
-                            <Badge className="bg-rose-500 text-white font-black text-[8px] uppercase px-2 py-0.5 rounded-sm">Net Balance</Badge>
+                            <Badge className="bg-indigo-500 text-white font-black text-[8px] uppercase px-2 py-0.5 rounded-sm">Net Balance</Badge>
                         </div>
                         <div>
                             <p className="text-2xl font-black text-white tracking-tighter italic leading-none">{formatCurrency(stats?.monthlyBalance || 0)}</p>
@@ -249,7 +249,7 @@ export default function LedgerPage() {
                 <div className="px-4 py-3 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Transacciones Recientes</h3>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" className="h-7 text-[8px] font-black text-slate-400 hover:text-rose-600 uppercase tracking-[0.2em]">
+                        <Button variant="ghost" size="sm" className="h-7 text-[8px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-[0.2em]">
                             <Filter className="h-3 w-3 mr-1.5" /> Filtrar
                         </Button>
                     </div>
@@ -270,7 +270,7 @@ export default function LedgerPage() {
                                 <TableRow>
                                     <TableCell colSpan={5} className="py-32 text-center">
                                         <div className="flex flex-col items-center gap-4">
-                                            <div className="h-8 w-8 border-4 border-rose-600 border-t-transparent rounded-full animate-spin" />
+                                            <div className="h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                                             <p className="font-black text-slate-300 uppercase tracking-[0.3em] text-[10px]">Consultando registros mayoristas...</p>
                                         </div>
                                     </TableCell>
@@ -314,7 +314,7 @@ export default function LedgerPage() {
                                     </TableCell>
                                     <TableCell className="text-right pr-6">
                                         <div className="flex justify-end gap-2">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-200 hover:text-rose-600 hover:bg-rose-50 transition-all">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-200 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
                                                 <Info className="h-4 w-4" />
                                             </Button>
                                         </div>

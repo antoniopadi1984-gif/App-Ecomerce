@@ -35,7 +35,7 @@ export default function ProductOverviewPage() {
                         <div key={i} className="h-32 bg-slate-100 rounded-2xl border border-slate-200" />
                     ))}
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="h-64 bg-slate-100 rounded-3xl border border-slate-200" />
                     <div className="h-64 bg-slate-100 rounded-3xl border border-slate-200" />
                 </div>
@@ -89,7 +89,7 @@ export default function ProductOverviewPage() {
             </div>
 
             {/* Modules Quick Access */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Research Status */}
                 <ModuleStatusCard
                     title={t('research_lab')}
@@ -113,7 +113,7 @@ export default function ProductOverviewPage() {
             </div>
 
             {/* Product Info Summary */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
                 <div className="flex items-start justify-between mb-8">
                     <div className="text-left">
                         <h2 className="text-2xl font-bold text-slate-900">{t('product_config')}</h2>
@@ -126,7 +126,7 @@ export default function ProductOverviewPage() {
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <InfoItem label={t('family')} value={product.productFamily || "N/A"} icon={Package} />
                     <InfoItem
                         label="Meta Pixel"
@@ -148,7 +148,7 @@ export default function ProductOverviewPage() {
 
 function MetricCard({ title, value, change, isPositive, icon: Icon }: any) {
     return (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-sm transition-shadow group">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
             <div className="flex items-center justify-between mb-4">
                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                     <Icon className="w-5 h-5" />
@@ -179,8 +179,8 @@ function ModuleStatusCard({ title, description, progress, statusText, href, icon
     };
 
     return (
-        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-sm transition-all group">
-            <div className="p-6">
+        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group">
+            <div className="p-8">
                 <div className="flex items-start justify-between mb-6">
                     <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500", colorClasses[color])}>
                         <Icon className="w-7 h-7" />

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
         const status = searchParams.get('status');
         const page = parseInt(searchParams.get('page') || '1');
         const pageSize = parseInt(searchParams.get('pageSize') || '25');
-        const storeId = request.headers.get('X-Store-Id') || searchParams.get('storeId');
+        const storeId = request.headers.get('X-Store-Id');
 
         const where: any = {};
         if (storeId) where.storeId = storeId;
@@ -53,8 +53,6 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        console.error(`[ORDERS API] StoreId: ${storeId} | Where clause:`, JSON.stringify(where));
-
         const [orders, total] = await Promise.all([
             prisma.order.findMany({
                 where,
@@ -71,7 +69,6 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            debugWhere: where,
             data: {
                 orders,
                 pagination: {

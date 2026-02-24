@@ -75,8 +75,8 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                 gradient: {
                     angle: 135,
                     stops: [
-                        { color: 'var(--slate-900)', position: 0 },
-                        { color: 'var(--slate-800)', position: 100 }
+                        { color: '#1a1a2e', position: 0 },
+                        { color: '#0f3460', position: 100 }
                     ]
                 }
             },
@@ -86,7 +86,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     shape: 'rectangle',
                     position: { x: 0, y: 0 },
                     size: { width: 1080, height: 8 },
-                    style: { backgroundColor: 'var(--primary)' }
+                    style: { backgroundColor: '#e94560' }
                 },
                 {
                     type: 'text',
@@ -97,7 +97,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 68,
                         fontWeight: '900',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'left',
                         lineHeight: 1.15,
                         textShadow: '0 4px 20px rgba(0,0,0,0.4)'
@@ -112,7 +112,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 52,
                         fontWeight: '800',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'center'
                     }
                 },
@@ -122,9 +122,9 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     position: { x: 240, y: 1450 },
                     size: { width: 600, height: 100 },
                     style: {
-                        background: 'linear-gradient(135deg, var(--primary), var(--accent-strong))',
+                        background: 'linear-gradient(135deg, #e94560, #d63447)',
                         borderRadius: 50,
-                        boxShadow: '0 10px 40px var(--primary-shadow)'
+                        boxShadow: '0 10px 40px rgba(233, 69, 96, 0.4)'
                     }
                 },
                 {
@@ -135,7 +135,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 36,
                         fontWeight: '700',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'center'
                     }
                 }
@@ -156,8 +156,8 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                 gradient: {
                     angle: 180,
                     stops: [
-                        { color: 'var(--slate-50)', position: 0 },
-                        { color: 'var(--white)', position: 100 }
+                        { color: '#f8f9fa', position: 0 },
+                        { color: '#ffffff', position: 100 }
                     ]
                 }
             },
@@ -175,7 +175,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     content: '★★★★★ 4.9',
                     position: { x: 60, y: 1180 },
                     size: { width: 960, height: 60 },
-                    style: { fontSize: 40, color: 'var(--alert-warning)', textAlign: 'center' }
+                    style: { fontSize: 40, color: '#fbbf24', textAlign: 'center' }
                 },
                 {
                     type: 'text',
@@ -186,7 +186,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 62,
                         fontWeight: '900',
-                        color: 'var(--primary)',
+                        color: '#667eea',
                         textAlign: 'center'
                     }
                 },
@@ -196,9 +196,9 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     position: { x: 190, y: 1680 },
                     size: { width: 700, height: 110 },
                     style: {
-                        background: 'linear-gradient(135deg, var(--alert-info), var(--primary))',
+                        background: 'linear-gradient(135deg, #667eea, #764ba2)',
                         borderRadius: 55,
-                        boxShadow: '0 15px 50px var(--info-shadow)'
+                        boxShadow: '0 15px 50px rgba(102, 126, 234, 0.35)'
                     }
                 },
                 {
@@ -209,7 +209,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 38,
                         fontWeight: '700',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'center'
                     }
                 }
@@ -230,8 +230,8 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                 gradient: {
                     angle: 135,
                     stops: [
-                        { color: 'var(--primary)', position: 0 },
-                        { color: 'var(--accent-strong)', position: 100 }
+                        { color: '#ff512f', position: 0 },
+                        { color: '#dd2476', position: 100 }
                     ]
                 }
             },
@@ -244,7 +244,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 44,
                         fontWeight: '900',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'center',
                         letterSpacing: '0.1em'
                     }
@@ -269,7 +269,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 160,
                         fontWeight: '900',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'center',
                         textShadow: '0 10px 30px rgba(0,0,0,0.3)'
                     }
@@ -282,7 +282,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 36,
                         fontWeight: '700',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'center'
                     }
                 },
@@ -295,7 +295,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 56,
                         fontWeight: '800',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'center',
                         lineHeight: 1.2
                     }
@@ -306,7 +306,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     position: { x: 140, y: 1500 },
                     size: { width: 800, height: 120 },
                     style: {
-                        backgroundColor: 'var(--white)',
+                        backgroundColor: '#ffffff',
                         borderRadius: 60,
                         boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
                     }
@@ -319,7 +319,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 42,
                         fontWeight: '900',
-                        color: 'var(--accent-strong)',
+                        color: '#dd2476',
                         textAlign: 'center'
                     }
                 }
@@ -337,7 +337,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
         layout: {
             background: {
                 type: 'solid',
-                value: 'var(--bg)'
+                value: '#f1f5f9'
             },
             elements: [
                 {
@@ -347,7 +347,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     size: { width: 960, height: 100 },
                     style: {
                         fontSize: 72,
-                        color: 'var(--alert-warning)',
+                        color: '#fbbf24',
                         textAlign: 'center'
                     }
                 },
@@ -357,7 +357,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     position: { x: 120, y: 380 },
                     size: { width: 840, height: 600 },
                     style: {
-                        backgroundColor: 'var(--white)',
+                        backgroundColor: '#ffffff',
                         borderRadius: 30,
                         boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
                         padding: 60
@@ -372,7 +372,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 36,
                         fontWeight: '500',
-                        color: 'var(--text)',
+                        color: '#1e293b',
                         textAlign: 'center',
                         lineHeight: 1.6,
                         fontStyle: 'italic'
@@ -386,7 +386,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 28,
                         fontWeight: '700',
-                        color: 'var(--muted-text)',
+                        color: '#64748b',
                         textAlign: 'center'
                     }
                 },
@@ -399,7 +399,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 52,
                         fontWeight: '900',
-                        color: 'var(--slate-900)',
+                        color: '#0f172a',
                         textAlign: 'center'
                     }
                 },
@@ -409,7 +409,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     position: { x: 240, y: 1540 },
                     size: { width: 600, height: 100 },
                     style: {
-                        background: 'linear-gradient(135deg, var(--alert-info), var(--primary))',
+                        background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
                         borderRadius: 50,
                         boxShadow: '0 10px 40px rgba(59, 130, 246, 0.4)'
                     }
@@ -422,7 +422,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 36,
                         fontWeight: '700',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'center'
                     }
                 }
@@ -440,7 +440,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
         layout: {
             background: {
                 type: 'solid',
-                value: 'var(--white)'
+                value: '#ffffff'
             },
             elements: [
                 {
@@ -451,7 +451,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 40,
                         fontWeight: '900',
-                        color: 'var(--slate-900)',
+                        color: '#0f172a',
                         textAlign: 'center',
                         letterSpacing: '0.05em'
                     }
@@ -463,9 +463,9 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     position: { x: 60, y: 280 },
                     size: { width: 960, height: 550 },
                     style: {
-                        backgroundColor: 'var(--accent-pastel)',
+                        backgroundColor: '#fef2f2',
                         borderRadius: 20,
-                        border: '3px solid var(--primary)'
+                        border: '3px solid #fca5a5'
                     }
                 },
                 {
@@ -476,7 +476,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 32,
                         fontWeight: '800',
-                        color: 'var(--alert-critical)',
+                        color: '#dc2626',
                         textAlign: 'center'
                     }
                 },
@@ -495,9 +495,9 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     position: { x: 60, y: 900 },
                     size: { width: 960, height: 550 },
                     style: {
-                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                        backgroundColor: '#f0fdf4',
                         borderRadius: 20,
-                        border: '3px solid var(--alert-ok)'
+                        border: '3px solid #86efac'
                     }
                 },
                 {
@@ -508,7 +508,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 32,
                         fontWeight: '800',
-                        color: 'var(--alert-ok)',
+                        color: '#16a34a',
                         textAlign: 'center'
                     }
                 },
@@ -526,7 +526,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     position: { x: 190, y: 1600 },
                     size: { width: 700, height: 110 },
                     style: {
-                        background: 'linear-gradient(135deg, var(--alert-ok), var(--primary))',
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
                         borderRadius: 55,
                         boxShadow: '0 15px 50px rgba(16, 185, 129, 0.35)'
                     }
@@ -539,7 +539,7 @@ export const STATIC_AD_TEMPLATES: StaticAdTemplate[] = [
                     style: {
                         fontSize: 34,
                         fontWeight: '700',
-                        color: 'var(--white)',
+                        color: '#ffffff',
                         textAlign: 'center'
                     }
                 }

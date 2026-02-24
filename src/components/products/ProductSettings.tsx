@@ -43,7 +43,7 @@ export function ProductSettings({ product }: { product: any }) {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter italic">
-                        Ajustes del <span className="text-rose-600 not-italic">Producto</span>
+                        Ajustes del <span className="text-indigo-600 not-italic">Producto</span>
                     </h1>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 italic">
                         Configuración Maestra • Localización & Metadatos
@@ -64,7 +64,7 @@ export function ProductSettings({ product }: { product: any }) {
                     <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden">
                         <CardHeader className="bg-slate-50/50 p-6 border-b border-slate-100">
                             <CardTitle className="text-xs font-black uppercase text-slate-800 flex items-center gap-2">
-                                <Package className="w-4 h-4 text-rose-500" /> Datos Principales
+                                <Package className="w-4 h-4 text-indigo-500" /> Datos Principales
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-4">
@@ -113,12 +113,12 @@ export function ProductSettings({ product }: { product: any }) {
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden border-rose-100 ring-1 ring-rose-500/5">
-                        <CardHeader className="bg-rose-50/30 p-6 border-b border-rose-100">
-                            <CardTitle className="text-xs font-black uppercase text-rose-900 flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-rose-600" /> Localización Cultural (Brain Sync)
+                    <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden border-indigo-100 ring-1 ring-indigo-500/5">
+                        <CardHeader className="bg-indigo-50/30 p-6 border-b border-indigo-100">
+                            <CardTitle className="text-xs font-black uppercase text-indigo-900 flex items-center gap-2">
+                                <Globe className="w-4 h-4 text-indigo-600" /> Localización Cultural (Brain Sync)
                             </CardTitle>
-                            <CardDescription className="text-[10px] font-medium text-rose-700/60 uppercase tracking-widest leading-none">
+                            <CardDescription className="text-[10px] font-medium text-indigo-700/60 uppercase tracking-widest leading-none">
                                 Define el léxico y tono que usarán los agentes de IA.
                             </CardDescription>
                         </CardHeader>
@@ -129,10 +129,10 @@ export function ProductSettings({ product }: { product: any }) {
                                     value={formData.country}
                                     onValueChange={val => setFormData({ ...formData, country: val })}
                                 >
-                                    <SelectTrigger className="h-12 rounded-xl border-rose-100 font-bold text-sm bg-white shadow-sm ring-1 ring-rose-500/5">
+                                    <SelectTrigger className="h-12 rounded-xl border-indigo-100 font-bold text-sm bg-white shadow-sm ring-1 ring-indigo-500/5">
                                         <SelectValue placeholder="Selecciona localización..." />
                                     </SelectTrigger>
-                                    <SelectContent className="rounded-xl border-rose-50 p-1 shadow-sm">
+                                    <SelectContent className="rounded-xl border-indigo-50 p-1 shadow-2xl">
                                         <SelectItem value="ES" className="rounded-lg py-2.5 font-bold text-xs">🇪🇸 España (Peninsular)</SelectItem>
                                         <SelectItem value="MX" className="rounded-lg py-2.5 font-bold text-xs">🇲🇽 México</SelectItem>
                                         <SelectItem value="CO" className="rounded-lg py-2.5 font-bold text-xs">🇨🇴 Colombia</SelectItem>
@@ -155,13 +155,13 @@ export function ProductSettings({ product }: { product: any }) {
                 <div className="space-y-6">
                     <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden bg-slate-900 text-white">
                         <CardHeader className="p-6">
-                            <CardTitle className="text-[10px] font-black uppercase text-rose-400 tracking-[0.2em]">Acciones Maestras</CardTitle>
+                            <CardTitle className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em]">Acciones Maestras</CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 pt-0 space-y-4">
                             <Button
                                 onClick={handleSave}
                                 disabled={loading}
-                                className="w-full h-12 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-sm transition-all active:scale-95"
+                                className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
                             >
                                 {loading ? "Guardando..." : (
                                     <div className="flex items-center gap-2">

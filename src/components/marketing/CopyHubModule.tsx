@@ -71,7 +71,7 @@ export function CopyHubModule({ productId, productTitle }: CopyHubProps) {
         <div className="grid grid-cols-12 gap-4 pt-4">
             {/* Panel de Configuración */}
             <div className="col-span-12 lg:col-span-4 space-y-4">
-                <Card className="bg-white/40 border-slate-100/50 rounded-2xl shadow-sm p-3 space-y-4 glass-card">
+                <Card className="bg-white/40 backdrop-blur-md border-slate-100/50 rounded-2xl shadow-sm p-3 space-y-4">
                     <div className="space-y-0.5 border-b border-slate-100/50 pb-2">
                         <h2 className="text-xs font-black uppercase italic text-slate-900 flex items-center gap-2">
                             <Plus className="h-3.5 w-3.5 text-rose-500" /> Motor de Copy
@@ -135,7 +135,7 @@ export function CopyHubModule({ productId, productTitle }: CopyHubProps) {
                                         className={cn(
                                             "flex items-center gap-2 p-2 rounded-xl border transition-all text-[9px] font-black uppercase tracking-tight text-left",
                                             context === item.id
-                                                ? "bg-rose-500 border-rose-500 text-white shadow-sm"
+                                                ? "bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-200"
                                                 : "bg-white/40 border-slate-100 text-slate-400 hover:bg-slate-50"
                                         )}
                                     >
@@ -149,7 +149,7 @@ export function CopyHubModule({ productId, productTitle }: CopyHubProps) {
                         <Button
                             onClick={handleGenerate}
                             disabled={loading}
-                            className="w-full h-10 rounded-xl bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[10px] shadow-sm transition-all"
+                            className="w-full h-10 rounded-xl bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[10px] shadow-lg transition-all"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generar Copy Maestro"}
                         </Button>
@@ -157,7 +157,7 @@ export function CopyHubModule({ productId, productTitle }: CopyHubProps) {
                 </Card>
 
                 <Card className={cn(
-                    "rounded-2xl p-3 border transition-all glass-panel",
+                    "rounded-2xl p-3 border transition-all backdrop-blur-sm",
                     (context === 'LANDING_PAGE' || context === 'ADVERTORIAL')
                         ? "bg-rose-500/5 border-rose-500/10 text-rose-900"
                         : "bg-emerald-500/5 border-emerald-500/10 text-emerald-900"
@@ -183,7 +183,7 @@ export function CopyHubModule({ productId, productTitle }: CopyHubProps) {
 
             {/* Panel del Editor */}
             <div className="col-span-12 lg:col-span-8">
-                <Card className="bg-white/40 border-slate-100/50 rounded-2xl shadow-sm min-h-[500px] flex flex-col overflow-hidden glass-card">
+                <Card className="bg-white/40 backdrop-blur-md border-slate-100/50 rounded-2xl shadow-sm min-h-[500px] flex flex-col overflow-hidden">
                     <Tabs defaultValue="editor" className="flex-1 flex flex-col">
                         <TabsList className="bg-slate-50/50 p-1.5 h-12 border-b border-slate-100/50 w-full justify-start gap-1.5">
                             <TabsTrigger value="editor" className="rounded-lg font-black uppercase text-[9px] px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm">Editor</TabsTrigger>

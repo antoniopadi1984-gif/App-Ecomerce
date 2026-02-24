@@ -1,15 +1,19 @@
 import { google } from "googleapis";
 import { prisma } from "./prisma";
-import { getConnectionSecret } from '@/lib/server/connections';
-import { getGoogleAuth } from './google-auth';
 
 /**
  * DRIVE STRUCTURE MANAGER
  * Auto-creates comprehensive folder structure for each product
  */
 
+const DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive"];
+
 async function getDriveClient() {
-    const auth = await getGoogleAuth('store-main');
+    const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "{}");
+    const auth = new google.auth.GoogleAuth({
+        credentials,
+        scopes: DRIVE_SCOPES,
+    });
     return google.drive({ version: "v3", auth });
 }
 
@@ -19,7 +23,11 @@ async function getDocsClient() {
 }
 
 export async function getAuthClient() {
-    return getGoogleAuth('store-main');
+    const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "{}");
+    return new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive'],
+    });
 }
 
 async function getRootFolderId(drive: any, storeId: string): Promise<string> {

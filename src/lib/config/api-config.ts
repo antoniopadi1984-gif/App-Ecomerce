@@ -9,7 +9,7 @@ export const API_CONFIG = {
     // ============================================
     vertexAI: {
         projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',
-        location: process.env.GOOGLE_CLOUD_LOCATION || 'eu',
+        location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
         apiKey: process.env.VERTEX_AI_API_KEY || '',
 
         models: {

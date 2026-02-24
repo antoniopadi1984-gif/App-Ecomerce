@@ -1,14 +1,14 @@
+
 import { GoogleAuth } from 'google-auth-library';
 import { AIProvider, AIResponse, TextOptions, VisionOptions } from "./interfaces";
-import { getConnectionSecret, getConnectionMeta } from '@/lib/server/connections';
 
 export class GeminiProvider implements AIProvider {
     name = "gemini";
     capabilities = ["TEXT" as const, "VISION" as const];
 
     private async getAccessToken(): Promise<string> {
-        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-        if (!saKey) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_KEY for Gemini GCP");
+        const saKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        if (!saKey) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_KEY");
 
         try {
             const key = JSON.parse(saKey);
@@ -34,43 +34,39 @@ export class GeminiProvider implements AIProvider {
     }
 
     async invokeText(options: TextOptions): Promise<AIResponse> {
-        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-        const apiKey = await getConnectionSecret('store-main', 'GEMINI') || process.env.VERTEX_AI_API_KEY || process.env.GEMINI_API_KEY;
-
-        const saKeyStatus = saKey ? "PRESENT" : "MISSING";
-        const apiKeyStatus = apiKey ? "PRESENT" : "MISSING";
+        const saKeyStatus = process.env.GOOGLE_SERVICE_ACCOUNT_KEY ? "PRESENT" : "MISSING";
+        const apiKeyStatus = (process.env.VERTEX_AI_API_KEY || process.env.GEMINI_API_KEY) ? "PRESENT" : "MISSING";
 
         console.log(`[GeminiProvider] invokeText: model=${options.model}, SA_KEY=${saKeyStatus}, API_KEY=${apiKeyStatus}`);
 
         // 1. Try Vertex AI (Preferred for Production)
-        if (saKey) {
+        if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
             console.log(`[GeminiProvider] -> Routing to Vertex AI (Service Account)`);
             return this.invokeVertex(options);
         }
 
         // 2. Try AI Studio (Fallback for API Key Users)
-        if (apiKey) {
+        if (process.env.VERTEX_AI_API_KEY || process.env.GEMINI_API_KEY) {
             console.log(`[GeminiProvider] -> Routing to AI Studio (API Key)`);
             return this.invokeAIStudio(options);
         }
 
-        throw new Error("No valid credentials found for Gemini in DB or ENV (GCP Service Account or GEMINI API_KEY)");
+        throw new Error("No valid credentials found for Gemini (GOOGLE_SERVICE_ACCOUNT_KEY or GEMINI_API_KEY)");
     }
 
     private async invokeVertex(options: TextOptions): Promise<AIResponse> {
-        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-        if (!saKey) throw new Error("Vertex requiere GOOGLE_SERVICE_ACCOUNT_KEY en Base de Datos");
+        const saKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        if (!saKey) throw new Error("Vertex requiere GOOGLE_SERVICE_ACCOUNT_KEY");
 
         let key;
         try {
             key = JSON.parse(saKey);
         } catch (e) {
-            throw new Error("Error al parsear GOOGLE_SERVICE_ACCOUNT_KEY: Formato JSON inválido. Quizás pegaste el ID de proyecto en el campo de JSON.");
+            throw new Error("Error al parsear GOOGLE_SERVICE_ACCOUNT_KEY: Formato JSON inválido");
         }
 
         const project = key.project_id;
-        const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
-        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const location = process.env.GOOGLE_LOCATION || "us-central1";
         const model = options.model;
 
         const token = await this.getAccessToken();
@@ -104,8 +100,8 @@ export class GeminiProvider implements AIProvider {
     }
 
     private async invokeAIStudio(options: TextOptions): Promise<AIResponse> {
-        const apiKey = await getConnectionSecret('store-main', 'GEMINI') || process.env.VERTEX_AI_API_KEY || process.env.GEMINI_API_KEY;
-        if (!apiKey) throw new Error("AI Studio requires GEMINI API KEY in Database");
+        const apiKey = process.env.VERTEX_AI_API_KEY || process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("AI Studio requires API KEY");
 
         // AI Studio uses 'generativelanguage.googleapis.com'
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${apiKey}`;

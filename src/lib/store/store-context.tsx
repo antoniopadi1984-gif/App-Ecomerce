@@ -1,8 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, startTransition } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -32,12 +31,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const [activeStoreId, setActiveStoreIdState] = useState<string | null>(null);
     const [stores, setStores] = useState<StoreInfo[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
 
     // Cargar stores disponibles
     const fetchStores = useCallback(async () => {
         try {
-            const res = await fetch("/api/stores", { cache: "no-store" });
+            const res = await fetch("/api/stores");
             const data = await res.json();
             if (res.ok && data.stores) {
                 setStores(data.stores);
@@ -51,7 +49,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                     setActiveStoreIdState(firstId);
                     if (typeof window !== "undefined") {
                         localStorage.setItem(STORAGE_KEY, firstId);
-                        document.cookie = `activeStoreId=${firstId}; path=/; max-age=31536000; SameSite=Lax`;
                     }
                     // Registrar asignación automática
                     logAudit("STORE_CONTEXT_SET", "STORE", firstId);
@@ -73,19 +70,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setActiveStoreIdState(id);
         if (typeof window !== "undefined") {
             localStorage.setItem(STORAGE_KEY, id);
-            document.cookie = `activeStoreId=${id}; path=/; max-age=31536000; SameSite=Lax`;
         }
         const store = stores.find(s => s.id === id);
         if (store) {
             toast.success(`Tienda activa: ${store.name}`);
         }
         logAudit("STORE_SWITCHED", "STORE", id);
-
-        // Force Next.js to re-fetch Server Components with the new active store cookie
-        startTransition(() => {
-            router.refresh();
-        });
-    }, [stores, router]);
+    }, [stores]);
 
     // Store activa actual
     const activeStore = stores.find(s => s.id === activeStoreId) || null;

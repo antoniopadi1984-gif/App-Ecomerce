@@ -126,8 +126,8 @@ export default function CustomersPage() {
                                     className={cn(
                                         "p-3 rounded-lg cursor-pointer transition-all border flex gap-4 group",
                                         selectedId === c.id
-                                            ? "bg-white border-emerald-100 shadow-sm ring-1 ring-emerald-500/10"
-                                            : "bg-transparent border-transparent hover:bg-white hover:border-slate-100 hover:shadow-sm"
+                                            ? "bg-white border-emerald-100 shadow-xl shadow-emerald-900/5 ring-1 ring-emerald-500/10"
+                                            : "bg-transparent border-transparent hover:bg-white hover:border-slate-100 hover:shadow-lg"
                                     )}
                                 >
                                     <Avatar className="h-10 w-10 border border-slate-100 shadow-xs">
@@ -184,9 +184,9 @@ export default function CustomersPage() {
                                 {/* PANEL HEADER */}
                                 <div className="p-4 border-b border-slate-100 bg-slate-50/20 flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className="h-14 w-14 bg-white rounded-lg border-2 border-slate-100 shadow-sm flex items-center justify-center relative">
+                                        <div className="h-14 w-14 bg-white rounded-lg border-2 border-slate-100 shadow-xl flex items-center justify-center relative">
                                             <User className="h-8 w-8 text-slate-300" />
-                                            <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-sm">
+                                            <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-lg">
                                                 <CheckCircle className="h-3 w-3 text-white" />
                                             </div>
                                         </div>
@@ -206,7 +206,7 @@ export default function CustomersPage() {
                                         <Button variant="outline" className="h-9 px-4 rounded-lg border-slate-200 font-black text-[10px] uppercase tracking-widest gap-2">
                                             <Download className="h-4 w-4" /> Exportar
                                         </Button>
-                                        <Button className="h-9 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-sm">
+                                        <Button className="h-9 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-xl shadow-slate-200">
                                             <Plus className="h-4 w-4" /> Nuevo Pedido
                                         </Button>
                                     </div>
@@ -220,11 +220,11 @@ export default function CustomersPage() {
                                         <div className="grid grid-cols-4 gap-4">
                                             {[
                                                 { label: 'Ingreso Total', value: `€${detail.totalSpent.toFixed(2)}`, icon: TrendingUp, color: 'emerald' },
-                                                { label: 'Pedidos', value: detail.totalOrders, icon: ShoppingBag, color: 'rose' },
+                                                { label: 'Pedidos', value: detail.totalOrders, icon: ShoppingBag, color: 'indigo' },
                                                 { label: 'Ticket Medio', value: `€${detail.avgTicket.toFixed(2)}`, icon: CreditCard, color: 'amber' },
                                                 { label: 'Antigüedad', value: '142 Días', icon: Calendar, color: 'slate' },
                                             ].map((kpi, i) => (
-                                                <Card key={i} className="p-3 border-slate-100 bg-slate-50/30 rounded-lg shadow-xs hover:shadow-sm transition-all border group">
+                                                <Card key={i} className="p-3 border-slate-100 bg-slate-50/30 rounded-lg shadow-xs hover:shadow-md transition-all border group">
                                                     <div className={cn("h-8 w-8 rounded-lg mb-2 flex items-center justify-center shadow-xs transition-transform group-hover:scale-105", `bg-${kpi.color}-100 text-${kpi.color}-600`)}>
                                                         <kpi.icon className="h-3.5 w-3.5" />
                                                     </div>
@@ -245,7 +245,7 @@ export default function CustomersPage() {
                                                 </div>
                                                 <div className="space-y-4">
                                                     {detail.orders.map((o: any) => (
-                                                        <div key={o.id} className="p-4 bg-white border border-slate-100 rounded-lg hover:border-emerald-100 hover:shadow-sm transition-all group flex items-center justify-between">
+                                                        <div key={o.id} className="p-4 bg-white border border-slate-100 rounded-lg hover:border-emerald-100 hover:shadow-xl transition-all group flex items-center justify-between">
                                                             <div className="flex items-center gap-5">
                                                                 <div className="h-10 w-10 bg-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-400 uppercase italic">
                                                                     #{o.orderNumber}
@@ -255,7 +255,7 @@ export default function CustomersPage() {
                                                                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{new Date(o.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="text-right flex items-center gap-6">
+                                                            <div className="text-right flex items-center gap-8">
                                                                 <div>
                                                                     <p className="text-xs font-black text-slate-900 italic">€{o.totalPrice}</p>
                                                                     <Badge variant="outline" className="text-[7px] font-black border-slate-100 text-slate-400 mt-1 uppercase">COD</Badge>
@@ -273,9 +273,9 @@ export default function CustomersPage() {
                                             <div className="w-[450px] space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.4em] flex items-center gap-3">
-                                                        <MessageSquare className="h-5 w-5 text-rose-600" /> Conversaciones Recientes
+                                                        <MessageSquare className="h-5 w-5 text-indigo-600" /> Conversaciones Recientes
                                                     </h3>
-                                                    <Button variant="link" className="text-[10px] font-black text-rose-600 uppercase tracking-widest gap-2">Ir al Inbox <ChevronRight className="h-3 w-3" /></Button>
+                                                    <Button variant="link" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest gap-2">Ir al Inbox <ChevronRight className="h-3 w-3" /></Button>
                                                 </div>
                                                 <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 h-[500px] flex flex-col">
                                                     <ScrollArea className="flex-1 pr-4">
@@ -313,15 +313,15 @@ export default function CustomersPage() {
                                                 <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.4em]">Observaciones Técnicas / CRM</h3>
                                             </div>
                                             <div className="relative group">
-                                                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 to-rose-500/10 blur opacity-0 group-focus-within:opacity-100 transition duration-1000" />
+                                                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 blur opacity-0 group-focus-within:opacity-100 transition duration-1000" />
                                                 <textarea
-                                                    className="w-full h-[150px] bg-slate-50/50 border border-slate-100 rounded-lg p-4 text-sm font-medium text-slate-600 italic leading-relaxed focus:bg-white focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/30 transition-all outline-none shadow-sm"
+                                                    className="w-full h-[150px] bg-slate-50/50 border border-slate-100 rounded-lg p-4 text-sm font-medium text-slate-600 italic leading-relaxed focus:bg-white focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/30 transition-all outline-none shadow-inner"
                                                     placeholder="Añade notas sobre el perfil psicológico del cliente, incidencias previas o acuerdos especiales..."
                                                     defaultValue={detail.notes}
                                                 />
                                             </div>
                                             <div className="flex justify-end">
-                                                <Button className="h-9 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10px] uppercase tracking-widest shadow-sm transition-all">
+                                                <Button className="h-9 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-200 transition-all">
                                                     Actualizar Ficha
                                                 </Button>
                                             </div>
@@ -334,9 +334,9 @@ export default function CustomersPage() {
                         <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-20 text-center animate-in fade-in duration-1000">
                             <div className="relative mb-12 group">
                                 <div className="absolute inset-0 bg-emerald-500/5 blur-[100px] rounded-full animate-pulse" />
-                                <div className="h-24 w-24 bg-white rounded-lg flex items-center justify-center border border-slate-100 shadow-sm relative z-10 group-hover:rotate-3 transition-transform duration-500">
+                                <div className="h-24 w-24 bg-white rounded-lg flex items-center justify-center border border-slate-100 shadow-2xl relative z-10 group-hover:rotate-3 transition-transform duration-500">
                                     <User className="h-10 w-10 text-slate-200" />
-                                    <div className="absolute -top-3 -right-3 h-8 w-8 bg-slate-900 rounded-lg shadow-sm flex items-center justify-center -rotate-12">
+                                    <div className="absolute -top-3 -right-3 h-8 w-8 bg-slate-900 rounded-lg shadow-xl flex items-center justify-center -rotate-12">
                                         <ShoppingBag className="h-4 w-4 text-emerald-400" />
                                     </div>
                                 </div>

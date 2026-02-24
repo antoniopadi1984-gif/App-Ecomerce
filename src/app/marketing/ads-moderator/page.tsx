@@ -109,36 +109,36 @@ export default function ModerationPage() {
                 subtitle="Moderación Inteligente de Ads"
                 icon={ShieldCheck}
                 actions={
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-6">
                         {stats.map((s, i) => (
                             <div key={i} className="text-right flex flex-col items-end">
-                                <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest leading-none mb-0.5">{s.label}</p>
-                                <p className={cn("text-[18px] font-black italic tracking-tighter leading-none", s.color)}>{s.value}</p>
+                                <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest leading-none mb-1">{s.label}</p>
+                                <p className={cn("text-xl font-black italic tracking-tighter leading-none", s.color)}>{s.value}</p>
                             </div>
                         ))}
                     </div>
                 }
             />
 
-            <div className="grid grid-cols-12 gap-1 p-1 relative z-10 max-w-[1600px] mx-auto w-full">
+            <div className="grid grid-cols-12 gap-6 p-6 relative z-10 max-w-[1600px] mx-auto w-full">
                 {/* Control Sidebar */}
-                <div className="col-span-12 lg:col-span-3 space-y-3">
-                    <Card className="bg-white border-slate-200 rounded-2xl p-3 space-y-4 shadow-sm">
+                <div className="col-span-12 lg:col-span-3 space-y-6">
+                    <Card className="bg-white border-slate-200 rounded-3xl p-6 space-y-8 shadow-sm">
                         <div>
-                            <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.15em] mb-2.5">Canales Conectados</h3>
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-amber-500/20 transition-all cursor-pointer group">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                            <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4">Canales Conectados</h3>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-amber-500/20 transition-all cursor-pointer group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
                                             <Facebook className="h-4 w-4" />
                                         </div>
                                         <p className="font-bold text-slate-700 text-xs">Facebook Ads</p>
                                     </div>
                                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                                 </div>
-                                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-amber-500/20 transition-all cursor-pointer group">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="h-7 w-7 rounded-lg bg-pink-50 flex items-center justify-center text-pink-600">
+                                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-amber-500/20 transition-all cursor-pointer group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-lg bg-pink-50 flex items-center justify-center text-pink-600">
                                             <Instagram className="h-4 w-4" />
                                         </div>
                                         <p className="font-bold text-slate-700 text-xs">Instagram Ads</p>
@@ -149,16 +149,16 @@ export default function ModerationPage() {
                         </div>
 
                         <div>
-                            <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.15em] mb-2.5">Reglas de IA</h3>
-                            <div className="space-y-2">
+                            <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4">Reglas de IA</h3>
+                            <div className="space-y-3">
                                 {[
                                     { l: "Ocultar Spam Automático", active: true },
                                     { l: "Auto-Reply (AI Brain)", active: true },
                                     { l: "Alerta de Crisis", active: true }
                                 ].map((r, i) => (
                                     <div key={i} className="flex items-center justify-between">
-                                        <p className="text-[11px] font-bold text-slate-600">{r.l}</p>
-                                        <Badge className="bg-amber-100 text-amber-700 font-black text-[8px] uppercase px-1.5 py-0 border-none">ON</Badge>
+                                        <p className="text-xs font-bold text-slate-600">{r.l}</p>
+                                        <Badge className="bg-amber-100 text-amber-700 font-black text-[8px] uppercase px-2 py-0 border-none">ON</Badge>
                                     </div>
                                 ))}
                             </div>
@@ -166,38 +166,41 @@ export default function ModerationPage() {
 
                         <Button
                             onClick={() => setAgentModalOpen(true)}
-                            className="w-full h-9 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-widest shadow-sm text-[10px]"
+                            className="w-full h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 text-[10px]"
                         >
-                            <Settings className="h-3.5 w-3.5 mr-2 text-rose-200" /> Configurar Agente IA
+                            <Settings className="h-3.5 w-3.5 mr-2 text-indigo-200" /> Configurar Agente IA
                         </Button>
                     </Card>
 
-                    <Card className="glass-card border-slate-200 mt-1">
-                        <CardContent className="p-1 relative overflow-hidden">
-                            <div className="relative z-10">
-                                <div className="h-6 w-6 rounded bg-amber-50 flex items-center justify-center text-amber-600 mb-0.5">
-                                    <Sparkles className="h-3 h-3" />
-                                </div>
-                                <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-900 mb-0">Optimizar Respuestas</h4>
-                                <p className="text-[10px] text-slate-500 leading-tight font-medium">Mejora la calidad de las respuestas automáticas basándote en el tono de tu marca y FAQs actualizadas.</p>
+                    <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/50 rounded-3xl p-6 space-y-4 group relative overflow-hidden shadow-sm">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                            <Brain className="h-16 w-16 text-amber-500" />
+                        </div>
+                        <div className="relative z-10 space-y-3">
+                            <div className="h-8 w-8 bg-amber-500/20 rounded-lg flex items-center justify-center text-amber-600">
+                                <Sparkles className="h-4 w-4" />
                             </div>
-                        </CardContent>
+                            <h3 className="text-sm font-black italic uppercase leading-tight text-slate-900">Optimizar Respuestas</h3>
+                            <p className="text-amber-700/80 text-[10px] font-bold leading-relaxed">
+                                Mejora la calidad de las respuestas automáticas basándote en el tono de tu marca y FAQs actualizadas.
+                            </p>
+                        </div>
                     </Card>
                 </div>
 
                 {/* Main Feed */}
-                <div className="col-span-12 lg:col-span-9 space-y-3">
-                    <Card className="bg-white border-slate-200 rounded-2xl p-3 space-y-3 shadow-sm">
+                <div className="col-span-12 lg:col-span-9 space-y-6">
+                    <Card className="bg-white border-slate-200 rounded-3xl p-6 space-y-6 shadow-sm">
                         <div className="flex items-center justify-between">
                             <Tabs defaultValue="pendientes" className="w-fit" onValueChange={setSelectedTab}>
-                                <TabsList className="bg-slate-50 border border-slate-100 rounded-xl p-0.5 h-8">
-                                    <TabsTrigger value="pendientes" className="rounded-lg px-2.5 h-7 font-black text-[9px] uppercase data-[state=active]:bg-amber-50 data-[state=active]:text-amber-600 data-[state=active]:shadow-xs">
+                                <TabsList className="bg-slate-50 border border-slate-100 rounded-xl p-1 h-10">
+                                    <TabsTrigger value="pendientes" className="rounded-lg px-4 font-black text-[9px] uppercase data-[state=active]:bg-amber-50 data-[state=active]:text-amber-600 data-[state=active]:shadow-sm">
                                         Pendientes ({comments.filter(c => c.status === "pending").length})
                                     </TabsTrigger>
-                                    <TabsTrigger value="aprobados" className="rounded-lg px-3 font-black text-[9px] uppercase data-[state=active]:text-slate-900 data-[state=active]:shadow-xs">
+                                    <TabsTrigger value="aprobados" className="rounded-lg px-4 font-black text-[9px] uppercase data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">
                                         Aprobados
                                     </TabsTrigger>
-                                    <TabsTrigger value="ocultos" className="rounded-lg px-3 font-black text-[9px] uppercase data-[state=active]:text-slate-900 data-[state=active]:shadow-xs">
+                                    <TabsTrigger value="ocultos" className="rounded-lg px-4 font-black text-[9px] uppercase data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">
                                         Ocultos
                                     </TabsTrigger>
                                 </TabsList>
@@ -208,47 +211,47 @@ export default function ModerationPage() {
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
                                     <Input
                                         placeholder="Buscar comentario..."
-                                        className="w-64 h-9 bg-white border-slate-200 rounded-xl pl-9 focus:ring-amber-500/20 text-xs font-bold shadow-sm"
+                                        className="w-64 h-10 bg-white border-slate-200 rounded-xl pl-9 focus:ring-amber-500/20 text-xs font-bold shadow-sm"
                                     />
                                 </div>
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    className={cn("h-9 w-9 rounded-xl bg-white border-slate-200 hover:border-amber-500/30 shadow-sm", isRefreshing && "animate-spin")}
+                                    className={cn("h-10 w-10 rounded-xl bg-white border-slate-200 hover:border-amber-500/30 shadow-sm", isRefreshing && "animate-spin")}
                                     onClick={handleRefresh}
                                 >
                                     <RefreshCw className="h-3.5 w-3.5 text-slate-400" />
                                 </Button>
-                                <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200 shadow-sm hover:border-amber-500/30">
+                                <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl bg-white border-slate-200 shadow-sm hover:border-amber-500/30">
                                     <Filter className="h-3.5 w-3.5 text-slate-400" />
                                 </Button>
                             </div>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {filteredComments.map((comment) => (
-                                <div key={comment.id} className="group flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all shadow-sm">
-                                    <div className="h-8 w-8 shrink-0 rounded-full bg-slate-200 border border-white flex items-center justify-center font-black text-[10px] text-slate-500 shadow-sm">
+                                <div key={comment.id} className="group flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all shadow-sm">
+                                    <div className="h-9 w-9 shrink-0 rounded-full bg-slate-200 border border-white flex items-center justify-center font-black text-[10px] text-slate-500 shadow-sm">
                                         {comment.user.charAt(1).toUpperCase()}
                                     </div>
                                     <div className="flex-1 space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2.5">
-                                                <p className="font-black text-slate-900 text-[12px]">{comment.user}</p>
+                                            <div className="flex items-center gap-3">
+                                                <p className="font-black text-slate-900 text-xs">{comment.user}</p>
                                                 <Badge className="bg-white border-slate-200 text-slate-500 text-[8px] font-black tracking-widest uppercase shadow-sm">{comment.adName}</Badge>
-                                                {comment.platform === "Instagram" ? <Instagram className="h-3 w-3 text-pink-500" /> : <Facebook className="h-3 w-3 text-blue-500" />}
+                                                {comment.platform === "Instagram" ? <Instagram className="h-3.5 w-3.5 text-pink-500" /> : <Facebook className="h-3.5 w-3.5 text-blue-500" />}
                                             </div>
                                             <span className="text-[9px] font-bold text-slate-400">{comment.time}</span>
                                         </div>
-                                        <p className="text-slate-700 text-[12px] font-semibold leading-normal">
+                                        <p className="text-slate-700 text-xs font-semibold leading-relaxed">
                                             {comment.text}
                                         </p>
                                         <div className="flex items-center justify-between pt-1">
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-3">
                                                 <Button
                                                     variant="ghost" size="sm"
                                                     onClick={() => handleAction(comment.id, "reply")}
-                                                    className="h-7 text-rose-600 hover:text-rose-700 hover:bg-rose-50 text-[9px] font-black uppercase tracking-widest px-2"
+                                                    className="h-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 text-[9px] font-black uppercase tracking-widest px-2"
                                                 >
                                                     <Reply className="h-3 w-3 mr-1.5" /> Responder
                                                 </Button>
@@ -287,7 +290,7 @@ export default function ModerationPage() {
 
             {/* AI AGENT CONFIGURATION MODAL */}
             <Dialog open={agentModalOpen} onOpenChange={setAgentModalOpen}>
-                <DialogContent className="bg-black border-white/10 text-white rounded-[2.5rem] max-w-2xl p-0 overflow-hidden">
+                <DialogContent className="bg-[#0a0a0a] border-white/10 text-white rounded-[2.5rem] max-w-2xl p-0 overflow-hidden">
                     <div className="h-2 w-full bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600" />
 
                     <div className="p-10 space-y-8">
@@ -304,7 +307,7 @@ export default function ModerationPage() {
                             </DialogDescription>
                         </DialogHeader>
 
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-2 gap-8">
                             {/* Left Col: Personality */}
                             <div className="space-y-6">
                                 <div className="space-y-3">
@@ -345,7 +348,7 @@ export default function ModerationPage() {
                                         <FileText className="h-3 w-3" /> Base de Conocimiento
                                     </label>
                                     <textarea
-                                        className="w-full h-[120px] bg-black border border-white/10 rounded-2xl p-4 text-xs font-medium text-slate-300 focus:ring-1 focus:ring-yellow-500/50 outline-none resize-none"
+                                        className="w-full h-[120px] bg-[#050505] border border-white/10 rounded-2xl p-4 text-xs font-medium text-slate-300 focus:ring-1 focus:ring-yellow-500/50 outline-none resize-none"
                                         placeholder="Pega aquí información sobre tus productos, tiempos de envío, FAQs... El agente usará esto para responder."
                                         value={agentKnowledge}
                                         onChange={(e) => setAgentKnowledge(e.target.value)}
@@ -366,7 +369,7 @@ export default function ModerationPage() {
                                     exit={{ height: 0, opacity: 0 }}
                                     className="space-y-6 pt-6 border-t border-white/10 overflow-hidden"
                                 >
-                                    <div className="grid grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-2 gap-8">
                                         <div className="space-y-3">
                                             <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Blacklist de Palabras (Automatic Hide)</label>
                                             <Input placeholder="estafa, mentira, fake..." className="h-12 bg-black border-white/10 rounded-xl" />
@@ -389,7 +392,7 @@ export default function ModerationPage() {
                                 <Sliders className="h-4 w-4 mr-3" /> Reglas Avanzadas
                             </Button>
                             <Button
-                                className="flex-[2] h-14 rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-black font-black uppercase tracking-widest shadow-sm text-[10px]"
+                                className="flex-[2] h-14 rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-black font-black uppercase tracking-widest shadow-xl shadow-yellow-900/20 text-[10px]"
                                 onClick={() => {
                                     setIsSaving(true);
                                     setTimeout(() => {

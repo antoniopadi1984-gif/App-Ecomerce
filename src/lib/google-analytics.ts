@@ -1,6 +1,5 @@
 import { google } from 'googleapis';
 import { prisma } from './prisma';
-import { getGoogleAuth } from './google-auth';
 
 /**
  * Google Analytics Service
@@ -10,7 +9,22 @@ import { getGoogleAuth } from './google-auth';
  */
 export class GoogleAnalyticsService {
     private static async getAuth() {
-        return getGoogleAuth('store-main');
+        // Load Service Account from database
+        const sa = await prisma.connection.findFirst({
+            where: { provider: "GOOGLE_SERVICE_ACCOUNT", isActive: true }
+        });
+
+        if (!sa || !sa.extraConfig) {
+            throw new Error('Service Account not configured');
+        }
+
+        const credentials = JSON.parse(sa.extraConfig as string);
+        const auth = new google.auth.GoogleAuth({
+            credentials,
+            scopes: ['https://www.googleapis.com/auth/analytics.readonly']
+        });
+
+        return auth;
     }
 
     /**

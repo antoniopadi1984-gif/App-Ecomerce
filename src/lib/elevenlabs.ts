@@ -2,21 +2,20 @@
  * ElevenLabs API Client for EcomBoom Control
  * Handles voice synthesis and cloning.
  */
-import { getConnectionSecret } from '@/lib/server/connections';
 
 export class ElevenLabsClient {
+    private apiKey: string;
     private baseUrl = "https://api.elevenlabs.io/v1";
 
-    private async getApiKey(): Promise<string> {
-        return await getConnectionSecret('store-main', 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY || "";
+    constructor(apiKey?: string) {
+        this.apiKey = apiKey || process.env.ELEVENLABS_API_KEY || "";
     }
 
     async getVoices() {
-        const apiKey = await this.getApiKey();
-        if (!apiKey) return { success: false, error: "No API Key configuration in Database" };
+        if (!this.apiKey) return { success: false, error: "No API Key" };
         try {
             const response = await fetch(`${this.baseUrl}/voices`, {
-                headers: { "xi-api-key": apiKey }
+                headers: { "xi-api-key": this.apiKey }
             });
             const data = await response.json();
             return { success: true, voices: data.voices };
@@ -32,8 +31,7 @@ export class ElevenLabsClient {
         use_speaker_boost?: boolean,
         model_id?: string
     } = {}) {
-        const apiKey = await this.getApiKey();
-        if (!apiKey) return { success: false, error: "No API Key in Database" };
+        if (!this.apiKey) return { success: false, error: "No API Key" };
         const {
             stability = 0.5,
             similarity = 0.75,
@@ -47,7 +45,7 @@ export class ElevenLabsClient {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "xi-api-key": apiKey
+                    "xi-api-key": this.apiKey
                 },
                 body: JSON.stringify({
                     text,

@@ -39,7 +39,7 @@ export default function ProductOrdersPage() {
                         <p className="text-slate-500 max-w-sm mx-auto font-medium text-sm">Debes vincular tu tienda oficial de Shopify antes de gestionar pedidos y logística.</p>
                     </div>
                     <Link href="/connections">
-                        <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-sm">
+                        <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-lg shadow-rose-500/20">
                             <Link2 className="w-4 h-4 mr-2" />
                             Ir a Conexiones
                         </Button>
@@ -78,26 +78,9 @@ export default function ProductOrdersPage() {
         );
     }
 
-    if (!activeStoreId) {
-        return (
-            <PageShell>
-                <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
-                    <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center">
-                        <AlertCircle className="w-10 h-10 text-slate-400" />
-                    </div>
-                    <div className="space-y-2 text-center">
-                        <h2 className="text-lg font-black text-slate-900 tracking-tight italic uppercase">Tienda no seleccionada</h2>
-                        <p className="text-slate-500 max-w-sm mx-auto font-medium text-sm">Por favor, selecciona una tienda en la barra superior para gestionar sus pedidos.</p>
-                    </div>
-                </div>
-            </PageShell>
-        );
-    }
-
     return (
         <PageShell loading={isConnected === null} loadingMessage="VERIFICANDO CONEXIÓN...">
             <OrdersHubClient
-                storeId={activeStoreId}
                 productId={productId}
                 productTitle={product?.title}
             />

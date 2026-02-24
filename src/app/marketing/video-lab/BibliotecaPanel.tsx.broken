@@ -1,0 +1,272 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Play, Video, Image as ImageIcon, FileText, Search, Filter, Download, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
+
+interface DriveFile {
+    id: string;
+    name: string;
+    path: string;
+    mimeType: string;
+    type: string;
+    createdTime: string;
+    webViewLink?: string;
+    thumbnailLink?: string;
+    duration?: number;
+    width?: number;
+    height?: number;
+}
+
+export default function BibliotecaPanel({ productId }: { productId: string }) {
+    const [files, setFiles] = useState<DriveFile[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterType, setFilterType] = useState<string>("all");
+
+    useEffect(() => {
+        if (!productId) return;
+        loadFiles();
+    }, [productId]);
+
+    const loadFiles = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/video-lab/drive-files?productId=${productId}`);
+            const data = await res.json();
+
+            if (data.error) {
+                toast.error("Error cargando Drive: " + data.error);
+                setFiles([]);
+            } else {
+                setFiles(data.files || []);
+                toast.success(`${data.count} archivos encontrados en Drive`);
+            }
+        } catch (error: any) {
+            toast.error("Error de red: " + error.message);
+            setFiles([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const filteredFiles = files.filter(file => {
+        const matchesSearch = file.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            file.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesType = filterType === "all" || file.type === filterType;
+        return matchesSearch && matchesType;
+    });
+
+    const getAssetIcon = (type: string) => {
+        switch (type) {
+            case "video": return <Video className="w-4 h-4" />;
+            case "image": return <ImageIcon className="w-4 h-4" />;
+            case "document": return <FileText className="w-4 h-4" />;
+            default: return <Video className="w-4 h-4" />;
+        }
+    };
+
+    const getConceptColor = (concept?: number) => {
+        if (!concept) return "bg-gray-500/20 text-gray-300";
+        const colors = [
+            "bg-red-500/20 text-red-300",      // 1: Problema
+            "bg-blue-500/20 text-blue-300",     // 2: Solución
+            "bg-purple-500/20 text-purple-300", // 3: Mecanismo
+            "bg-green-500/20 text-green-300",   // 4: Prueba
+            "bg-yellow-500/20 text-yellow-300", // 5: Autoridad
+            "bg-pink-500/20 text-pink-300",     // 6: Estatus
+            "bg-orange-500/20 text-orange-300"  // 7: Resultado
+        ];
+        return colors[concept - 1] || colors[0];
+    };
+
+    const conceptNames = ["Problema", "Solución", "Mecanismo", "Prueba", "Autoridad", "Estatus", "Resultado"];
+
+    const breadcrumbs = currentFolder ? currentFolder.split('/') : [];
+    const currentNode = getCurrentFolderNode();
+
+    const handleRenameFile = async (file: DriveFile) => {
+        const newName = prompt(`Renombrar "${file.name}" a:`, file.name);
+        if (!newName || newName === file.name) return;
+
+        toast.info("Renombrando archivo... (función pendiente)");
+        // TODO: Implement rename API
+    };
+
+    return (
+        <div className="h-full flex flex-col gap-4">
+            {/* Breadcrumb Navigation */}
+            <div className="flex items-center gap-2 text-sm text-white/60">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentFolder("")}
+                    className="h-7 px-2 hover:bg-white/5 hover:text-white"
+                >
+                    <Home className="w-3 h-3 mr-1" />
+                    Inicio
+                </Button>
+                {breadcrumbs.map((folder, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                        <ChevronRight className="w-3 h-3 text-white/30" />
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setCurrentFolder(breadcrumbs.slice(0, index + 1).join('/'))}
+                            className="h-7 px-2 hover:bg-white/5 hover:text-white"
+                        >
+                            {folder}
+                        </Button>
+                    </div>
+                ))}
+            </div>
+
+            {/* Header & Controls */}
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 flex-1">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                        <Input
+                            placeholder="Buscar en biblioteca..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFilterType("all")}
+                            className={filterType === "all" ? "bg-indigo-500/20 border-indigo-500/50" : "bg-white/5 border-white/10"}
+                        >
+                            Todos ({files.length})
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFilterType("video")}
+                            className={filterType === "video" ? "bg-indigo-500/20 border-indigo-500/50" : "bg-white/5 border-white/10"}
+                        >
+                            <Video className="w-3 h-3 mr-1" />
+                            Videos ({files.filter(f => f.type === "video").length})
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFilterType("image")}
+                            className={filterType === "image" ? "bg-indigo-500/20 border-indigo-500/50" : "bg-white/5 border-white/10"}
+                        >
+                            <ImageIcon className="w-3 h-3 mr-1" />
+                            Imágenes ({files.filter(f => f.type === "image").length})
+                        </Button>
+                    </div>
+                </div>
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                    {filteredFiles.length} Resultados
+                </Badge>
+            </div>
+
+            {/* Asset Grid */}
+            {loading ? (
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center space-y-3">
+                        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <p className="text-sm text-white/50">Cargando biblioteca...</p>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex-1 overflow-y-auto space-y-6 pb-4">
+                    {/* Folders Section */}
+                    {!searchTerm && currentNode && currentNode.subfolders.size > 0 && (
+                        <div className="space-y-3">
+                            <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider px-1">Carpetas</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {Array.from(currentNode.subfolders.entries()).map(([folderName, folderNode]) => (
+                                    <Card
+                                        key={folderName}
+                                        onClick={() => setCurrentFolder(folderNode.path)}
+                                        className="bg-white/5 border-white/10 hover:border-indigo-500/50 transition-all cursor-pointer group"
+                                    >
+                                        <CardContent className="p-4 flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
+                                                <Folder className="w-5 h-5 text-indigo-400" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-white truncate">{folderName}</p>
+                                                <p className="text-xs text-white/40">
+                                                    {folderNode.files.length} archivo{folderNode.files.length !== 1 ? 's' : ''}
+                                                </p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Files Section */}
+                    {filteredFiles.length === 0 && (!currentNode || currentNode.subfolders.size === 0) ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="text-center space-y-3 max-w-md">
+                                <Folder className="w-16 h-16 text-white/10 mx-auto" />
+                                <h3 className="text-lg font-medium text-white/50">Carpeta vacía</h3>
+                                <p className="text-sm text-white/30">
+                                    {searchTerm ? "No se encontraron resultados" : "No hay archivos en esta carpeta"}
+                                </p>
+                            </div>
+                        </div>
+                    ) : filteredFiles.length > 0 && (
+                        <div className="space-y-3">
+                            {!searchTerm && <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider px-1">Archivos</h3>}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                {filteredFiles.map((file) => (
+                                    <Card key={file.id} className="bg-white/5 border-white/10 group hover:border-indigo-500/50 transition-all cursor-pointer">
+                                        <div className="aspect-video bg-black/50 relative overflow-hidden rounded-t-lg">
+                                            {file.thumbnailLink && (
+                                                <img src={file.thumbnailLink} alt={file.name} className="w-full h-full object-cover" />
+                                            )}
+                                            <div className="absolute inset-0 flex items-center justify-center text-white/20 group-hover:text-indigo-400/50 transition-colors">
+                                                {getAssetIcon(file.type)}
+                                                <Play className="w-8 h-8 absolute" />
+                                            </div>
+                                        </div>
+                                        <CardContent className="p-3 space-y-2">
+                                            <div className="flex items-start gap-2">
+                                                {getAssetIcon(file.type)}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-medium text-white truncate">
+                                                        {file.name}
+                                                    </p>
+                                                    <p className="text-[10px] text-white/40 truncate">
+                                                        {file.type} • {file.path}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-6 px-2 text-[10px] flex-1 hover:bg-indigo-500/20"
+                                                    onClick={() => {
+                                                        if (file.webViewLink) {
+                                                            window.open(file.webViewLink, '_blank');
+                                                        }
+                                                    }}
+                                                >
+                                                    <ExternalLink className="w-3 h-3 mr-1" />
+                                                    Ver en Drive
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+            )}
+                        </div>
+                    );
+}

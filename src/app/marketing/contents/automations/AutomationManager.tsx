@@ -80,11 +80,11 @@ export default function AutomationManager({ storeId }: { storeId: string }) {
             </header>
 
             {isAdding && (
-                <Card className="rounded-[32px] border-emerald-200 bg-emerald-50/20 border-2 overflow-hidden shadow-sm">
+                <Card className="rounded-[32px] border-emerald-200 bg-emerald-50/20 border-2 overflow-hidden shadow-xl">
                     <CardHeader className="bg-white border-b border-emerald-50 p-6">
                         <CardTitle className="text-lg font-black uppercase tracking-tight">Crear Automatización</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-6">
+                    <CardContent className="p-8 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nombre de la Regla</label>

@@ -50,7 +50,7 @@ function AssetCard({ asset, onClick }: { asset: any, onClick: () => void }) {
     return (
         <div
             onClick={onClick}
-            className="group glass-panel rounded-xl overflow-hidden shadow-sm hover:shadow-sm hover:shadow-sm hover:-translate-y-1 transition-all duration-300 cursor-pointer relative"
+            className="group bg-white/60 backdrop-blur-md rounded-xl overflow-hidden border border-white/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer relative"
         >
             {/* Visual Preview Container */}
             <div className="relative aspect-[9/11] bg-slate-900 group-hover:scale-[1.01] transition-transform duration-500">
@@ -77,13 +77,13 @@ function AssetCard({ asset, onClick }: { asset: any, onClick: () => void }) {
 
                 <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                     <Badge className={cn(
-                        "font-black text-[8px] uppercase tracking-widest border-none px-1.5 py-0.5 shadow-sm",
+                        "font-black text-[8px] uppercase tracking-widest border-none px-1.5 py-0.5 shadow-lg",
                         isReady ? "bg-emerald-500 text-white" : "bg-amber-500 text-white"
                     )}>
                         {asset.verdict || "Testing"}
                     </Badge>
                     {isWinner && (
-                        <Badge className="bg-rose-600 text-white font-black text-[8px] uppercase tracking-widest border-none px-1.5 py-0.5 shadow-sm flex items-center gap-1">
+                        <Badge className="bg-indigo-600 text-white font-black text-[8px] uppercase tracking-widest border-none px-1.5 py-0.5 shadow-lg flex items-center gap-1">
                             <Sparkles className="w-2 h-2" />
                             Winner
                         </Badge>
@@ -95,7 +95,7 @@ function AssetCard({ asset, onClick }: { asset: any, onClick: () => void }) {
                         <span className="text-[9px] font-black text-white/60 uppercase tracking-widest truncate">{asset.nomenclatura || "UGC_GEN_01"}</span>
                         <h3 className="text-white font-bold text-xs truncate leading-tight mt-0.5">{asset.name}</h3>
                     </div>
-                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white scale-0 group-hover:scale-100 transition-transform duration-300">
+                    <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white scale-0 group-hover:scale-100 transition-transform duration-300">
                         <Play className="w-2.5 h-2.5 fill-current ml-0.5" />
                     </div>
                 </div>

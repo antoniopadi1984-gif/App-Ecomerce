@@ -83,49 +83,49 @@ export function CreativeIterationLab({
     };
 
     return (
-        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-rose-500 to-purple-500" />
-            <div className="p-3">
-                <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
+        <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl shadow-slate-200/50">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
+            <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
                         <div className="p-2 bg-blue-50 rounded-lg">
-                            <Sparkles className="w-5 h-5 text-blue-600" />
+                            <Sparkles className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Laboratorio de Iteración</h3>
-                            <p className="text-[10px] text-slate-500 font-medium">Genera variaciones instantáneas desde Datos Forenses</p>
+                            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Creative Iteration Lab</h3>
+                            <p className="text-sm text-slate-500 font-medium">Generate instant variations based on Forensic Data</p>
                         </div>
                     </div>
-                    <Badge variant="outline" className="bg-slate-900 text-white border-slate-800 px-3 py-1 text-xs">
-                        MODELO IA: CLAUDE 3.7 SONNET
+                    <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 px-3 py-1 text-xs">
+                        AI MODEL: CLAUDE 3.7 SONNET
                     </Badge>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Avatar Generator */}
-                    <div className="group bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-300">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:bg-slate-100 transition-colors">
-                                <Users className="w-3.5 h-3.5" />
+                    <div className="group bg-slate-50 hover:bg-white p-4 rounded-lg border border-slate-100 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                <Users className="w-4 h-4" />
                             </div>
-                            <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Avatares</h4>
+                            <h4 className="text-[11px] font-black text-slate-700 uppercase tracking-widest">Avatars</h4>
                         </div>
                         <div className="space-y-3">
                             <select
-                                className="w-full text-[10px] font-black uppercase h-9 border border-slate-200 bg-slate-50 focus:bg-white rounded-lg outline-none px-2 text-slate-700 transition-colors"
+                                className="w-full text-[10px] font-black uppercase h-9 border-slate-200 bg-white rounded-xl outline-none px-2"
                                 value={avatarParams.awarenessLevel}
                                 onChange={(e) => setAvatarParams({ ...avatarParams, awarenessLevel: e.target.value })}
                             >
-                                <option value="Most Aware">🔥 Muy Consciente</option>
-                                <option value="Product Aware">🛒 Consc. Producto</option>
-                                <option value="Solution Aware">💡 Consc. Solución</option>
-                                <option value="Problem Aware">🤕 Consc. Problema</option>
-                                <option value="Unaware">🥶 Inconsciente</option>
+                                <option value="Most Aware">🔥 Most Aware</option>
+                                <option value="Product Aware">🛒 Product Aware</option>
+                                <option value="Solution Aware">💡 Solution Aware</option>
+                                <option value="Problem Aware">🤕 Problem Aware</option>
+                                <option value="Unaware">🥶 Unaware</option>
                             </select>
                             <Button
                                 onClick={handleRegenerateAvatars}
                                 disabled={isLoading}
-                                className="w-full h-8 text-[9px] font-black uppercase tracking-widest bg-slate-900 hover:bg-black text-white rounded-lg transition-colors shadow-sm"
+                                className="w-full h-9 text-[9px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-500/10"
                             >
                                 Regenerar
                             </Button>
@@ -133,28 +133,28 @@ export function CreativeIterationLab({
                     </div>
 
                     {/* Angle Explorer */}
-                    <div className="group bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-300">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:bg-slate-100 transition-colors">
-                                <Target className="w-3.5 h-3.5" />
+                    <div className="group bg-slate-50 hover:bg-white p-4 rounded-lg border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <Target className="w-4 h-4" />
                             </div>
-                            <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Ángulos</h4>
+                            <h4 className="text-[11px] font-black text-slate-700 uppercase tracking-widest">Ángulos</h4>
                         </div>
                         <div className="space-y-3">
                             <select
-                                className="w-full text-[10px] font-black uppercase h-9 border border-slate-200 bg-slate-50 focus:bg-white rounded-lg outline-none px-2 text-slate-700 transition-colors"
+                                className="w-full text-[10px] font-black uppercase h-9 border-slate-200 bg-white rounded-xl outline-none px-2"
                                 value={angleVariationType}
                                 onChange={(e) => setAngleVariationType(e.target.value)}
                             >
-                                <option value="ALL">🧬 Mix Híbrido</option>
-                                <option value="DIRECT">👊 Respuesta Directa</option>
+                                <option value="ALL">🧬 Hybrid Mix</option>
+                                <option value="DIRECT">👊 Direct Response</option>
                                 <option value="STORY">📖 Storytelling</option>
-                                <option value="CONTRARIAN">⚡ Contrariano</option>
+                                <option value="CONTRARIAN">⚡ Contrarian</option>
                             </select>
                             <Button
                                 onClick={handleGenerateAngles}
                                 disabled={isLoading}
-                                className="w-full h-8 text-[9px] font-black uppercase tracking-widest bg-slate-900 hover:bg-black text-white rounded-lg transition-colors shadow-sm"
+                                className="w-full h-9 text-[9px] font-black uppercase tracking-widest bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/10"
                             >
                                 Explorar
                             </Button>
@@ -162,28 +162,28 @@ export function CreativeIterationLab({
                     </div>
 
                     {/* Copy Architect */}
-                    <div className="group bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-300">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:bg-slate-100 transition-colors">
-                                <FileText className="w-3.5 h-3.5" />
+                    <div className="group bg-slate-50 hover:bg-white p-4 rounded-lg border border-slate-100 hover:border-rose-200 hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-300">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+                                <FileText className="w-4 h-4" />
                             </div>
-                            <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Textos V3</h4>
+                            <h4 className="text-[11px] font-black text-slate-700 uppercase tracking-widest">Copy V3</h4>
                         </div>
                         <div className="space-y-3">
                             <select
-                                className="w-full text-[10px] font-black uppercase h-9 border border-slate-200 bg-slate-50 focus:bg-white rounded-lg outline-none px-2 text-slate-700 transition-colors"
+                                className="w-full text-[10px] font-black uppercase h-9 border-slate-200 bg-white rounded-xl outline-none px-2"
                                 value={copyType}
                                 onChange={(e) => setCopyType(e.target.value as any)}
                             >
-                                <option value="HEADLINE">📰 Titulares</option>
-                                <option value="VSL_OPENING">🎬 Aperturas VSL</option>
-                                <option value="CTA">🎯 Llamadas a la Acción</option>
-                                <option value="BULLETS">🔫 Viñetas</option>
+                                <option value="HEADLINE">📰 Headlines</option>
+                                <option value="VSL_OPENING">🎬 VSL Openers</option>
+                                <option value="CTA">🎯 CTAs</option>
+                                <option value="BULLETS">🔫 Bullets</option>
                             </select>
                             <Button
                                 onClick={handleGenerateCopy}
                                 disabled={isLoading}
-                                className="w-full h-8 text-[9px] font-black uppercase tracking-widest bg-slate-900 hover:bg-black text-white rounded-lg transition-colors shadow-sm"
+                                className="w-full h-9 text-[9px] font-black uppercase tracking-widest bg-rose-500 hover:bg-rose-600 text-white rounded-xl shadow-lg shadow-rose-500/10"
                             >
                                 Generar
                             </Button>
@@ -191,23 +191,24 @@ export function CreativeIterationLab({
                     </div>
 
                     {/* God-Tier Copy (V4) */}
-                    <div className="group bg-slate-950 p-3 rounded-xl border border-slate-800 hover:border-slate-700 hover:shadow-sm transition-all duration-500 relative overflow-hidden flex flex-col justify-between">
-                        <div className="absolute -top-10 -right-10 w-24 h-24 bg-[var(--primary)]/10 rounded-full blur-2xl group-hover:bg-[var(--primary)]/15 transition-all" />
-
-                        <div className="relative z-10">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-white mb-2 flex items-center gap-2">
-                                <Zap className="w-4 h-4 text-[var(--primary)] fill-current" /> GOD-TIER V4
-                            </h3>
-                            <p className="text-[9px] font-medium text-white italic opacity-90 mb-3">Secuencia Triple: Briefing + Destilación + Generación</p>
+                    <div className="group bg-slate-900 p-4 rounded-lg border border-slate-800 hover:border-yellow-500/50 hover:shadow-2xl hover:shadow-yellow-500/10 transition-all duration-500 relative overflow-hidden">
+                        <div className="absolute -top-4 -right-4 w-12 h-12 bg-yellow-500/10 rounded-full blur-xl group-hover:bg-yellow-500/20 transition-all" />
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500">
+                                <Zap className="w-4 h-4 fill-current" />
+                            </div>
+                            <h4 className="text-[11px] font-black text-yellow-500 uppercase tracking-widest">God-Tier V4</h4>
                         </div>
-
-                        <Button
-                            onClick={handleGenerateGodTier}
-                            disabled={isLoading}
-                            className="w-full relative z-10 h-8 text-[9px] font-black uppercase tracking-widest bg-[var(--primary)] hover:bg-rose-500 text-white rounded-lg shadow-sm hover:shadow-[0_0_15px_rgba(244,63,94,0.3)] transition-all border border-[var(--primary)]/50"
-                        >
-                            Lanzar Secuencia
-                        </Button>
+                        <div className="space-y-3">
+                            <p className="text-[10px] font-medium text-slate-400 italic">Secuencia Triple: Briefing + Destilación + Generación Claude 3.7</p>
+                            <Button
+                                onClick={handleGenerateGodTier}
+                                disabled={isLoading}
+                                className="w-full h-9 text-[9px] font-black uppercase tracking-widest bg-yellow-500 hover:bg-yellow-600 text-slate-900 rounded-xl shadow-lg shadow-yellow-500/20"
+                            >
+                                Lanzar Secuencia
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
@@ -223,7 +224,7 @@ export function CreativeIterationLab({
                                 <XCircle className="w-5 h-5 text-slate-400" />
                             </Button>
                         </div>
-                        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 max-h-[400px] overflow-y-auto custom-scrollbar font-mono text-[11px] leading-relaxed text-blue-300 shadow-sm">
+                        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 max-h-[400px] overflow-y-auto custom-scrollbar font-mono text-[11px] leading-relaxed text-blue-300 shadow-inner">
                             <pre className="whitespace-pre-wrap">{JSON.stringify(iterationResults.data, null, 2)}</pre>
                         </div>
                     </div>

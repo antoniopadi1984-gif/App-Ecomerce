@@ -129,7 +129,7 @@ export function ResearchConfig() {
                             key={f.id}
                             onClick={() => setFramework(f.id)}
                             className={`p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${framework === f.id
-                                ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                                ? "border-slate-900 bg-slate-900 text-white shadow-lg"
                                 : "border-slate-100 bg-slate-50/50 hover:border-slate-200"
                                 }`}
                         >
@@ -162,15 +162,15 @@ export function ResearchConfig() {
                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                     </div>
 
-                    <div className="p-3 bg-rose-50/50 border border-rose-100 rounded-xl flex items-center justify-between">
+                    <div className="p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                             <div>
-                                <p className="text-[10px] font-black text-rose-700 uppercase">Razonamiento IA</p>
-                                <p className="text-[9px] text-rose-600/80 font-bold italic">Gemini 1.5 Pro Flash Stable</p>
+                                <p className="text-[10px] font-black text-indigo-700 uppercase">Razonamiento IA</p>
+                                <p className="text-[9px] text-indigo-600/80 font-bold italic">Gemini 1.5 Pro Flash Stable</p>
                             </div>
                         </div>
-                        <CheckCircle2 className="w-4 h-4 text-rose-500" />
+                        <CheckCircle2 className="w-4 h-4 text-indigo-500" />
                     </div>
 
                     <div className="pt-2">

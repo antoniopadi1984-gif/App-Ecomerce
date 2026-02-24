@@ -8,7 +8,7 @@ export default async function ClowdbotSettingsPage() {
     if (!store) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="text-center p-6 bg-slate-50 rounded-3xl border border-slate-200">
+                <div className="text-center p-8 bg-slate-50 rounded-3xl border border-slate-200">
                     <h2 className="text-2xl font-black text-slate-800">No se encontró ninguna tienda</h2>
                     <p className="text-slate-500 mt-2">Por favor, configura una tienda primero.</p>
                 </div>
@@ -17,7 +17,7 @@ export default async function ClowdbotSettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--bg)]">
+        <div className="min-h-screen bg-[#fcfcfd]">
             <AgentManager storeId={store.id} />
         </div>
     );

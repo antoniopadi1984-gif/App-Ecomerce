@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { CreativeAgentPanel } from "@/components/creative/CreativeAgentPanel";
 import {
     Layout, Upload, Zap, Globe, FileText, Layers, Sparkles, Rocket, Check, Search,
     Brain as BrainIcon, ShoppingCart, Info, ChevronRight, MousePointer2, ShieldCheck,
@@ -26,15 +25,13 @@ import {
 } from "@/app/marketing/landing-lab/actions";
 import { generateProductCopy } from "@/app/marketing/copy-hub/actions";
 import { validateContent } from "@/lib/content-qa";
-import { BrandingContent } from "@/components/marketing/BrandingContent";
 
 interface LandingLabProps {
     productId: string;
     productTitle?: string;
-    storeId?: string;
 }
 
-export function LandingLabModule({ productId, productTitle, storeId = '' }: LandingLabProps) {
+export function LandingLabModule({ productId, productTitle }: LandingLabProps) {
     // --- ESTADO: LANDING LAB ---
     const [themeConfig, setThemeConfig] = useState<any>(null);
     const [isScanning, setIsScanning] = useState(false);
@@ -132,12 +129,12 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 border border-slate-100/50 bg-white/20 backdrop-blur-md rounded-[1.5rem] overflow-hidden shadow-sm">
             {/* Sidebar de Control Unificado */}
             <div className="lg:col-span-3 border-r border-slate-100/50 flex flex-col bg-white/40">
                 <div className="p-3 border-b border-slate-100/50 bg-slate-50/50">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 flex items-center gap-2">
-                        <BrainIcon className="w-3.5 h-3.5 text-rose-500" /> Landing Builder
+                        <BrainIcon className="w-3.5 h-3.5 text-rose-500" /> Agente Especialista
                     </h3>
                 </div>
 
@@ -160,8 +157,8 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                                     <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Sincronización Shopify</label>
                                     <div
                                         className={cn(
-                                            "border border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-all",
-                                            themeConfig ? "border-emerald-500 bg-emerald-50" : "border-slate-300 bg-slate-50 hover:bg-slate-100"
+                                            "border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all",
+                                            themeConfig ? "border-emerald-500/50 bg-emerald-500/5" : "border-slate-200 bg-white/20 hover:bg-slate-50/50"
                                         )}
                                         onClick={() => document.getElementById('theme-module-input')?.click()}
                                     >
@@ -186,7 +183,7 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                                         </div>
                                     </div>
 
-                                    <Button onClick={handleGenerateLayout} className="w-full h-9 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-sm gap-2">
+                                    <Button onClick={handleGenerateLayout} className="w-full h-9 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-lg shadow-rose-200/50 gap-2">
                                         <Zap className="w-3.5 h-3.5 fill-current" /> Construir Layout
                                     </Button>
                                 </div>
@@ -240,7 +237,7 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                                         </div>
                                     </div>
 
-                                    <Button onClick={handleGenerateCopy} disabled={loadingCopy} className="w-full h-9 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-sm gap-2">
+                                    <Button onClick={handleGenerateCopy} disabled={loadingCopy} className="w-full h-9 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-lg gap-2">
                                         {loadingCopy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 fill-current text-rose-500" />}
                                         Generar Inteligencia
                                     </Button>
@@ -334,7 +331,7 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                     <div className="p-3 border-t border-slate-100/50 bg-slate-50/50">
                         <Button
                             disabled={generatedStructure.length === 0}
-                            className="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-sm gap-2"
+                            className="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-lg shadow-emerald-200/50 gap-2"
                             onClick={() => toast.success("Desplegando a Shopify...")}
                         >
                             <Rocket className="w-3.5 h-3.5" /> Publicar en Shopify
@@ -343,46 +340,37 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                 </Tabs>
             </div>
 
-            {/* Área de Trabajo Landing Builder */}
+            {/* Área de Trabajo Agente Especialista */}
             <div className="lg:col-span-9 bg-slate-50/50 flex flex-col h-[650px]">
-                <Tabs defaultValue="strategy" className="flex-1 flex flex-col">
+                <Tabs defaultValue="funnel" className="flex-1 flex flex-col">
                     <div className="h-10 flex items-center px-4 justify-between bg-white/40 border-b border-slate-100/50">
                         <TabsList className="bg-transparent h-8 gap-1">
-                            <TabsTrigger value="strategy" className="h-7 px-3 rounded-lg text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">ESTRATEGIA</TabsTrigger>
                             <TabsTrigger value="funnel" className="h-7 px-3 rounded-lg text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">LABORATORIO FUNNEL</TabsTrigger>
                             <TabsTrigger value="intelligence" className="h-7 px-3 rounded-lg text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm flex gap-2">
                                 INTELIGENCIA DE COPY {qaResult && <div className={cn("h-1 w-1 rounded-full mt-0.5", qaResult.passed ? "bg-emerald-500" : "bg-rose-500")} />}
                             </TabsTrigger>
                         </TabsList>
                         <div className="flex items-center gap-3">
-                            <span className="text-[7px] text-slate-400 font-mono tracking-[0.3em] uppercase italic">Landing Builder / v.4.0</span>
+                            <span className="text-[7px] text-slate-400 font-mono tracking-[0.3em] uppercase italic">Agente Especialista / v.1.0</span>
                             <Badge className="bg-rose-500 text-white border-none px-2 py-0 h-4 text-[6px] font-black uppercase shadow-sm">ALPHA</Badge>
                         </div>
                     </div>
 
-                    <TabsContent value="strategy" className="flex-1 m-0">
-                        <ScrollArea className="h-full bg-slate-50/30">
-                            <div className="p-4">
-                                <BrandingContent />
-                            </div>
-                        </ScrollArea>
-                    </TabsContent>
-
                     <TabsContent value="funnel" className="flex-1 m-0">
-                        <ScrollArea className="h-full bg-slate-50/30">
+                        <ScrollArea className="h-full bg-white/20">
                             {generatedStructure.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center p-8 text-slate-300">
-                                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
-                                        <Sparkles className="w-5 h-5 text-rose-500/50" />
+                                <div className="h-full flex flex-col items-center justify-center p-20 text-slate-300">
+                                    <div className="w-16 h-16 rounded-full bg-white border border-slate-100 flex items-center justify-center mb-6 shadow-sm">
+                                        <Sparkles className="w-7 h-7 text-rose-500/30" />
                                     </div>
                                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-center max-w-[200px] leading-relaxed text-slate-400">
                                         Generador de Landing Pages Activo. Construye el layout para visualizar el funnel.
                                     </p>
                                 </div>
                             ) : (
-                                <div className="p-4 space-y-3 max-w-[800px] mx-auto">
+                                <div className="p-6 space-y-4 max-w-[800px] mx-auto">
                                     {generatedStructure.map((block, i) => (
-                                        <div key={i} className="group relative p-4 border border-slate-200 rounded-xl bg-white text-center shadow-sm transition-all hover:border-rose-300">
+                                        <div key={i} className="group relative p-8 border border-white/50 rounded-2xl bg-white/60 text-center shadow-sm backdrop-blur-sm transition-all hover:border-rose-500/30">
                                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Badge className="bg-slate-50 text-slate-400 text-[6px]">ID: {i}</Badge>
                                             </div>
@@ -405,7 +393,7 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                                         value={generatedCopy}
                                         onChange={e => setGeneratedCopy(e.target.value)}
                                         placeholder="Esperando respuesta del Agente..."
-                                        className="w-full h-full min-h-[500px] bg-transparent border-none text-slate-700 text-sm font-medium leading-relaxed resize-none focus:ring-0 p-4 font-mono"
+                                        className="w-full h-full min-h-[500px] bg-transparent border-none text-slate-700 text-sm font-medium leading-relaxed resize-none focus:ring-0 p-8 font-mono"
                                     />
                                 </ScrollArea>
                                 <div className="p-3 bg-white/40 border-t border-slate-100/50 flex justify-end gap-2">
@@ -457,26 +445,7 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                     </TabsContent>
                 </Tabs>
             </div>
-
-            {/* Agent IA Panel — Full Width Below */}
-            {storeId && (
-                <div className="lg:col-span-12 border-t border-slate-100 p-3">
-                    <CreativeAgentPanel
-                        storeId={storeId}
-                        productId={productId}
-                        productTitle={productTitle}
-                        agentRole="LANDING_AGENT"
-                        agentName="Landing Builder IA"
-                        onGenerate={(text) => {
-                            setGeneratedCopy(text);
-                            const qa = validateContent(text, 'LANDING');
-                            setQaResult(qa);
-                        }}
-                        onImport={(data) => setGeneratedCopy(data)}
-                    />
-                </div>
-            )}
-        </div >
+        </div>
     );
 }
 
@@ -486,7 +455,7 @@ function LayoutOption({ label, active, onClick, icon: Icon }: any) {
             onClick={onClick}
             className={cn(
                 "p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all",
-                active ? "bg-rose-500 border-rose-600 text-white shadow-sm" : "bg-white/40 border-slate-100 text-slate-400 hover:bg-slate-50"
+                active ? "bg-rose-500 border-rose-600 text-white shadow-lg shadow-rose-200/20" : "bg-white/40 border-slate-100 text-slate-400 hover:bg-slate-50"
             )}
         >
             <Icon className={cn("w-4 h-4", active ? "text-white" : "text-rose-500/50")} />

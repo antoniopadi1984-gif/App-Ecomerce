@@ -33,7 +33,7 @@ export function FinanceAiBunker() {
     };
 
     return (
-        <Card className="premium-card bg-slate-900 border-none overflow-hidden rounded-[3rem] shadow-sm relative">
+        <Card className="premium-card bg-slate-900 border-none overflow-hidden rounded-[3rem] shadow-2xl relative">
             {/* Background elements */}
             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
                 <Brain className="h-64 w-64 text-primary" />
@@ -72,7 +72,7 @@ export function FinanceAiBunker() {
                     <Button
                         onClick={handleConsult}
                         disabled={loading}
-                        className="h-16 px-10 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl gap-3 shadow-sm active:scale-95 transition-all text-xs uppercase tracking-widest"
+                        className="h-16 px-10 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl gap-3 shadow-xl active:scale-95 transition-all text-xs uppercase tracking-widest"
                     >
                         {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Zap className="h-5 w-5" />}
                         {loading ? "Analizando Ledger..." : "GENERAR RUTA DE ESCALADO"}
@@ -80,7 +80,7 @@ export function FinanceAiBunker() {
                 </div>
 
                 {advice ? (
-                    <div className="animate-in slide-in-from-bottom duration-500 bg-white/5 border border-white/10 rounded-[2rem] p-6 space-y-6">
+                    <div className="animate-in slide-in-from-bottom duration-500 bg-white/5 border border-white/10 rounded-[2rem] p-8 space-y-6">
                         <div className="flex items-center justify-between border-b border-white/5 pb-4">
                             <div className="flex items-center gap-2">
                                 <Sparkles className="h-4 w-4 text-primary" />

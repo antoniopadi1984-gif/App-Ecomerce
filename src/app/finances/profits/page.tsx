@@ -42,7 +42,7 @@ export default function ProfitsDashboard() {
         <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-4">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center shadow-sm">
+                    <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg shadow-slate-200">
                         <DollarSign className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -99,7 +99,7 @@ export default function ProfitsDashboard() {
                                     <span className="text-[11px] font-black text-slate-900 italic">{order.orderNumber}</span>
                                     <span className="text-[8px] text-slate-400 uppercase font-black tracking-widest leading-none mt-1">{order.logisticsStatus}</span>
                                 </div>
-                                <div className="flex gap-6 items-center">
+                                <div className="flex gap-8 items-center">
                                     <div className="flex flex-col items-end leading-none">
                                         <span className="text-[8px] uppercase font-black tracking-widest text-slate-400 mb-1">PROFIT</span>
                                         <span className="text-[12px] font-black italic tracking-tighter text-slate-950">

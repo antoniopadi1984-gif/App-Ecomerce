@@ -78,8 +78,8 @@ export function DirectorPanel() {
     return (
         <div className="grid grid-cols-12 gap-5 h-full">
             <div className="col-span-12 lg:col-span-4 space-y-4">
-                <div className="bg-slate-900 text-white rounded-[2.5rem] p-6 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-opacity">
+                <div className="bg-slate-900 text-white rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-30 transition-opacity">
                         <Bot className="w-32 h-32" />
                     </div>
 
@@ -111,7 +111,7 @@ export function DirectorPanel() {
                                     <Button
                                         onClick={startProduction}
                                         disabled={loading}
-                                        className="w-full h-16 bg-white hover:bg-rose-50 text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-sm transition-all active:scale-95 gap-4"
+                                        className="w-full h-16 bg-white hover:bg-rose-50 text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all active:scale-95 gap-4"
                                     >
                                         {loading ? <RefreshCw className="w-5 h-5 animate-spin text-rose-500" /> : <Zap className="w-5 h-5 text-rose-500 fill-rose-500" />}
                                         INICIAR MISIÓN AGENTICA
@@ -133,7 +133,7 @@ export function DirectorPanel() {
                 </div>
 
                 {/* Progress Indicators */}
-                <div className="glass-panel p-6 rounded-[2rem] shadow-sm">
+                <div className="bg-white/20 backdrop-blur-xl border border-white/40 p-6 rounded-[2rem] shadow-sm">
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-6 flex items-center gap-3">
                         <Brain className="w-4 h-4 text-rose-500" /> Estado de la Tarea
                     </h4>
@@ -146,8 +146,8 @@ export function DirectorPanel() {
             </div>
 
             <div className="col-span-12 lg:col-span-8 h-full min-h-0">
-                <div className="glass-panel rounded-[3rem] h-full shadow-sm flex flex-col overflow-hidden">
-                    <div className="p-6 border-b border-white/20 flex items-center justify-between bg-white/40">
+                <div className="bg-white/20 backdrop-blur-xl border border-white/40 rounded-[3rem] h-full shadow-sm flex flex-col overflow-hidden">
+                    <div className="p-8 border-b border-white/20 flex items-center justify-between bg-white/40">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center">
                                 <MessageSquare className="w-5 h-5 text-white" />
@@ -156,7 +156,7 @@ export function DirectorPanel() {
                         </div>
                     </div>
 
-                    <ScrollArea className="flex-1 p-6">
+                    <ScrollArea className="flex-1 p-8">
                         {step === 'idle' && (
                             <div className="flex flex-col items-center justify-center h-[400px] text-center gap-6 opacity-30">
                                 <Bot className="w-20 h-20 text-slate-300" />
@@ -184,7 +184,7 @@ export function DirectorPanel() {
                                     <div className="whitespace-pre-wrap">{aiResponse}</div>
                                 </div>
 
-                                <div className="p-6 bg-slate-900 text-white rounded-[2rem] space-y-6 shadow-sm">
+                                <div className="p-8 bg-slate-900 text-white rounded-[2rem] space-y-6 shadow-2xl">
                                     <div className="space-y-1">
                                         <h4 className="text-xs font-black uppercase text-rose-500">PASO 2: Calibración Estratégica</h4>
                                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Define el Nivel de Conciencia y el Ángulo</p>
@@ -234,7 +234,7 @@ export function DirectorPanel() {
                                         COPY <ArrowRight className="w-3.5 h-3.5" />
                                     </Button>
                                 </div>
-                                <div className="bg-white p-6 rounded-[3rem] border border-white shadow-sm prose prose-slate max-w-none text-slate-800 font-medium leading-relaxed">
+                                <div className="bg-white p-8 rounded-[3rem] border border-white shadow-xl prose prose-slate max-w-none text-slate-800 font-medium leading-relaxed">
                                     <div className="whitespace-pre-wrap text-[13px]">{finalScript}</div>
                                 </div>
                             </div>
@@ -245,8 +245,8 @@ export function DirectorPanel() {
 
             {/* Prompt Editor Modal */}
             <Dialog open={promptEditorOpen} onOpenChange={setPromptEditorOpen}>
-                <DialogContent className="max-w-4xl h-[80vh] flex flex-col rounded-[3rem] overflow-hidden p-0 border-none shadow-sm">
-                    <div className="bg-slate-900 p-6 flex items-center justify-between">
+                <DialogContent className="max-w-4xl h-[80vh] flex flex-col rounded-[3rem] overflow-hidden p-0 border-none shadow-2xl">
+                    <div className="bg-slate-900 p-8 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-2xl bg-rose-500 flex items-center justify-center">
                                 <Settings className="w-5 h-5 text-white" />
@@ -261,8 +261,8 @@ export function DirectorPanel() {
                         </Button>
                     </div>
 
-                    <div className="flex-1 p-6 bg-slate-50 flex flex-col gap-6 overflow-hidden">
-                        <div className="flex-1 min-h-0 bg-white rounded-[2rem] border border-slate-200 shadow-sm p-4">
+                    <div className="flex-1 p-8 bg-slate-50 flex flex-col gap-6 overflow-hidden">
+                        <div className="flex-1 min-h-0 bg-white rounded-[2rem] border border-slate-200 shadow-inner p-4">
                             <Textarea
                                 className="w-full h-full resize-none border-none focus-visible:ring-0 p-4 font-mono text-xs leading-relaxed text-slate-600"
                                 defaultValue={DEFAULT_DIRECTOR_PROMPT}
@@ -273,7 +273,7 @@ export function DirectorPanel() {
                             <div className="flex items-center gap-3 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">
                                 <AlertCircle className="w-4 h-4 text-rose-500 animate-pulse" /> Estos cambios afectan a toda la producción agentica
                             </div>
-                            <Button className="bg-slate-900 text-white rounded-xl px-8 h-10 font-black uppercase text-[10px] tracking-widest shadow-sm" onClick={async () => {
+                            <Button className="bg-slate-900 text-white rounded-xl px-8 h-10 font-black uppercase text-[10px] tracking-widest shadow-lg" onClick={async () => {
                                 const newPrompt = (document.getElementById('prompt-area') as HTMLTextAreaElement).value;
                                 const res = await updateAgentPrompt(newPrompt);
                                 if (res.success) {
@@ -295,7 +295,7 @@ function AgentTask({ label, status }: { label: string, status: 'pending' | 'acti
     return (
         <div className={cn(
             "p-4 rounded-2xl border flex items-center justify-between transition-all duration-500",
-            status === 'active' ? "bg-white border-rose-500 shadow-sm translate-x-2" :
+            status === 'active' ? "bg-white border-rose-500 shadow-md translate-x-2" :
                 status === 'complete' ? "bg-emerald-50 border-emerald-100 opacity-80" : "bg-white/40 border-slate-100 opacity-30"
         )}>
             <div className="flex items-center gap-3">

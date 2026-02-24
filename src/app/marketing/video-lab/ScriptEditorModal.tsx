@@ -84,7 +84,7 @@ export default function ScriptEditorModal({
 
     return (
         <div
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={onClose}
         >
             <div
@@ -139,7 +139,7 @@ export default function ScriptEditorModal({
                             value={script}
                             onChange={(e) => setScript(e.target.value)}
                             placeholder="El script aparecerá aquí... o escribe uno nuevo"
-                            className="min-h-[200px] bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-rose-500"
+                            className="min-h-[200px] bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-indigo-500"
                         />
                         <p className="text-xs text-white/40">
                             {script.length} caracteres
@@ -174,8 +174,8 @@ export default function ScriptEditorModal({
                     </div>
 
                     {/* Info */}
-                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-3">
-                        <p className="text-xs text-rose-300">
+                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-3">
+                        <p className="text-xs text-indigo-300">
                             💡 <strong>Cómo funciona:</strong> Edita el script, luego genera el nuevo audio con ElevenLabs.
                             El sistema reemplazará la pista de audio del video automáticamente con FFmpeg.
                         </p>

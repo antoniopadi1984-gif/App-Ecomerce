@@ -39,7 +39,7 @@ export default function InventarioPage() {
                         <p className="text-slate-500 max-w-sm mx-auto font-medium text-sm">Debes vincular tu tienda oficial de Shopify para ver el inventario.</p>
                     </div>
                     <Link href="/connections">
-                        <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-sm">
+                        <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-lg shadow-rose-500/20">
                             <Link2 className="w-4 h-4 mr-2" />
                             Ir a Conexiones
                         </Button>
@@ -56,7 +56,7 @@ export default function InventarioPage() {
                 subtitle="Control de stock, variantes y logística de entrada"
                 icon={Package}
                 actions={
-                    <Button className="bg-rose-600 hover:bg-black text-white font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl shadow-sm">
+                    <Button className="bg-indigo-600 hover:bg-black text-white font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl shadow-lg shadow-indigo-500/20">
                         <Plus className="w-4 h-4 mr-2" /> Nuevo Producto
                     </Button>
                 }
@@ -78,7 +78,7 @@ export default function InventarioPage() {
                     {[
                         { label: "STOCK TOTAL", value: "1.420", unit: "unidades", status: "OK", color: "emerald" },
                         { label: "BAJO STOCK", value: "3", unit: "SKUs", status: "CRÍTICO", color: "rose" },
-                        { label: "VALOR ALMACÉN", value: "42.500€", unit: "PVP", status: "Nominal", color: "rose" },
+                        { label: "VALOR ALMACÉN", value: "42.500€", unit: "PVP", status: "Nominal", color: "indigo" },
                     ].map((stat, i) => (
                         <KpiCard
                             key={i}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 
-export function useProductOrders(storeId: string, productId: string, initialStatus: string = 'ALL') {
+export function useProductOrders(productId: string, initialStatus: string = 'ALL') {
     const [loading, setLoading] = useState(false);
     const [orders, setOrders] = useState<any[]>([]);
     const [pagination, setPagination] = useState({ total: 0, page: 1, pageSize: 15, totalPages: 0 });
@@ -14,7 +14,7 @@ export function useProductOrders(storeId: string, productId: string, initialStat
         setLoading(true);
         try {
             // New unified endpoint that supports GLOBAL
-            const url = `/api/orders?page=${page}&pageSize=${pagination.pageSize}&status=${statusFilter}&productId=${productId}&storeId=${storeId}`;
+            const url = `/api/orders?page=${page}&pageSize=${pagination.pageSize}&status=${statusFilter}&productId=${productId}`;
             const response = await fetch(url);
             const result = await response.json();
 
@@ -28,7 +28,7 @@ export function useProductOrders(storeId: string, productId: string, initialStat
         } finally {
             setLoading(false);
         }
-    }, [productId, pagination.pageSize, statusFilter, storeId]);
+    }, [productId, pagination.pageSize, statusFilter]);
 
     useEffect(() => {
         loadOrders(1);

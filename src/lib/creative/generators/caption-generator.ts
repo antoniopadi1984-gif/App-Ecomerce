@@ -1,6 +1,5 @@
 import ffmpeg from 'fluent-ffmpeg';
 import { Storage } from '@google-cloud/storage';
-import { getConnectionSecret, getConnectionMeta } from '@/lib/server/connections';
 import { createWriteStream, unlinkSync } from 'fs';
 import { Readable } from 'stream';
 import { join } from 'path';
@@ -11,28 +10,14 @@ import { tmpdir } from 'os';
  * Usa Whisper API para transcripción
  */
 export class CaptionGenerator {
-    private storage!: Storage;
-    private bucketName!: string;
-    private vertexApiKey!: string;
-    private isInitialized = false;
+    private storage: Storage;
+    private bucketName: string;
 
-    constructor() { }
-
-    private async initClients() {
-        if (this.isInitialized) return;
-
-        const geminiToken = await getConnectionSecret('store-main', 'GEMINI') || process.env.VERTEX_AI_API_KEY || process.env.GEMINI_API_KEY;
-        const meta = await getConnectionMeta('store-main', 'GCP');
-
-        this.vertexApiKey = geminiToken || '';
-        this.bucketName = meta?.GCS_BUCKET_NAME || process.env.GCS_BUCKET_NAME || '';
-        const projectId = meta?.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT_ID || '';
-
+    constructor() {
         this.storage = new Storage({
-            projectId: projectId
+            projectId: process.env.GOOGLE_CLOUD_PROJECT_ID
         });
-
-        this.isInitialized = true;
+        this.bucketName = process.env.GCS_BUCKET_NAME || '';
     }
 
     /**
@@ -46,9 +31,8 @@ export class CaptionGenerator {
         console.log('[CaptionGenerator] Transcribiendo con Gemini...');
 
         try {
-            await this.initClients();
             const { GoogleGenerativeAI } = await import('@google/generative-ai');
-            const genAI = new GoogleGenerativeAI(this.vertexApiKey);
+            const genAI = new GoogleGenerativeAI(process.env.VERTEX_AI_API_KEY || '');
             const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-002' });
 
             // Download audio
@@ -138,8 +122,6 @@ Example format:
         console.log('[CaptionGenerator] Agregando subtítulos al video...');
 
         return new Promise(async (resolve, reject) => {
-            await this.initClients();
-
             const tempVideo = join(tmpdir(), `video_${Date.now()}.mp4`);
             const tempSRT = join(tmpdir(), `subs_${Date.now()}.srt`);
             const outputVideo = join(tmpdir(), `output_${Date.now()}.mp4`);

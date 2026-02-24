@@ -186,8 +186,8 @@ export default function FacebookAdsPage() {
     if (!productId) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center animate-in fade-in duration-700">
-                <div className="w-20 h-20 bg-rose-50 rounded-2xl flex items-center justify-center">
-                    <AlertCircle className="w-10 h-10 text-rose-500" />
+                <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                    <AlertCircle className="w-10 h-10 text-indigo-500" />
                 </div>
                 <div className="space-y-2">
                     <h2 className="text-lg font-black text-slate-900 tracking-tight italic uppercase">Contexto Requerido</h2>
@@ -210,7 +210,7 @@ export default function FacebookAdsPage() {
                     {/* TOOLBAR / HEADER */}
                     <div className="h-12 glass-card border-none flex items-center justify-between px-4 shrink-0 rounded-b-none rounded-t-2xl shadow-none border-b border-slate-200/50">
                         <div className="flex items-center gap-2">
-                            <Button variant="default" size="sm" className="bg-primary hover:bg-rose-500 h-8 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                            <Button variant="default" size="sm" className="bg-primary hover:bg-rose-500 h-8 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-100">
                                 <Plus className="w-3.5 h-3.5 mr-1" /> CREAR
                             </Button>
                             <Button variant="outline" size="sm" className="h-8 rounded-xl px-3 text-[10px] font-black uppercase tracking-widest border-slate-200/50 hover:bg-slate-50" onClick={() => setVisibleColumns(DEFAULT_COLUMNS.map(c => c.id))}>
@@ -234,7 +234,7 @@ export default function FacebookAdsPage() {
                                         <Columns className="w-3.5 h-3.5 mr-1" /> COLUMNAS
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56 glass-card p-1.5 border-none shadow-sm rounded-2xl z-[80]">
+                                <DropdownMenuContent align="end" className="w-56 glass-card p-1.5 border-none shadow-2xl rounded-2xl z-[80]">
                                     <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 px-3 py-2">Configurar Rejilla</DropdownMenuLabel>
                                     <DropdownMenuSeparator className="bg-slate-100/50 my-1" />
                                     <ScrollArea className="h-[300px] no-scrollbar">
@@ -297,14 +297,14 @@ export default function FacebookAdsPage() {
                     )}
 
                     {/* TABS SELECTOR (Campaigns, Adsets, Ads) */}
-                    <div className="bg-white/60 px-4 border-b border-slate-200/50 shrink-0">
+                    <div className="bg-white/60 backdrop-blur-sm px-4 border-b border-slate-200/50 shrink-0">
                         <Tabs value={activeTab} onValueChange={(v) => {
                             setActiveTab(v);
                             // Auto-reset lower level filters if jumping up
                             if (v === 'campaigns') { setSelectedCampaignId(null); setSelectedAdsetId(null); }
                             if (v === 'adsets') { setSelectedAdsetId(null); }
                         }}>
-                            <TabsList className="bg-transparent h-10 p-0 gap-6">
+                            <TabsList className="bg-transparent h-10 p-0 gap-8">
                                 <TabsTrigger value="campaigns" className="h-10 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary text-[10px] font-black uppercase tracking-[0.15em]">
                                     Campañas
                                 </TabsTrigger>
@@ -328,7 +328,7 @@ export default function FacebookAdsPage() {
                                             key={col.id}
                                             className={cn(
                                                 "border-r border-b border-slate-200 px-2 text-[10px] font-black text-slate-500 uppercase tracking-tighter leading-none h-8",
-                                                col.sticky && "sticky left-0 bg-slate-50 z-30 shadow-[1px_0_0_0_var(--border)]",
+                                                col.sticky && "sticky left-0 bg-slate-50 z-30 shadow-[1px_0_0_0_#e2e8f0]",
                                                 col.align === 'right' && "text-right"
                                             )}
                                         >
@@ -337,7 +337,7 @@ export default function FacebookAdsPage() {
                                                 {col.tooltip && (
                                                     <Tooltip>
                                                         <TooltipTrigger>
-                                                            <Sparkles className="w-2.5 h-2.5 text-rose-400" />
+                                                            <Sparkles className="w-2.5 h-2.5 text-indigo-400" />
                                                         </TooltipTrigger>
                                                         <TooltipContent className="bg-slate-900 border-none text-white text-[10px] rounded-lg">
                                                             {col.tooltip}
@@ -354,7 +354,7 @@ export default function FacebookAdsPage() {
                                     <TableRow>
                                         <TableCell colSpan={columnsToRender.length} className="h-32 text-center">
                                             <div className="flex flex-col items-center gap-2">
-                                                <RefreshCcw className="w-6 h-6 text-rose-500 animate-spin" />
+                                                <RefreshCcw className="w-6 h-6 text-indigo-500 animate-spin" />
                                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando Truth Layer...</span>
                                             </div>
                                         </TableCell>
@@ -446,7 +446,7 @@ export default function FacebookAdsPage() {
                                             }
                                             if (col.id === 'roas_real') {
                                                 display = `${(item.roas_real || 0).toFixed(2)}x`;
-                                                color = "text-rose-700 font-black italic";
+                                                color = "text-indigo-700 font-black italic";
                                             }
                                             if (col.id === 'margin_real') {
                                                 display = fmtPerc((item.margin_real || 0) * 100);
@@ -533,12 +533,12 @@ export default function FacebookAdsPage() {
 
                 {/* RIGHT FLOATING AI PANEL */}
                 {isAiPanelOpen && (
-                    <div className="w-[320px] bg-white border-l border-slate-200 fixed right-0 top-14 bottom-0 shadow-sm z-30 animate-in slide-in-from-right duration-300">
+                    <div className="w-[320px] bg-white border-l border-slate-200 fixed right-0 top-14 bottom-0 shadow-2xl z-30 animate-in slide-in-from-right duration-300">
                         <div className="h-full flex flex-col">
                             <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-rose-600 flex items-center justify-center">
+                                        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
                                             <Sparkles className="w-4 h-4 text-white" />
                                         </div>
                                         <div>
@@ -554,8 +554,8 @@ export default function FacebookAdsPage() {
                                     </Button>
                                 </div>
 
-                                <div className="bg-rose-50 border border-rose-100 rounded-lg p-2.5">
-                                    <p className="text-[10px] text-rose-900 font-medium leading-relaxed italic">
+                                <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-indigo-900 font-medium leading-relaxed italic">
                                         "He detectado que la campaña <span className="font-bold underline">Scale Winner</span> tiene un CPA saludable, pero el CTR está bajando. Sugiero refrescar creativos del ángulo [Miedos]."
                                     </p>
                                 </div>
@@ -612,7 +612,7 @@ export default function FacebookAdsPage() {
                             <div className="p-4 border-t border-slate-100">
                                 <div className="relative">
                                     <Input placeholder="Pregunta al agente sobre tus ads..." className="h-9 pr-10 text-[10px] font-medium border-slate-200 rounded-lg" />
-                                    <Button size="icon" className="absolute right-1 top-1 h-7 w-7 bg-rose-600 hover:bg-rose-700 rounded-md">
+                                    <Button size="icon" className="absolute right-1 top-1 h-7 w-7 bg-indigo-600 hover:bg-indigo-700 rounded-md">
                                         <MessageCircle className="w-3.5 h-3.5 text-white" />
                                     </Button>
                                 </div>

@@ -54,7 +54,7 @@ export default function CourseManager({ storeId }: { storeId: string }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {templates.map((t) => (
-                    <Card key={t.id} className="rounded-[32px] border-slate-200/60 overflow-hidden hover:border-purple-200 hover:shadow-sm hover:shadow-sm transition-all group bg-white">
+                    <Card key={t.id} className="rounded-[32px] border-slate-200/60 overflow-hidden hover:border-purple-200 hover:shadow-2xl hover:shadow-purple-500/5 transition-all group bg-white">
                         <CardHeader className="p-6">
                             <div className="flex justify-between items-start">
                                 <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center font-black">
@@ -85,7 +85,7 @@ export default function CourseManager({ storeId }: { storeId: string }) {
                             <Button
                                 onClick={() => handleGenerate(t.id)}
                                 disabled={generatingId === t.id}
-                                className="w-full bg-slate-900 group-hover:bg-purple-600 text-white font-black py-6 rounded-2xl transition-all shadow-sm"
+                                className="w-full bg-slate-900 group-hover:bg-purple-600 text-white font-black py-6 rounded-2xl transition-all shadow-lg shadow-slate-200"
                             >
                                 {generatingId === t.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
                                 {generatingId === t.id ? "GENERANDO VÍDEO..." : "RE-GENERAR MINI-CURSO"}

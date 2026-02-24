@@ -46,9 +46,9 @@ export function EspiaPanel({ onSelect }: { onSelect?: (item: any) => void }) {
 
     return (
         <div className="flex flex-col h-full gap-4">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 glass-panel rounded-[2rem] border border-white/50 shadow-sm">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/50 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-sm">
+                    <div className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
                         <Video className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -98,7 +98,7 @@ export function EspiaPanel({ onSelect }: { onSelect?: (item: any) => void }) {
                         ))
                     ) : filtered.length > 0 ? (
                         filtered.map((item) => (
-                            <div key={item.id} className="group relative rounded-[2rem] border border-white/50 bg-white/40 overflow-hidden shadow-sm hover:shadow-sm hover:-translate-y-1 transition-all duration-500">
+                            <div key={item.id} className="group relative rounded-[2rem] border border-white/50 bg-white/20 backdrop-blur-md overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
                                 <div className="relative aspect-video bg-slate-100/50 overflow-hidden flex items-center justify-center">
                                     {item.videoUrl ? (
                                         <video src={item.videoUrl} className="w-full h-full object-cover" muted loop onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()} />
@@ -116,7 +116,7 @@ export function EspiaPanel({ onSelect }: { onSelect?: (item: any) => void }) {
                                             USAR ESTE
                                         </Button>
                                         {item.url && (
-                                            <a href={item.url} target="_blank" className="h-8 w-8 bg-white/20 border border-white/30 rounded-xl flex items-center justify-center text-white hover:bg-rose-500 transition-colors">
+                                            <a href={item.url} target="_blank" className="h-8 w-8 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white hover:bg-rose-500 transition-colors">
                                                 <ExternalLink className="h-3.5 h-3.5" />
                                             </a>
                                         )}

@@ -1,12 +1,50 @@
-export async function register() {
-    // En desarrollo NO arrancamos worker ni engine desde aquí.
-    // Esto evita que Next intente meter APIs Node en Edge Runtime.
-    if (process.env.NODE_ENV !== "production") {
-        console.log("🛑 [Instrumentation] Worker/Engine auto-start disabled (dev).");
-        return;
-    }
 
-    // En producción, si quieres auto-start, se hace desde scripts/procesos externos,
-    // no desde instrumentation, para no romper runtimes.
-    console.log("ℹ️ [Instrumentation] Production mode: no auto-start here.");
+
+
+export async function register() {
+    if (process.env.NEXT_RUNTIME === 'nodejs') {
+        const { spawn } = await import("child_process");
+        const path = await import("path");
+        // Prevent multiple initializations in dev mode
+        if ((global as any)._workerStarted) {
+            console.log("⏭️ [Instrumentation] Worker already started, skipping...");
+            return;
+        }
+        (global as any)._workerStarted = true;
+
+        console.log("⚙️ [Instrumentation] System initializing...");
+
+        (async () => {
+            const { AutoConnectionService } = await import("@/lib/server/auto-connection-service");
+            await AutoConnectionService.run();
+        })();
+
+
+        (async () => {
+            try {
+                console.log("🚀 [Instrumentation] Auto-Starting Worker Sidecar...");
+                const { initHandlers, startWorker } = await import("@/lib/worker");
+                await initHandlers();
+
+                // Start Worker
+                startWorker();
+
+                console.log("✅ [Instrumentation] Worker Sidecar is now backgrounded.");
+
+                // Start Python Engine (EcomBoom Control)
+                console.log("🚀 [Instrumentation] Auto-Starting EcomBoom Control Engine...");
+                const engineScript = path.resolve(process.cwd(), "src/engine/start_engine.sh");
+                const engineProcess = spawn("bash", [engineScript], {
+                    detached: true,
+                    stdio: 'ignore',
+                    cwd: process.cwd()
+                });
+                engineProcess.unref();
+                console.log("✅ [Instrumentation] EcomBoom Control Engine initialization triggered.");
+            } catch (e) {
+                console.error("❌ [Instrumentation] Failed to auto-start worker:", e);
+                (global as any)._workerStarted = false; // Reset lock on failure
+            }
+        })();
+    }
 }

@@ -1,5 +1,4 @@
 import { Storage } from '@google-cloud/storage';
-import { getConnectionSecret, getConnectionMeta } from '@/lib/server/connections';
 
 export interface VoiceGenerationOptions {
     text: string;
@@ -9,34 +8,19 @@ export interface VoiceGenerationOptions {
 }
 
 export class VoiceGenerator {
-    private apiKey!: string;
-    private storage!: Storage;
-    private bucketName!: string;
-    private projectId!: string;
-    private isInitialized = false;
+    private apiKey: string;
+    private storage: Storage;
+    private bucketName: string;
+    private projectId: string;
 
-    constructor() { }
-
-    private async initClients() {
-        if (this.isInitialized) return;
-
-        const apiKey = await getConnectionSecret('store-main', 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY;
-        const meta = await getConnectionMeta('store-main', 'GCP');
-
-        this.apiKey = apiKey || '';
-        this.bucketName = meta?.GCS_BUCKET_NAME || process.env.GCS_BUCKET_NAME || '';
-        this.projectId = meta?.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT_ID || '';
-
-        // If bucket info isn't found and we know it's missing, log warning instead of crashing
-        if (!this.bucketName) {
-            console.warn('[VoiceGenerator] Warning: GCS_BUCKET_NAME is not configured.');
-        }
+    constructor() {
+        this.apiKey = process.env.ELEVENLABS_API_KEY || '';
+        this.bucketName = process.env.GCS_BUCKET_NAME || '';
+        this.projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || '';
 
         this.storage = new Storage({
             projectId: this.projectId
         });
-
-        this.isInitialized = true;
     }
 
     /**
@@ -46,12 +30,10 @@ export class VoiceGenerator {
         console.log('[VoiceGenerator] 🎙️ Generando audio con ElevenLabs...');
 
         try {
-            await this.initClients();
-
             const voice = options.voiceId || process.env.ELEVENLABS_VOICE_FEMALE || '';
 
             if (!this.apiKey) {
-                throw new Error('ELEVENLABS API key not found in Database Connections nor in process.env');
+                throw new Error('ELEVENLABS_API_KEY not configured');
             }
 
             const response = await fetch(

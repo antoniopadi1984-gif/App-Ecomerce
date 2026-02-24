@@ -47,34 +47,32 @@ export default function AdsManagerPage() {
 
     if (!productId || productId === 'GLOBAL') {
         return (
-            <PageShell>
-                <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 text-center animate-in fade-in duration-700 p-4">
-                    <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm">
-                        <Sparkles className="w-8 h-8 text-slate-300" />
-                    </div>
-                    <div className="space-y-1">
-                        <h2 className="text-sm font-black text-slate-900 uppercase italic">Contexto Requerido</h2>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest max-w-xs mx-auto">Selecciona un producto relevante en la barra superior.</p>
-                    </div>
-                    <div className="flex -space-x-2 overflow-hidden p-1 opacity-50 grayscale">
-                        {allProducts.slice(0, 5).map((p) => (
-                            <div key={p.id} className="inline-block h-8 w-8 rounded-lg ring-2 ring-white shadow-sm overflow-hidden bg-slate-50 border border-slate-100 relative">
-                                {p.imageUrl ? (
-                                    <Image
-                                        src={p.imageUrl}
-                                        alt={p.title || "Product"}
-                                        fill
-                                        sizes="32px"
-                                        className="object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-300 font-black text-[10px]">?</div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+            <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 text-center animate-in fade-in duration-700 p-4">
+                <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center border border-rose-100 shadow-sm">
+                    <Sparkles className="w-8 h-8 text-primary" />
                 </div>
-            </PageShell>
+                <div className="space-y-1">
+                    <h2 className="text-xl font-black text-slate-900 tracking-tighter italic uppercase">Contexto de Producto Requerido</h2>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] max-w-sm mx-auto">Selecciona un producto específico en la barra superior para analizar su rendimiento publicitario.</p>
+                </div>
+                <div className="flex -space-x-2 overflow-hidden p-1">
+                    {allProducts.slice(0, 5).map((p) => (
+                        <div key={p.id} className="inline-block h-10 w-10 rounded-xl ring-4 ring-white shadow-md overflow-hidden bg-slate-100 border border-slate-200 relative">
+                            {p.imageUrl ? (
+                                <Image
+                                    src={p.imageUrl}
+                                    alt={p.title || "Product"}
+                                    fill
+                                    sizes="40px"
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400 font-black text-[12px]">?</div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
         );
     }
 
@@ -85,7 +83,7 @@ export default function AdsManagerPage() {
                 subtitle={`Ads Manager Pro / ${product?.title}`}
                 icon={TrendingUp}
                 actions={
-                    <div className="bg-white/50 p-1 rounded-xl border border-slate-200/50 inline-flex w-fit shadow-xs">
+                    <div className="bg-white/50 backdrop-blur-md p-1 rounded-xl border border-slate-200/50 inline-flex w-fit shadow-xs">
                         <Tabs value={activePlatform} onValueChange={setActivePlatform} className="w-fit">
                             <TabsList className="bg-transparent h-8 p-0 gap-1">
                                 {PLATFORMS.map((p) => (

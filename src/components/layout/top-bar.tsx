@@ -81,7 +81,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className={cn(
-                                "flex items-center gap-2 px-2.5 py-1.5 glass-card border-slate-200/50 rounded-xl hover:border-primary/20 transition-all group shrink min-w-0 shadow-sm max-w-[200px]",
+                                "flex items-center gap-2 px-2.5 py-1.5 bg-white/50 backdrop-blur-sm border border-slate-200/50 rounded-xl hover:border-primary/20 transition-all group shrink min-w-0 shadow-sm max-w-[200px]",
                                 "max-md:py-2.5 max-md:px-3"
                             )}>
                                 <div className="w-5 h-5 rounded-lg bg-rose-50 flex items-center justify-center shrink-0 border border-rose-100">
@@ -132,7 +132,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className={cn(
-                                "flex items-center gap-2 px-2.5 py-1.5 glass-card !bg-rose-50/75 border-rose-200/50 rounded-xl hover:border-primary/40 transition-all group shrink min-w-0 max-w-[220px] shadow-sm ring-1 ring-rose-500/10",
+                                "flex items-center gap-2 px-2.5 py-1.5 bg-rose-50/50 backdrop-blur-sm border border-rose-200/50 rounded-xl hover:border-primary/40 transition-all group shrink min-w-0 max-w-[220px] shadow-sm ring-1 ring-rose-500/10",
                                 "max-md:py-2.5 max-md:px-3" // Larger touch target
                             )}>
                                 <div className="w-6 h-6 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center overflow-hidden shrink-0">
@@ -231,7 +231,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
 
                     {/* KPI Pills - Glass Style */}
                     {product && (
-                        <div className="hidden lg:flex items-center gap-1.5 p-1 glass-panel rounded-xl shadow-sm">
+                        <div className="hidden lg:flex items-center gap-1.5 p-1 bg-white/30 backdrop-blur-md rounded-xl border border-white/50 shadow-sm">
                             <div className="flex items-center gap-2 px-3 py-1.5 bg-white/80 rounded-lg shadow-xs border border-white/50">
                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">ROAS BE</span>
                                 <span className="text-[11px] font-black text-rose-500 italic">{(product as any).roasBE || "2.40"}</span>
@@ -256,7 +256,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                     <Settings className="w-3.5 h-3.5" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[200px] glass-card p-1.5 z-[70] border-none rounded-2xl shadow-sm">
+                            <DropdownMenuContent align="end" className="w-[200px] glass-card p-1.5 z-[70] border-none rounded-2xl shadow-xl">
                                 <DropdownMenuLabel className="px-3 py-2">
                                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ajustes & Sistema</span>
                                 </DropdownMenuLabel>

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
         // 2. Beeping Status Sync (Fetch logistics updates)
         console.log("🚚 [FullSync] Syncing Beeping statuses...");
-        await syncBeepingStatuses(store.id, 0);
+        await syncBeepingStatuses(0);
 
         // 3. Regenerate Snapshots (Today & Yesterday)
         // This also triggers Meta Ads sync inside MetricsSnapshotService

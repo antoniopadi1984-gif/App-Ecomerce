@@ -57,7 +57,7 @@ export default function TeamPage() {
                         <Button onClick={loadData} variant="outline" size="sm" className="bg-white">
                             <RefreshCw className={`w-4 h-4 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
                         </Button>
-                        <Button className="bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-sm uppercase tracking-widest text-[10px] h-10 px-6 rounded-xl">
+                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-200 uppercase tracking-widest text-[10px] h-10 px-6 rounded-xl">
                             <Plus className="w-4 h-4 mr-2" />
                             Invitar Miembro
                         </Button>
@@ -65,15 +65,15 @@ export default function TeamPage() {
                 }
             />
 
-            <div className="p-6 md:p-6 space-y-6 max-w-[1600px] mx-auto w-full">
+            <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto w-full">
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                     <TabsList className="bg-white border border-slate-200 p-1 h-auto rounded-xl inline-flex">
-                        <TabsTrigger value="members" className="data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 text-slate-500 font-bold text-xs uppercase tracking-wider px-6 py-2 rounded-lg gap-2">
+                        <TabsTrigger value="members" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 text-slate-500 font-bold text-xs uppercase tracking-wider px-6 py-2 rounded-lg gap-2">
                             <Users className="w-4 h-4" />
                             Miembros ({data.users.length})
                         </TabsTrigger>
-                        <TabsTrigger value="agents" className="data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 text-slate-500 font-bold text-xs uppercase tracking-wider px-6 py-2 rounded-lg gap-2">
+                        <TabsTrigger value="agents" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 text-slate-500 font-bold text-xs uppercase tracking-wider px-6 py-2 rounded-lg gap-2">
                             <Bot className="w-4 h-4" />
                             Agentes IA ({data.agents.length})
                         </TabsTrigger>
@@ -82,7 +82,7 @@ export default function TeamPage() {
                     <TabsContent value="members" className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                             {data.users.map((user: any) => (
-                                <Card key={user.id} className="border-slate-200 shadow-sm hover:shadow-sm transition-shadow">
+                                <Card key={user.id} className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                                     <CardContent className="p-5 flex items-start gap-4">
                                         <Avatar className="w-12 h-12 border-2 border-white shadow-sm">
                                             <AvatarImage src={user.avatar} />
@@ -113,31 +113,31 @@ export default function TeamPage() {
 
                     <TabsContent value="agents" className="space-y-4">
                         <div className="flex justify-end mb-4">
-                            <Button onClick={handleCreateAgent} variant="secondary" className="bg-white border border-rose-100 text-rose-600 font-bold text-xs hover:bg-rose-50">
+                            <Button onClick={handleCreateAgent} variant="secondary" className="bg-white border border-indigo-100 text-indigo-600 font-bold text-xs hover:bg-indigo-50">
                                 <Plus className="w-3.5 h-3.5 mr-2" /> NUEVO AGENTE
                             </Button>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                            <Card className="border-2 border-dashed border-rose-200 bg-rose-50/30 flex items-center justify-center p-6 cursor-pointer hover:bg-rose-50 transition-colors" onClick={handleCreateAgent}>
+                            <Card className="border-2 border-dashed border-indigo-200 bg-indigo-50/30 flex items-center justify-center p-6 cursor-pointer hover:bg-indigo-50 transition-colors" onClick={handleCreateAgent}>
                                 <div className="text-center space-y-2">
-                                    <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center mx-auto text-rose-500">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mx-auto text-indigo-500">
                                         <Plus className="w-6 h-6" />
                                     </div>
-                                    <p className="text-rose-600 font-bold text-xs uppercase">Contratar Agente</p>
+                                    <p className="text-indigo-600 font-bold text-xs uppercase">Contratar Agente</p>
                                 </div>
                             </Card>
                             {data.agents.map((agent: any) => (
-                                <Card key={agent.id} className="border-slate-200 shadow-sm hover:ring-2 hover:ring-rose-100 transition-all">
+                                <Card key={agent.id} className="border-slate-200 shadow-sm hover:ring-2 hover:ring-indigo-100 transition-all">
                                     <CardHeader className="p-5 pb-2 flex flex-row items-center justify-between space-y-0">
-                                        <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-100 font-bold text-[10px] uppercase">
+                                        <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 font-bold text-[10px] uppercase">
                                             {agent.role}
                                         </Badge>
                                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                                     </CardHeader>
                                     <CardContent className="p-5 pt-2 space-y-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
+                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100">
                                                 <Bot className="w-6 h-6" />
                                             </div>
                                             <div>
@@ -157,7 +157,7 @@ export default function TeamPage() {
                                             </div>
                                         </div>
 
-                                        <Button className="w-full h-8 text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50">
+                                        <Button className="w-full h-8 text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50">
                                             CONFIGURAR
                                         </Button>
                                     </CardContent>

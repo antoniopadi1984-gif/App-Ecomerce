@@ -108,7 +108,7 @@ export default function StaticAdsPage() {
 
             <header className="relative flex items-center justify-between mb-6 z-10 shrink-0 border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center shadow-sm border border-slate-200">
+                    <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center shadow-premium border border-slate-200">
                         <ImageIcon className="h-5 w-5 text-yellow-600" />
                     </div>
                     <div>
@@ -141,7 +141,7 @@ export default function StaticAdsPage() {
                                             setSelectedProductId(e.target.value);
                                             if (p) setProductName(p.title);
                                         }}
-                                        className="w-full h-10 bg-slate-50 border-slate-200 rounded-lg focus:ring-yellow-500/20 focus:border-yellow-500/50 transition-all font-bold text-xs text-slate-700 px-3 outline-none appearance-none shadow-sm"
+                                        className="w-full h-10 bg-slate-50 border-slate-200 rounded-lg focus:ring-yellow-500/20 focus:border-yellow-500/50 transition-all font-bold text-xs text-slate-700 px-3 outline-none appearance-none shadow-inner"
                                     >
                                         <option value="" disabled>Seleccionar producto...</option>
                                         {dbProducts.map(p => (
@@ -155,7 +155,7 @@ export default function StaticAdsPage() {
                                         placeholder="Ej: Personas con dolor de espalda..."
                                         value={targetAudience}
                                         onChange={(e) => setTargetAudience(e.target.value)}
-                                        className="h-10 bg-slate-50 border-slate-200 rounded-lg focus:ring-yellow-500/20 focus:border-yellow-500/50 transition-all font-bold text-xs text-slate-700 px-3 shadow-sm"
+                                        className="h-10 bg-slate-50 border-slate-200 rounded-lg focus:ring-yellow-500/20 focus:border-yellow-500/50 transition-all font-bold text-xs text-slate-700 px-3 shadow-inner"
                                     />
                                 </div>
                             </div>
@@ -175,7 +175,7 @@ export default function StaticAdsPage() {
                         <Button
                             onClick={handleGenerateConcepts}
                             disabled={isGenerating}
-                            className="w-full h-12 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-black font-black uppercase tracking-widest shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full h-12 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-black font-black uppercase tracking-widest shadow-xl shadow-yellow-200 transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
                             {isGenerating ? <RefreshCw className="h-4 w-4 animate-spin shrink-0" /> : <Wand2 className="h-4 w-4 shrink-0" />}
                             <span className="truncate text-[10px]">Diseñar Conceptos</span>
@@ -207,7 +207,7 @@ export default function StaticAdsPage() {
                     {!concepts.length && !isGenerating ? (
                         <div className="h-[500px] border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50 flex flex-col items-center justify-center relative overflow-hidden">
                             <div className="relative text-center space-y-4">
-                                <div className="h-20 w-20 bg-white rounded-lg mx-auto flex items-center justify-center shadow-sm border border-slate-100 animate-bounce-slow">
+                                <div className="h-20 w-20 bg-white rounded-lg mx-auto flex items-center justify-center shadow-2xl border border-slate-100 animate-bounce-slow">
                                     <ImageIcon className="h-10 w-10 text-yellow-700/20" />
                                 </div>
                                 <h3 className="text-lg font-black text-slate-950 uppercase italic tracking-tighter">Visual Intelligence Hub</h3>
@@ -217,7 +217,7 @@ export default function StaticAdsPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
                             {concepts.map((concept, idx) => (
-                                <Card key={idx} className="bg-white border-slate-200 rounded-lg overflow-hidden group hover:border-yellow-200 transition-all duration-500 shadow-sm flex flex-col">
+                                <Card key={idx} className="bg-white border-slate-200 rounded-lg overflow-hidden group hover:border-yellow-200 transition-all duration-500 shadow-premium flex flex-col">
                                     <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden group-hover:bg-slate-200 transition-colors">
                                         <div className="absolute inset-0 flex items-center justify-center opacity-10">
                                             <ImageIcon className="h-24 w-24" />

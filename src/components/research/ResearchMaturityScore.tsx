@@ -37,15 +37,15 @@ export function ResearchMaturityScore({ maturity, loading, onSync, nodesCount }:
     ];
 
     const getStatusColor = (val: number) => {
-        if (val >= 0.8) return "bg-emerald-500 shadow-sm";
-        if (val >= 0.4) return "bg-amber-500 shadow-sm";
-        return "bg-rose-500 shadow-sm";
+        if (val >= 0.8) return "bg-emerald-500 shadow-emerald-500/50";
+        if (val >= 0.4) return "bg-amber-500 shadow-amber-500/50";
+        return "bg-rose-500 shadow-rose-500/50";
     };
 
     return (
         <section className="space-y-3">
             {/* Main Header Card */}
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm flex flex-row items-center justify-between gap-4">
+            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-xl flex flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
                         <BrainCircuit className="w-5 h-5 text-blue-400" />
@@ -60,7 +60,7 @@ export function ResearchMaturityScore({ maturity, loading, onSync, nodesCount }:
 
                 <div className="flex items-center gap-4 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
                     <div className="flex flex-col items-center">
-                        <div className={cn("w-2 h-2 rounded-full shadow-sm animate-pulse", getStatusColor(maturity.overall))}></div>
+                        <div className={cn("w-2 h-2 rounded-full shadow-lg animate-pulse", getStatusColor(maturity.overall))}></div>
                         <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">{t('signal')}</span>
                     </div>
                     <div className="h-6 w-px bg-white/10"></div>
@@ -86,7 +86,7 @@ export function ResearchMaturityScore({ maturity, loading, onSync, nodesCount }:
                 <PremiumCard className="lg:col-span-2">
                     <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                            <BarChart3 className="w-3.5 h-3.5 text-rose-500" />
+                            <BarChart3 className="w-3.5 h-3.5 text-indigo-500" />
                             <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Atributos de Madurez</h3>
                         </div>
 
@@ -110,8 +110,8 @@ export function ResearchMaturityScore({ maturity, loading, onSync, nodesCount }:
 
                 {/* Learning Loop Info */}
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="p-4 bg-rose-50/30 rounded-xl border border-rose-100/50 flex flex-col justify-center">
-                        <h4 className="text-[9px] font-black text-rose-700 uppercase mb-2 flex items-center gap-1.5 tracking-widest">
+                    <div className="p-4 bg-indigo-50/30 rounded-xl border border-indigo-100/50 flex flex-col justify-center">
+                        <h4 className="text-[9px] font-black text-indigo-700 uppercase mb-2 flex items-center gap-1.5 tracking-widest">
                             <RefreshCw className="w-3.5 h-3.5" /> {t('learning_loop')}
                         </h4>
                         <p className="text-xl font-black text-slate-900 tracking-tighter leading-none mb-1">

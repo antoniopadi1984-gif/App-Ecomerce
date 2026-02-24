@@ -50,7 +50,7 @@ function AssetCard({ asset, onClick }: { asset: any, onClick: () => void }) {
     return (
         <div
             onClick={onClick}
-            className="group glass-panel rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer relative"
+            className="group glass-panel rounded-xl overflow-hidden shadow-sm hover:shadow-sm hover:shadow-sm hover:-translate-y-1 transition-all duration-300 cursor-pointer relative"
         >
             {/* Visual Preview Container */}
             <div className="relative aspect-[9/11] bg-slate-900 group-hover:scale-[1.01] transition-transform duration-500">
@@ -77,13 +77,13 @@ function AssetCard({ asset, onClick }: { asset: any, onClick: () => void }) {
 
                 <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                     <Badge className={cn(
-                        "font-black text-[8px] uppercase tracking-widest border-none px-1.5 py-0.5 shadow-lg",
+                        "font-black text-[8px] uppercase tracking-widest border-none px-1.5 py-0.5 shadow-sm",
                         isReady ? "bg-emerald-500 text-white" : "bg-amber-500 text-white"
                     )}>
                         {asset.verdict || "Testing"}
                     </Badge>
                     {isWinner && (
-                        <Badge className="bg-indigo-600 text-white font-black text-[8px] uppercase tracking-widest border-none px-1.5 py-0.5 shadow-lg flex items-center gap-1">
+                        <Badge className="bg-rose-600 text-white font-black text-[8px] uppercase tracking-widest border-none px-1.5 py-0.5 shadow-sm flex items-center gap-1">
                             <Sparkles className="w-2 h-2" />
                             Winner
                         </Badge>

@@ -135,7 +135,7 @@ export function CopyHubModule({ productId, productTitle }: CopyHubProps) {
                                         className={cn(
                                             "flex items-center gap-2 p-2 rounded-xl border transition-all text-[9px] font-black uppercase tracking-tight text-left",
                                             context === item.id
-                                                ? "bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-200"
+                                                ? "bg-rose-500 border-rose-500 text-white shadow-sm"
                                                 : "bg-white/40 border-slate-100 text-slate-400 hover:bg-slate-50"
                                         )}
                                     >
@@ -149,7 +149,7 @@ export function CopyHubModule({ productId, productTitle }: CopyHubProps) {
                         <Button
                             onClick={handleGenerate}
                             disabled={loading}
-                            className="w-full h-10 rounded-xl bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[10px] shadow-lg transition-all"
+                            className="w-full h-10 rounded-xl bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[10px] shadow-sm transition-all"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generar Copy Maestro"}
                         </Button>

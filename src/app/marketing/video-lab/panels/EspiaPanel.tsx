@@ -48,7 +48,7 @@ export function EspiaPanel({ onSelect }: { onSelect?: (item: any) => void }) {
         <div className="flex flex-col h-full gap-4">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 glass-panel rounded-[2rem] border border-white/50 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
+                    <div className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-sm">
                         <Video className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -98,7 +98,7 @@ export function EspiaPanel({ onSelect }: { onSelect?: (item: any) => void }) {
                         ))
                     ) : filtered.length > 0 ? (
                         filtered.map((item) => (
-                            <div key={item.id} className="group relative rounded-[2rem] border border-white/50 bg-white/40 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
+                            <div key={item.id} className="group relative rounded-[2rem] border border-white/50 bg-white/40 overflow-hidden shadow-sm hover:shadow-sm hover:-translate-y-1 transition-all duration-500">
                                 <div className="relative aspect-video bg-slate-100/50 overflow-hidden flex items-center justify-center">
                                     {item.videoUrl ? (
                                         <video src={item.videoUrl} className="w-full h-full object-cover" muted loop onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()} />

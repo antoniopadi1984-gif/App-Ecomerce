@@ -35,7 +35,7 @@ export default function FulfillmentRulesPage() {
     return (
         <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-4 animate-in fade-in duration-700">
             <div className="flex items-center gap-4">
-                <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center shadow-xl">
+                <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center shadow-sm">
                     <Shield className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -107,7 +107,7 @@ export default function FulfillmentRulesPage() {
                                     />
                                 </div>
                             </div>
-                            <Button onClick={() => handleSave(rule)} className="w-full h-8 bg-slate-900 hover:bg-black text-white uppercase font-black text-[9px] tracking-widest rounded-lg transition-all shadow-xl">
+                            <Button onClick={() => handleSave(rule)} className="w-full h-8 bg-slate-900 hover:bg-black text-white uppercase font-black text-[9px] tracking-widest rounded-lg transition-all shadow-sm">
                                 <Save className="h-3 w-3 mr-2" /> Guardar Cambios
                             </Button>
                         </CardContent>

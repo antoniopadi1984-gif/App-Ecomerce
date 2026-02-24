@@ -682,7 +682,7 @@ export default function PerformancePage() {
                         <KPICard label="Ventas" value={formatValue(totals.revenue, 'currency')} icon={<BarChart3 className="w-3 h-3" />} color="emerald" />
                         <KPICard label="ROAS" value={formatValue(roas, 'ratio')} icon={<TrendingUp className="w-3 h-3" />} color="amber" />
                         <KPICard label="CPA" value={formatValue(cpa, 'currency')} icon={<ShoppingCart className="w-3 h-3" />} />
-                        <KPICard label="Compras" value={totals.purchases?.toLocaleString() || '0'} icon={<ShoppingCart className="w-3 h-3" />} color="indigo" />
+                        <KPICard label="Compras" value={totals.purchases?.toLocaleString() || '0'} icon={<ShoppingCart className="w-3 h-3" />} color="rose" />
                     </div>
 
                     {/* === TABLA PRINCIPAL === */}
@@ -883,7 +883,7 @@ function KPICard({ label, value, icon, color = 'slate' }: { label: string; value
         slate: 'text-primary',
         emerald: 'text-emerald-600',
         amber: 'text-amber-600',
-        indigo: 'text-indigo-600'
+        rose: 'text-rose-600'
     };
     return (
         <div className="bg-white rounded-lg border border-slate-200 px-2 py-1.5 flex items-center justify-between shadow-sm">
@@ -899,7 +899,7 @@ function KPICard({ label, value, icon, color = 'slate' }: { label: string; value
 function DetailPanel({ row, level, onClose }: { row: any; level: string; onClose: () => void }) {
     const norm = row.metricsNorm || {};
     return (
-        <div className="w-[380px] bg-white border-l border-slate-200 shadow-lg absolute right-0 top-0 h-full z-50 flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="w-[380px] bg-white border-l border-slate-200 shadow-sm absolute right-0 top-0 h-full z-50 flex flex-col animate-in slide-in-from-right duration-300">
             <div className="p-3 border-b border-slate-100 flex items-center justify-between">
                 <div>
                     <span className="text-[8px] font-black text-slate-400 uppercase">{level}</span>

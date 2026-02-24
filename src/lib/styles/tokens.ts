@@ -80,7 +80,7 @@ export const TYPOGRAPHY = {
 
 export const SHADOWS = {
     sm: 'shadow-sm',
-    premium: 'var(--shadow-premium)',
+    premium: 'var(--shadow-sm)',
     glass: 'var(--glass-shadow)',
 };
 

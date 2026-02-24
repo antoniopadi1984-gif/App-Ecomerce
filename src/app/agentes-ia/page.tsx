@@ -79,7 +79,7 @@ export default function AIAgentsPage() {
                         <p className="text-slate-500 max-w-sm mx-auto font-medium text-sm">Se requiere la integración base de Shopify para reclutar agentes de IA.</p>
                     </div>
                     <Link href="/connections">
-                        <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-lg shadow-rose-500/20">
+                        <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-sm">
                             <Link2 className="w-4 h-4 mr-2" />
                             Vincular Tienda
                         </Button>
@@ -100,13 +100,13 @@ export default function AIAgentsPage() {
                         <div className="flex items-center gap-3">
                             <div className="flex -space-x-2">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="w-6 h-6 rounded-full bg-indigo-50 border-2 border-white flex items-center justify-center">
-                                        <Zap className="w-3 h-3 text-indigo-500" />
+                                    <div key={i} className="w-6 h-6 rounded-full bg-rose-50 border-2 border-white flex items-center justify-center">
+                                        <Zap className="w-3 h-3 text-rose-500" />
                                     </div>
                                 ))}
                             </div>
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">3 Nodos Activos</span>
-                            <Button onClick={handleCreateAgent} className="h-7 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[8px] tracking-widest shadow-lg shadow-indigo-100 transition-all">
+                            <Button onClick={handleCreateAgent} className="h-7 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-black uppercase text-[8px] tracking-widest shadow-sm transition-all">
                                 <Plus className="w-3 h-3 mr-2" />
                                 RECLUTAR AGENTE
                             </Button>
@@ -114,7 +114,7 @@ export default function AIAgentsPage() {
                     }
                 />
 
-                <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden relative flex flex-col">
+                <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden relative flex flex-col">
                     <div className="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/20">
                         <div className="flex items-center gap-3 flex-1 max-w-md">
                             <div className="relative flex-1">
@@ -160,14 +160,14 @@ export default function AIAgentsPage() {
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                                     {filteredAgents.map((agent: any) => (
-                                        <Card key={agent.id} className="group border-slate-100 rounded-lg shadow-xs hover:shadow-xl transition-all overflow-hidden relative border">
+                                        <Card key={agent.id} className="group border-slate-100 rounded-lg shadow-xs hover:shadow-sm transition-all overflow-hidden relative border">
                                             <CardHeader className="p-3 pb-1.5 border-none">
                                                 <div className="flex justify-between items-start">
-                                                    <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 font-black text-[7px] uppercase tracking-widest italic rounded-md px-1.5 h-4">
+                                                    <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-100 font-black text-[7px] uppercase tracking-widest italic rounded-md px-1.5 h-4">
                                                         {agent.role}
                                                     </Badge>
                                                     <div className="flex items-center gap-1">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-200" />
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-sm" />
                                                         <span className="text-[7px] font-black text-emerald-600 uppercase italic">ONLINE</span>
                                                     </div>
                                                 </div>
@@ -175,8 +175,8 @@ export default function AIAgentsPage() {
 
                                             <CardContent className="p-3 pt-1 space-y-3">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-7 h-7 rounded-md bg-slate-900 flex items-center justify-center text-white shadow-md shadow-slate-200 group-hover:rotate-3 transition-transform">
-                                                        <Brain className="w-4 h-4 text-indigo-400" />
+                                                    <div className="w-7 h-7 rounded-md bg-slate-900 flex items-center justify-center text-white shadow-sm group-hover:rotate-3 transition-transform">
+                                                        <Brain className="w-4 h-4 text-rose-400" />
                                                     </div>
                                                     <div>
                                                         <h3 className="text-[11px] font-black text-slate-900 tracking-tight uppercase italic leading-none">{agent.name}</h3>
@@ -191,17 +191,17 @@ export default function AIAgentsPage() {
                                                     </div>
                                                     <div className="p-2 bg-slate-50/50 rounded-md border border-slate-100">
                                                         <span className="text-[6px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">AUTH</span>
-                                                        <span className="text-[9px] font-black text-indigo-600 italic">100%</span>
+                                                        <span className="text-[9px] font-black text-rose-600 italic">100%</span>
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-1.5">
                                                     <div className="flex justify-between text-[6px] font-black uppercase text-slate-400 tracking-widest">
                                                         <span>SYNAPSE LINK</span>
-                                                        <span className="text-indigo-500 italic">ACTIVE</span>
+                                                        <span className="text-rose-500 italic">ACTIVE</span>
                                                     </div>
-                                                    <div className="h-0.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                                                        <div className="h-full bg-indigo-500 w-[70%]" />
+                                                    <div className="h-0.5 bg-slate-100 rounded-full overflow-hidden shadow-sm">
+                                                        <div className="h-full bg-rose-500 w-[70%]" />
                                                     </div>
                                                 </div>
 
@@ -218,12 +218,12 @@ export default function AIAgentsPage() {
                                         </Card>
                                     ))}
 
-                                    <Card onClick={handleCreateAgent} className="group border-2 border-dashed border-slate-100 rounded-lg p-6 bg-slate-50/30 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-indigo-200 transition-all gap-4">
-                                        <div className="w-12 h-12 bg-white rounded-lg border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-indigo-600 group-hover:shadow-lg transition-all">
+                                    <Card onClick={handleCreateAgent} className="group border-2 border-dashed border-slate-100 rounded-lg p-6 bg-slate-50/30 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-rose-200 transition-all gap-4">
+                                        <div className="w-12 h-12 bg-white rounded-lg border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-rose-600 group-hover:shadow-sm transition-all">
                                             <Plus className="w-6 h-6" />
                                         </div>
                                         <div className="text-center">
-                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">Contratar Agente Neural</h4>
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-rose-600 transition-colors">Contratar Agente Neural</h4>
                                             <p className="text-[8px] text-slate-300 font-bold uppercase mt-1 italic">Click para expandir equipo</p>
                                         </div>
                                     </Card>
@@ -233,19 +233,19 @@ export default function AIAgentsPage() {
                     </ScrollArea>
 
                     {/* FOOTER STATS */}
-                    <div className="p-4 bg-slate-900 border-t border-indigo-500/10 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em] text-white/50">
+                    <div className="p-4 bg-slate-900 border-t border-rose-500/10 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em] text-white/50">
                         <div className="flex gap-6">
                             <div className="flex items-center gap-2">
                                 <Activity className="h-3 w-3 text-emerald-500" />
                                 <span>System Health: Nominal</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Cpu className="h-3 w-3 text-indigo-400" />
+                                <Cpu className="h-3 w-3 text-rose-400" />
                                 <span>Core Usage: 14%</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                            <div className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
                             <span>Neural Link: ESTABLISHED</span>
                         </div>
                     </div>

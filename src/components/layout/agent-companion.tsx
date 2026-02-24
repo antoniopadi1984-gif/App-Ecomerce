@@ -89,7 +89,7 @@ export function AgentCompanion() {
         <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-3">
             {/* Chat Window */}
             {isOpen && (
-                <div className="w-[320px] h-[450px] bg-slate-50/90 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300 ring-1 ring-white/50">
+                <div className="w-[320px] h-[450px] bg-slate-50/90 rounded-2xl shadow-sm flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300 ring-1 ring-white/50">
                     {/* Header */}
                     <div className="p-3 bg-slate-900 text-white flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -183,7 +183,7 @@ export function AgentCompanion() {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "h-12 w-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 active:scale-90",
+                    "h-12 w-12 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 active:scale-90",
                     isOpen ? "bg-slate-900 text-white rotate-90" : "bg-rose-500 text-white hover:scale-110"
                 )}
             >

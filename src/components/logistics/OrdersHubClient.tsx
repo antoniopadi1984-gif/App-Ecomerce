@@ -78,7 +78,7 @@ export function OrdersHubClient({ storeId, productId, productTitle }: OrdersHubC
                             <TabsTrigger
                                 key={tab.v}
                                 value={tab.v}
-                                className="px-3 h-7 rounded-md data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs font-black text-[8px] uppercase tracking-widest text-slate-500 transition-all whitespace-nowrap"
+                                className="px-3 h-7 rounded-md data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-xs font-black text-[8px] uppercase tracking-widest text-slate-500 transition-all whitespace-nowrap"
                             >
                                 {tab.t}
                             </TabsTrigger>

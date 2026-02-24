@@ -168,7 +168,7 @@ export function AiCollaborationPanel({
                         <Button
                             onClick={handleProcessImport}
                             disabled={!importValue || isSaving}
-                            className="w-full h-10 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest shadow-md hover:bg-black transition-all flex items-center justify-center gap-2 text-[9px]"
+                            className="w-full h-10 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest shadow-sm hover:bg-black transition-all flex items-center justify-center gap-2 text-[9px]"
                         >
                             {isSaving ? <Wand2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                             Guardar Data

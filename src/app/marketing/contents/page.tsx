@@ -64,7 +64,7 @@ export default function ContentsDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {modules.map((m) => (
                         <Link key={m.href} href={m.href}>
-                            <Card className="h-full border-slate-100 bg-white hover:border-rose-500/30 hover:shadow-xl transition-all rounded-2xl group overflow-hidden">
+                            <Card className="h-full border-slate-100 bg-white hover:border-rose-500/30 hover:shadow-sm transition-all rounded-2xl group overflow-hidden">
                                 <CardHeader className="pb-2 p-4">
                                     <div className={`w-10 h-10 ${m.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform duration-300`}>
                                         <m.icon className="w-5 h-5" />
@@ -107,7 +107,7 @@ export default function ContentsDashboard() {
                                 <p className="text-slate-400 font-bold uppercase tracking-widest text-[8px]">Empieza creando una plantilla para tu primer producto.</p>
                             </div>
                             <Link href="/marketing/contents/ebooks">
-                                <Button className="mt-4 bg-slate-900 hover:bg-black text-white px-6 h-10 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-md transition-all hover:scale-102">
+                                <Button className="mt-4 bg-slate-900 hover:bg-black text-white px-6 h-10 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-sm transition-all hover:scale-102">
                                     IR AL GENERADOR
                                 </Button>
                             </Link>

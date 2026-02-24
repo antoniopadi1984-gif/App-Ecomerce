@@ -58,10 +58,10 @@ export default function AdSpyPage() {
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         <div className="flex flex-1 max-w-md gap-2">
                             <div className="relative flex-1 group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-rose-500 transition-colors" />
                                 <Input
                                     placeholder="BUSCAR..."
-                                    className="h-9 pl-9 bg-white border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest placeholder:text-slate-300 focus:ring-indigo-500/10 focus:border-indigo-500/50 shadow-sm"
+                                    className="h-9 pl-9 bg-white border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest placeholder:text-slate-300 focus:ring-rose-500/10 focus:border-rose-500/50 shadow-sm"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
@@ -135,13 +135,13 @@ function TabsList({ filter, setFilter }: any) {
 
 function AdCard({ item }: { item: any }) {
     return (
-        <div className="break-inside-avoid relative group rounded-[2.5rem] border border-slate-100 bg-white overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
+        <div className="break-inside-avoid relative group rounded-[2.5rem] border border-slate-100 bg-white overflow-hidden shadow-sm hover:shadow-sm hover:-translate-y-1 transition-all duration-500">
             {/* PLATFORM BADGE */}
             <div className="absolute top-4 left-4 z-10">
                 <Badge className={cn(
-                    "h-6 px-3 rounded-lg text-[9px] font-black uppercase italic shadow-lg",
+                    "h-6 px-3 rounded-lg text-[9px] font-black uppercase italic shadow-sm",
                     item.platform === 'FACEBOOK' ? "bg-blue-600 text-white" :
-                        item.platform === 'TIKTOK' ? "bg-black text-white" : "bg-indigo-600 text-white"
+                        item.platform === 'TIKTOK' ? "bg-black text-white" : "bg-rose-600 text-white"
                 )}>
                     {item.platform}
                 </Badge>
@@ -149,7 +149,7 @@ function AdCard({ item }: { item: any }) {
 
             {/* ACTION MENU */}
             <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 shadow-xl text-slate-900">
+                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 shadow-sm text-slate-900">
                     <MoreVertical className="h-4 w-4" />
                 </Button>
             </div>
@@ -180,7 +180,7 @@ function AdCard({ item }: { item: any }) {
                         <Eye className="h-4 w-4" /> Ver Full
                     </Button>
                     {item.url && (
-                        <a href={item.url} target="_blank" className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                        <a href={item.url} target="_blank" className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm hover:scale-110 transition-transform">
                             <ExternalLink className="h-4 w-4 text-slate-900" />
                         </a>
                     )}
@@ -199,7 +199,7 @@ function AdCard({ item }: { item: any }) {
                 </p>
 
                 <div className="flex items-center gap-2 pt-4 border-t border-slate-50">
-                    <Button variant="ghost" className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100">
+                    <Button variant="ghost" className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-50/50 hover:bg-rose-100">
                         <Microscope className="h-3.5 w-3.5 mr-2" /> Analizar con Gemini
                     </Button>
                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50">

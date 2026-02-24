@@ -46,7 +46,7 @@ export function ResearchHeader({
         <div className="flex items-center justify-between gap-4 px-4 py-2.5 bg-white/70 rounded-xl border border-slate-200/60 shadow-sm relative overflow-hidden glass-header">
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-100 shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-rose-600 flex items-center justify-center shadow-sm shrink-0">
                         <Cpu className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex flex-col">
@@ -80,7 +80,7 @@ export function ResearchHeader({
                 </Button>
 
                 <Button
-                    className="h-8 px-4 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white border-0 shadow-lg shadow-indigo-100 transition-all duration-300 rounded-lg"
+                    className="h-8 px-4 gap-2 bg-rose-600 hover:bg-rose-700 text-white border-0 shadow-sm transition-all duration-300 rounded-lg"
                     onClick={onStartResearch}
                     disabled={isResearching}
                 >
@@ -102,8 +102,8 @@ export function ResearchHeader({
                             <MoreVertical className="w-4 h-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44 bg-white/95 border-slate-200 rounded-xl shadow-2xl p-1">
-                        <DropdownMenuItem className="gap-2 focus:bg-indigo-50 focus:text-indigo-600 cursor-pointer rounded-lg py-2 text-[9px] font-black uppercase tracking-widest">
+                    <DropdownMenuContent align="end" className="w-44 bg-white/95 border-slate-200 rounded-xl shadow-sm p-1">
+                        <DropdownMenuItem className="gap-2 focus:bg-rose-50 focus:text-rose-600 cursor-pointer rounded-lg py-2 text-[9px] font-black uppercase tracking-widest">
                             <Activity className="w-3.5 h-3.5" />
                             <span>{t('history_logs')}</span>
                         </DropdownMenuItem>

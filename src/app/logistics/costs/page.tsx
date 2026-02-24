@@ -130,7 +130,7 @@ export default function LogisticsFinanceManager() {
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-            <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+            <Loader2 className="h-8 w-8 text-rose-600 animate-spin" />
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Cargando Centro de Costes...</p>
         </div>
     );
@@ -141,12 +141,12 @@ export default function LogisticsFinanceManager() {
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-slate-100">
                 <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg shadow-slate-200">
-                            <Calculator className="h-4 w-4 text-indigo-400" />
+                        <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-sm">
+                            <Calculator className="h-4 w-4 text-rose-400" />
                         </div>
                         <div>
                             <h1 className="text-sm font-black uppercase tracking-tighter text-slate-900 italic leading-none">
-                                Finanzas <span className="text-indigo-600 not-italic ml-1">&</span> Logística <span className="text-blue-500 font-bold not-italic ml-1">v4</span>
+                                Finanzas <span className="text-rose-600 not-italic ml-1">&</span> Logística <span className="text-blue-500 font-bold not-italic ml-1">v4</span>
                             </h1>
                             <p className="text-[7px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1.5 opacity-80">
                                 Control Unificado de Márgenes Operativos y COGS
@@ -171,7 +171,7 @@ export default function LogisticsFinanceManager() {
                         variant="outline"
                         className="h-8 px-3 rounded-lg border-slate-200 bg-white shadow-xs font-black uppercase text-[8px] tracking-widest hover:bg-slate-50 transition-all"
                     >
-                        <RefreshCw className="h-3 w-3 mr-2 text-indigo-500" />
+                        <RefreshCw className="h-3 w-3 mr-2 text-rose-500" />
                         Sincronizar Catálogo
                     </Button>
                 </div>
@@ -179,13 +179,13 @@ export default function LogisticsFinanceManager() {
 
             <Tabs defaultValue="logistics" className="space-y-6">
                 <TabsList className="bg-slate-100/50 border border-slate-200/30 p-1 h-9 rounded-lg w-full max-w-[450px] shadow-xs">
-                    <TabsTrigger value="logistics" className="flex-1 rounded-md h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs text-slate-400 transition-all">
+                    <TabsTrigger value="logistics" className="flex-1 rounded-md h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-xs text-slate-400 transition-all">
                         <Truck className="h-3 w-3 mr-2" /> Reglas de Envío
                     </TabsTrigger>
-                    <TabsTrigger value="products" className="flex-1 rounded-md h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs text-slate-400 transition-all">
+                    <TabsTrigger value="products" className="flex-1 rounded-md h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-xs text-slate-400 transition-all">
                         <Box className="h-3 w-3 mr-2" /> Productos (COGS)
                     </TabsTrigger>
-                    <TabsTrigger value="integration" className="flex-1 rounded-md h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-xs text-slate-400 transition-all">
+                    <TabsTrigger value="integration" className="flex-1 rounded-md h-7 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-xs text-slate-400 transition-all">
                         <Zap className="h-3 w-3 mr-2" /> Integración
                     </TabsTrigger>
                 </TabsList>
@@ -194,7 +194,7 @@ export default function LogisticsFinanceManager() {
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {/* ADD PROVIDER CARD - PREMIUM GLASS STYLE */}
                         <div
-                            className="bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center gap-4 group hover:border-indigo-400 hover:bg-indigo-50/10 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
+                            className="bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center gap-4 group hover:border-rose-400 hover:bg-rose-50/10 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
                             onClick={async () => {
                                 if (!activeStoreId) return;
                                 const name = prompt("Nombre del proveedor logístico (ej: DHL, Correos):");
@@ -210,7 +210,7 @@ export default function LogisticsFinanceManager() {
                                 }
                             }}
                         >
-                            <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center border border-slate-100 shadow-sm group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center border border-slate-100 shadow-sm group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all">
                                 <Plus className="h-5 w-5" />
                             </div>
                             <div className="text-center space-y-1">
@@ -221,11 +221,11 @@ export default function LogisticsFinanceManager() {
 
                         {/* LIST OF PROVIDERS */}
                         {rules.map((rule) => (
-                            <Card key={rule.id} className="bg-white border border-slate-100 rounded-lg shadow-xs overflow-hidden group hover:shadow-md transition-all">
+                            <Card key={rule.id} className="bg-white border border-slate-100 rounded-lg shadow-xs overflow-hidden group hover:shadow-sm transition-all">
                                 <div className="p-4 space-y-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="h-8 w-8 bg-slate-950 rounded-lg flex items-center justify-center text-sm shadow-lg shadow-slate-200">
+                                            <div className="h-8 w-8 bg-slate-950 rounded-lg flex items-center justify-center text-sm shadow-sm">
                                                 {rule.provider === 'BEEPING' ? '🐝' : rule.provider === 'DROPI' ? '📦' : rule.provider === 'AMAZON' ? '☁️' : '🚚'}
                                             </div>
                                             <div>
@@ -246,14 +246,14 @@ export default function LogisticsFinanceManager() {
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                                         <div className="space-y-1.5">
                                             <Label className="text-[7.5px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1.5">
-                                                <ArrowRight className="h-2.5 w-2.5 text-indigo-500" /> Envío (Out)
+                                                <ArrowRight className="h-2.5 w-2.5 text-rose-500" /> Envío (Out)
                                             </Label>
                                             <div className="relative group/input">
                                                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 font-black text-[10px]">€</span>
                                                 <Input
                                                     type="number" step="0.1"
                                                     defaultValue={rule.baseShippingCost}
-                                                    className="pl-6 bg-slate-50 border-slate-100 h-8 font-black text-xs rounded-lg focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all shadow-xs"
+                                                    className="pl-6 bg-slate-50 border-slate-100 h-8 font-black text-xs rounded-lg focus:bg-white focus:ring-4 focus:ring-rose-100 transition-all shadow-xs"
                                                     onBlur={(e) => handleUpdateRule(rule.id, 'baseShippingCost', parseFloat(e.target.value))}
                                                 />
                                             </div>
@@ -367,7 +367,7 @@ export default function LogisticsFinanceManager() {
                                                     setSearchQuery("");
                                                 }}
                                             >
-                                                <Plus className="h-3 w-3 text-indigo-500" />
+                                                <Plus className="h-3 w-3 text-rose-500" />
                                             </Button>
                                         </div>
                                         <div className="space-y-2">
@@ -391,7 +391,7 @@ export default function LogisticsFinanceManager() {
                                                 const margin = realPrice - cost - logisticsFull - codCost;
 
                                                 return (
-                                                    <div key={product.id} className="bg-slate-50/50 rounded-lg p-2 flex items-center gap-2.5 group/prod hover:bg-indigo-50/50 transition-colors border border-transparent hover:border-indigo-100">
+                                                    <div key={product.id} className="bg-slate-50/50 rounded-lg p-2 flex items-center gap-2.5 group/prod hover:bg-rose-50/50 transition-colors border border-transparent hover:border-rose-100">
                                                         <div className="h-9 w-9 bg-white rounded-md overflow-hidden border border-slate-100 flex-shrink-0 shadow-xs">
                                                             {product.image ? <img src={product.image} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-50" />}
                                                         </div>
@@ -408,7 +408,7 @@ export default function LogisticsFinanceManager() {
                                                                         type="number"
                                                                         step="0.01"
                                                                         defaultValue={cost}
-                                                                        className="h-5 text-[8px] font-black bg-white border-slate-100 px-1 py-0 text-center focus:ring-1 focus:ring-indigo-500 rounded-sm"
+                                                                        className="h-5 text-[8px] font-black bg-white border-slate-100 px-1 py-0 text-center focus:ring-1 focus:ring-rose-500 rounded-sm"
                                                                         placeholder="Coste"
                                                                         onBlur={(e) => handleUpdateProduct(product.id, 'unitCost', parseFloat(e.target.value))}
                                                                     />
@@ -453,7 +453,7 @@ export default function LogisticsFinanceManager() {
                                             {product.image ? (
                                                 <img src={product.image} className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-slate-950 text-indigo-400 font-black text-[8px]">?</div>
+                                                <div className="w-full h-full flex items-center justify-center bg-slate-950 text-rose-400 font-black text-[8px]">?</div>
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -496,9 +496,9 @@ export default function LogisticsFinanceManager() {
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="hidden lg:flex flex-col items-center justify-center p-2 bg-slate-950 rounded-lg min-w-[70px] shadow-lg">
+                                            <div className="hidden lg:flex flex-col items-center justify-center p-2 bg-slate-950 rounded-lg min-w-[70px] shadow-sm">
                                                 <span className="text-[6px] font-black text-slate-500 uppercase tracking-widest">Margen</span>
-                                                <span className="text-[11px] font-black text-indigo-400 italic">
+                                                <span className="text-[11px] font-black text-rose-400 italic">
                                                     €{((product.finance?.sellingPrice || 0) - (product.finance?.unitCost || 0)).toFixed(1)}
                                                 </span>
                                             </div>
@@ -506,7 +506,7 @@ export default function LogisticsFinanceManager() {
                                     </div>
 
                                     {/* FULFILLMENT COST LAYER (New Task 6.7) */}
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 p-3 bg-slate-50/80 rounded-lg border border-slate-100 shadow-inner">
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 p-3 bg-slate-50/80 rounded-lg border border-slate-100 shadow-sm">
                                         <div className="space-y-1">
                                             <Label className="text-[7.5px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1 leading-none">
                                                 <Truck className="h-2.5 w-2.5" /> Envío (Out)
@@ -585,23 +585,23 @@ export default function LogisticsFinanceManager() {
                 </TabsContent>
 
                 <TabsContent value="integration" className="max-w-3xl">
-                    <Card className="bg-slate-950 border-none rounded-lg overflow-hidden shadow-2xl">
-                        <div className="p-6 border-b border-white/5 bg-gradient-to-br from-indigo-900/10 to-transparent">
+                    <Card className="bg-slate-950 border-none rounded-lg overflow-hidden shadow-sm">
+                        <div className="p-6 border-b border-white/5 bg-gradient-to-br from-rose-900/10 to-transparent">
                             <h3 className="text-sm font-black uppercase tracking-tight text-white flex items-center gap-2 italic">
-                                <Zap className="h-4 w-4 text-indigo-400" /> Webhooks Maestros <span className="text-blue-500 not-italic ml-1">v2.1</span>
+                                <Zap className="h-4 w-4 text-rose-400" /> Webhooks Maestros <span className="text-blue-500 not-italic ml-1">v2.1</span>
                             </h3>
                             <p className="text-[7px] font-black text-slate-500 uppercase tracking-[0.2em] mt-1 opacity-80">Conexión Directa Global Listener</p>
                         </div>
                         <div className="p-6 space-y-4">
                             {providersWebhooks.map((p) => (
                                 <div key={p.name} className="bg-white/[0.03] rounded-lg p-4 border border-white/5 flex items-center gap-4 hover:bg-white/[0.05] transition-all group">
-                                    <div className="h-10 w-10 bg-white/5 rounded-lg flex items-center justify-center text-lg shadow-inner group-hover:bg-indigo-600 transition-all">
+                                    <div className="h-10 w-10 bg-white/5 rounded-lg flex items-center justify-center text-lg shadow-sm group-hover:bg-rose-600 transition-all">
                                         {p.icon}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="text-[10px] font-black text-white uppercase tracking-widest italic">{p.name} Operational Socket</h4>
                                         <div className="mt-1.5 group/code relative">
-                                            <code className="text-[9px] font-mono text-indigo-300 block bg-black/40 p-2 rounded-md border border-white/5 truncate max-w-full italic">
+                                            <code className="text-[9px] font-mono text-rose-300 block bg-black/40 p-2 rounded-md border border-white/5 truncate max-w-full italic">
                                                 {p.url}
                                             </code>
                                         </div>
@@ -612,7 +612,7 @@ export default function LogisticsFinanceManager() {
                                             navigator.clipboard.writeText(p.url);
                                             toast.success(`${p.name} Webhook copiado`);
                                         }}
-                                        className="h-8 px-4 bg-white text-slate-950 hover:bg-indigo-50 font-black uppercase text-[8px] tracking-widest rounded-md transition-all shadow-lg shadow-indigo-500/10 shrink-0"
+                                        className="h-8 px-4 bg-white text-slate-950 hover:bg-rose-50 font-black uppercase text-[8px] tracking-widest rounded-md transition-all shadow-sm shrink-0"
                                     >
                                         <Copy className="h-3 w-3 mr-2" /> Copiar
                                     </Button>
@@ -636,10 +636,10 @@ export default function LogisticsFinanceManager() {
 
             {/* PRODUCT SELECTOR DIALOG */}
             <Dialog open={!!selectingProvider} onOpenChange={(open) => !open && setSelectingProvider(null)}>
-                <DialogContent className="max-w-lg bg-white p-0 overflow-hidden gap-0 rounded-lg border-none shadow-2xl">
+                <DialogContent className="max-w-lg bg-white p-0 overflow-hidden gap-0 rounded-lg border-none shadow-sm">
                     <DialogHeader className="p-4 border-b border-slate-50 bg-slate-50/50">
                         <DialogTitle className="text-sm font-black uppercase text-slate-800 tracking-tight flex items-center gap-2 italic">
-                            <Plus className="h-4 w-4 text-indigo-600" />
+                            <Plus className="h-4 w-4 text-rose-600" />
                             Vincular a {selectingProvider} <span className="text-slate-400 ml-2 text-[9px] not-italic">({products.length} productos)</span>
                         </DialogTitle>
                     </DialogHeader>
@@ -692,7 +692,7 @@ export default function LogisticsFinanceManager() {
                                             }}
                                             className={cn(
                                                 "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all border border-transparent shadow-xs mb-1",
-                                                isLinked ? "bg-emerald-50/50 opacity-50 cursor-default" : "hover:bg-indigo-50 hover:border-indigo-100 bg-white border-slate-100"
+                                                isLinked ? "bg-emerald-50/50 opacity-50 cursor-default" : "hover:bg-rose-50 hover:border-rose-100 bg-white border-slate-100"
                                             )}
                                         >
                                             <div className="h-9 w-9 bg-white rounded-md overflow-hidden flex-shrink-0 border border-slate-100 shadow-xs">
@@ -735,7 +735,7 @@ export default function LogisticsFinanceManager() {
                                                     toast.error(res.message, { id: tid });
                                                 }
                                             }}
-                                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[8px] tracking-widest h-8 rounded-lg px-4 shadow-lg shadow-indigo-500/20"
+                                            className="bg-rose-600 hover:bg-rose-700 text-white font-black uppercase text-[8px] tracking-widest h-8 rounded-lg px-4 shadow-sm"
                                         >
                                             <RefreshCw className="h-3 w-3 mr-2" />
                                             Sincronizar Catálogo

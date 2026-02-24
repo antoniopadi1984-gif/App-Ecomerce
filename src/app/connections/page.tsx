@@ -161,10 +161,10 @@ function ConnectionsContent() {
                                 setConfigOpen(true);
                             }
                         }}>
-                            <Button onClick={handleOpenAdd} className="h-8 px-4 bg-rose-500 hover:bg-black text-[9px] font-black uppercase tracking-widest rounded-lg transition-all border-none shadow-md shadow-rose-500/10">
+                            <Button onClick={handleOpenAdd} className="h-8 px-4 bg-rose-500 hover:bg-black text-[9px] font-black uppercase tracking-widest rounded-lg transition-all border-none shadow-sm">
                                 <Plus className="w-3.5 h-3.5 mr-1.5" /> Vincular Nodo
                             </Button>
-                            <DialogContent className="sm:max-w-[360px] rounded-[2rem] p-6 border-none shadow-premium z-[100] bg-white/95">
+                            <DialogContent className="sm:max-w-[360px] rounded-[2rem] p-6 border-none shadow-sm z-[100] bg-white/95">
                                 <DialogHeader className="pb-2 border-b border-slate-50">
                                     <DialogTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">
                                         {selectedProviderConfig?.name || "Vincular Nodo"}
@@ -192,7 +192,7 @@ function ConnectionsContent() {
                                             <SelectContent
                                                 position="popper"
                                                 sideOffset={4}
-                                                className="rounded-xl border-slate-100 shadow-2xl z-[200] bg-white w-[var(--radix-select-trigger-width)] max-h-[220px] overflow-x-hidden overflow-y-auto p-1.5"
+                                                className="rounded-xl border-slate-100 shadow-sm z-[200] bg-white w-[var(--radix-select-trigger-width)] max-h-[220px] overflow-x-hidden overflow-y-auto p-1.5"
                                             >
                                                 <div className="space-y-0.5">
                                                     {providers.map(p => (
@@ -231,7 +231,7 @@ function ConnectionsContent() {
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
-                                    <Button type="submit" className="w-full h-10 bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-[0.25em] rounded-xl mt-2 shadow-lg shadow-rose-500/20 active:scale-[0.98] transition-all">
+                                    <Button type="submit" className="w-full h-10 bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-[0.25em] rounded-xl mt-2 shadow-sm active:scale-[0.98] transition-all">
                                         {editingConnection ? "Actualizar Configuración" : "Guardar Configuración"}
                                     </Button>
                                 </form>
@@ -258,7 +258,7 @@ function ConnectionsContent() {
                                 <motion.div key={conn.id} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.05, duration: 0.4 }}>
                                     <Card className={cn(
                                         "group flex flex-col bg-white rounded-xl border border-slate-200/80 shadow-sm",
-                                        "hover:shadow-md hover:border-slate-300 transition-all duration-300 overflow-hidden relative"
+                                        "hover:shadow-sm hover:border-slate-300 transition-all duration-300 overflow-hidden relative"
                                     )}>
                                         {/* Status Bar */}
                                         <div className="h-1 w-full bg-emerald-500" />

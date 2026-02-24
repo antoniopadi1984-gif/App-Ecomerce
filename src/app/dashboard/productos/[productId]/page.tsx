@@ -148,7 +148,7 @@ export default function ProductOverviewPage() {
 
 function MetricCard({ title, value, change, isPositive, icon: Icon }: any) {
     return (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-sm transition-shadow group">
             <div className="flex items-center justify-between mb-4">
                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                     <Icon className="w-5 h-5" />
@@ -179,7 +179,7 @@ function ModuleStatusCard({ title, description, progress, statusText, href, icon
     };
 
     return (
-        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group">
+        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-sm transition-all group">
             <div className="p-6">
                 <div className="flex items-start justify-between mb-6">
                     <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500", colorClasses[color])}>

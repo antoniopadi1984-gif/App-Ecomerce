@@ -188,7 +188,7 @@ export default function InboxPage() {
     const selectedChat = conversations.find(c => c.id === selectedId);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-2rem)] bg-white rounded-lg overflow-hidden border border-slate-200 shadow-2xl transition-all duration-700">
+        <div className="flex flex-col h-[calc(100vh-2rem)] bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm transition-all duration-700">
             {configError && (
                 <div className="bg-rose-50 border-b border-rose-100 p-4 flex items-center justify-center gap-3 animate-in fade-in slide-in-from-top duration-500">
                     <AlertTriangle className="h-5 w-5 text-rose-500 animate-pulse" />
@@ -207,11 +207,11 @@ export default function InboxPage() {
                     <div className="p-6 pb-4 flex flex-col gap-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-md shadow-slate-200">
-                                    <MessageSquare className="h-4 w-4 text-indigo-400" />
+                                <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-sm">
+                                    <MessageSquare className="h-4 w-4 text-rose-400" />
                                 </div>
                                 <h2 className="font-black text-xs uppercase tracking-tighter text-slate-900 italic">
-                                    CENTRAL <span className="text-indigo-600 not-italic">INBOX</span>
+                                    CENTRAL <span className="text-rose-600 not-italic">INBOX</span>
                                 </h2>
                             </div>
                         </div>
@@ -221,7 +221,7 @@ export default function InboxPage() {
                                 onClick={() => setSidebarTab('CHATS')}
                                 className={cn(
                                     "flex-1 py-1.5 rounded-md text-[8px] font-black uppercase tracking-widest transition-all",
-                                    sidebarTab === 'CHATS' ? "bg-white text-indigo-600 shadow-xs" : "text-slate-400 hover:text-slate-600"
+                                    sidebarTab === 'CHATS' ? "bg-white text-rose-600 shadow-xs" : "text-slate-400 hover:text-slate-600"
                                 )}
                             >
                                 TRANSMISSIONS
@@ -238,7 +238,7 @@ export default function InboxPage() {
                         </div>
 
                         <div className="relative group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
                             <Input
                                 value={searchTerm}
                                 onChange={(e) => handleSearch(e.target.value)}
@@ -253,7 +253,7 @@ export default function InboxPage() {
                             {sidebarTab === 'CHATS' ? (
                                 loadingChats ? (
                                     <div className="p-12 text-center">
-                                        <RefreshCw className="h-6 w-6 text-indigo-600 animate-spin mx-auto mb-4" />
+                                        <RefreshCw className="h-6 w-6 text-rose-600 animate-spin mx-auto mb-4" />
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando...</p>
                                     </div>
                                 ) : conversations.map(chat => (
@@ -263,11 +263,11 @@ export default function InboxPage() {
                                         className={cn(
                                             "p-3 rounded-lg cursor-pointer transition-all flex gap-3 group relative border",
                                             selectedId === chat.id
-                                                ? "bg-white border-indigo-100 shadow-xl shadow-indigo-900/5 ring-1 ring-indigo-500/10"
+                                                ? "bg-white border-rose-100 shadow-sm ring-1 ring-rose-500/10"
                                                 : "bg-transparent border-transparent hover:bg-slate-100/50"
                                         )}
                                     >
-                                        <Avatar className="h-12 w-12 border-2 border-white shadow-md group-hover:border-indigo-100 transition-all scale-100 group-active:scale-95">
+                                        <Avatar className="h-12 w-12 border-2 border-white shadow-sm group-hover:border-rose-100 transition-all scale-100 group-active:scale-95">
                                             <AvatarFallback className="bg-slate-200 text-slate-500 font-black text-xs">
                                                 {chat.customerName.slice(0, 2).toUpperCase()}
                                             </AvatarFallback>
@@ -276,7 +276,7 @@ export default function InboxPage() {
                                             <div className="flex justify-between items-start mb-1">
                                                 <div className="flex items-center gap-2 truncate">
                                                     {chat.riskLevel === 'HIGH' && <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />}
-                                                    <span className={cn("text-xs font-black uppercase tracking-tight truncate", selectedId === chat.id ? "text-indigo-600" : "text-slate-700")}>
+                                                    <span className={cn("text-xs font-black uppercase tracking-tight truncate", selectedId === chat.id ? "text-rose-600" : "text-slate-700")}>
                                                         {chat.customerName}
                                                     </span>
                                                 </div>
@@ -295,7 +295,7 @@ export default function InboxPage() {
                                             </div>
                                         </div>
                                         {chat.unreadCount > 0 && (
-                                            <div className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 bg-indigo-600 rounded-full flex items-center justify-center text-[9px] font-black text-white shadow-lg shadow-indigo-200">
+                                            <div className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 bg-rose-600 rounded-full flex items-center justify-center text-[9px] font-black text-white shadow-sm">
                                                 {chat.unreadCount}
                                             </div>
                                         )}
@@ -314,7 +314,7 @@ export default function InboxPage() {
                                             setSelectedId(customer.id);
                                             setSidebarTab('CHATS');
                                         }}
-                                        className="p-3 rounded-lg bg-white border border-slate-100 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 transition-all cursor-pointer flex gap-3 group"
+                                        className="p-3 rounded-lg bg-white border border-slate-100 hover:border-emerald-200 hover:shadow-sm hover:shadow-sm transition-all cursor-pointer flex gap-3 group"
                                     >
                                         <Avatar className="h-10 w-10 border-2 border-slate-50">
                                             <AvatarFallback className="bg-emerald-50 text-emerald-600 font-black text-[10px]">
@@ -328,7 +328,7 @@ export default function InboxPage() {
                                             </div>
                                             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">{customer.customerPhone}</p>
                                             <div className="flex items-center gap-2 mb-4">
-                                                <Badge className="bg-indigo-600/10 text-indigo-600 border-none font-black text-[8px] uppercase">Clowdbot Copilot</Badge>
+                                                <Badge className="bg-rose-600/10 text-rose-600 border-none font-black text-[8px] uppercase">Clowdbot Copilot</Badge>
                                             </div>
                                             <div className="flex items-center gap-2 mt-2">
                                                 <div className="px-2 py-0.5 bg-emerald-50 rounded text-[7px] font-black text-emerald-600 uppercase italic">
@@ -359,7 +359,7 @@ export default function InboxPage() {
                                         <div>
                                             <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight flex items-center gap-2 italic">
                                                 {selectedChat.customerName}
-                                                <Badge variant="outline" className="text-[7px] font-black border-indigo-100 text-indigo-600 bg-indigo-50/50 rounded-md">#{selectedChat.orderNumber}</Badge>
+                                                <Badge variant="outline" className="text-[7px] font-black border-rose-100 text-rose-600 bg-rose-50/50 rounded-md">#{selectedChat.orderNumber}</Badge>
                                             </h3>
                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1 mt-0.5">
                                                 <Smartphone className="h-2.5 w-2.5" /> {selectedChat.customerPhone}
@@ -370,18 +370,18 @@ export default function InboxPage() {
                                         <div className="flex items-center gap-1.5 bg-slate-100/50 p-0.5 rounded-lg border border-slate-200">
                                             <div className={cn(
                                                 "flex items-center gap-1.5 px-3 py-1 rounded-md transition-all",
-                                                aiActive ? "bg-white text-indigo-600 shadow-xs" : "bg-transparent text-slate-400"
+                                                aiActive ? "bg-white text-rose-600 shadow-xs" : "bg-transparent text-slate-400"
                                             )}>
-                                                <Bot className={cn("h-3 w-3", aiActive ? "text-indigo-600" : "text-slate-300")} />
+                                                <Bot className={cn("h-3 w-3", aiActive ? "text-rose-600" : "text-slate-300")} />
                                                 <span className="text-[8px] font-black uppercase tracking-widest whitespace-nowrap">Clowdbot</span>
                                                 <Switch
                                                     checked={aiActive}
                                                     onCheckedChange={setAiActive}
-                                                    className="scale-[0.6] data-[state=checked]:bg-indigo-600"
+                                                    className="scale-[0.6] data-[state=checked]:bg-rose-600"
                                                 />
                                             </div>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-all">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-all">
                                             <MoreVertical className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -411,7 +411,7 @@ export default function InboxPage() {
                                                     <div className={cn(
                                                         "p-3.5 shadow-xs relative min-w-[120px] max-w-[85%] transition-all",
                                                         (isAi || isAgent)
-                                                            ? "bg-indigo-600 text-white rounded-lg rounded-tr-none shadow-indigo-900/10 italic"
+                                                            ? "bg-rose-600 text-white rounded-lg rounded-tr-none shadow-sm italic"
                                                             : "bg-slate-100 text-slate-700 rounded-lg rounded-tl-none border border-slate-200"
                                                     )}>
                                                         <div className="flex items-center justify-between gap-6 mb-1.5 opacity-70">
@@ -473,7 +473,7 @@ export default function InboxPage() {
                                     <div className="max-w-4xl mx-auto relative group w-full">
                                         <div className={cn(
                                             "absolute -inset-0.5 rounded-lg blur-[2px] opacity-0 group-focus-within:opacity-100 transition duration-700",
-                                            isTestMode ? "bg-amber-500/20" : "bg-indigo-500/20"
+                                            isTestMode ? "bg-amber-500/20" : "bg-rose-500/20"
                                         )} />
                                         <div className="relative flex gap-2">
                                             <div className="relative flex-1">
@@ -491,7 +491,7 @@ export default function InboxPage() {
                                                     size="icon"
                                                     className={cn(
                                                         "absolute right-1 top-1 h-8 w-8 rounded-md shadow-xs transition-all hover:scale-105 active:scale-95",
-                                                        isTestMode ? "bg-amber-500 hover:bg-amber-600 shadow-amber-200" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
+                                                        isTestMode ? "bg-amber-500 hover:bg-amber-600 shadow-sm" : "bg-rose-600 hover:bg-rose-700 shadow-sm"
                                                     )}
                                                     onClick={handleSendMessage}
                                                 >
@@ -500,7 +500,7 @@ export default function InboxPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 mt-2 px-1">
-                                            <Button variant="ghost" size="sm" className="h-6 text-[8px] font-black text-slate-400 hover:text-indigo-600 gap-1.5 uppercase tracking-widest rounded-md transition-all">
+                                            <Button variant="ghost" size="sm" className="h-6 text-[8px] font-black text-slate-400 hover:text-rose-600 gap-1.5 uppercase tracking-widest rounded-md transition-all">
                                                 <Paperclip className="h-3 w-3" /> ATTACH ASSET
                                             </Button>
                                             <Button
@@ -519,16 +519,16 @@ export default function InboxPage() {
                         ) : (
                             <div className="flex-1 flex flex-col items-center justify-center text-slate-400 select-none animate-in fade-in duration-1000">
                                 <div className="relative mb-6 group">
-                                    <div className="absolute inset-0 bg-indigo-500/5 blur-[60px] rounded-full animate-pulse transition-all duration-1000" />
-                                    <div className="relative z-10 p-10 rounded-lg bg-white border border-slate-100 shadow-2xl flex items-center justify-center">
+                                    <div className="absolute inset-0 bg-rose-500/5 blur-[60px] rounded-full animate-pulse transition-all duration-1000" />
+                                    <div className="relative z-10 p-10 rounded-lg bg-white border border-slate-100 shadow-sm flex items-center justify-center">
                                         <MessageSquare className="h-16 w-16 text-slate-150 transition-colors duration-700" />
-                                        <div className="absolute -top-3 -right-3 h-10 w-10 bg-slate-900 rounded-lg shadow-xl flex items-center justify-center rotate-12">
-                                            <Zap className="h-5 w-5 text-indigo-400 fill-indigo-400" />
+                                        <div className="absolute -top-3 -right-3 h-10 w-10 bg-slate-900 rounded-lg shadow-sm flex items-center justify-center rotate-12">
+                                            <Zap className="h-5 w-5 text-rose-400 fill-rose-400" />
                                         </div>
                                     </div>
                                 </div>
                                 <h3 className="text-4xl font-black uppercase tracking-tight text-slate-900 mb-2">
-                                    CENTRAL <span className="text-indigo-600">INBOX</span>
+                                    CENTRAL <span className="text-rose-600">INBOX</span>
                                 </h3>
                                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Selecciona un canal para interceptar</p>
                                 <div className="mt-12 flex gap-4">
@@ -552,17 +552,17 @@ export default function InboxPage() {
                                 <div className="flex items-center gap-3">
                                     <div className={cn(
                                         "h-2 w-2 rounded-full shadow-[0_0_10px]",
-                                        selectedChat.riskLevel === 'HIGH' ? "bg-rose-500 shadow-rose-200" :
-                                            selectedChat.riskLevel === 'MEDIUM' ? "bg-amber-500 shadow-amber-200" :
-                                                "bg-emerald-500 shadow-emerald-200"
+                                        selectedChat.riskLevel === 'HIGH' ? "bg-rose-500 shadow-sm" :
+                                            selectedChat.riskLevel === 'MEDIUM' ? "bg-amber-500 shadow-sm" :
+                                                "bg-emerald-500 shadow-sm"
                                     )} />
                                     <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500">Estado de Seguridad</h4>
                                 </div>
                                 <Badge className={cn(
-                                    "text-white text-[9px] font-black uppercase italic px-3 border-none shadow-lg",
-                                    selectedChat.riskLevel === 'HIGH' ? "bg-rose-500 shadow-rose-100" :
-                                        selectedChat.riskLevel === 'MEDIUM' ? "bg-amber-500 shadow-amber-100" :
-                                            "bg-emerald-500 shadow-emerald-100"
+                                    "text-white text-[9px] font-black uppercase italic px-3 border-none shadow-sm",
+                                    selectedChat.riskLevel === 'HIGH' ? "bg-rose-500 shadow-sm" :
+                                        selectedChat.riskLevel === 'MEDIUM' ? "bg-amber-500 shadow-sm" :
+                                            "bg-emerald-500 shadow-sm"
                                 )}>
                                     {selectedChat.riskLevel || 'SECURE'}
                                 </Badge>
@@ -574,17 +574,17 @@ export default function InboxPage() {
                                     <section className="space-y-6">
                                         <div className="flex items-center justify-between mb-2">
                                             <Label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Resumen del Pedido</Label>
-                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 rounded-lg">
-                                                <span className="text-[10px] font-black text-indigo-600 italic">#{selectedChat.orderNumber}</span>
+                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-rose-50 rounded-lg">
+                                                <span className="text-[10px] font-black text-rose-600 italic">#{selectedChat.orderNumber}</span>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 transition-all hover:bg-white hover:shadow-xs group">
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-indigo-600 transition-colors">Venta Total</p>
+                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-rose-600 transition-colors">Venta Total</p>
                                                 <p className="text-lg font-black text-slate-900 italic">€{(selectedChat as any).revenue || '0.00'}</p>
                                             </div>
                                             <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 transition-all hover:bg-white hover:shadow-xs group">
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-indigo-600 transition-colors">Logística</p>
+                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-rose-600 transition-colors">Logística</p>
                                                 <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{(selectedChat as any).carrier}</p>
                                             </div>
                                         </div>
@@ -612,16 +612,16 @@ export default function InboxPage() {
                                         <div className="space-y-6">
                                             {loadingHistory ? (
                                                 <div className="flex items-center justify-center p-12">
-                                                    <RefreshCw className="h-4 w-4 text-indigo-600 animate-spin opacity-50" />
+                                                    <RefreshCw className="h-4 w-4 text-rose-600 animate-spin opacity-50" />
                                                 </div>
                                             ) : history.length > 0 ? history.map((h, i) => (
                                                 <div key={i} className="relative pl-6 pb-6 last:pb-0 border-l border-slate-100">
                                                     <div className={cn(
                                                         "absolute left-[-4.5px] top-1 h-2 w-2 rounded-full",
                                                         h.status === 'DELIVERED' ? "bg-emerald-500" :
-                                                            h.status === 'RETURNED' || h.status === 'INCIDENCE' ? "bg-rose-500" : "bg-indigo-400"
+                                                            h.status === 'RETURNED' || h.status === 'INCIDENCE' ? "bg-rose-500" : "bg-rose-400"
                                                     )} />
-                                                    <div className="p-4 bg-white rounded-lg border border-slate-200 hover:border-indigo-100 hover:shadow-xs transition-all group relative overflow-hidden">
+                                                    <div className="p-4 bg-white rounded-lg border border-slate-200 hover:border-rose-100 hover:shadow-xs transition-all group relative overflow-hidden">
                                                         <div className="flex justify-between items-start mb-2">
                                                             <div className="flex flex-col">
                                                                 <span className="text-[10px] font-black text-slate-900 uppercase italic">ORDER #{h.orderNumber}</span>
@@ -647,7 +647,7 @@ export default function InboxPage() {
                                         <div className="grid grid-cols-1 gap-4">
                                             <Button
                                                 onClick={handleTriggerTracking}
-                                                className="h-12 w-full bg-slate-900 hover:bg-slate-800 text-indigo-400 font-black text-[10px] uppercase tracking-widest rounded-lg shadow-xl shadow-slate-200 transition-all active:scale-[0.98] flex items-center justify-center group"
+                                                className="h-12 w-full bg-slate-900 hover:bg-slate-800 text-rose-400 font-black text-[10px] uppercase tracking-widest rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center group"
                                             >
                                                 <Truck className="h-4 w-4 mr-3 group-hover:rotate-12 transition-transform" />
                                                 DISPATCH TRACKING WHATSAPP

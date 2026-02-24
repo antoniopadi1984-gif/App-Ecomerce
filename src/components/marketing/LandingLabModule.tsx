@@ -186,7 +186,7 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                                         </div>
                                     </div>
 
-                                    <Button onClick={handleGenerateLayout} className="w-full h-9 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-lg shadow-rose-200/50 gap-2">
+                                    <Button onClick={handleGenerateLayout} className="w-full h-9 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-sm gap-2">
                                         <Zap className="w-3.5 h-3.5 fill-current" /> Construir Layout
                                     </Button>
                                 </div>
@@ -240,7 +240,7 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                                         </div>
                                     </div>
 
-                                    <Button onClick={handleGenerateCopy} disabled={loadingCopy} className="w-full h-9 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-lg gap-2">
+                                    <Button onClick={handleGenerateCopy} disabled={loadingCopy} className="w-full h-9 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-sm gap-2">
                                         {loadingCopy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 fill-current text-rose-500" />}
                                         Generar Inteligencia
                                     </Button>
@@ -334,7 +334,7 @@ export function LandingLabModule({ productId, productTitle, storeId = '' }: Land
                     <div className="p-3 border-t border-slate-100/50 bg-slate-50/50">
                         <Button
                             disabled={generatedStructure.length === 0}
-                            className="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-lg shadow-emerald-200/50 gap-2"
+                            className="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-sm gap-2"
                             onClick={() => toast.success("Desplegando a Shopify...")}
                         >
                             <Rocket className="w-3.5 h-3.5" /> Publicar en Shopify
@@ -486,7 +486,7 @@ function LayoutOption({ label, active, onClick, icon: Icon }: any) {
             onClick={onClick}
             className={cn(
                 "p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all",
-                active ? "bg-rose-500 border-rose-600 text-white shadow-lg shadow-rose-200/20" : "bg-white/40 border-slate-100 text-slate-400 hover:bg-slate-50"
+                active ? "bg-rose-500 border-rose-600 text-white shadow-sm" : "bg-white/40 border-slate-100 text-slate-400 hover:bg-slate-50"
             )}
         >
             <Icon className={cn("w-4 h-4", active ? "text-white" : "text-rose-500/50")} />

@@ -39,11 +39,11 @@ export default function NotificationsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                        <div className="p-1 px-2 rounded-lg bg-slate-900 shadow-lg shadow-slate-200">
-                            <BellRing className="h-4 w-4 text-indigo-400" />
+                        <div className="p-1 px-2 rounded-lg bg-slate-900 shadow-sm">
+                            <BellRing className="h-4 w-4 text-rose-400" />
                         </div>
                         <h2 className="text-lg font-black tracking-tighter text-slate-950 uppercase italic leading-none">
-                            Centro de Notificaciones <span className="text-indigo-600 not-italic ml-1">v4</span>
+                            Centro de Notificaciones <span className="text-rose-600 not-italic ml-1">v4</span>
                         </h2>
                     </div>
                     <p className="text-slate-400 font-bold text-[8px] uppercase tracking-[0.2em] mt-1.5 opacity-80">
@@ -136,12 +136,12 @@ export default function NotificationsPage() {
             </div>
 
             {/* Banner Informativo Compacto */}
-            <Card className="bg-slate-950 border-none rounded-lg p-5 shadow-xl relative overflow-hidden group">
+            <Card className="bg-slate-950 border-none rounded-lg p-5 shadow-sm relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500 grayscale brightness-200">
                     <Info className="h-24 w-24 text-white" />
                 </div>
                 <div className="flex items-center gap-6 relative z-10">
-                    <div className="h-10 w-10 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0 shadow-lg">
+                    <div className="h-10 w-10 rounded-lg bg-rose-600 flex items-center justify-center shrink-0 shadow-sm">
                         <Zap className="h-5 w-5 text-white" />
                     </div>
                     <div className="space-y-0.5">

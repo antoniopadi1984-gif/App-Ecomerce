@@ -72,7 +72,7 @@ export default function ProductsPage() {
                                 <Filter className="w-3.5 h-3.5 mr-2" />
                                 FILTRAR
                             </Button>
-                            <Button className="h-8 px-3 text-[9px] font-black uppercase tracking-widest bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-xl shadow-slate-200 transition-all">
+                            <Button className="h-8 px-3 text-[9px] font-black uppercase tracking-widest bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition-all">
                                 <Plus className="w-3.5 h-3.5 mr-2" />
                                 NUEVO PRODUCTO
                             </Button>
@@ -124,11 +124,11 @@ export default function ProductsPage() {
                             <button
                                 key={product.id}
                                 onClick={() => handleSelectProduct(product.id)}
-                                className="group bg-white rounded-lg border border-slate-200 shadow-xs hover:shadow-xl hover:border-indigo-200 transition-all duration-300 overflow-hidden flex flex-col text-left active:scale-[0.98] relative border"
+                                className="group bg-white rounded-lg border border-slate-200 shadow-xs hover:shadow-sm hover:border-rose-200 transition-all duration-300 overflow-hidden flex flex-col text-left active:scale-[0.98] relative border"
                             >
                                 <div className="p-3 flex-1 flex flex-col items-start gap-2.5">
                                     <div className="flex items-start justify-between w-full">
-                                        <div className="w-8 h-8 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all duration-300 overflow-hidden shadow-inner relative">
+                                        <div className="w-8 h-8 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-rose-50 group-hover:text-rose-600 transition-all duration-300 overflow-hidden shadow-sm relative">
                                             {product.imageUrl ? (
                                                 <Image
                                                     src={product.imageUrl}
@@ -141,39 +141,39 @@ export default function ProductsPage() {
                                                 <Package className="w-4 h-4" />
                                             )}
                                         </div>
-                                        <Badge variant={product.status === 'ACTIVE' ? 'secondary' : 'outline'} className="rounded-md px-1.5 py-0 font-black text-[6px] uppercase tracking-[0.2em] border-none bg-slate-100 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors h-4 flex items-center justify-center">
+                                        <Badge variant={product.status === 'ACTIVE' ? 'secondary' : 'outline'} className="rounded-md px-1.5 py-0 font-black text-[6px] uppercase tracking-[0.2em] border-none bg-slate-100 text-slate-400 group-hover:bg-rose-600 group-hover:text-white transition-colors h-4 flex items-center justify-center">
                                             {product.status}
                                         </Badge>
                                     </div>
-                                    <h3 className="text-[10px] font-black text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-1 italic uppercase tracking-tighter leading-tight">
+                                    <h3 className="text-[10px] font-black text-slate-800 group-hover:text-rose-600 transition-colors line-clamp-1 italic uppercase tracking-tighter leading-tight">
                                         {product.title}
                                     </h3>
                                     <div className="flex items-center gap-2 text-[7px] font-black text-slate-400 uppercase tracking-widest">
                                         <span className="shrink-0 tracking-tighter">ID: {product.id.slice(0, 6)}</span>
                                         <span className="text-slate-200">•</span>
-                                        <span className="flex items-center gap-1 text-indigo-500 shrink-0">
-                                            <TrendingUp className="w-2.5 h-2.5 text-indigo-400" />
+                                        <span className="flex items-center gap-1 text-rose-500 shrink-0">
+                                            <TrendingUp className="w-2.5 h-2.5 text-rose-400" />
                                             V4.0
                                         </span>
                                     </div>
                                 </div>
-                                <div className="px-3 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between group-hover:bg-indigo-50/50 transition-colors">
-                                    <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-indigo-600 transition-colors">ACCEDER DASHBOARD</span>
-                                    <ExternalLink className="w-2.5 h-2.5 text-slate-300 group-hover:text-indigo-500 transition-all" />
+                                <div className="px-3 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between group-hover:bg-rose-50/50 transition-colors">
+                                    <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-rose-600 transition-colors">ACCEDER DASHBOARD</span>
+                                    <ExternalLink className="w-2.5 h-2.5 text-slate-300 group-hover:text-rose-500 transition-all" />
                                 </div>
                             </button>
                         ))}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-lg border-2 border-dashed border-slate-200 text-center animate-in fade-in duration-700">
-                        <div className="w-12 h-12 rounded-lg bg-white shadow-xl flex items-center justify-center text-slate-200 mb-6 border border-slate-100">
+                        <div className="w-12 h-12 rounded-lg bg-white shadow-sm flex items-center justify-center text-slate-200 mb-6 border border-slate-100">
                             <Package className="w-6 h-6" />
                         </div>
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest italic leading-none">{t('no_products_found')}</h3>
                         <p className="text-[9px] text-slate-400 mt-2 max-w-sm text-center px-4 font-black uppercase tracking-wider">
                             {searchQuery ? t('try_other_search') : t('no_products_desc')}
                         </p>
-                        <Button className="mt-8 h-9 px-6 bg-slate-900 hover:bg-slate-800 text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-lg shadow-xl shadow-slate-200 transition-all active:scale-[0.98]">
+                        <Button className="mt-8 h-9 px-6 bg-slate-900 hover:bg-slate-800 text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-lg shadow-sm transition-all active:scale-[0.98]">
                             <Plus className="w-4 h-4 mr-2" />
                             FACTORÍA DE ESCALA
                         </Button>

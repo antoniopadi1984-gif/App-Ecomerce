@@ -25,7 +25,7 @@
   --radius-md: 8px;
   --radius-sm: 6px;
 
-  --shadow-premium: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 

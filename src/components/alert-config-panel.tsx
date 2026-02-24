@@ -149,7 +149,7 @@ export function AlertConfigPanel({ storeId, isOpen, onClose, onSave }: AlertConf
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-2xl bg-white shadow-2xl rounded-2xl max-h-[90vh] overflow-hidden">
+            <Card className="w-full max-w-2xl bg-white shadow-sm rounded-2xl max-h-[90vh] overflow-hidden">
                 <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 px-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -178,7 +178,7 @@ export function AlertConfigPanel({ storeId, isOpen, onClose, onSave }: AlertConf
                         icon={TrendingUp}
                         title="ROAS (Return on Ad Spend)"
                         description="Alertas basadas en el retorno publicitario"
-                        color="indigo"
+                        color="rose"
                     >
                         <ThresholdRow
                             label="🔴 Crítico (menor que)"
@@ -286,7 +286,7 @@ export function AlertConfigPanel({ storeId, isOpen, onClose, onSave }: AlertConf
                         icon={DollarSign}
                         title="Inversión Diaria"
                         description="Alertas por exceso de gasto"
-                        color="indigo"
+                        color="rose"
                     >
                         <ThresholdRow
                             label="🔴 Crítico (mayor que)"
@@ -419,7 +419,7 @@ function ThresholdSection({ icon: Icon, title, description, color, children }: a
             <div className="flex items-center gap-2">
                 <div className={cn(
                     "h-8 w-8 rounded-lg flex items-center justify-center",
-                    color === "indigo" && "bg-indigo-100 text-indigo-600",
+                    color === "rose" && "bg-rose-100 text-rose-600",
                     color === "rose" && "bg-rose-100 text-rose-600",
                     color === "emerald" && "bg-emerald-100 text-emerald-600",
                     color === "amber" && "bg-amber-100 text-amber-600"

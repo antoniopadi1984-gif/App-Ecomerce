@@ -75,7 +75,7 @@ export default function EbookManager({ storeId }: { storeId: string }) {
             </header>
 
             {isEditing && (
-                <Card className="rounded-[32px] border-blue-200 bg-blue-50/30 overflow-hidden border-2 shadow-xl shadow-blue-500/5 transition-all">
+                <Card className="rounded-[32px] border-blue-200 bg-blue-50/30 overflow-hidden border-2 shadow-sm transition-all">
                     <CardHeader className="bg-white border-b border-blue-100 p-6">
                         <CardTitle className="text-xl font-black text-slate-800">CONFIGURAR NUEVA GUIA</CardTitle>
                     </CardHeader>
@@ -115,7 +115,7 @@ export default function EbookManager({ storeId }: { storeId: string }) {
                         </div>
                         <div className="flex gap-4 justify-end">
                             <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold">CANCELAR</Button>
-                            <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 py-6 font-black shadow-lg shadow-blue-200">
+                            <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 py-6 font-black shadow-sm">
                                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "GUARDAR PLANTILLA"}
                             </Button>
                         </div>
@@ -125,10 +125,10 @@ export default function EbookManager({ storeId }: { storeId: string }) {
 
             <div className="grid grid-cols-1 gap-4">
                 {templates.map((t) => (
-                    <Card key={t.id} className="rounded-[28px] border-slate-200/60 overflow-hidden hover:shadow-lg transition-all group bg-white/80">
+                    <Card key={t.id} className="rounded-[28px] border-slate-200/60 overflow-hidden hover:shadow-sm transition-all group bg-white/80">
                         <CardContent className="p-0">
                             <div className="flex flex-col md:flex-row items-center p-6 gap-6">
-                                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black shadow-inner">
+                                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black shadow-sm">
                                     <FileText className="w-8 h-8" />
                                 </div>
                                 <div className="flex-1 text-center md:text-left">
@@ -160,7 +160,7 @@ export default function EbookManager({ storeId }: { storeId: string }) {
                                         <p className="text-xs text-slate-400 italic px-2">No se han generado archivos todavía para esta plantilla.</p>
                                     ) : (
                                         t.assets.map((asset: any) => (
-                                            <div key={asset.id} className="flex justify-between items-center bg-white border border-slate-100 px-4 py-3 rounded-2xl shadow-sm hover:shadow-md transition-all">
+                                            <div key={asset.id} className="flex justify-between items-center bg-white border border-slate-100 px-4 py-3 rounded-2xl shadow-sm hover:shadow-sm transition-all">
                                                 <div className="flex items-center gap-3">
                                                     <Badge className="bg-blue-100 text-blue-700 border-0 rounded-lg text-[9px] font-black">V{asset.metadataJson ? JSON.parse(asset.metadataJson).pages : '1'}PGS</Badge>
                                                     <span className="text-xs font-bold text-slate-600">{new Date(asset.createdAt).toLocaleDateString()}</span>

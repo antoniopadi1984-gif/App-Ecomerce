@@ -49,7 +49,7 @@ export default function SettingsHubPage() {
                             className={cn(
                                 "flex items-center gap-2.5 p-2 rounded-lg transition-all text-left group",
                                 activeSection === section.id
-                                    ? "bg-slate-900 text-white shadow-md"
+                                    ? "bg-slate-900 text-white shadow-sm"
                                     : "hover:bg-slate-50 text-slate-600"
                             )}
                         >

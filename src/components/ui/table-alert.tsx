@@ -60,9 +60,9 @@ export function TableAlert({
                         </div>
                     </TooltipTrigger>
                     {description && (
-                        <TooltipContent side="top" className="max-w-[200px] text-[10px] font-bold uppercase tracking-widest bg-slate-900 text-white border-none p-2 rounded-lg shadow-xl">
+                        <TooltipContent side="top" className="max-w-[200px] text-[10px] font-bold uppercase tracking-widest bg-slate-900 text-white border-none p-2 rounded-lg shadow-sm">
                             <div className="flex flex-col gap-1">
-                                <span className="flex items-center gap-1.5 text-indigo-400">
+                                <span className="flex items-center gap-1.5 text-rose-400">
                                     <Icon className="size-3" />
                                     {label || config.label}
                                 </span>

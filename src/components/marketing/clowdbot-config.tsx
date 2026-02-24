@@ -137,7 +137,7 @@ export function ClowdbotConfig() {
     return (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* AGENT PERSONALIZATION */}
-            <Card className="xl:col-span-5 rounded-[2rem] border-none shadow-xl bg-card overflow-hidden">
+            <Card className="xl:col-span-5 rounded-[2rem] border-none shadow-sm bg-card overflow-hidden">
                 <div className="p-6 bg-slate-900 text-white relative">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] rounded-full -mr-10 -mt-10" />
                     <div className="flex items-center justify-between mb-4 relative z-10">
@@ -184,7 +184,7 @@ export function ClowdbotConfig() {
                                 <SelectTrigger className="h-12 bg-slate-50 border-none rounded-xl font-bold text-[13px] focus:ring-4 focus:ring-primary/5 transition-all">
                                     <SelectValue placeholder="Seleccionar Rol" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-white border-slate-100 rounded-xl shadow-2xl">
+                                <SelectContent className="bg-white border-slate-100 rounded-xl shadow-sm">
                                     <SelectItem value="Especialista en Atención al Cliente" className="text-xs font-bold">Soporte & Post-Venta</SelectItem>
                                     <SelectItem value="Asistente de Ventas & Upselling" className="text-xs font-bold font-primary">Comercial & Conversión</SelectItem>
                                     <SelectItem value="Recuperador de Carritos & Ofertas" className="text-xs font-bold">Recuperación de Abandonos</SelectItem>
@@ -200,7 +200,7 @@ export function ClowdbotConfig() {
                             <div className="grid grid-cols-2 gap-2">
                                 {[
                                     { id: 'WHATSAPP', icon: MessageSquare, label: 'WhatsApp', color: 'emerald' },
-                                    { id: 'EMAIL', icon: Mail, label: 'Email', color: 'indigo' },
+                                    { id: 'EMAIL', icon: Mail, label: 'Email', color: 'rose' },
                                     { id: 'INSTAGRAM', icon: MessageSquare, label: 'Instagram', color: 'rose' },
                                     { id: 'FACEBOOK', icon: MessageSquare, label: 'Messenger', color: 'blue' },
                                 ].map(ch => (
@@ -223,8 +223,8 @@ export function ClowdbotConfig() {
                     </div>
 
                     <div className="pt-2 space-y-4">
-                        <div className="space-y-4 p-5 bg-indigo-50/30 rounded-[1.5rem] border border-indigo-100/50">
-                            <Label className="text-[10px] font-black uppercase text-indigo-600 tracking-widest pl-1 flex items-center gap-2">
+                        <div className="space-y-4 p-5 bg-rose-50/30 rounded-[1.5rem] border border-rose-100/50">
+                            <Label className="text-[10px] font-black uppercase text-rose-600 tracking-widest pl-1 flex items-center gap-2">
                                 <Mail className="h-3.5 w-3.5" /> Configuración de Email
                             </Label>
 
@@ -435,7 +435,7 @@ export function ClowdbotConfig() {
             </Card>
 
             {/* KNOWLEDGE BASE SECTION */}
-            <Card className="xl:col-span-7 rounded-[2rem] border-none shadow-xl bg-card overflow-hidden flex flex-col">
+            <Card className="xl:col-span-7 rounded-[2rem] border-none shadow-sm bg-card overflow-hidden flex flex-col">
                 <CardHeader className="p-6 border-b border-slate-50 bg-slate-50/30">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -474,7 +474,7 @@ export function ClowdbotConfig() {
                             value={currentRoleKnowledge}
                             onChange={(e) => updateRoleKnowledge(e.target.value)}
                             placeholder={`Instrucciones específicas para el rol de ${config.agentRole}...`}
-                            className="flex-1 min-h-[250px] bg-indigo-50/30 border border-indigo-100/50 border-none rounded-2xl p-6 text-[13px] font-medium leading-relaxed resize-none focus:ring-4 focus:ring-primary/5 transition-all font-mono placeholder:text-slate-300"
+                            className="flex-1 min-h-[250px] bg-rose-50/30 border border-rose-100/50 border-none rounded-2xl p-6 text-[13px] font-medium leading-relaxed resize-none focus:ring-4 focus:ring-primary/5 transition-all font-mono placeholder:text-slate-300"
                         />
                     </div>
 

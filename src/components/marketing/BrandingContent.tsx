@@ -78,7 +78,7 @@ export function BrandingContent() {
     if (productId === 'GLOBAL') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-4">
-                <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 mb-3">
+                <div className="h-12 w-12 bg-rose-100 rounded-lg flex items-center justify-center text-rose-600 mb-3">
                     <Sparkles className="h-6 w-6" />
                 </div>
                 <h2 className="text-xl font-black text-slate-800 uppercase tracking-tighter italic">AI Branding Engine</h2>
@@ -94,15 +94,15 @@ export function BrandingContent() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
                 <div>
                     <h1 className="text-lg font-black text-slate-900 flex items-center gap-2 uppercase italic tracking-tighter">
-                        Branding Engine <span className="text-slate-400 not-italic">•</span> <span className="text-indigo-600">{product?.title || 'Producto'}</span>
+                        Branding Engine <span className="text-slate-400 not-italic">•</span> <span className="text-rose-600">{product?.title || 'Producto'}</span>
                     </h1>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Identidad Forense y Offer Engineering</p>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" className="h-8 text-[9px] font-black uppercase tracking-widest rounded-xl border-slate-200">
-                        <Sparkles className="w-3 h-3 mr-2 text-indigo-500" /> Analizar
+                        <Sparkles className="w-3 h-3 mr-2 text-rose-500" /> Analizar
                     </Button>
-                    <Button onClick={handleSave} className="gap-2 bg-slate-900 hover:bg-black h-8 text-[9px] font-black uppercase tracking-widest rounded-xl px-4 shadow-xl shadow-slate-200">
+                    <Button onClick={handleSave} className="gap-2 bg-slate-900 hover:bg-black h-8 text-[9px] font-black uppercase tracking-widest rounded-xl px-4 shadow-sm">
                         <Save className="w-3 h-3" /> Guardar
                     </Button>
                 </div>
@@ -113,7 +113,7 @@ export function BrandingContent() {
                 <Card className="border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white flex flex-col">
                     <CardHeader className="p-4 bg-slate-50 border-b border-slate-100">
                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-slate-900">
-                            <Shield className="w-3.5 h-3.5 text-indigo-500" /> Creative DNA
+                            <Shield className="w-3.5 h-3.5 text-rose-500" /> Creative DNA
                         </CardTitle>
                         <CardDescription className="text-slate-400 text-[8px] font-bold uppercase tracking-widest mt-0.5">Spencer Pawlin Framework</CardDescription>
                     </CardHeader>
@@ -143,35 +143,35 @@ export function BrandingContent() {
 
                 {/* 2. OFFER ENGINEERING (Alex Hormozi) */}
                 <Card className="border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white flex flex-col">
-                    <CardHeader className="p-4 bg-indigo-50 border-b border-indigo-100 flex-row items-center justify-between">
+                    <CardHeader className="p-4 bg-rose-50 border-b border-rose-100 flex-row items-center justify-between">
                         <div>
-                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-indigo-900">
-                                <Zap className="w-3.5 h-3.5 fill-indigo-500 text-indigo-500" /> Offer Engine
+                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-rose-900">
+                                <Zap className="w-3.5 h-3.5 fill-rose-500 text-rose-500" /> Offer Engine
                             </CardTitle>
-                            <CardDescription className="text-indigo-400 text-[8px] font-bold uppercase tracking-widest mt-0.5">Alex Hormozi V2 Equation</CardDescription>
+                            <CardDescription className="text-rose-400 text-[8px] font-bold uppercase tracking-widest mt-0.5">Alex Hormozi V2 Equation</CardDescription>
                         </div>
-                        <Badge className="bg-indigo-600 text-white border-0 text-[10px] font-black px-2 py-0.5 rounded-lg">Score: {calculateValueScore().toFixed(0)}</Badge>
+                        <Badge className="bg-rose-600 text-white border-0 text-[10px] font-black px-2 py-0.5 rounded-lg">Score: {calculateValueScore().toFixed(0)}</Badge>
                     </CardHeader>
                     <CardContent className="p-4 space-y-4 flex-1">
                         <div className="space-y-3">
                             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
                                 <div className="space-y-1">
                                     <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest flex justify-between">
-                                        Perceived Likelihood <span className="text-indigo-600">{profile.offer.likelihood}/10</span>
+                                        Perceived Likelihood <span className="text-rose-600">{profile.offer.likelihood}/10</span>
                                     </label>
-                                    <input type="range" min="1" max="10" value={profile.offer.likelihood} onChange={(e) => setProfile({ ...profile, offer: { ...profile.offer, likelihood: parseInt(e.target.value) } })} className="w-full accent-indigo-600 h-1 bg-slate-200 rounded-full appearance-none" />
+                                    <input type="range" min="1" max="10" value={profile.offer.likelihood} onChange={(e) => setProfile({ ...profile, offer: { ...profile.offer, likelihood: parseInt(e.target.value) } })} className="w-full accent-rose-600 h-1 bg-slate-200 rounded-full appearance-none" />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest flex justify-between">
-                                        Time Delay <span className="text-indigo-600">{profile.offer.timeDelay}/10</span>
+                                        Time Delay <span className="text-rose-600">{profile.offer.timeDelay}/10</span>
                                     </label>
-                                    <input type="range" min="1" max="10" value={profile.offer.timeDelay} onChange={(e) => setProfile({ ...profile, offer: { ...profile.offer, timeDelay: parseInt(e.target.value) } })} className="w-full accent-indigo-600 h-1 bg-slate-200 rounded-full appearance-none" />
+                                    <input type="range" min="1" max="10" value={profile.offer.timeDelay} onChange={(e) => setProfile({ ...profile, offer: { ...profile.offer, timeDelay: parseInt(e.target.value) } })} className="w-full accent-rose-600 h-1 bg-slate-200 rounded-full appearance-none" />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest flex justify-between">
-                                        Effort & Sacrifice <span className="text-indigo-600">{profile.offer.effort}/10</span>
+                                        Effort & Sacrifice <span className="text-rose-600">{profile.offer.effort}/10</span>
                                     </label>
-                                    <input type="range" min="1" max="10" value={profile.offer.effort} onChange={(e) => setProfile({ ...profile, offer: { ...profile.offer, effort: parseInt(e.target.value) } })} className="w-full accent-indigo-600 h-1 bg-slate-200 rounded-full appearance-none" />
+                                    <input type="range" min="1" max="10" value={profile.offer.effort} onChange={(e) => setProfile({ ...profile, offer: { ...profile.offer, effort: parseInt(e.target.value) } })} className="w-full accent-rose-600 h-1 bg-slate-200 rounded-full appearance-none" />
                                 </div>
                             </div>
 

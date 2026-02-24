@@ -206,7 +206,7 @@ export function BibliotecaModule({ storeId, productId, productTitle }: Bibliotec
                 <Card className="rounded-2xl border-slate-200 shadow-sm bg-white p-2">
                     <div className="flex flex-col md:flex-row items-center gap-3">
                         <div className="relative flex-1 group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
                             <Input
                                 placeholder="Buscar por nombre o nomenclatura Spencer..."
                                 value={search}
@@ -244,10 +244,10 @@ export function BibliotecaModule({ storeId, productId, productTitle }: Bibliotec
 
                     {/* Bulk Actions (Visible when selection exists) */}
                     {selectedAssets.length > 0 && (
-                        <div className="mt-2 py-2 px-3 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-between animate-in slide-in-from-top-2 duration-300">
+                        <div className="mt-2 py-2 px-3 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-between animate-in slide-in-from-top-2 duration-300">
                             <div className="flex items-center gap-3">
-                                <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">{selectedAssets.length} Seleccionados</span>
-                                <div className="h-4 w-px bg-indigo-200" />
+                                <span className="text-[10px] font-black text-rose-700 uppercase tracking-widest">{selectedAssets.length} Seleccionados</span>
+                                <div className="h-4 w-px bg-rose-200" />
                                 <div className="flex gap-1.5">
                                     <Button onClick={() => handleBulkStatus('WINNER')} size="sm" className="h-7 text-[9px] font-black uppercase bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 rounded-lg">
                                         <Sparkles className="w-3 h-3 mr-1" /> Marcar Winner
@@ -255,7 +255,7 @@ export function BibliotecaModule({ storeId, productId, productTitle }: Bibliotec
                                     <Button onClick={() => handleBulkStatus('KILL')} size="sm" className="h-7 text-[9px] font-black uppercase bg-white text-red-600 border border-red-200 hover:bg-red-50 rounded-lg">
                                         <Trash2 className="w-3 h-3 mr-1" /> Marcar Kill
                                     </Button>
-                                    <Button onClick={() => setSelectedAssets([])} variant="ghost" className="h-7 text-[9px] font-black uppercase text-indigo-600">
+                                    <Button onClick={() => setSelectedAssets([])} variant="ghost" className="h-7 text-[9px] font-black uppercase text-rose-600">
                                         Cancelar
                                     </Button>
                                 </div>
@@ -267,7 +267,7 @@ export function BibliotecaModule({ storeId, productId, productTitle }: Bibliotec
                 {/* Assets Grid/List */}
                 {loading && assets.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-32 space-y-4">
-                        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+                        <Loader2 className="w-10 h-10 text-rose-500 animate-spin" />
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Accediendo a la Biblioteca...</p>
                     </div>
                 ) : assets.length === 0 ? (
@@ -304,7 +304,7 @@ export function BibliotecaModule({ storeId, productId, productTitle }: Bibliotec
                 <div className="flex items-center justify-between py-4 px-2">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mostrando {assets.length} de {total} activos</p>
                     {total > assets.length && (
-                        <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-white bg-white/50 border border-slate-100 px-6 rounded-xl h-10">
+                        <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-white bg-white/50 border border-slate-100 px-6 rounded-xl h-10">
                             Cargar Más <ChevronDown className="w-4 h-4 ml-1" />
                         </Button>
                     )}
@@ -329,15 +329,15 @@ function AssetLibraryCard({ asset, viewMode, isSelected, onToggle }: { asset: an
         return (
             <div
                 className={cn(
-                    "group bg-white rounded-xl border p-2 flex items-center gap-4 transition-all hover:border-indigo-300",
-                    isSelected ? "border-indigo-500 bg-indigo-50/20" : "border-slate-100 shadow-xs"
+                    "group bg-white rounded-xl border p-2 flex items-center gap-4 transition-all hover:border-rose-300",
+                    isSelected ? "border-rose-500 bg-rose-50/20" : "border-slate-100 shadow-xs"
                 )}
             >
                 <div
                     onClick={onToggle}
                     className={cn(
                         "w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 cursor-pointer transition-all",
-                        isSelected ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-200"
+                        isSelected ? "bg-rose-600 border-rose-600 text-white" : "bg-white border-slate-200"
                     )}
                 >
                     {isSelected && <Check className="w-3 h-3" />}
@@ -390,8 +390,8 @@ function AssetLibraryCard({ asset, viewMode, isSelected, onToggle }: { asset: an
     return (
         <Card
             className={cn(
-                "group rounded-2xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/5 cursor-pointer bg-white relative",
-                isSelected ? "border-indigo-500 ring-2 ring-indigo-500/10" : "border-slate-100"
+                "group rounded-2xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-sm hover:shadow-sm cursor-pointer bg-white relative",
+                isSelected ? "border-rose-500 ring-2 ring-rose-500/10" : "border-slate-100"
             )}
         >
             <div className="relative aspect-[4/5] bg-slate-950 overflow-hidden">
@@ -401,7 +401,7 @@ function AssetLibraryCard({ asset, viewMode, isSelected, onToggle }: { asset: an
                     className={cn(
                         "absolute top-3 left-3 z-30 w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all",
                         isSelected
-                            ? "bg-indigo-600 border-indigo-600 text-white"
+                            ? "bg-rose-600 border-rose-600 text-white"
                             : "bg-black/20 border-white/40 opacity-0 group-hover:opacity-100"
                     )}
                 >
@@ -410,7 +410,7 @@ function AssetLibraryCard({ asset, viewMode, isSelected, onToggle }: { asset: an
 
                 {/* Concept / Status Badges */}
                 <div className="absolute top-3 right-3 z-30 flex flex-col items-end gap-1.5">
-                    <Badge className={cn("text-[8px] font-black uppercase tracking-widest border-none px-2 py-0.5 shadow-lg", statusColors[asset.status] || 'bg-slate-200')}>
+                    <Badge className={cn("text-[8px] font-black uppercase tracking-widest border-none px-2 py-0.5 shadow-sm", statusColors[asset.status] || 'bg-slate-200')}>
                         {asset.status}
                     </Badge>
                     {concept && (
@@ -458,7 +458,7 @@ function AssetLibraryCard({ asset, viewMode, isSelected, onToggle }: { asset: an
                     <div className="h-6 w-px bg-white/10" />
                     <div className="text-center">
                         <p className="text-[7px] font-black text-white/60 uppercase tracking-widest">Hook</p>
-                        <p className="text-[10px] font-black text-indigo-400">{asset.hookRate?.toFixed(1) || '0.0'}%</p>
+                        <p className="text-[10px] font-black text-rose-400">{asset.hookRate?.toFixed(1) || '0.0'}%</p>
                     </div>
                     <div className="h-6 w-px bg-white/10" />
                     <div className="text-center">

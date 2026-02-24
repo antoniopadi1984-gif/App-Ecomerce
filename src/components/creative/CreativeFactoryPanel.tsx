@@ -104,7 +104,7 @@ export function CreativeFactoryPanel({ productId, productName, onBatchCreated }:
                 {/* Header Section */}
                 <div className="bg-slate-900 px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
                     <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 shadow-inner">
+                        <div className="h-9 w-9 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 shadow-sm">
                             <Wand2 className="h-4.5 w-4.5 text-rose-300" />
                         </div>
                         <div>
@@ -148,7 +148,7 @@ export function CreativeFactoryPanel({ productId, productName, onBatchCreated }:
                                         className={cn(
                                             "flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-[9px] font-black uppercase tracking-wider transition-all",
                                             type === opt.id
-                                                ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-rose-500/10"
+                                                ? "bg-slate-900 border-slate-900 text-white shadow-sm"
                                                 : "bg-white/60 border-slate-100/50 text-slate-400 hover:bg-white hover:text-slate-600 hover:border-rose-200"
                                         )}
                                     >
@@ -207,7 +207,7 @@ export function CreativeFactoryPanel({ productId, productName, onBatchCreated }:
                                             value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value))}
                                             className="w-full accent-rose-500 h-1.5 bg-slate-100 rounded-full appearance-none cursor-pointer"
                                         />
-                                        <div className="min-w-[40px] h-9 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md">
+                                        <div className="min-w-[40px] h-9 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-sm">
                                             {quantity}
                                         </div>
                                     </div>
@@ -265,7 +265,7 @@ export function CreativeFactoryPanel({ productId, productName, onBatchCreated }:
                         <Button
                             onClick={handleGenerate}
                             disabled={isCreating}
-                            className="h-14 w-full rounded-2xl bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[10px] shadow-lg relative overflow-hidden transition-all hover:scale-[1.01] active:scale-[0.98]"
+                            className="h-14 w-full rounded-2xl bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[10px] shadow-sm relative overflow-hidden transition-all hover:scale-[1.01] active:scale-[0.98]"
                         >
                             <div className="flex flex-col items-center gap-0.5 relative z-10">
                                 {isCreating ? <RefreshCw className="w-4 h-4 animate-spin text-rose-500" /> : <Zap className="w-4 h-4 text-rose-500 mb-0.5" />}
@@ -301,7 +301,7 @@ export function CreativeFactoryPanel({ productId, productName, onBatchCreated }:
                                                 <span className="text-slate-400 bg-slate-50/50 px-2 py-0.5 rounded border border-slate-100 italic">ID: {batch.id.slice(-6)}</span>
                                                 <span className={cn(
                                                     "px-2 py-0.5 rounded border flex items-center gap-1.5",
-                                                    batch.status === 'COMPLETED' ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600 shadow-sm shadow-rose-500/5"
+                                                    batch.status === 'COMPLETED' ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600 shadow-sm"
                                                 )}>
                                                     <div className={cn("w-1 h-1 rounded-full", batch.status === 'COMPLETED' ? "bg-emerald-500" : "bg-rose-500 animate-pulse")} />
                                                     {batch.status === 'COMPLETED' ? 'COMPLETADO' : 'PROCESANDO'}
@@ -309,7 +309,7 @@ export function CreativeFactoryPanel({ productId, productName, onBatchCreated }:
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center shadow-md group-hover/batch:scale-105 transition-transform">
+                                                    <div className="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center shadow-sm group-hover/batch:scale-105 transition-transform">
                                                         {batch.type === 'STATIC_AD' ? <Layout className="w-5 h-5 text-rose-500" /> : <Play className="w-5 h-5 text-rose-500" />}
                                                     </div>
                                                     <div>

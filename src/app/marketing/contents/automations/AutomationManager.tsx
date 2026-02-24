@@ -80,7 +80,7 @@ export default function AutomationManager({ storeId }: { storeId: string }) {
             </header>
 
             {isAdding && (
-                <Card className="rounded-[32px] border-emerald-200 bg-emerald-50/20 border-2 overflow-hidden shadow-xl">
+                <Card className="rounded-[32px] border-emerald-200 bg-emerald-50/20 border-2 overflow-hidden shadow-sm">
                     <CardHeader className="bg-white border-b border-emerald-50 p-6">
                         <CardTitle className="text-lg font-black uppercase tracking-tight">Crear Automatización</CardTitle>
                     </CardHeader>

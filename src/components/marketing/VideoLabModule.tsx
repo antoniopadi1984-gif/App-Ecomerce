@@ -341,7 +341,7 @@ function ProcessingAction({ icon, label, description, color }: {
     };
 
     return (
-        <button className={`${colorMap[color]} border rounded-xl p-3 text-left hover:shadow-md transition-all`}>
+        <button className={`${colorMap[color]} border rounded-xl p-3 text-left hover:shadow-sm transition-all`}>
             <div className="mb-1">{icon}</div>
             <div className="text-[10px] font-black uppercase tracking-wide">{label}</div>
             <div className="text-[9px] opacity-70">{description}</div>

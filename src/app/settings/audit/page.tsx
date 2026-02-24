@@ -194,7 +194,7 @@ export default function AuditPage() {
                                                             <summary className="text-[9px] font-black uppercase tracking-widest text-slate-300 group-hover:text-slate-900 transition-colors">
                                                                 DATA
                                                             </summary>
-                                                            <pre className="text-[9px] mt-2 bg-slate-950 text-slate-300 p-3 rounded-lg overflow-auto max-h-32 shadow-xl border border-white/10">
+                                                            <pre className="text-[9px] mt-2 bg-slate-950 text-slate-300 p-3 rounded-lg overflow-auto max-h-32 shadow-sm border border-white/10">
                                                                 {formatValue(entry.newValue)}
                                                             </pre>
                                                         </details>

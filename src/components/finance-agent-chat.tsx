@@ -94,7 +94,7 @@ export function FinanceAgentChat({ monthlyData, className }: FinanceAgentChatPro
             <Button
                 onClick={() => setIsOpen(true)}
                 className={cn(
-                    "fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 z-50 transition-all hover:scale-110",
+                    "fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-sm bg-gradient-to-br from-rose-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 z-50 transition-all hover:scale-110",
                     className
                 )}
             >
@@ -105,11 +105,11 @@ export function FinanceAgentChat({ monthlyData, className }: FinanceAgentChatPro
 
     return (
         <div className={cn(
-            "fixed bottom-6 right-6 w-[380px] h-[520px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden",
+            "fixed bottom-6 right-6 w-[380px] h-[520px] bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col z-50 overflow-hidden",
             className
         )}>
             {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-rose-600 to-purple-600 px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
                         <Bot className="h-5 w-5 text-white" />
@@ -137,7 +137,7 @@ export function FinanceAgentChat({ monthlyData, className }: FinanceAgentChatPro
                         className={cn(
                             "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
                             msg.role === "user"
-                                ? "ml-auto bg-indigo-600 text-white rounded-br-sm"
+                                ? "ml-auto bg-rose-600 text-white rounded-br-sm"
                                 : "bg-white border border-slate-100 shadow-sm rounded-bl-sm text-slate-700"
                         )}
                     >
@@ -160,7 +160,7 @@ export function FinanceAgentChat({ monthlyData, className }: FinanceAgentChatPro
                         <Badge
                             key={i}
                             variant="outline"
-                            className="cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-colors text-xs py-1"
+                            className="cursor-pointer hover:bg-rose-50 hover:border-rose-300 transition-colors text-xs py-1"
                             onClick={() => {
                                 setInput(action.label);
                             }}
@@ -180,13 +180,13 @@ export function FinanceAgentChat({ monthlyData, className }: FinanceAgentChatPro
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                         placeholder="Pregunta sobre tus finanzas..."
-                        className="flex-1 text-sm rounded-xl border-slate-200 focus:border-indigo-300"
+                        className="flex-1 text-sm rounded-xl border-slate-200 focus:border-rose-300"
                         disabled={isLoading}
                     />
                     <Button
                         onClick={sendMessage}
                         disabled={!input.trim() || isLoading}
-                        className="rounded-xl bg-indigo-600 hover:bg-indigo-500 h-10 w-10 p-0"
+                        className="rounded-xl bg-rose-600 hover:bg-rose-500 h-10 w-10 p-0"
                     >
                         <Send className="h-4 w-4" />
                     </Button>

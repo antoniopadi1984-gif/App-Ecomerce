@@ -121,7 +121,7 @@ function ResearchContent() {
                         <Button
                             onClick={() => startResearch()}
                             disabled={loading || progress.percent > 0 && progress.percent < 100}
-                            className="h-9 px-8 bg-slate-900 hover:bg-black text-white rounded-lg shadow-lg shadow-slate-200 transition-all flex items-center gap-2 group relative overflow-hidden"
+                            className="h-9 px-8 bg-slate-900 hover:bg-black text-white rounded-lg shadow-sm transition-all flex items-center gap-2 group relative overflow-hidden"
                         >
                             <div className="absolute inset-0 bg-[var(--primary)] opacity-0 group-hover:opacity-10 transition-opacity" />
                             <PlayCircle className="w-4 h-4 text-[var(--primary)]" />
@@ -136,7 +136,7 @@ function ResearchContent() {
                             >
                                 <Microscope className="w-4 h-4" />
                             </Button>
-                            <Button className="h-9 px-4 bg-[var(--primary)] hover:bg-rose-500 text-white rounded-lg shadow-sm shadow-rose-200 font-black uppercase tracking-widest text-[9px] flex items-center gap-2 transition-all">
+                            <Button className="h-9 px-4 bg-[var(--primary)] hover:bg-rose-500 text-white rounded-lg shadow-sm font-black uppercase tracking-widest text-[9px] flex items-center gap-2 transition-all">
                                 <Sparkles className="w-3.5 h-3.5" />
                                 Exportar
                             </Button>
@@ -170,7 +170,7 @@ function ResearchContent() {
                                 className={cn(
                                     "flex items-center justify-between px-2.5 py-1.5 rounded transition-all duration-300 text-left group border text-[9px] font-black uppercase tracking-widest leading-none h-7",
                                     activePhaseId === p.id
-                                        ? "bg-slate-900 text-white border-slate-900 shadow-md -translate-x-0.5"
+                                        ? "bg-slate-900 text-white border-slate-900 shadow-sm -translate-x-0.5"
                                         : "bg-white/40 text-slate-500 border-white/50 hover:bg-white hover:border-slate-200"
                                 )}
                             >
@@ -226,7 +226,7 @@ function ResearchContent() {
                     </div>
 
                     <div className="flex-1 flex flex-col gap-1.5">
-                        <div className="bg-white/60 rounded-lg border border-white/20 shadow-xl overflow-hidden flex flex-col flex-1">
+                        <div className="bg-white/60 rounded-lg border border-white/20 shadow-sm overflow-hidden flex flex-col flex-1">
                             <div className="px-2.5 py-1.5 border-b border-slate-100 bg-white/40 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <h2 className="text-[16px] font-black text-slate-900 uppercase tracking-tighter italic leading-none">
@@ -306,7 +306,7 @@ function ResearchContent() {
                                                     isSyncing={loading}
                                                 />
                                                 <div className="space-y-4">
-                                                    <div className="p-4 rounded-xl bg-slate-900 text-white shadow-xl relative overflow-hidden">
+                                                    <div className="p-4 rounded-xl bg-slate-900 text-white shadow-sm relative overflow-hidden">
                                                         <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--primary)]/20 blur-2xl" />
                                                         <h3 className="text-xs font-black uppercase tracking-widest mb-3 flex items-center gap-2">
                                                             <LineChart className="w-4 h-4 text-[var(--primary)]" /> Market Sophistication

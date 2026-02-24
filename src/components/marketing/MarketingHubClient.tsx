@@ -46,25 +46,25 @@ export function MarketingHubClient({ productId, productTitle, allProducts = [] }
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
                 <div className="px-4 py-2 bg-white/50 border-b border-slate-200">
                     <TabsList className="bg-slate-100/50 p-1 rounded-lg border border-slate-200 h-10 w-fit gap-1">
-                        <TabsTrigger value="assets" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
+                        <TabsTrigger value="assets" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <Grid3X3 className="w-3.5 h-3.5" /> Activos
                         </TabsTrigger>
                         <TabsTrigger value="video" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-black data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <Video className="w-3.5 h-3.5" /> Video Lab
                         </TabsTrigger>
-                        <TabsTrigger value="copy" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
+                        <TabsTrigger value="copy" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <FileText className="w-3.5 h-3.5" /> Copy Hub
                         </TabsTrigger>
-                        <TabsTrigger value="adspy" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
+                        <TabsTrigger value="adspy" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <Facebook className="w-3.5 h-3.5" /> Ad Spy
                         </TabsTrigger>
-                        <TabsTrigger value="landings" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
+                        <TabsTrigger value="landings" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <Layout className="w-3.5 h-3.5" /> Landing Lab
                         </TabsTrigger>
-                        <TabsTrigger value="performance" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
+                        <TabsTrigger value="performance" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <TrendingUp className="w-3.5 h-3.5" /> Rendimiento
                         </TabsTrigger>
-                        <TabsTrigger value="clowdbot" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
+                        <TabsTrigger value="clowdbot" className="px-4 h-8 rounded-md font-black text-[9px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-sm transition-all flex gap-1.5">
                             <Bot className="w-3.5 h-3.5" /> Clowdbot
                         </TabsTrigger>
                     </TabsList>

@@ -256,7 +256,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                     <Settings className="w-3.5 h-3.5" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[200px] glass-card p-1.5 z-[70] border-none rounded-2xl shadow-xl">
+                            <DropdownMenuContent align="end" className="w-[200px] glass-card p-1.5 z-[70] border-none rounded-2xl shadow-sm">
                                 <DropdownMenuLabel className="px-3 py-2">
                                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ajustes & Sistema</span>
                                 </DropdownMenuLabel>

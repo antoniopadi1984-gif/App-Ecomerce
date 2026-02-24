@@ -85,7 +85,7 @@ export function StaticAdsModule({ productId, productTitle, storeId = '' }: Stati
                             <Button
                                 onClick={handleGenerateConcepts}
                                 disabled={isGenerating}
-                                className="w-full h-10 bg-slate-900 hover:bg-black text-rose-500 font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 group"
+                                className="w-full h-10 bg-slate-900 hover:bg-black text-rose-500 font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 group"
                             >
                                 {isGenerating ? (
                                     <RefreshCw className="h-4 w-4 animate-spin shrink-0" />
@@ -151,11 +151,11 @@ export function StaticAdsModule({ productId, productTitle, storeId = '' }: Stati
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-6 duration-1000">
                             {concepts.map((concept, idx) => (
-                                <Card key={idx} className="bg-white border-slate-200 rounded-xl overflow-hidden group hover:border-rose-300 hover:shadow-xl hover:shadow-rose-500/5 transition-all shadow-sm flex flex-col p-0">
+                                <Card key={idx} className="bg-white border-slate-200 rounded-xl overflow-hidden group hover:border-rose-300 hover:shadow-sm hover:shadow-sm transition-all shadow-sm flex flex-col p-0">
                                     {/* Ad Canvas Section */}
                                     <div className="aspect-[4/5] bg-slate-100/50 relative overflow-hidden flex flex-col">
                                         <div className="absolute top-3 inset-x-3 flex justify-between items-start z-10">
-                                            <Badge className="bg-rose-500 text-white font-black uppercase text-[8px] tracking-widest rounded-lg px-2 py-0.5 shadow-md border-none">
+                                            <Badge className="bg-rose-500 text-white font-black uppercase text-[8px] tracking-widest rounded-lg px-2 py-0.5 shadow-sm border-none">
                                                 ID: {idx + 1}
                                             </Badge>
                                             <Badge className="bg-white/90 text-slate-800 border border-slate-200 font-black uppercase text-[8px] tracking-widest rounded-lg px-2 py-0.5 shadow-sm">
@@ -215,7 +215,7 @@ export function StaticAdsModule({ productId, productTitle, storeId = '' }: Stati
                                             <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[8.5px] text-slate-500 leading-relaxed break-words line-clamp-3 italic opacity-60 group-hover:opacity-100 transition-opacity">
                                                 {concept.prompt}
                                             </div>
-                                            <Button className="w-full h-9 bg-slate-900 text-white font-black uppercase text-[9px] tracking-widest rounded-lg hover:bg-black transition-all flex items-center justify-center gap-2 shadow-md">
+                                            <Button className="w-full h-9 bg-slate-900 text-white font-black uppercase text-[9px] tracking-widest rounded-lg hover:bg-black transition-all flex items-center justify-center gap-2 shadow-sm">
                                                 <Sparkles className="h-3 w-3 text-rose-500" /> Generar Imagen Pro
                                             </Button>
                                         </div>

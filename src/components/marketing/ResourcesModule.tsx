@@ -218,7 +218,7 @@ export function ResourcesModule({ storeId = '', productId, productTitle }: Resou
                 <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
                     <CardHeader className="p-4 border-b border-slate-100">
                         <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-indigo-600" />
+                            <Calendar className="h-4 w-4 text-rose-600" />
                             Almanaque Editorial + Campañas
                         </CardTitle>
                         <CardDescription className="text-[10px]">
@@ -230,7 +230,7 @@ export function ResourcesModule({ storeId = '', productId, productTitle }: Resou
                             <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
                             <p className="text-xs font-bold">Almanaque Editorial</p>
                             <p className="text-[10px]">Genera un calendario de publicaciones adaptado a tu producto y audiencia</p>
-                            <Button className="mt-3 h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+                            <Button className="mt-3 h-8 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">
                                 <Sparkles className="h-3 w-3 mr-1" /> Generar Almanaque
                             </Button>
                         </div>

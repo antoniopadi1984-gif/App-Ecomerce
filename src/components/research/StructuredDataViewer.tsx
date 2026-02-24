@@ -44,33 +44,33 @@ export function StructuredDataViewer({
     if (data.mecanismo_real || data.core_identity) {
         return (
             <div className="space-y-4 animate-in fade-in duration-500">
-                <div className="bg-slate-900/95 p-5 rounded-xl border border-white/10 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
-                    <h4 className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.3em] mb-4 flex items-center gap-2 relative z-10 italic">
+                <div className="bg-slate-900/95 p-5 rounded-xl border border-white/10 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                    <h4 className="text-[10px] font-black uppercase text-rose-400 tracking-[0.3em] mb-4 flex items-center gap-2 relative z-10 italic">
                         <Database className="w-3.5 h-3.5" /> Core Product DNA <span className="text-white/20 ml-2">v4.2</span>
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                         <div className="space-y-1.5 p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-                            <span className="text-[8px] font-black text-indigo-300/60 uppercase tracking-widest">Mecanismo Único</span>
+                            <span className="text-[8px] font-black text-rose-300/60 uppercase tracking-widest">Mecanismo Único</span>
                             <p className="text-[13px] font-bold text-white leading-tight italic">{data.mecanismo_real || 'N/A'}</p>
                         </div>
                         <div className="space-y-1.5 p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-                            <span className="text-[8px] font-black text-indigo-300/60 uppercase tracking-widest">Identidad de Marca</span>
+                            <span className="text-[8px] font-black text-rose-300/60 uppercase tracking-widest">Identidad de Marca</span>
                             <p className="text-[13px] font-bold text-white leading-tight italic">{data.core_identity || 'N/A'}</p>
                         </div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <Card className="p-4 bg-white/60 border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+                    <Card className="p-4 bg-white/60 border-slate-100 shadow-sm hover:shadow-sm transition-all hover:-translate-y-0.5">
                         <span className="text-[8px] font-black text-slate-400 uppercase block mb-2 tracking-widest">Problema Raíz</span>
                         <p className="text-[11px] font-bold text-slate-800 leading-snug">{data.root_problem || 'N/A'}</p>
                     </Card>
-                    <Card className="p-4 bg-white/60 border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+                    <Card className="p-4 bg-white/60 border-slate-100 shadow-sm hover:shadow-sm transition-all hover:-translate-y-0.5">
                         <span className="text-[8px] font-black text-slate-400 uppercase block mb-2 tracking-widest">Diferenciación</span>
                         <p className="text-[11px] font-bold text-slate-800 leading-snug">{data.diferenciacion || 'N/A'}</p>
                     </Card>
-                    <Card className="p-4 bg-white/60 border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+                    <Card className="p-4 bg-white/60 border-slate-100 shadow-sm hover:shadow-sm transition-all hover:-translate-y-0.5">
                         <span className="text-[8px] font-black text-slate-400 uppercase block mb-2 tracking-widest">Oportunidad</span>
                         <p className="text-[11px] font-bold text-slate-800 leading-snug">{data.opportunity || 'N/A'}</p>
                     </Card>
@@ -83,9 +83,9 @@ export function StructuredDataViewer({
     if (data.primary_emotional_hook || data.desires) {
         return (
             <div className="space-y-5 animate-in fade-in duration-500">
-                <div className="bg-indigo-600 p-5 rounded-xl text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
+                <div className="bg-rose-600 p-5 rounded-xl text-white shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-24 -mt-24 group-hover:bg-white/20 transition-all duration-700" />
-                    <h4 className="text-[9px] font-black uppercase text-indigo-100 tracking-[0.3em] mb-2 flex items-center gap-2 relative z-10 italic">
+                    <h4 className="text-[9px] font-black uppercase text-rose-100 tracking-[0.3em] mb-2 flex items-center gap-2 relative z-10 italic">
                         <Zap className="w-3.5 h-3.5 fill-current" /> Máximo Gancho Emocional
                     </h4>
                     <p className="text-base font-black italic relative z-10 leading-tight">"{data.primary_emotional_hook || 'N/A'}"</p>
@@ -99,20 +99,20 @@ export function StructuredDataViewer({
                     </div>
                     <div className="grid gap-2">
                         {(data.desires || []).map((d: any, idx: number) => (
-                            <div key={idx} className="p-3.5 rounded-xl bg-white/80 border border-slate-100 shadow-xs hover:border-indigo-200 transition-all group/item">
+                            <div key={idx} className="p-3.5 rounded-xl bg-white/80 border border-slate-100 shadow-xs hover:border-rose-200 transition-all group/item">
                                 <div className="flex items-start gap-4">
-                                    <div className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-black shrink-0 shadow-lg group-hover/item:bg-indigo-600 transition-colors italic">
+                                    <div className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-black shrink-0 shadow-sm group-hover/item:bg-rose-600 transition-colors italic">
                                         {idx + 1}
                                     </div>
                                     <div className="flex-1 space-y-1.5">
                                         <div className="flex items-center gap-2">
-                                            <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 text-[6px] font-black uppercase px-2">{d.stage || 'N/A'}</Badge>
+                                            <Badge className="bg-rose-50 text-rose-600 border-rose-100 text-[6px] font-black uppercase px-2">{d.stage || 'N/A'}</Badge>
                                             <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Intensidad: {d.intensity || 'MÁXIMA'}</span>
                                         </div>
                                         <p className="text-[12px] font-black text-slate-800 leading-tight">
-                                            {d.surface_desire} <span className="text-slate-300 mx-1">→</span> <span className="text-indigo-600 italic uppercase">{d.core_desire}</span>
+                                            {d.surface_desire} <span className="text-slate-300 mx-1">→</span> <span className="text-rose-600 italic uppercase">{d.core_desire}</span>
                                         </p>
-                                        <p className="text-[10px] font-medium text-slate-500 leading-relaxed italic border-l-2 border-indigo-100 pl-3 py-0.5">
+                                        <p className="text-[10px] font-medium text-slate-500 leading-relaxed italic border-l-2 border-rose-100 pl-3 py-0.5">
                                             {d.pain_point}
                                         </p>
                                     </div>
@@ -131,22 +131,22 @@ export function StructuredDataViewer({
             <div className="space-y-5 animate-in fade-in duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {data.angle_tree.map((angle: any, idx: number) => (
-                        <Card key={idx} className="relative overflow-hidden p-5 bg-white border-slate-100 shadow-sm hover:border-indigo-400 group transition-all duration-500 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 rounded-xl">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full -mr-10 -mt-10 group-hover:bg-indigo-500/10 transition-colors" />
+                        <Card key={idx} className="relative overflow-hidden p-5 bg-white border-slate-100 shadow-sm hover:border-rose-400 group transition-all duration-500 hover:shadow-sm hover:shadow-sm hover:-translate-y-1 rounded-xl">
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/5 rounded-full -mr-10 -mt-10 group-hover:bg-rose-500/10 transition-colors" />
                             <div className="absolute top-4 right-4 opacity-5 group-hover:opacity-40 transition-opacity">
-                                <Target className="w-8 h-8 text-indigo-600" />
+                                <Target className="w-8 h-8 text-rose-600" />
                             </div>
 
                             <div className="space-y-3 relative z-10 mb-12">
                                 <div>
-                                    <Badge className="bg-slate-900/5 text-slate-500 border-none text-[6px] font-black uppercase tracking-widest mb-1.5 px-1.5 py-0.5 group-hover:bg-indigo-600 group-hover:text-white transition-colors">{angle.category || 'MARKETING ANGLE'}</Badge>
-                                    <h4 className="text-[13px] font-black text-slate-900 leading-tight uppercase italic group-hover:text-indigo-950">{angle.concept}</h4>
+                                    <Badge className="bg-slate-900/5 text-slate-500 border-none text-[6px] font-black uppercase tracking-widest mb-1.5 px-1.5 py-0.5 group-hover:bg-rose-600 group-hover:text-white transition-colors">{angle.category || 'MARKETING ANGLE'}</Badge>
+                                    <h4 className="text-[13px] font-black text-slate-900 leading-tight uppercase italic group-hover:text-rose-950">{angle.concept}</h4>
                                 </div>
 
                                 <div className="space-y-2 bg-slate-50/50 p-2.5 rounded-lg border border-slate-100 group-hover:bg-white transition-colors">
                                     <div className="flex items-start gap-2">
-                                        <div className="w-1 h-1 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                                        <span className="text-[9px] font-bold text-slate-600 leading-tight">Hook: <span className="text-indigo-600 italic">"{angle.hook_preview}"</span></span>
+                                        <div className="w-1 h-1 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                                        <span className="text-[9px] font-bold text-slate-600 leading-tight">Hook: <span className="text-rose-600 italic">"{angle.hook_preview}"</span></span>
                                     </div>
                                     <div className="flex items-start gap-2">
                                         <div className="w-1 h-1 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
@@ -161,7 +161,7 @@ export function StructuredDataViewer({
                             <div className="absolute bottom-4 left-4 right-4">
                                 <Button
                                     onClick={() => handleGenerateGodTierCopy(0, idx)}
-                                    className="w-full h-8 bg-slate-900 hover:bg-indigo-600 text-white text-[8px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md group-hover:shadow-indigo-500/10 italic"
+                                    className="w-full h-8 bg-slate-900 hover:bg-rose-600 text-white text-[8px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm group-hover:shadow-sm italic"
                                 >
                                     GOD-TIER COPY
                                 </Button>

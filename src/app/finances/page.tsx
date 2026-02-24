@@ -52,7 +52,7 @@ import { motion } from "framer-motion";
    TABS CONFIG
    ───────────────────────────────────── */
 const FINANCE_TABS = [
-    { id: "ledger", label: "Profit & Ledger", icon: Wallet, color: "from-indigo-600 to-blue-600" },
+    { id: "ledger", label: "Profit & Ledger", icon: Wallet, color: "from-rose-600 to-blue-600" },
     { id: "expenses", label: "Gastos Fijos", icon: Receipt, color: "from-emerald-600 to-teal-600" },
     { id: "simulator", label: "Simulador", icon: Calculator, color: "from-violet-600 to-purple-600" },
 ] as const;
@@ -92,7 +92,7 @@ export default function FinancesHub() {
                                 className={cn(
                                     "flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                                     isActive
-                                        ? `bg-gradient-to-r ${tab.color} text-white shadow-lg`
+                                        ? `bg-gradient-to-r ${tab.color} text-white shadow-sm`
                                         : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
                                 )}
                             >
@@ -211,7 +211,7 @@ function LedgerTab() {
                     <p className="text-slate-500 max-w-sm mx-auto font-medium text-sm">Se requiere la integración base de la tienda para generar estados financieros.</p>
                 </div>
                 <Link href="/connections">
-                    <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-lg shadow-rose-500/20">
+                    <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-sm">
                         <Link2 className="w-4 h-4 mr-2" /> Vincular Tienda
                     </Button>
                 </Link>
@@ -349,7 +349,7 @@ function LedgerTab() {
                     </div>
                     {productFinancialsLoading ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-4">
-                            <Calculator className="w-8 h-8 text-indigo-400 animate-spin" />
+                            <Calculator className="w-8 h-8 text-rose-400 animate-spin" />
                             <p className="text-slate-400 font-black text-[9px] uppercase tracking-widest">Calculando Profit...</p>
                         </div>
                     ) : (
@@ -402,7 +402,7 @@ function ExpensesTab() {
                         <RefreshCw className={cn("h-3 w-3 mr-1.5", syncing && "animate-spin")} />
                         {syncing ? "Sincronizando..." : "Sync Total"}
                     </Button>
-                    <Card className="bg-slate-900 border-none px-3 py-1 flex items-center gap-2 rounded-lg shadow-xl">
+                    <Card className="bg-slate-900 border-none px-3 py-1 flex items-center gap-2 rounded-lg shadow-sm">
                         <Calculator className="h-3 w-3 text-slate-400" />
                         <div className="flex flex-col">
                             <span className="text-[7px] text-slate-500 uppercase font-black leading-none tracking-widest">Total Fijos / Mes</span>
@@ -434,7 +434,7 @@ function ExpensesTab() {
                                     <SelectTrigger className="h-7 text-[10px] font-bold bg-slate-50 border-slate-100 rounded-lg px-2.5">
                                         <SelectValue placeholder="Tipo..." />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-white border-slate-100 rounded-lg shadow-xl">
+                                    <SelectContent className="bg-white border-slate-100 rounded-lg shadow-sm">
                                         {expenseCategories.map(cat => (
                                             <SelectItem key={cat.id} value={cat.id} className="text-[10px] font-bold">{cat.name}</SelectItem>
                                         ))}
@@ -491,10 +491,10 @@ function ExpensesTab() {
             </div>
 
             {/* Impact Card */}
-            <Card className="bg-slate-900 border-none overflow-hidden rounded-lg shadow-xl shadow-slate-200/50">
+            <Card className="bg-slate-900 border-none overflow-hidden rounded-lg shadow-sm">
                 <div className="p-2.5 px-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                        <div className="h-7 w-7 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-400">
                             <Calculator className="h-3.5 w-3.5" />
                         </div>
                         <div>
@@ -619,7 +619,7 @@ function SimulatorTab() {
                 {/* Input Controls */}
                 <Card className="md:col-span-5 bg-slate-950 border-none rounded-lg text-white">
                     <CardHeader className="p-3 flex flex-row items-center justify-between">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-widest text-rose-400 flex items-center gap-2">
                             <Target className="h-3.5 w-3.5" /> Parámetros
                         </CardTitle>
                         <div className="flex items-center gap-2">
@@ -661,9 +661,9 @@ function SimulatorTab() {
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label className="text-[8px] uppercase text-slate-400">Conv. Rate (%)</Label>
-                                <span className="text-[10px] font-black text-indigo-400">{params.conversionRate}%</span>
+                                <span className="text-[10px] font-black text-rose-400">{params.conversionRate}%</span>
                             </div>
-                            <input type="range" min="0.1" max="10" step="0.1" value={params.conversionRate} onChange={(e) => setParams({ ...params, conversionRate: Number(e.target.value) })} className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
+                            <input type="range" min="0.1" max="10" step="0.1" value={params.conversionRate} onChange={(e) => setParams({ ...params, conversionRate: Number(e.target.value) })} className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500" />
                         </div>
                         <div className="space-y-1">
                             <Label className="text-[8px] uppercase text-slate-400">Beneficio Neto Deseado / Pedido (€)</Label>
@@ -675,7 +675,7 @@ function SimulatorTab() {
                 {/* Results */}
                 <div className="md:col-span-7 space-y-3">
                     <div className="grid grid-cols-2 gap-3">
-                        <Card className="bg-slate-900 border-none shadow-xl rounded-lg overflow-hidden">
+                        <Card className="bg-slate-900 border-none shadow-sm rounded-lg overflow-hidden">
                             <CardHeader className="p-2.5 pb-0">
                                 <CardDescription className="text-[9px] font-black uppercase tracking-widest text-slate-500">CPA Máximo ({results.targetROAS} ROAS)</CardDescription>
                             </CardHeader>
@@ -703,7 +703,7 @@ function SimulatorTab() {
                             <div className="grid grid-cols-3 gap-2 text-center">
                                 <div className="p-2 bg-slate-50 rounded"><div className="text-[8px] text-slate-400 font-black uppercase tracking-widest">Ingresos</div><div className="font-black text-slate-900 italic tracking-tighter">€{results.revenue}</div></div>
                                 <div className="p-2 bg-slate-50 rounded"><div className="text-[8px] text-slate-400 font-black uppercase tracking-widest">Costes</div><div className="font-black text-slate-900 italic tracking-tighter">€{results.cost}</div></div>
-                                <div className="p-2 bg-slate-900 rounded shadow-lg"><div className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Margen</div><div className="font-black text-white italic tracking-tighter">€{results.margin}</div></div>
+                                <div className="p-2 bg-slate-900 rounded shadow-sm"><div className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Margen</div><div className="font-black text-white italic tracking-tighter">€{results.margin}</div></div>
                             </div>
                             <Separator className="bg-slate-50" />
                             <div className="flex items-center justify-between text-xs">
@@ -745,7 +745,7 @@ function SimulatorTab() {
                         </Dialog>
                         <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
                             <DialogTrigger asChild>
-                                <Button size="sm" className="flex-1 text-[9px] h-7 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white uppercase tracking-tighter">
+                                <Button size="sm" className="flex-1 text-[9px] h-7 gap-2 bg-rose-600 hover:bg-rose-700 text-white uppercase tracking-tighter">
                                     <Save className="h-3 w-3" /> Guardar
                                 </Button>
                             </DialogTrigger>

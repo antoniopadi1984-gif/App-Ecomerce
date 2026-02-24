@@ -51,10 +51,10 @@ export default function APIUsagePage() {
         <div className="min-h-0 bg-white p-4 animate-in fade-in duration-500">
             <div className="max-w-5xl mx-auto space-y-6">
                 {/* Header */}
-                <div className="bg-slate-900 rounded-lg p-4 text-white flex items-center justify-between shadow-lg shadow-slate-100 italic">
+                <div className="bg-slate-900 rounded-lg p-4 text-white flex items-center justify-between shadow-sm italic">
                     <div>
                         <h1 className="text-lg font-black uppercase tracking-tighter leading-none">
-                            Consumo de APIs <span className="text-indigo-400 not-italic ml-1">v4</span>
+                            Consumo de APIs <span className="text-rose-400 not-italic ml-1">v4</span>
                         </h1>
                         <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.3em] mt-1.5 opacity-80">
                             Tracking de uso y costos de Vertex AI, Replicate, ElevenLabs
@@ -69,7 +69,7 @@ export default function APIUsagePage() {
                             key={d}
                             onClick={() => setDays(d)}
                             className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${days === d
-                                ? 'bg-white text-indigo-600 shadow-sm'
+                                ? 'bg-white text-rose-600 shadow-sm'
                                 : 'text-slate-400 hover:text-slate-600'
                                 }`}
                         >
@@ -94,7 +94,7 @@ export default function APIUsagePage() {
                     <div className="bg-white rounded-lg shadow-sm p-3.5 border border-slate-100 relative overflow-hidden group">
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-widest leading-none">Total Llamadas</h3>
-                            <Zap className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                            <Zap className="w-3.5 h-3.5 text-slate-300 group-hover:text-rose-500 transition-colors" />
                         </div>
                         <p className="text-xl font-black text-slate-900 tracking-tighter italic">
                             {summary?.totalCalls.toLocaleString() || '0'}
@@ -117,7 +117,7 @@ export default function APIUsagePage() {
                 {/* Usage by Model */}
                 <div className="bg-white rounded-lg shadow-sm p-5 border border-slate-100">
                     <div className="flex items-center gap-2 mb-6">
-                        <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                         <h2 className="text-xs font-black uppercase text-slate-900 italic tracking-tight">
                             Uso por Modelo/API <span className="text-slate-300 not-italic ml-1">· Distribution Matrix</span>
                         </h2>
@@ -128,7 +128,7 @@ export default function APIUsagePage() {
                             const percentage = (data.totalCost / summary.totalCost) * 100;
 
                             return (
-                                <div key={model} className="bg-slate-50/50 rounded-lg p-3 border border-slate-100 group hover:border-indigo-100 transition-all">
+                                <div key={model} className="bg-slate-50/50 rounded-lg p-3 border border-slate-100 group hover:border-rose-100 transition-all">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="overflow-hidden">
                                             <h3 className="text-[10px] font-black text-slate-800 uppercase italic tracking-tight truncate leading-none">{model}</h3>
@@ -140,7 +140,7 @@ export default function APIUsagePage() {
                                             <p className="text-xs font-black text-slate-900 italic leading-none">
                                                 ${data.totalCost.toFixed(2)}
                                             </p>
-                                            <p className="text-[7px] font-black text-indigo-500 uppercase tracking-widest mt-1 opacity-70">
+                                            <p className="text-[7px] font-black text-rose-500 uppercase tracking-widest mt-1 opacity-70">
                                                 {percentage.toFixed(1)}%
                                             </p>
                                         </div>
@@ -149,7 +149,7 @@ export default function APIUsagePage() {
                                     {/* Progress bar */}
                                     <div className="w-full bg-slate-200/50 rounded-full h-1 overflow-hidden">
                                         <div
-                                            className="bg-indigo-600 h-full rounded-full transition-all duration-1000"
+                                            className="bg-rose-600 h-full rounded-full transition-all duration-1000"
                                             style={{ width: `${percentage}%` }}
                                         />
                                     </div>
@@ -191,9 +191,9 @@ export default function APIUsagePage() {
                                                     day: 'numeric'
                                                 })}
                                             </span>
-                                            <div className="flex-1 bg-slate-50 rounded-lg h-7 relative overflow-hidden border border-slate-100 shadow-inner group-hover:border-emerald-100 transition-all">
+                                            <div className="flex-1 bg-slate-50 rounded-lg h-7 relative overflow-hidden border border-slate-100 shadow-sm group-hover:border-emerald-100 transition-all">
                                                 <div
-                                                    className="bg-emerald-600 h-full rounded-lg flex items-center justify-end pr-3 transition-all duration-1000 shadow-inner"
+                                                    className="bg-emerald-600 h-full rounded-lg flex items-center justify-end pr-3 transition-all duration-1000 shadow-sm"
                                                     style={{ width: `${width}%`, minWidth: '40px' }}
                                                 >
                                                     <span className="text-[10px] font-black text-white italic tracking-tighter shadow-sm">

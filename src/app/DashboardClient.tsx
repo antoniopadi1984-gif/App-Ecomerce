@@ -29,7 +29,7 @@ export default function DashboardClient({ initialKpi, initialOrders, initialCamp
             {/* Header Ultra Compact */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-1 border-b border-slate-100/50 pb-2">
                 <div className="flex items-center gap-3">
-                    <div className="h-6 w-6 bg-slate-950 rounded flex items-center justify-center text-white shadow-lg">
+                    <div className="h-6 w-6 bg-slate-950 rounded flex items-center justify-center text-white shadow-sm">
                         <Activity className="h-3.5 w-3.5" />
                     </div>
                     <div className="space-y-0 text-left">
@@ -64,7 +64,7 @@ export default function DashboardClient({ initialKpi, initialOrders, initialCamp
                         <KpiCard label={t('net_profit')} value={`€${(initialKpi?.netProfit || 0).toLocaleString('es-ES', { minimumFractionDigits: 1 })}`} trend="+12.5%" icon={DollarSign} color="text-emerald-600" bg="bg-emerald-50/50" aura />
                         <KpiCard label={t('orders_today')} value={initialKpi?.ordersCount || 0} sub={`${initialKpi?.recoveryRate || 0}% health`} icon={Package} color="text-blue-600" bg="bg-blue-50/50" />
                         <KpiCard label={t('incidences')} value={initialKpi?.incidences || 0} icon={AlertTriangle} color={(initialKpi?.incidences || 0) > 0 ? "text-rose-500" : "text-slate-400"} bg={(initialKpi?.incidences || 0) > 0 ? "bg-rose-50/50" : "bg-slate-50/50"} alert={(initialKpi?.incidences || 0) > 0} />
-                        <KpiCard label={t('avg_ticket')} value={`€${(initialKpi?.avgTicket || 0).toFixed(1)}`} icon={Activity} color="text-indigo-600" bg="bg-indigo-50/50" />
+                        <KpiCard label={t('avg_ticket')} value={`€${(initialKpi?.avgTicket || 0).toFixed(1)}`} icon={Activity} color="text-rose-600" bg="bg-rose-50/50" />
                     </motion.div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
@@ -172,11 +172,11 @@ export default function DashboardClient({ initialKpi, initialOrders, initialCamp
                             <h3 className="text-[9px] font-black uppercase italic mb-3 text-left">{t('effective_channels')}</h3>
                             <div className="space-y-3">
                                 <StatLevel label="Meta Ads" value="45%" color="bg-blue-600" />
-                                <StatLevel label="Google Search" value="30%" color="bg-indigo-600" />
+                                <StatLevel label="Google Search" value="30%" color="bg-rose-600" />
                                 <StatLevel label="Direct Traffic" value="25%" color="bg-slate-400" />
                             </div>
                         </Card>
-                        <Card className="compact-card p-3 bg-slate-950 text-white border-none shadow-xl">
+                        <Card className="compact-card p-3 bg-slate-950 text-white border-none shadow-sm">
                             <div className="flex items-center gap-2 mb-2">
                                 <Zap className="h-3 w-3 text-amber-400" />
                                 <h3 className="text-[9px] font-black uppercase italic text-slate-400">{t('ai_strategy_core')}</h3>
@@ -199,9 +199,9 @@ function KpiCard({ label, value, trend, sub, icon: Icon, color, bg, alert, aura 
     return (
         <motion.div variants={item}>
             <Card className={cn(
-                "compact-card border-none bg-white rounded-lg transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5 overflow-hidden relative group",
+                "compact-card border-none bg-white rounded-lg transition-all duration-300 hover:shadow-sm hover:shadow-sm hover:-translate-y-0.5 overflow-hidden relative group",
                 alert && "bg-rose-50/20 ring-1 ring-rose-100/30",
-                aura && "before:absolute before:-top-4 before:-right-4 before:w-16 before:h-16 before:bg-indigo-500/10 before:rounded-full before:blur-2xl before:pointer-events-none"
+                aura && "before:absolute before:-top-4 before:-right-4 before:w-16 before:h-16 before:bg-rose-500/10 before:rounded-full before:blur-2xl before:pointer-events-none"
             )}>
                 <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-10 transition-opacity">
                     <Icon className="h-10 w-10 text-slate-900" />

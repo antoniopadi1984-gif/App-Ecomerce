@@ -39,7 +39,7 @@ interface Agent {
 }
 
 const AGENTS: Agent[] = [
-    { id: 'landing', name: 'Landing Expert', role: 'Conversion Architect', icon: Layout, status: 'ONLINE', color: 'indigo' },
+    { id: 'landing', name: 'Landing Expert', role: 'Conversion Architect', icon: Layout, status: 'ONLINE', color: 'rose' },
     { id: 'designer', name: 'Pro Designer', role: 'Visual Identity', icon: Palette, status: 'ONLINE', color: 'pink' },
     { id: 'video', name: 'Video Editor Pro', role: 'Motion & FX', icon: Video, status: 'IDLE', color: 'purple' },
     { id: 'spencer', name: 'Spencer Strategist', role: 'Growth Method', icon: Target, status: 'THINKING', color: 'slate' },
@@ -64,7 +64,7 @@ export function AgencyControlPanel({ productId }: { productId: string }) {
             <div
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "absolute left-[-12px] top-1/2 -translate-y-1/2 w-6 h-12 bg-slate-900 border border-slate-700/50 rounded-l-md flex items-center justify-center cursor-pointer hover:bg-indigo-600 transition-colors group-hover/sidebar:opacity-100 opacity-0",
+                    "absolute left-[-12px] top-1/2 -translate-y-1/2 w-6 h-12 bg-slate-900 border border-slate-700/50 rounded-l-md flex items-center justify-center cursor-pointer hover:bg-rose-600 transition-colors group-hover/sidebar:opacity-100 opacity-0",
                     isOpen && "opacity-100 left-[-20px] w-5 h-10 rounded-full"
                 )}
             >
@@ -72,17 +72,17 @@ export function AgencyControlPanel({ productId }: { productId: string }) {
             </div>
 
             {/* Sidebar Content */}
-            <div className="w-full h-full bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col overflow-hidden">
+            <div className="w-full h-full bg-slate-900 border-l border-slate-800 shadow-sm flex flex-col overflow-hidden">
                 {/* Header */}
                 <div className="p-4 border-b border-slate-800 bg-black/20">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-500 rounded-lg">
+                        <div className="p-2 bg-rose-500 rounded-lg">
                             <Shield className="w-4 h-4 text-white" />
                         </div>
                         {isOpen && (
                             <div className="animate-in fade-in slide-in-from-left-2 duration-300">
                                 <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Agency Intelligence</h2>
-                                <p className="text-[8px] font-bold text-indigo-400 uppercase tracking-widest mt-0.5">Unified Hub V4</p>
+                                <p className="text-[8px] font-bold text-rose-400 uppercase tracking-widest mt-0.5">Unified Hub V4</p>
                             </div>
                         )}
                     </div>
@@ -97,18 +97,18 @@ export function AgencyControlPanel({ productId }: { productId: string }) {
                                 onClick={() => setSelectedAgent(agent.id)}
                                 className={cn(
                                     "w-full rounded-xl flex items-center gap-3 transition-all duration-300 p-2.5",
-                                    selectedAgent === agent.id ? "bg-white/10 text-white shadow-lg" : "hover:bg-white/5 text-slate-400"
+                                    selectedAgent === agent.id ? "bg-white/10 text-white shadow-sm" : "hover:bg-white/5 text-slate-400"
                                 )}
                             >
                                 <div className={cn(
                                     "relative shrink-0 p-1.5 rounded-lg transition-colors",
-                                    selectedAgent === agent.id ? "bg-indigo-500 text-white" : "bg-white/5 group-hover:bg-white/10"
+                                    selectedAgent === agent.id ? "bg-rose-500 text-white" : "bg-white/5 group-hover:bg-white/10"
                                 )}>
                                     <agent.icon className="w-3.5 h-3.5" />
                                     <div className={cn(
                                         "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-slate-900 shadow-sm",
                                         agent.status === 'ONLINE' ? "bg-emerald-500 animate-pulse" :
-                                            agent.status === 'THINKING' ? "bg-indigo-500 animate-bounce" : "bg-slate-400"
+                                            agent.status === 'THINKING' ? "bg-rose-500 animate-bounce" : "bg-slate-400"
                                     )} />
                                 </div>
 
@@ -123,7 +123,7 @@ export function AgencyControlPanel({ productId }: { productId: string }) {
 
                 {isOpen && (
                     <div className="p-4 bg-black/40 border-t border-slate-800">
-                        <Button className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-lg shadow-indigo-500/10">
+                        <Button className="w-full h-10 bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-widest text-[9px] rounded-xl shadow-sm">
                             Command Center
                         </Button>
                     </div>

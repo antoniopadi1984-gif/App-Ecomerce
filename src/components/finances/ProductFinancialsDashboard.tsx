@@ -58,7 +58,7 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
                     value={`€${(summary.totalRevenue || 0).toLocaleString()}`}
                     sub={`${summary.totalOrders || 0} pedidos`}
                     icon={DollarSign}
-                    color="indigo"
+                    color="rose"
                 />
                 <MetricCard
                     label="NET PROFIT"
@@ -115,7 +115,7 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
 
                 <TabsContent value="daily" className="m-0 space-y-4">
                     {/* Metrics Table */}
-                    <div className="bg-white rounded-lg border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
                         <div className="overflow-x-auto no-scrollbar">
                             <table className="w-full text-left border-collapse table-fixed min-w-[2200px]">
                                 <thead>
@@ -171,8 +171,8 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
                                                 <td className="px-4 py-2">
                                                     <div className="flex items-center justify-center">
                                                         <div className={cn(
-                                                            "w-2.5 h-2.5 rounded-full shadow-lg",
-                                                            isDayProfitable ? "bg-emerald-500 shadow-emerald-200" : "bg-rose-500 shadow-rose-200"
+                                                            "w-2.5 h-2.5 rounded-full shadow-sm",
+                                                            isDayProfitable ? "bg-emerald-500 shadow-sm" : "bg-rose-500 shadow-sm"
                                                         )} />
                                                     </div>
                                                 </td>
@@ -198,7 +198,7 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
 
 function MetricCard({ label, value, sub, icon: Icon, color, trend }: { label: string, value: string, sub: string, icon: any, color: string, trend?: 'up' | 'down' }) {
     const colors: Record<string, string> = {
-        indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
+        rose: "bg-rose-50 text-rose-600 border-rose-100",
         emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
         rose: "bg-rose-50 text-rose-600 border-rose-100",
         amber: "bg-amber-50 text-amber-600 border-amber-100",
@@ -206,7 +206,7 @@ function MetricCard({ label, value, sub, icon: Icon, color, trend }: { label: st
     };
 
     return (
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group overflow-hidden relative hover:-translate-y-1">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:shadow-sm hover:shadow-sm transition-all duration-300 group overflow-hidden relative hover:-translate-y-1">
             <div className="absolute -right-1 -top-1 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
                 <Icon className="w-16 h-16 rotate-12" />
             </div>

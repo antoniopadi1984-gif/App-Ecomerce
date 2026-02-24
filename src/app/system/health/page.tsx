@@ -20,7 +20,7 @@ export default function SystemHealthPage() {
     const [lastScan, setLastScan] = useState(new Date());
 
     const services = [
-        { name: "Meta Ads API", status: "HEALTHY", latency: 120, uptime: 99.9, icon: Zap, color: "indigo" },
+        { name: "Meta Ads API", status: "HEALTHY", latency: 120, uptime: 99.9, icon: Zap, color: "rose" },
         { name: "Shopify Webhooks", status: "HEALTHY", latency: 45, uptime: 100, icon: ShoppingCart, color: "emerald" },
         { name: "Logística Engine", status: "WARNING", latency: 850, uptime: 98.5, icon: Truck, color: "amber", issues: ["Latencia elevada en el endpoint de tracking"] },
         { name: "AI Moderation Guard", status: "HEALTHY", latency: 310, uptime: 99.8, icon: ShieldCheck, color: "purple" },
@@ -50,7 +50,7 @@ export default function SystemHealthPage() {
                             onClick={() => setLastScan(new Date())}
                             className="h-8 w-8 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 shadow-sm"
                         >
-                            <RefreshCw className="h-4 w-4 text-indigo-600" />
+                            <RefreshCw className="h-4 w-4 text-rose-600" />
                         </Button>
                     </div>
                 }
@@ -70,12 +70,12 @@ export default function SystemHealthPage() {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <Server className="h-4 w-4 text-indigo-600" />
+                                            <Server className="h-4 w-4 text-rose-600" />
                                             <CardTitle className="text-sm font-black uppercase tracking-tight">Motor de Sincronización</CardTitle>
                                         </div>
                                         <CardDescription className="text-slate-400 font-bold uppercase text-[8px] tracking-widest mt-1">Status de procesos activos</CardDescription>
                                     </div>
-                                    <Badge className="bg-indigo-50 text-indigo-600 border-none font-black text-[9px] tracking-widest px-2 py-0.5 rounded-full uppercase italic">Active</Badge>
+                                    <Badge className="bg-rose-50 text-rose-600 border-none font-black text-[9px] tracking-widest px-2 py-0.5 rounded-full uppercase italic">Active</Badge>
                                 </div>
                             </CardHeader>
                             <CardContent className="p-4 space-y-4">
@@ -83,7 +83,7 @@ export default function SystemHealthPage() {
                                     <div key={idx} className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <div className={cn("h-1.5 w-1.5 rounded-full", job.status === "RUNNING" ? "bg-indigo-500 animate-pulse" : "bg-emerald-500")} />
+                                                <div className={cn("h-1.5 w-1.5 rounded-full", job.status === "RUNNING" ? "bg-rose-500 animate-pulse" : "bg-emerald-500")} />
                                                 <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight">{job.name}</span>
                                             </div>
                                             <span className="text-[9px] font-bold text-slate-400 uppercase italic">{job.lastRun}</span>
@@ -101,8 +101,8 @@ export default function SystemHealthPage() {
                     <div className="space-y-6">
                         <Card className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="h-8 w-8 bg-indigo-50 rounded-lg flex items-center justify-center">
-                                    <Cloud className="h-4 w-4 text-indigo-600" />
+                                <div className="h-8 w-8 bg-rose-50 rounded-lg flex items-center justify-center">
+                                    <Cloud className="h-4 w-4 text-rose-600" />
                                 </div>
                                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Truth Layer Health</h3>
                             </div>
@@ -124,7 +124,7 @@ export default function SystemHealthPage() {
                             </div>
                         </Card>
 
-                        <Button className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white border-none rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg group">
+                        <Button className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white border-none rounded-xl font-black uppercase text-[10px] tracking-widest shadow-sm group">
                             Configurar Alertas
                             <ArrowRight className="h-3.5 w-3.5 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
@@ -139,7 +139,7 @@ function ServiceCard({ name, status, latency, uptime, icon: Icon, color, issues 
     const isHealthy = status === "HEALTHY";
 
     return (
-        <Card className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+        <Card className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden group hover:shadow-sm transition-shadow">
             <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-4">
                     <div className={cn(

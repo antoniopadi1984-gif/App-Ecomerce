@@ -215,7 +215,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
             {/* 1. MAESTRO HEADER */}
             <header className="border-b border-white/40 glass-header sticky top-0 z-30 shadow-sm px-4 h-10 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-lg">
+                    <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-sm">
                         <Wand2 className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex flex-col">
@@ -230,14 +230,14 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                 </div>
 
                 {/* CONTROLES GLOBALES DEL AGENTE */}
-                <div className="flex items-center gap-1.5 bg-white/40 p-1 rounded-2xl border border-white/60 shadow-inner">
+                <div className="flex items-center gap-1.5 bg-white/40 p-1 rounded-2xl border border-white/60 shadow-sm">
                     <div className="flex items-center px-4 h-7">
                         <Database className="w-3.5 h-3.5 text-rose-500 mr-2" />
                         <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                             <SelectTrigger className="w-[160px] h-7 bg-transparent border-none text-[9px] font-black uppercase tracking-widest focus:ring-0">
                                 <SelectValue placeholder="Producto" />
                             </SelectTrigger>
-                            <SelectContent className="glass-panel border-slate-100 shadow-2xl rounded-2xl">
+                            <SelectContent className="glass-panel border-slate-100 shadow-sm rounded-2xl">
                                 {initialProducts.map(p => (
                                     <SelectItem key={p.id} value={p.id} className="text-[9px] font-black uppercase tracking-widest">{p.title}</SelectItem>
                                 ))}
@@ -254,7 +254,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                                 <SelectValue />
                             </div>
                         </SelectTrigger>
-                        <SelectContent className="glass-panel border-slate-100 shadow-2xl rounded-2xl">
+                        <SelectContent className="glass-panel border-slate-100 shadow-sm rounded-2xl">
                             <SelectItem value="TIKTOK" className="text-[9px] font-black uppercase tracking-widest">TikTok</SelectItem>
                             <SelectItem value="META" className="text-[9px] font-black uppercase tracking-widest">Meta Ads</SelectItem>
                             <SelectItem value="YOUTUBE" className="text-[9px] font-black uppercase tracking-widest">YouTube</SelectItem>
@@ -270,7 +270,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                                 <span>Avatar Studio</span>
                             </div>
                         </SelectTrigger>
-                        <SelectContent className="glass-panel border-slate-100 shadow-2xl rounded-2xl">
+                        <SelectContent className="glass-panel border-slate-100 shadow-sm rounded-2xl">
                             <SelectItem value="default" className="text-[9px] font-black uppercase tracking-widest">SARA V2 (Global)</SelectItem>
                         </SelectContent>
                     </Select>
@@ -279,7 +279,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                 <div className="flex items-center gap-3">
                     <Badge variant={projectId ? "default" : "secondary"} className={cn(
                         "h-6 text-[8px] font-black tracking-[0.2em] uppercase px-3 rounded-full flex gap-2 items-center",
-                        projectId ? "bg-rose-500 text-white shadow-lg shadow-rose-200/50" : "bg-slate-100/50 text-slate-400 border border-slate-200"
+                        projectId ? "bg-rose-500 text-white shadow-sm" : "bg-slate-100/50 text-slate-400 border border-slate-200"
                     )}>
                         {projectId ? <Zap className="w-2.5 h-2.5 fill-current" /> : null}
                         {projectId ? "MOTOR ACTIVO" : "AGENTE EN ESPERA"}
@@ -329,7 +329,7 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
 
                         {/* 🧠 CEREBRO: Análisis y Visión */}
                         <TabsContent value="assets" className="outline-none mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            <Card className="rounded-[2.5rem] border-slate-100 glass-panel shadow-xl overflow-hidden min-h-[500px]">
+                            <Card className="rounded-[2.5rem] border-slate-100 glass-panel shadow-sm overflow-hidden min-h-[500px]">
                                 <CardHeader className="p-8 border-b border-slate-100/50 flex flex-row items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center border border-rose-100">
@@ -448,7 +448,7 @@ function IngestPanel({ onIngest, isIngesting }: { onIngest: (f: File) => void, i
                             </div>
                         ) : (
                             <>
-                                <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center shadow-md group-hover:scale-105 transition-all duration-300">
+                                <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center shadow-sm group-hover:scale-105 transition-all duration-300">
                                     <Upload className="w-5 h-5 text-white" />
                                 </div>
                                 <div className="text-center space-y-1">
@@ -533,7 +533,7 @@ function AnalyzePanel({ onAnalyze, isAnalyzing, result, hasAsset }: any) {
                                 <Button
                                     onClick={onAnalyze}
                                     disabled={isAnalyzing}
-                                    className="bg-slate-900 hover:bg-black text-white shadow-md h-10 px-8 font-black uppercase text-[9px] tracking-widest rounded-xl transition-all group gap-2"
+                                    className="bg-slate-900 hover:bg-black text-white shadow-sm h-10 px-8 font-black uppercase text-[9px] tracking-widest rounded-xl transition-all group gap-2"
                                 >
                                     {isAnalyzing ? "PROCESANDO MATRIZ..." : "INICIAR ANÁLISIS PROFUNDO"}
                                     {!isAnalyzing && <Sparkles className="w-3.5 h-3.5 text-rose-500 group-hover:animate-pulse" />}
@@ -603,7 +603,7 @@ function ScriptPanel({ isGenerating, onGenerate, script }: any) {
                                     size="sm"
                                     onClick={onGenerate}
                                     disabled={isGenerating}
-                                    className="h-8 text-[9px] font-black bg-slate-900 hover:bg-black text-white rounded-lg px-4 uppercase tracking-[0.1em] transition-all shadow-md"
+                                    className="h-8 text-[9px] font-black bg-slate-900 hover:bg-black text-white rounded-lg px-4 uppercase tracking-[0.1em] transition-all shadow-sm"
                                 >
                                     {isGenerating ? "REDACTANDO..." : "GENERAR GUION"}
                                 </Button>
@@ -634,7 +634,7 @@ function ScriptPanel({ isGenerating, onGenerate, script }: any) {
                     </div>
                 </div>
 
-                <div className="bg-slate-900 p-4 rounded-xl shadow-md text-white overflow-hidden relative group border border-slate-800">
+                <div className="bg-slate-900 p-4 rounded-xl shadow-sm text-white overflow-hidden relative group border border-slate-800">
                     <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform duration-700">
                         <Sparkles className="w-16 h-16" />
                     </div>
@@ -651,7 +651,7 @@ function StructureStep({ label, active = false }: { label: string, active?: bool
     return (
         <div className={cn(
             "p-4 rounded-2xl border transition-all flex items-center gap-3",
-            active ? "bg-white border-rose-200 shadow-md translate-x-1" : "bg-white/40 border-slate-100 opacity-50"
+            active ? "bg-white border-rose-200 shadow-sm translate-x-1" : "bg-white/40 border-slate-100 opacity-50"
         )}>
             <div className={cn("w-1.5 h-1.5 rounded-full", active ? "bg-rose-500 animate-pulse" : "bg-slate-300")} />
             <span className={cn("text-[9px] font-black uppercase tracking-widest", active ? "text-slate-900" : "text-slate-400")}>{label}</span>
@@ -706,7 +706,7 @@ function VariantsPanel({ variants, onGenerate, onAddCaptions, isGenerating, defa
                         </div>
 
                         <Button
-                            className="w-full h-10 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[9px] rounded-lg shadow-md transition-all gap-2 active:scale-95"
+                            className="w-full h-10 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[9px] rounded-lg shadow-sm transition-all gap-2 active:scale-95"
                             disabled={isGenerating}
                             onClick={() => onGenerate({ concept, avatarPrompt: prompt, script })}
                         >
@@ -761,7 +761,7 @@ function VariantsPanel({ variants, onGenerate, onAddCaptions, isGenerating, defa
                                             alt={v.name}
                                         />
                                         <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
-                                            <Button size="icon" variant="secondary" className="rounded-full w-10 h-10 shadow-lg scale-75 group-hover:scale-100 transition-transform duration-300" onClick={() => window.open(v.videoUrl, '_blank')}>
+                                            <Button size="icon" variant="secondary" className="rounded-full w-10 h-10 shadow-sm scale-75 group-hover:scale-100 transition-transform duration-300" onClick={() => window.open(v.videoUrl, '_blank')}>
                                                 <Play className="w-5 h-5 fill-slate-900 text-slate-900" />
                                             </Button>
                                             <span className="text-[8px] font-black text-white uppercase tracking-[0.2em] translate-y-2 group-hover:translate-y-0 transition-transform duration-300">Previsualizar</span>

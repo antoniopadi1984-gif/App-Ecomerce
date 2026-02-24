@@ -130,7 +130,7 @@ export default function ProductFinancePage() {
                         <div className="text-xl font-black text-slate-900">€{stats?.productStats ? (stats.productStats.reduce((acc: number, p: any) => acc + (p.revenue / p.unitsSold || 0), 0) / stats.productStats.length).toFixed(2) : "0.00"}</div>
                     </CardContent>
                 </Card>
-                <Card className="bg-slate-900 border-none shadow-xl rounded-lg overflow-hidden">
+                <Card className="bg-slate-900 border-none shadow-sm rounded-lg overflow-hidden">
                     <CardHeader className="p-3 pb-1"><CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-400">Upsell Take Rate</CardTitle></CardHeader>
                     <CardContent className="p-3 pt-0">
                         <div className="text-xl font-black text-white italic">12.4%</div>
@@ -151,7 +151,7 @@ export default function ProductFinancePage() {
                             <CardHeader className="bg-slate-50/50 pb-4 border-b border-slate-50">
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-lg bg-slate-900 flex items-center justify-center text-white font-black text-lg italic shadow-xl">
+                                        <div className="h-10 w-10 rounded-lg bg-slate-900 flex items-center justify-center text-white font-black text-lg italic shadow-sm">
                                             {supplier.name.charAt(0)}
                                         </div>
                                         <div>

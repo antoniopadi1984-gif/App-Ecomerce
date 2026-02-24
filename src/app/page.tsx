@@ -53,7 +53,7 @@ export default function DashboardPage() {
             <p className="text-slate-500 max-w-sm mx-auto font-medium text-sm">Debes vincular tu tienda oficial de Shopify para ver las operaciones globales.</p>
           </div>
           <Link href="/connections">
-            <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-lg shadow-rose-500/20">
+            <Button className="bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 rounded-xl shadow-sm">
               <Link2 className="w-4 h-4 mr-2" />
               Ir a Conexiones
             </Button>

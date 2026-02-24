@@ -97,7 +97,7 @@ export default function StaticAdsPage() {
                     <button
                         onClick={() => setView('generator')}
                         className={`px-4 py-2 rounded-lg ${view === 'generator'
-                            ? 'bg-indigo-600 text-white'
+                            ? 'bg-rose-600 text-white'
                             : 'bg-white border text-gray-700'
                             }`}
                     >
@@ -106,7 +106,7 @@ export default function StaticAdsPage() {
                     <button
                         onClick={() => setView('library')}
                         className={`px-4 py-2 rounded-lg ${view === 'library'
-                            ? 'bg-indigo-600 text-white'
+                            ? 'bg-rose-600 text-white'
                             : 'bg-white border text-gray-700'
                             }`}
                     >
@@ -121,7 +121,7 @@ export default function StaticAdsPage() {
                     {/* Template-Based */}
                     <div className="bg-white rounded-xl shadow-sm border p-6">
                         <div className="flex items-center gap-3 mb-6">
-                            <Palette className="text-indigo-600" size={24} />
+                            <Palette className="text-rose-600" size={24} />
                             <h2 className="text-xl font-semibold">Template-Based</h2>
                         </div>
 
@@ -154,11 +154,11 @@ export default function StaticAdsPage() {
                                 )}
                             </div>
 
-                            <div className="bg-indigo-50 p-4 rounded-lg">
-                                <p className="text-sm text-indigo-900 font-medium mb-2">
+                            <div className="bg-rose-50 p-4 rounded-lg">
+                                <p className="text-sm text-rose-900 font-medium mb-2">
                                     Se generarán 5 ads con:
                                 </p>
-                                <ul className="text-sm text-indigo-700 space-y-1">
+                                <ul className="text-sm text-rose-700 space-y-1">
                                     <li>✓ Copy auto-poblado del research</li>
                                     <li>✓ Templates COLD/WARM/HOT</li>
                                     <li>✓ Variantes de color</li>
@@ -168,7 +168,7 @@ export default function StaticAdsPage() {
                             <button
                                 onClick={handleGenerateFromResearch}
                                 disabled={loading || !productId}
-                                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50"
                             >
                                 {loading ? 'Generando...' : (
                                     <>
@@ -272,13 +272,13 @@ export default function StaticAdsPage() {
                         {creatives.map((creative) => (
                             <div key={creative.id} className="bg-white rounded-xl shadow-sm border overflow-hidden">
                                 {/* Preview */}
-                                <div className="aspect-[9/16] bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                                <div className="aspect-[9/16] bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center">
                                     {creative.thumbnailUrl ? (
                                         <img src={creative.thumbnailUrl} alt={creative.title} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="text-center p-6">
-                                            <ImageIcon className="mx-auto mb-2 text-indigo-400" size={48} />
-                                            <p className="text-sm text-indigo-600">{creative.dimensions}</p>
+                                            <ImageIcon className="mx-auto mb-2 text-rose-400" size={48} />
+                                            <p className="text-sm text-rose-600">{creative.dimensions}</p>
                                         </div>
                                     )}
                                 </div>

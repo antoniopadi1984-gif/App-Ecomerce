@@ -83,8 +83,8 @@ export function CreativeIterationLab({
     };
 
     return (
-        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
+        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-rose-500 to-purple-500" />
             <div className="p-3">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -103,7 +103,7 @@ export function CreativeIterationLab({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     {/* Avatar Generator */}
-                    <div className="group bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-300">
+                    <div className="group bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-300">
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:bg-slate-100 transition-colors">
                                 <Users className="w-3.5 h-3.5" />
@@ -133,7 +133,7 @@ export function CreativeIterationLab({
                     </div>
 
                     {/* Angle Explorer */}
-                    <div className="group bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-300">
+                    <div className="group bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-300">
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:bg-slate-100 transition-colors">
                                 <Target className="w-3.5 h-3.5" />
@@ -162,7 +162,7 @@ export function CreativeIterationLab({
                     </div>
 
                     {/* Copy Architect */}
-                    <div className="group bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-300">
+                    <div className="group bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-300">
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:bg-slate-100 transition-colors">
                                 <FileText className="w-3.5 h-3.5" />
@@ -191,7 +191,7 @@ export function CreativeIterationLab({
                     </div>
 
                     {/* God-Tier Copy (V4) */}
-                    <div className="group bg-slate-950 p-3 rounded-xl border border-slate-800 hover:border-slate-700 hover:shadow-2xl transition-all duration-500 relative overflow-hidden flex flex-col justify-between">
+                    <div className="group bg-slate-950 p-3 rounded-xl border border-slate-800 hover:border-slate-700 hover:shadow-sm transition-all duration-500 relative overflow-hidden flex flex-col justify-between">
                         <div className="absolute -top-10 -right-10 w-24 h-24 bg-[var(--primary)]/10 rounded-full blur-2xl group-hover:bg-[var(--primary)]/15 transition-all" />
 
                         <div className="relative z-10">
@@ -223,7 +223,7 @@ export function CreativeIterationLab({
                                 <XCircle className="w-5 h-5 text-slate-400" />
                             </Button>
                         </div>
-                        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 max-h-[400px] overflow-y-auto custom-scrollbar font-mono text-[11px] leading-relaxed text-blue-300 shadow-inner">
+                        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 max-h-[400px] overflow-y-auto custom-scrollbar font-mono text-[11px] leading-relaxed text-blue-300 shadow-sm">
                             <pre className="whitespace-pre-wrap">{JSON.stringify(iterationResults.data, null, 2)}</pre>
                         </div>
                     </div>

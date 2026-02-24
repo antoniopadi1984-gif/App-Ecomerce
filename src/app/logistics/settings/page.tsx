@@ -101,7 +101,7 @@ export default function LogisticsSettingsPage() {
 
             <div className="grid grid-cols-1 gap-6">
                 {rules.map((rule) => (
-                    <Card key={rule.id} className="overflow-hidden border-border bg-card shadow-lg rounded-[2.5rem]">
+                    <Card key={rule.id} className="overflow-hidden border-border bg-card shadow-sm rounded-[2.5rem]">
                         <div className="p-6 flex flex-col sm:flex-row gap-6">
                             <div className="w-full sm:w-64 space-y-4">
                                 <div className="h-14 w-full bg-muted flex items-center justify-center rounded-2xl">

@@ -344,7 +344,7 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                             <Radio className="w-3 h-3 text-emerald-500" /> ESTUDIO EN VIVO
                         </TabsTrigger>
                         <TabsTrigger value="science" className="rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
-                            <Beaker className="w-3 h-3 text-indigo-500" /> CIENCIA
+                            <Beaker className="w-3 h-3 text-rose-500" /> CIENCIA
                         </TabsTrigger>
                         <TabsTrigger value="assets" className="rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
                             <History className="w-3 h-3" /> HISTORIAL
@@ -392,7 +392,7 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                     <TabsContent value="studio" className="outline-none mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                             <div className="lg:col-span-4 space-y-3">
-                                <Card className="rounded-3xl border-slate-200 overflow-hidden shadow-xl glass-panel border-dashed">
+                                <Card className="rounded-3xl border-slate-200 overflow-hidden shadow-sm glass-panel border-dashed">
                                     <CardHeader className="p-5 border-b border-slate-100/50 bg-slate-50/30">
                                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-between">
                                             <div className="flex items-center gap-2">
@@ -407,10 +407,10 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                                                 <User className="w-3 h-3" /> SUJETO DE PRUEBA
                                             </Label>
                                             <Select value={selectedAvatar?.id || ""} onValueChange={(id) => setSelectedAvatar(avatars.find(a => a.id === id))}>
-                                                <SelectTrigger className="rounded-2xl h-11 bg-slate-50 border-slate-100 text-[11px] font-black uppercase tracking-widest shadow-inner px-4">
+                                                <SelectTrigger className="rounded-2xl h-11 bg-slate-50 border-slate-100 text-[11px] font-black uppercase tracking-widest shadow-sm px-4">
                                                     <SelectValue placeholder="SELECCIONAR..." />
                                                 </SelectTrigger>
-                                                <SelectContent className="rounded-2xl border-slate-200 shadow-2xl">
+                                                <SelectContent className="rounded-2xl border-slate-200 shadow-sm">
                                                     {avatars.map(a => <SelectItem key={a.id} value={a.id} className="text-[10px] font-bold uppercase tracking-widest py-3">{a.name} ({a.region})</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
@@ -432,7 +432,7 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                                             <Textarea
                                                 value={script}
                                                 onChange={(e) => setScript(e.target.value)}
-                                                className="min-h-[160px] rounded-2xl bg-slate-50/50 border-slate-100 p-4 text-[11px] font-medium leading-relaxed focus:bg-white transition-all shadow-inner"
+                                                className="min-h-[160px] rounded-2xl bg-slate-50/50 border-slate-100 p-4 text-[11px] font-medium leading-relaxed focus:bg-white transition-all shadow-sm"
                                                 placeholder="Escribe el guion aquí..."
                                             />
                                         </div>
@@ -440,7 +440,7 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                                         <Button
                                             onClick={handleGenerateVideo}
                                             disabled={loading || !script || !selectedAvatar}
-                                            className="w-full bg-slate-900 hover:bg-black h-12 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] text-white shadow-xl shadow-slate-900/10 active:scale-[0.98] transition-all gap-3"
+                                            className="w-full bg-slate-900 hover:bg-black h-12 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] text-white shadow-sm active:scale-[0.98] transition-all gap-3"
                                         >
                                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 text-emerald-400 fill-emerald-400" />}
                                             LANZAR PRODUCCIÓN
@@ -450,7 +450,7 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                             </div>
 
                             <div className="lg:col-span-8">
-                                <div className="bg-slate-900 aspect-video rounded-[2.5rem] border border-slate-800 shadow-2xl flex items-center justify-center overflow-hidden h-full min-h-[450px] relative">
+                                <div className="bg-slate-900 aspect-video rounded-[2.5rem] border border-slate-800 shadow-sm flex items-center justify-center overflow-hidden h-full min-h-[450px] relative">
                                     {generatedVideoUrl ? (
                                         <video src={generatedVideoUrl} controls className="w-full h-full object-contain" autoPlay />
                                     ) : (
@@ -475,10 +475,10 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                                 { id: 'COLLAGEN', label: 'Producción de Colágeno', desc: 'Simulación médica de regeneración dérmica', icon: Sparkles, color: 'rose' },
                                 { id: 'HAIR_GROWTH', label: 'Estimulación Capilar', desc: 'Timelapse de crecimiento folicular 8k', icon: Zap, color: 'amber' },
                                 { id: 'WRINKLE_REDUCTION', label: 'Efecto Rejuvenecimiento', desc: 'Dermatología láser y alisado de finas líneas', icon: ShieldCheck, color: 'emerald' },
-                                { id: 'BLOODSTREAM', label: 'Flujo Sanguíneo', desc: 'Viaje macroscópico por el sistema arterial', icon: Radio, color: 'indigo' },
+                                { id: 'BLOODSTREAM', label: 'Flujo Sanguíneo', desc: 'Viaje macroscópico por el sistema arterial', icon: Radio, color: 'rose' },
                                 { id: 'PRODUCT_USAGE', label: 'Interacción de Producto', desc: 'Efecto de aura y absorción celular', icon: Wand2, color: 'purple' }
                             ].map((sim) => (
-                                <Card key={sim.id} className="rounded-3xl border-slate-100 hover:border-rose-300 transition-all cursor-pointer group shadow-sm bg-white hover:shadow-xl hover:-translate-y-1">
+                                <Card key={sim.id} className="rounded-3xl border-slate-100 hover:border-rose-300 transition-all cursor-pointer group shadow-sm bg-white hover:shadow-sm hover:-translate-y-1">
                                     <CardContent className="p-6 space-y-4">
                                         <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center transition-all", `bg-${sim.color}-500/10 group-hover:bg-${sim.color}-500 group-hover:scale-110`)}>
                                             <sim.icon className={cn("w-6 h-6", `text-${sim.color}-500 group-hover:text-white`)} />
@@ -502,7 +502,7 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                     </TabsContent>
 
                     <TabsContent value="assets" className="outline-none mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <Card className="rounded-[2.5rem] border-slate-100 bg-white/80 shadow-xl overflow-hidden min-h-[500px]">
+                        <Card className="rounded-[2.5rem] border-slate-100 bg-white/80 shadow-sm overflow-hidden min-h-[500px]">
                             <CardHeader className="p-8 border-b border-slate-100/50 flex flex-row items-center justify-between">
                                 <div>
                                     <CardTitle className="text-sm font-black uppercase tracking-tight italic">Biblioteca de Activos Generados</CardTitle>
@@ -523,7 +523,7 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                                 ) : (
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                                         {avatarAssets.creatives.map((c: any) => (
-                                            <div key={c.id} className="group relative aspect-[9/16] bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-lg transition-all hover:scale-[1.02] hover:shadow-rose-500/10 hover:border-rose-500/30">
+                                            <div key={c.id} className="group relative aspect-[9/16] bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-sm transition-all hover:scale-[1.02] hover:shadow-sm hover:border-rose-500/30">
                                                 {c.videoUrl && <video src={c.videoUrl} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" />}
                                                 <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent">
                                                     <Badge className="bg-rose-500 text-white text-[6px] font-black mb-1">VIDEO UGC</Badge>
@@ -535,12 +535,12 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
                                             </div>
                                         ))}
                                         {avatarAssets.assets.map((a: any) => (
-                                            <div key={a.id} className="group relative aspect-square bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden shadow-sm transition-all hover:border-indigo-300">
+                                            <div key={a.id} className="group relative aspect-square bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden shadow-sm transition-all hover:border-rose-300">
                                                 <div className="w-full h-full flex items-center justify-center bg-slate-50">
-                                                    <Beaker className="w-8 h-8 text-indigo-500/20" />
+                                                    <Beaker className="w-8 h-8 text-rose-500/20" />
                                                 </div>
                                                 <div className="absolute inset-x-0 bottom-0 p-3 bg-white/90 border-t border-slate-100">
-                                                    <Badge variant="outline" className="border-indigo-100 text-indigo-600 text-[6px] font-black mb-1 bg-indigo-50/30 uppercase">{a.mime || 'SIMULACIÓN'}</Badge>
+                                                    <Badge variant="outline" className="border-rose-100 text-rose-600 text-[6px] font-black mb-1 bg-rose-50/30 uppercase">{a.mime || 'SIMULACIÓN'}</Badge>
                                                     <p className="text-[8px] font-black text-slate-900 truncate uppercase tracking-tighter">ID: {a.pathLocal.substring(0, 8)}</p>
                                                     <p className="text-[6px] text-slate-400 font-bold uppercase mt-0.5">{a.avatarProfile?.name}</p>
                                                 </div>
@@ -559,7 +559,7 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
 
             {isAdding && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40">
-                    <Card className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl shadow-xl border border-slate-200 bg-white p-5 space-y-5">
+                    <Card className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl shadow-sm border border-slate-200 bg-white p-5 space-y-5">
                         <header className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-3">
                                 <Fingerprint className="h-5 w-5 text-rose-500" />
@@ -623,7 +623,7 @@ function AvatarStudioContent({ isEmbedded }: { isEmbedded: boolean }) {
 
                         <footer className="flex gap-3 pt-4">
                             <Button onClick={() => { setIsAdding(false); setEditingAvatarId(null); }} variant="outline" className="flex-1 h-10 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-400">Cancelar</Button>
-                            <Button onClick={handleCreateProfile} disabled={loading} className="flex-[2] bg-slate-900 text-white h-10 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg">
+                            <Button onClick={handleCreateProfile} disabled={loading} className="flex-[2] bg-slate-900 text-white h-10 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-sm">
                                 {loading ? '...' : (editingAvatarId ? 'ACTUALIZAR' : 'GUARDAR')}
                             </Button>
                         </footer>

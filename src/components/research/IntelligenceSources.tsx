@@ -93,7 +93,7 @@ export function IntelligenceSources({
 
             {/* Competitors Feed */}
             <div className="flex-1 min-w-[240px] flex items-center gap-3 bg-white p-1.5 rounded-lg border border-slate-100 shadow-sm group">
-                <div className="w-7 h-7 rounded-md bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-md bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
                     <Globe className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex-1 flex gap-1.5 items-center">
@@ -105,9 +105,9 @@ export function IntelligenceSources({
                     />
                     <div className="flex items-center gap-1.5">
                         {competitorLinks?.length > 0 && (
-                            <span className="text-[8px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">{competitorLinks.length}</span>
+                            <span className="text-[8px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded-md">{competitorLinks.length}</span>
                         )}
-                        <Button size="sm" onClick={onAddCompetitor} className="bg-indigo-600 hover:bg-indigo-700 h-6 w-6 p-0 rounded-md">
+                        <Button size="sm" onClick={onAddCompetitor} className="bg-rose-600 hover:bg-rose-700 h-6 w-6 p-0 rounded-md">
                             <Plus className="w-3 h-3 text-white" />
                         </Button>
                     </div>

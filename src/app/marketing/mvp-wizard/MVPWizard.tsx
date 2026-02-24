@@ -57,7 +57,7 @@ export default function MVPWizard({ stores }: { stores: any[] }) {
         <div className="space-y-3 animate-in fade-in duration-500">
             <header className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-rose-600 rounded-lg shadow-sm shadow-rose-100">
+                    <div className="p-1.5 bg-rose-600 rounded-lg shadow-sm">
                         <Rocket className="w-4 h-4 text-white" />
                     </div>
                     <div>
@@ -85,7 +85,7 @@ export default function MVPWizard({ stores }: { stores: any[] }) {
                                         <SelectTrigger className="h-8 rounded-lg border-slate-200 font-bold text-xs bg-slate-50/30">
                                             <SelectValue placeholder="Selecciona tienda..." />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-lg border-slate-100 shadow-xl">
+                                        <SelectContent className="rounded-lg border-slate-100 shadow-sm">
                                             {stores.map(s => (
                                                 <SelectItem key={s.id} value={s.id} className="text-xs font-bold py-1.5">{s.name}</SelectItem>
                                             ))}
@@ -143,7 +143,7 @@ export default function MVPWizard({ stores }: { stores: any[] }) {
                                                     <SelectValue placeholder="Selecciona país..." />
                                                 </div>
                                             </SelectTrigger>
-                                            <SelectContent className="rounded-lg border-slate-100 shadow-xl">
+                                            <SelectContent className="rounded-lg border-slate-100 shadow-sm">
                                                 <SelectItem value="ES" className="text-xs font-bold py-1.5 flex items-center gap-2">🇪🇸 España (Peninsular)</SelectItem>
                                                 <SelectItem value="MX" className="text-xs font-bold py-1.5">🇲🇽 México</SelectItem>
                                                 <SelectItem value="CO" className="text-xs font-bold py-1.5">🇨🇴 Colombia</SelectItem>
@@ -170,10 +170,10 @@ export default function MVPWizard({ stores }: { stores: any[] }) {
 
                 {/* Financials & Action */}
                 <div className="space-y-3">
-                    <Card className="rounded-xl border-slate-200 shadow-sm bg-indigo-50/20">
-                        <CardHeader className="p-3 border-b border-indigo-100/50 py-2.5">
-                            <CardTitle className="text-[10px] font-black uppercase text-indigo-900 flex items-center gap-2">
-                                <DollarSign size={12} className="text-indigo-600" /> 2. Estructura de Costes
+                    <Card className="rounded-xl border-slate-200 shadow-sm bg-rose-50/20">
+                        <CardHeader className="p-3 border-b border-rose-100/50 py-2.5">
+                            <CardTitle className="text-[10px] font-black uppercase text-rose-900 flex items-center gap-2">
+                                <DollarSign size={12} className="text-rose-600" /> 2. Estructura de Costes
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-3 space-y-2">
@@ -228,10 +228,10 @@ export default function MVPWizard({ stores }: { stores: any[] }) {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between p-2 bg-white/50 rounded-lg border border-indigo-100">
+                            <div className="flex items-center justify-between p-2 bg-white/50 rounded-lg border border-rose-100">
                                 <div className="flex items-center gap-1.5">
-                                    <Truck className="w-3 h-3 text-indigo-500" />
-                                    <span className="text-[9px] font-black uppercase text-indigo-900">¿Contraentrega?</span>
+                                    <Truck className="w-3 h-3 text-rose-500" />
+                                    <span className="text-[9px] font-black uppercase text-rose-900">¿Contraentrega?</span>
                                 </div>
                                 <Switch
                                     className="scale-[0.6] origin-right"
@@ -245,7 +245,7 @@ export default function MVPWizard({ stores }: { stores: any[] }) {
                     <Button
                         onClick={handleLaunch}
                         disabled={loading}
-                        className="w-full h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md shadow-rose-200 transition-all active:scale-95 flex flex-col items-center justify-center gap-0 leading-none"
+                        className="w-full h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-0 leading-none"
                     >
                         {loading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

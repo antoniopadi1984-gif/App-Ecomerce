@@ -155,7 +155,7 @@ export function AddProductDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="h-9 px-4 bg-slate-900 hover:bg-black text-white rounded-xl shadow-lg border border-slate-700/50 flex items-center gap-2 transition-all">
+                <Button className="h-9 px-4 bg-slate-900 hover:bg-black text-white rounded-xl shadow-sm border border-slate-700/50 flex items-center gap-2 transition-all">
                     <Plus className="w-4 h-4 text-[var(--primary)]" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Añadir Producto</span>
                 </Button>
@@ -170,7 +170,7 @@ export function AddProductDialog() {
                             Inicialización en Neural DB
                         </p>
                     </div>
-                    <div className="bg-indigo-50 border border-indigo-100 text-indigo-600 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-inner">
+                    <div className="bg-rose-50 border border-rose-100 text-rose-600 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-sm">
                         <Brain className="w-3.5 h-3.5" />
                         <span className="text-[9px] font-black uppercase tracking-widest">IA Sync Ready</span>
                     </div>
@@ -187,7 +187,7 @@ export function AddProductDialog() {
 
                             <div className="space-y-1.5 hover:bg-slate-50 p-2 rounded-xl border border-dashed border-transparent hover:border-slate-200 transition-colors cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
                                 <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-1 cursor-pointer">
-                                    <UploadCloud className="w-3 h-3 group-hover:text-indigo-500 transition-colors" /> Base Image / Main Thumbnail
+                                    <UploadCloud className="w-3 h-3 group-hover:text-rose-500 transition-colors" /> Base Image / Main Thumbnail
                                 </label>
                                 <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" />
                                 {formData.imageUrl ? (
@@ -198,7 +198,7 @@ export function AddProductDialog() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="h-20 w-full rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50/50 group-hover:bg-slate-100/50 group-hover:border-indigo-300 transition-all">
+                                    <div className="h-20 w-full rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50/50 group-hover:bg-slate-100/50 group-hover:border-rose-300 transition-all">
                                         <span className="text-[10px] text-slate-400 font-bold">Haz clic para subir imagen principal</span>
                                     </div>
                                 )}
@@ -307,7 +307,7 @@ export function AddProductDialog() {
                                 </div>
                                 <div className="bg-white border border-slate-100 p-2 rounded-xl text-center">
                                     <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Max CPC</p>
-                                    <p className={cn("text-xs font-black mt-0.5", metrics.maxCPC > 0 ? "text-indigo-600" : "text-slate-300")}>
+                                    <p className={cn("text-xs font-black mt-0.5", metrics.maxCPC > 0 ? "text-rose-600" : "text-slate-300")}>
                                         {metrics.maxCPC > 0 ? `€${metrics.maxCPC.toFixed(2)}` : '-'}
                                     </p>
                                 </div>
@@ -319,7 +319,7 @@ export function AddProductDialog() {
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1 font-mono">
                                     <LinkIcon className="w-3.5 h-3.5" /> Enlaces Amazon
                                 </h3>
-                                <button type="button" onClick={() => setAmazonLinks([...amazonLinks, ""])} className="text-[10px] font-bold text-indigo-500 hover:text-indigo-600">Añadir</button>
+                                <button type="button" onClick={() => setAmazonLinks([...amazonLinks, ""])} className="text-[10px] font-bold text-rose-500 hover:text-rose-600">Añadir</button>
                             </div>
                             <div className="space-y-2 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
                                 {amazonLinks.map((link, i) => (
@@ -338,7 +338,7 @@ export function AddProductDialog() {
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1 font-mono">
                                     <LinkIcon className="w-3.5 h-3.5" /> Bibliotecas Competencia
                                 </h3>
-                                <button type="button" onClick={() => setCompetitorLinks([...competitorLinks, ""])} className="text-[10px] font-bold text-indigo-500 hover:text-indigo-600">Añadir</button>
+                                <button type="button" onClick={() => setCompetitorLinks([...competitorLinks, ""])} className="text-[10px] font-bold text-rose-500 hover:text-rose-600">Añadir</button>
                             </div>
                             <div className="space-y-2 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
                                 {competitorLinks.map((link, i) => (
@@ -357,7 +357,7 @@ export function AddProductDialog() {
 
                     <div className="col-span-full pt-4 mt-2 border-t border-slate-200 flex justify-end gap-3">
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl">Cancelar</Button>
-                        <Button type="submit" disabled={loading} className="h-10 px-8 bg-[var(--primary)] hover:bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-200 font-black uppercase tracking-widest text-[10px] transition-all">
+                        <Button type="submit" disabled={loading} className="h-10 px-8 bg-[var(--primary)] hover:bg-rose-500 text-white rounded-xl shadow-sm font-black uppercase tracking-widest text-[10px] transition-all">
                             {loading ? "Iniciando..." : "Crear & Iniciar Research"}
                         </Button>
                     </div>

@@ -81,7 +81,7 @@ export default function ExpensesPage() {
                         {syncing ? "Sincronizando..." : "Sincronización Total"}
                     </Button>
 
-                    <Card className="bg-slate-900 border-none px-3 py-1.5 flex items-center gap-2.5 rounded-lg shadow-xl">
+                    <Card className="bg-slate-900 border-none px-3 py-1.5 flex items-center gap-2.5 rounded-lg shadow-sm">
                         <Calculator className="h-3.5 w-3.5 text-slate-400" />
                         <div className="flex flex-col">
                             <span className="text-[7px] text-slate-500 uppercase font-black leading-none tracking-widest">Total Fijos / Mes</span>
@@ -114,7 +114,7 @@ export default function ExpensesPage() {
                                     <SelectTrigger className="h-8 text-[11px] font-bold bg-slate-50 border-slate-100 rounded-lg px-3">
                                         <SelectValue placeholder="Tipo..." />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-white border-slate-100 rounded-lg shadow-xl">
+                                    <SelectContent className="bg-white border-slate-100 rounded-lg shadow-sm">
                                         {expenseCategories.map(cat => (
                                             <SelectItem key={cat.id} value={cat.id} className="text-[11px] font-bold">{cat.name}</SelectItem>
                                         ))}
@@ -178,10 +178,10 @@ export default function ExpensesPage() {
             </div>
 
             {/* Real-time Impact Card */}
-            <Card className="bg-slate-900 border-none overflow-hidden rounded-lg shadow-xl shadow-slate-200/50">
+            <Card className="bg-slate-900 border-none overflow-hidden rounded-lg shadow-sm">
                 <div className="p-3 px-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                        <div className="h-8 w-8 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-400">
                             <Calculator className="h-4 w-4" />
                         </div>
                         <div>

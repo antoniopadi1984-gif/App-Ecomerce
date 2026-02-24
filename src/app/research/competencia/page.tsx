@@ -34,7 +34,7 @@ export default function CompetenciaPage() {
                 subtitle="Benchmark & Market Analysis"
                 icon={Target}
                 badges={
-                    <Badge variant="outline" className="bg-indigo-50 text-indigo-600 border-none font-black text-[7px] uppercase tracking-widest px-2 h-5 rounded-sm">V4.0</Badge>
+                    <Badge variant="outline" className="bg-rose-50 text-rose-600 border-none font-black text-[7px] uppercase tracking-widest px-2 h-5 rounded-sm">V4.0</Badge>
                 }
             />
 

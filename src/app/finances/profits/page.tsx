@@ -42,7 +42,7 @@ export default function ProfitsDashboard() {
         <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-4">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg shadow-slate-200">
+                    <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center shadow-sm">
                         <DollarSign className="h-5 w-5 text-white" />
                     </div>
                     <div>

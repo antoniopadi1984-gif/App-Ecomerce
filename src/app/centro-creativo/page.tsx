@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
    TAB CONFIG
    ───────────────────────────────────── */
 const CREATIVE_TABS = [
-    { id: "landing", icon: Brain, label: "Landing Builder", color: "from-indigo-600 to-blue-600" },
+    { id: "landing", icon: Brain, label: "Landing Builder", color: "from-rose-600 to-blue-600" },
     { id: "static", icon: Image, label: "Ads Estáticos", color: "from-amber-600 to-orange-600" },
     { id: "video", icon: Zap, label: "Video Lab", color: "from-violet-600 to-purple-600" },
     { id: "resources", icon: BookOpen, label: "Recursos", color: "from-cyan-600 to-sky-600" },
@@ -64,8 +64,8 @@ export default function CentroCreativoPage() {
         return (
             <PageShell>
                 <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center animate-in fade-in duration-700">
-                    <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100">
-                        <Sparkles className="w-8 h-8 text-indigo-500" />
+                    <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center shadow-sm">
+                        <Sparkles className="w-8 h-8 text-rose-500" />
                     </div>
                     <div className="space-y-2 text-center">
                         <h2 className="text-lg font-black text-slate-900 tracking-tight italic uppercase">Factoría Creativa</h2>
@@ -128,7 +128,7 @@ export default function CentroCreativoPage() {
                                 className={cn(
                                     "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[8px] font-black uppercase tracking-widest transition-all duration-300",
                                     isActive
-                                        ? `bg-gradient-to-r ${tab.color} text-white shadow-lg`
+                                        ? `bg-gradient-to-r ${tab.color} text-white shadow-sm`
                                         : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
                                 )}
                             >

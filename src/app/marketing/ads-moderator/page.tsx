@@ -166,9 +166,9 @@ export default function ModerationPage() {
 
                         <Button
                             onClick={() => setAgentModalOpen(true)}
-                            className="w-full h-9 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 text-[10px]"
+                            className="w-full h-9 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-widest shadow-sm text-[10px]"
                         >
-                            <Settings className="h-3.5 w-3.5 mr-2 text-indigo-200" /> Configurar Agente IA
+                            <Settings className="h-3.5 w-3.5 mr-2 text-rose-200" /> Configurar Agente IA
                         </Button>
                     </Card>
 
@@ -248,7 +248,7 @@ export default function ModerationPage() {
                                                 <Button
                                                     variant="ghost" size="sm"
                                                     onClick={() => handleAction(comment.id, "reply")}
-                                                    className="h-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 text-[9px] font-black uppercase tracking-widest px-2"
+                                                    className="h-7 text-rose-600 hover:text-rose-700 hover:bg-rose-50 text-[9px] font-black uppercase tracking-widest px-2"
                                                 >
                                                     <Reply className="h-3 w-3 mr-1.5" /> Responder
                                                 </Button>
@@ -389,7 +389,7 @@ export default function ModerationPage() {
                                 <Sliders className="h-4 w-4 mr-3" /> Reglas Avanzadas
                             </Button>
                             <Button
-                                className="flex-[2] h-14 rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-black font-black uppercase tracking-widest shadow-xl shadow-yellow-900/20 text-[10px]"
+                                className="flex-[2] h-14 rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-black font-black uppercase tracking-widest shadow-sm text-[10px]"
                                 onClick={() => {
                                     setIsSaving(true);
                                     setTimeout(() => {

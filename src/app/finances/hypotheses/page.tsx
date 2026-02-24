@@ -231,7 +231,7 @@ export default function HypothesesPage() {
                     <CardContent className="p-4 pt-0 space-y-4">
 
                         {bundle.enabled && (
-                            <div className="p-3 bg-slate-900 rounded-lg border border-slate-800 space-y-2 shadow-xl">
+                            <div className="p-3 bg-slate-900 rounded-lg border border-slate-800 space-y-2 shadow-sm">
                                 <Label className="text-[10px] text-white font-black uppercase tracking-widest">Configuración de Oferta (Bundle)</Label>
                                 <div className="flex gap-4">
                                     <div className="space-y-1">
@@ -318,7 +318,7 @@ export default function HypothesesPage() {
                 <div className="md:col-span-7 space-y-4">
                     {/* Primary Results */}
                     <div className="grid grid-cols-2 gap-4">
-                        <Card className="bg-slate-900 border-none shadow-xl rounded-lg overflow-hidden">
+                        <Card className="bg-slate-900 border-none shadow-sm rounded-lg overflow-hidden">
                             <CardHeader className="p-3 pb-0">
                                 <CardDescription className="text-[10px] font-black uppercase tracking-widest text-slate-500">CPA Máximo ({results.targetROAS} ROAS)</CardDescription>
                             </CardHeader>
@@ -354,7 +354,7 @@ export default function HypothesesPage() {
                                     <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Costes Tot.</div>
                                     <div className="font-black text-slate-900 italic tracking-tighter">€{results.cost}</div>
                                 </div>
-                                <div className="p-2 bg-slate-900 rounded shadow-lg">
+                                <div className="p-2 bg-slate-900 rounded shadow-sm">
                                     <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Margen</div>
                                     <div className="font-black text-white italic tracking-tighter">€{results.margin}</div>
                                 </div>

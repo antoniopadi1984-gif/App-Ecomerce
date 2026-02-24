@@ -41,7 +41,7 @@ export function Sidebar({
       onMouseLeave={() => handleHover(false)}
       className={cn(
         "fixed left-0 top-0 z-[100] glass-panel border-r border-white/40 h-screen flex flex-col transition-all duration-300 ease-in-out shadow-none",
-        "max-md:shadow-2xl max-md:w-[280px]",
+        "max-md:shadow-sm max-md:w-[280px]",
         isOpen ? "w-[var(--sidebar-width)] translate-x-0" : "w-[var(--sidebar-collapsed)] max-md:-translate-x-full"
       )}
     >
@@ -51,7 +51,7 @@ export function Sidebar({
         isOpen ? "px-3 justify-between" : "justify-center"
       )}>
         <div className={cn("flex items-center overflow-hidden", isOpen ? "gap-2.5" : "gap-0")}>
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-rose-200/50">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-sm">
             <Rocket className="w-3.5 h-3.5 text-white" />
           </div>
           {isOpen && (

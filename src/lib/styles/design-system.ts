@@ -17,7 +17,7 @@ export const ds = {
         shadow: SHADOWS.sm,
         border: 'border border-slate-100/60',
         radius: 'rounded-lg',
-        hover: 'hover:shadow-indigo-500/5 transition-all duration-300',
+        hover: 'hover:shadow-sm transition-all duration-300',
     },
 
     typography: {
@@ -32,13 +32,13 @@ export const ds = {
 
     glass: {
         base: 'bg-white/60 border border-white/40 shadow-sm',
-        premium: 'bg-white/40 border border-white/50 shadow-xl shadow-indigo-500/5',
-        dark: 'bg-slate-900/80 border border-slate-800/50 shadow-2xl',
-        input: 'bg-white/20 border border-white/30 focus:bg-white/40 focus:border-indigo-500/50 transition-all',
+        premium: 'bg-white/40 border border-white/50 shadow-sm',
+        dark: 'bg-slate-900/80 border border-slate-800/50 shadow-sm',
+        input: 'bg-white/20 border border-white/30 focus:bg-white/40 focus:border-rose-500/50 transition-all',
     },
 
     effects: {
         glow: 'after:absolute after:inset-0 after:rounded-[inherit] after:shadow-[0_0_15px_rgba(79,70,229,0.1)] after:opacity-0 hover:after:opacity-100 after:transition-opacity after:pointer-events-none',
-        aura: 'before:absolute before:-top-4 before:-right-4 before:w-24 before:h-24 before:bg-indigo-500/5 before:rounded-full before:blur-2xl before:pointer-events-none',
+        aura: 'before:absolute before:-top-4 before:-right-4 before:w-24 before:h-24 before:bg-rose-500/5 before:rounded-full before:blur-2xl before:pointer-events-none',
     }
 };

@@ -130,3 +130,4 @@ prisma/*.stale_root
 # macOS
 .DS_Store
 .venv_backup/
+src/engine/static/avatars/_generated/

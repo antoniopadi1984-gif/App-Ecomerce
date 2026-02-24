@@ -436,7 +436,7 @@ export function ClowdbotConfig() {
 
             {/* KNOWLEDGE BASE SECTION */}
             <Card className="xl:col-span-7 rounded-[2rem] border-none shadow-xl bg-card overflow-hidden flex flex-col">
-                <CardHeader className="p-8 border-b border-slate-50 bg-slate-50/30">
+                <CardHeader className="p-6 border-b border-slate-50 bg-slate-50/30">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center border border-slate-200 shadow-sm text-primary">
@@ -453,7 +453,7 @@ export function ClowdbotConfig() {
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="p-8 flex-1 space-y-6 flex flex-col">
+                <CardContent className="p-6 flex-1 space-y-6 flex flex-col">
                     <div className="space-y-3">
                         <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 flex items-center gap-2">
                             <Database className="h-3 w-3 text-primary" /> Sabiduría Global (Base)

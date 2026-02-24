@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
     Video, Upload, Sparkles, Clapperboard, Play, Pause,
     MonitorPlay, Mic2, UserSquare2, Type, MoveRight,
     Wand2, Download, Share2, Layers, Film, Music, CheckCircle2, RefreshCw, Globe,
     ArrowUpRight, Zap, ExternalLink, Info, Truck, ChevronRight, Eye, MousePointer2,
-    LayoutTemplate, Image as ImageIcon, Database, FileText
+    LayoutTemplate, Image as ImageIcon, Database, FileText, Brain, BrainCircuit, Users, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +17,25 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { createMaestroProject, ingestVideoAsset, analyzeVideoLocal, analyzeVideoAsset, generateMaestroScripts, generateAvatarStaticImage, verifySystemHealth } from "../maestro/actions";
+import {
+    createMaestroProject,
+    ingestVideoAsset,
+    analyzeVideoAsset,
+    generateMaestroScripts,
+    generateMaestroVariant,
+    addCaptionsToMaestroAsset,
+    verifySystemHealth,
+    getMaestroProjectState
+} from "../maestro/actions";
+import { getFirstStoreId as getMaestroStoreId } from "../avatars/actions";
 import BibliotecaPanel from "./BibliotecaPanel";
+import { CreativeFactoryPanel } from "@/components/creative/CreativeFactoryPanel";
+import { EspiaPanel } from "./panels/EspiaPanel";
+import AvatarStudioPage from "../avatars/page";
+import { DirectorPanel } from "./panels/DirectorPanel";
 
 interface MaestroWorkspaceProps {
     initialProducts: any[];
@@ -40,7 +55,8 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
 
     // Project State
     const [projectId, setProjectId] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState("ingesta");
+    const [projectState, setProjectState] = useState<any>(null);
+    const [activeTab, setActiveTab] = useState("espia"); // Nueva tab por defecto
     const [currentAssetId, setCurrentAssetId] = useState<string | null>(null);
     const [maestroScript, setMaestroScript] = useState<string>("");
 
@@ -48,16 +64,34 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
     const [isIngesting, setIsIngesting] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isGeneratingScript, setIsGeneratingScript] = useState(false);
+    const [isGeneratingVariant, setIsGeneratingVariant] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<any>(null);
 
-    // URL Synchronization
+    // URL Synchronization & State Hydration
     useEffect(() => {
-        if (selectedProduct && selectedProduct !== queryProductId) {
-            const params = new URLSearchParams(searchParams);
-            params.set("productId", selectedProduct);
-            router.replace(`${pathname}?${params.toString()}`);
+        if (selectedProduct) {
+            if (selectedProduct !== queryProductId) {
+                const params = new URLSearchParams(searchParams);
+                params.set("productId", selectedProduct);
+                router.replace(`${pathname}?${params.toString()}`);
+            }
+            // Load project if exists for this product (simple logic: find latest)
         }
     }, [selectedProduct, queryProductId, pathname, router, searchParams]);
+
+    const loadProjectState = async (id: string) => {
+        const state = await getMaestroProjectState(id);
+        setProjectState(state);
+        if (state?.maestroScripts?.length) {
+            setMaestroScript(state.maestroScripts[state.maestroScripts.length - 1].content);
+        }
+    };
+
+    useEffect(() => {
+        if (projectId) {
+            loadProjectState(projectId);
+        }
+    }, [projectId]);
 
     // Initial Project Creation (Lazy or Explicit)
     const ensureProject = async (): Promise<string | null> => {
@@ -125,10 +159,14 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
         if (!projectId) return;
         setIsGeneratingScript(true);
         try {
-            await generateMaestroScripts(projectId, "Context from clips");
-            setMaestroScript(`**GUION MAESTRO GENERADO**\n\n[0-3s] HOOK: Stop scrolling! (${platform})\n[3-15s] BODY: Problema/Solución para servicio.\n[15-30s] CTA: Click en el enlace.`);
-            toast.success("Guiones Generados (V1)");
-            setActiveTab("variantes");
+            // Context from product brain if available
+            const prod = initialProducts.find(p => p.id === selectedProduct);
+            const res = await generateMaestroScripts(projectId, `Generar guion viral para ${prod?.title}. Plataforma: ${platform}. Idioma: ${language}.`);
+            if (res.success) {
+                toast.success("Guiones Generados con Éxito");
+                loadProjectState(projectId);
+                setActiveTab("guiones");
+            }
         } catch (e: any) {
             toast.error("Error generando guion: " + e.message);
         } finally {
@@ -136,135 +174,190 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
         }
     }
 
+    const handleGenerateVariant = async (data: any) => {
+        if (!projectId) return;
+        setIsGeneratingVariant(true);
+        try {
+            const res = await generateMaestroVariant({
+                projectId,
+                ...data
+            });
+            if (res.success) {
+                toast.success("Variante Generada!");
+                loadProjectState(projectId);
+            } else {
+                toast.error("Error: " + res.error);
+            }
+        } catch (e: any) {
+            toast.error("Error: " + e.message);
+        } finally {
+            setIsGeneratingVariant(false);
+        }
+    };
+
+    const handleAddCaptions = async (assetId: string) => {
+        toast.info("Generando subtítulos con Gemini Vision...");
+        try {
+            const res = await addCaptionsToMaestroAsset(assetId);
+            if (res.success) {
+                toast.success("Video Subtitulado con Éxito!");
+                if (projectId) loadProjectState(projectId);
+            } else {
+                toast.error("Error: " + res.error);
+            }
+        } catch (e: any) {
+            toast.error("Error: " + e.message);
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-indigo-500/30 overflow-x-hidden flex flex-col">
+        <div className="flex-1 bg-transparent text-slate-900 font-sans selection:bg-rose-500/30 overflow-x-hidden flex flex-col">
             {/* 1. MAESTRO HEADER */}
-            <header className="border-b border-slate-200 bg-white shadow-sm sticky top-0 z-50">
-                <div className="max-w-[1800px] mx-auto px-4 h-16 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                            <Wand2 className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex flex-col">
-                            <h1 className="text-sm font-bold tracking-tight text-slate-900">
-                                VIDEO LAB <span className="text-indigo-600">MAESTRO</span>
-                            </h1>
-                            <div className="flex items-center gap-1.5">
-                                <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-bold border-indigo-200 text-indigo-600 bg-indigo-50 rounded-sm">
-                                    V3.0
-                                </Badge>
-                                <span className="text-[10px] text-slate-400 font-medium">GEMINI 3.5 FLASH + CLAUDE 3.5 Hybrid</span>
-                            </div>
+            <header className="border-b border-white/40 glass-header sticky top-0 z-30 shadow-sm px-4 h-10 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-lg">
+                        <Wand2 className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex flex-col">
+                        <h1 className="text-[10px] font-black tracking-widest text-slate-900 uppercase italic">
+                            Video Lab <span className="text-rose-500">Maestro</span>
+                        </h1>
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-[7px] text-slate-400 font-bold uppercase tracking-[0.2em]">Cerebro Híbrido V.4.2</p>
+                            <Badge className="h-3.5 bg-emerald-500/10 text-emerald-600 border-none px-1 py-0 text-[6px] font-black uppercase tracking-widest">SISTEMA ONLINE</Badge>
                         </div>
                     </div>
+                </div>
 
-                    {/* GLOBAL CONTROLS */}
-                    <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                {/* CONTROLES GLOBALES DEL AGENTE */}
+                <div className="flex items-center gap-1.5 bg-white/40 p-1 rounded-2xl border border-white/60 shadow-inner">
+                    <div className="flex items-center px-4 h-7">
+                        <Database className="w-3.5 h-3.5 text-rose-500 mr-2" />
                         <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                            <SelectTrigger className="w-[200px] h-8 bg-transparent border-none text-xs focus:ring-0">
+                            <SelectTrigger className="w-[160px] h-7 bg-transparent border-none text-[9px] font-black uppercase tracking-widest focus:ring-0">
                                 <SelectValue placeholder="Producto" />
                             </SelectTrigger>
-                            <SelectContent className="bg-white border border-slate-200 shadow-sm border-slate-200 text-slate-900">
+                            <SelectContent className="glass-panel border-slate-100 shadow-2xl rounded-2xl">
                                 {initialProducts.map(p => (
-                                    <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                                    <SelectItem key={p.id} value={p.id} className="text-[9px] font-black uppercase tracking-widest">{p.title}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                        <div className="w-px h-4 bg-white/10" />
-                        <Select value={platform} onValueChange={setPlatform}>
-                            <SelectTrigger className="w-[100px] h-8 bg-transparent border-none text-xs focus:ring-0">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white border border-slate-200 shadow-sm border-slate-200 text-slate-900">
-                                <SelectItem value="TIKTOK">TikTok</SelectItem>
-                                <SelectItem value="META">Meta Ads</SelectItem>
-                                <SelectItem value="YOUTUBE">Shorts</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <div className="w-px h-4 bg-white/10" />
-                        <Select value={language} onValueChange={setLanguage}>
-                            <SelectTrigger className="w-[70px] h-8 bg-transparent border-none text-xs focus:ring-0">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white border border-slate-200 shadow-sm border-slate-200 text-slate-900">
-                                <SelectItem value="ES">ES</SelectItem>
-                                <SelectItem value="EN">EN</SelectItem>
-                                <SelectItem value="FR">FR</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <div className="w-px h-4 bg-white/10" />
-                        <Select value={avatarId} onValueChange={setAvatarId}>
-                            <SelectTrigger className="w-[140px] h-8 bg-transparent border-none text-xs focus:ring-0">
-                                <div className="flex items-center gap-2">
-                                    <UserSquare2 className="w-3 h-3 text-indigo-700" />
-                                    <span>Avatar S.</span>
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent className="bg-white border border-slate-200 shadow-sm border-slate-200 text-slate-900">
-                                <SelectItem value="default">Avatar Studio</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Badge variant={projectId ? "default" : "secondary"} className="h-6 text-[10px]">
-                            {projectId ? "PROYECTO ACTIVO" : "SIN PROYECTO"}
-                        </Badge>
-                    </div>
+                    <div className="w-px h-3 bg-slate-200" />
+
+                    <Select value={platform} onValueChange={setPlatform}>
+                        <SelectTrigger className="w-[100px] h-7 bg-transparent border-none text-[9px] font-black uppercase tracking-widest focus:ring-0">
+                            <div className="flex items-center gap-2">
+                                <Globe className="w-3 h-3 text-slate-400" />
+                                <SelectValue />
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent className="glass-panel border-slate-100 shadow-2xl rounded-2xl">
+                            <SelectItem value="TIKTOK" className="text-[9px] font-black uppercase tracking-widest">TikTok</SelectItem>
+                            <SelectItem value="META" className="text-[9px] font-black uppercase tracking-widest">Meta Ads</SelectItem>
+                            <SelectItem value="YOUTUBE" className="text-[9px] font-black uppercase tracking-widest">YouTube</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <div className="w-px h-3 bg-slate-200" />
+
+                    <Select value={avatarId} onValueChange={setAvatarId}>
+                        <SelectTrigger className="w-[140px] h-7 bg-transparent border-none text-[9px] font-black uppercase tracking-widest focus:ring-0">
+                            <div className="flex items-center gap-2">
+                                <UserSquare2 className="w-3.5 h-3.5 text-rose-500" />
+                                <span>Avatar Studio</span>
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent className="glass-panel border-slate-100 shadow-2xl rounded-2xl">
+                            <SelectItem value="default" className="text-[9px] font-black uppercase tracking-widest">SARA V2 (Global)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <Badge variant={projectId ? "default" : "secondary"} className={cn(
+                        "h-6 text-[8px] font-black tracking-[0.2em] uppercase px-3 rounded-full flex gap-2 items-center",
+                        projectId ? "bg-rose-500 text-white shadow-lg shadow-rose-200/50" : "bg-slate-100/50 text-slate-400 border border-slate-200"
+                    )}>
+                        {projectId ? <Zap className="w-2.5 h-2.5 fill-current" /> : null}
+                        {projectId ? "MOTOR ACTIVO" : "AGENTE EN ESPERA"}
+                    </Badge>
                 </div>
             </header>
 
             {/* 2. MAESTRO TABS */}
-            <div className="flex-1 max-w-[1800px] mx-auto w-full p-4 md:p-6 overflow-hidden flex flex-col">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col space-y-6">
-                    <TabsList className="bg-slate-100/50 border border-slate-200 p-1.5 rounded-2xl w-full justify-start h-auto gap-1">
-                        <MaestroTabTrigger value="ingesta" icon={Upload} label="Ingesta" />
-                        <MaestroTabTrigger value="analisis" icon={BrainCircuit} label="Análisis" />
-                        <MaestroTabTrigger value="clips" icon={Film} label="Clips" />
-                        <MaestroTabTrigger value="guiones" icon={FileText} label="Guiones" />
-                        <MaestroTabTrigger value="montaje" icon={Layers} label="Montaje" />
-                        <MaestroTabTrigger value="variantes" icon={LayoutTemplate} label="Variantes" />
-                        <MaestroTabTrigger value="biblioteca" icon={Database} label="Biblioteca" />
-                        <div className="ml-auto flex items-center gap-2 px-3">
+            <div className="flex-1 max-w-[1800px] mx-auto w-full p-3 overflow-hidden flex flex-col pt-0">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+                    <div className="flex items-center justify-between border-b border-slate-100/50 py-1 mb-4">
+                        <TabsList className="bg-transparent h-8 gap-0">
+                            <MaestroTabTrigger value="espia" icon={Eye} label="ESPÍA" />
+                            <MaestroTabTrigger value="cerebro" icon={BrainCircuit} label="CEREBRO" />
+                            <MaestroTabTrigger value="escritor" icon={FileText} label="ESCRITOR" />
+                            <MaestroTabTrigger value="identidad" icon={Users} label="AVATAR" />
+                            <MaestroTabTrigger value="fabrica" icon={Zap} label="FÁBRICA" />
+                            <MaestroTabTrigger value="director" icon={Sparkles} label="DIRECTOR AGENTE" />
+                            <MaestroTabTrigger value="biblioteca" icon={Database} label="BIBLIOTECA" />
+                        </TabsList>
+
+                        <div className="flex items-center gap-3">
                             <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
-                                className="h-7 text-[10px] border-emerald-200 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 gap-2 font-bold"
+                                className="h-7 text-[8px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50/50 hover:bg-emerald-50 gap-2 rounded-xl"
                                 onClick={async () => {
                                     toast.info("Ejecutando diagnóstico...");
-                                    const res = await verifySystemHealth();
-                                    alert(JSON.stringify(res, null, 2)); // Simple alert for now, can be Dialog
+                                    await verifySystemHealth();
+                                    toast.success("Todos los sistemas activos");
                                 }}
                             >
-                                <Zap className="w-3 h-3 fill-emerald-600" />
-                                SYSTEM OPERATIONAL
+                                <Zap className="w-2.5 h-2.5 fill-emerald-600" /> SISTEMA ACTIVO
                             </Button>
                         </div>
-                    </TabsList>
+                    </div>
 
                     {/* CONTENT PANELS */}
                     <div className="flex-1 min-h-0 relative">
-                        {/* INGESTA */}
-                        <TabsContent value="ingesta" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <IngestPanel onIngest={handleIngest} isIngesting={isIngesting} />
+                        {/* 🕵️ ESPÍA: Ingesta Foreplay Style */}
+                        <TabsContent value="espia" className="h-full m-0 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <EspiaPanel onSelect={(item) => {
+                                toast.success("Anuncio seleccionado para análisis.");
+                                setActiveTab("cerebro");
+                            }} />
                         </TabsContent>
 
-                        {/* ANALISIS (Gemini) */}
-                        <TabsContent value="analisis" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <AnalyzePanel
-                                onAnalyze={handleAnalyze}
-                                isAnalyzing={isAnalyzing}
-                                result={analysisResult}
-                                hasAsset={!!currentAssetId}
-                            />
+                        {/* 🧠 CEREBRO: Análisis y Visión */}
+                        <TabsContent value="assets" className="outline-none mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <Card className="rounded-[2.5rem] border-slate-100 glass-panel shadow-xl overflow-hidden min-h-[500px]">
+                                <CardHeader className="p-8 border-b border-slate-100/50 flex flex-row items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center border border-rose-100">
+                                            <BrainCircuit className="w-5 h-5 text-rose-500" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <h3 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">Cerebro Maestro</h3>
+                                            <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Análisis de Inteligencia Visual</p>
+                                        </div>
+                                    </div>
+                                    <Badge className="bg-rose-50 text-rose-600 border border-rose-100 font-black h-6 px-3 rounded-lg text-[8px] tracking-widest shadow-sm">
+                                        V.4.2
+                                    </Badge>
+                                </CardHeader>
+                                <CardContent className="p-8 grid grid-cols-12 gap-6">
+                                    <IngestPanel onIngest={handleIngest} isIngesting={isIngesting} />
+                                    <AnalyzePanel
+                                        onAnalyze={handleAnalyze}
+                                        isAnalyzing={isAnalyzing}
+                                        result={analysisResult}
+                                        hasAsset={!!currentAssetId}
+                                    />
+                                </CardContent>
+                            </Card>
                         </TabsContent>
 
-                        {/* Other Tabs Placeholders */}
-                        <TabsContent value="clips" className="h-full m-0">
-                            <div className="flex items-center justify-center h-full text-slate-900/70 text-lg">🎬 Clips Segmenter (Coming Soon)</div>
-                        </TabsContent>
-
-                        <TabsContent value="guiones" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {/* ✍️ ESCRITOR: Editor de Guiones */}
+                        <TabsContent value="escritor" className="h-full m-0 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <ScriptPanel
                                 isGenerating={isGeneratingScript}
                                 onGenerate={handleGenerateScript}
@@ -272,14 +365,36 @@ export default function MaestroWorkspace({ initialProducts }: MaestroWorkspacePr
                             />
                         </TabsContent>
 
-                        <TabsContent value="montaje" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div className="flex items-center justify-center h-full text-slate-900/70 text-lg">🎞️ Timeline Assembler (Coming Soon)</div>
+                        {/* 👤 IDENTIDAD: Avatars & Voice */}
+                        <TabsContent value="identidad" className="h-full m-0 flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-rose-500" /></div>}>
+                                <AvatarStudioPage isEmbedded={true} />
+                            </Suspense>
                         </TabsContent>
 
-                        <TabsContent value="variantes" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <VariantsPanel />
+                        {/* 🏭 FÁBRICA: Producción Masiva */}
+                        <TabsContent value="fabrica" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="space-y-4">
+                                <CreativeFactoryPanel
+                                    productId={selectedProduct}
+                                    productName={initialProducts.find(p => p.id === selectedProduct)?.title || "Producto"}
+                                />
+                                <VariantsPanel
+                                    variants={projectState?.maestroVariants || []}
+                                    onGenerate={handleGenerateVariant}
+                                    onAddCaptions={handleAddCaptions}
+                                    isGenerating={isGeneratingVariant}
+                                    defaultScript={maestroScript}
+                                />
+                            </div>
                         </TabsContent>
 
+                        {/* 🤖 DIRECTOR AGENTE */}
+                        <TabsContent value="director" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <DirectorPanel />
+                        </TabsContent>
+
+                        {/* 📂 BIBLIOTECA */}
                         <TabsContent value="biblioteca" className="h-full m-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <BibliotecaPanel productId={selectedProduct} />
                         </TabsContent>
@@ -294,9 +409,9 @@ function MaestroTabTrigger({ value, icon: Icon, label }: { value: string, icon: 
     return (
         <TabsTrigger
             value={value}
-            className="data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all duration-200 h-9 px-4 rounded-xl gap-2 text-[11px] font-bold uppercase tracking-wider relative overflow-hidden"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-rose-500 data-[state=active]:bg-rose-500/5 px-4 h-8 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 data-[state=active]:text-slate-900 transition-all gap-2"
         >
-            <Icon className="w-3.5 h-3.5" />
+            <Icon className="w-3.5 h-3.5 opacity-70" />
             {label}
         </TabsTrigger>
     );
@@ -312,68 +427,73 @@ function IngestPanel({ onIngest, isIngesting }: { onIngest: (f: File) => void, i
     }
 
     return (
-        <div className="grid grid-cols-12 gap-6 h-full">
-            <div className="col-span-4 bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-6 shadow-sm">
-                <div className="space-y-1">
-                    <h3 className="text-lg font-bold text-slate-900 tracking-tight">Ingerir Referencia</h3>
-                    <p className="text-sm text-slate-500 font-medium">Sube un video o pega un enlace para comenzar.</p>
+        <div className="grid grid-cols-12 gap-3 h-full">
+            <div className="col-span-4 bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-4 shadow-sm">
+                <div className="space-y-1 border-b border-slate-100 pb-3">
+                    <h3 className="text-[10px] font-black text-slate-900 uppercase italic tracking-widest">Referencia Maestra</h3>
+                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em]">Ingesta de Inteligencia Visual</p>
                 </div>
 
                 <input type="file" ref={fileInput} className="hidden" accept="video/*" onChange={handleFile} />
 
-                <Card
+                <div
                     onClick={() => fileInput.current?.click()}
-                    className="bg-slate-50/50 border-indigo-200 border-dashed border-2 hover:border-indigo-600 hover:bg-white transition-all cursor-pointer group rounded-2xl overflow-hidden shadow-none"
+                    className="bg-slate-50 border-slate-200 border-dashed border hover:border-rose-300 hover:bg-slate-100 transition-all cursor-pointer group rounded-xl overflow-hidden"
                 >
-                    <CardContent className="flex flex-col items-center justify-center h-48 gap-4 p-6">
+                    <div className="flex flex-col items-center justify-center h-32 gap-3 p-4">
                         {isIngesting ? (
                             <div className="flex flex-col items-center gap-3">
-                                <RefreshCw className="w-10 h-10 text-indigo-600 animate-spin" />
-                                <span className="text-[11px] text-indigo-600 font-black uppercase tracking-widest animate-pulse">INGESTANDO...</span>
+                                <RefreshCw className="w-8 h-8 text-rose-500 animate-spin" />
+                                <span className="text-[9px] text-rose-500 font-black uppercase tracking-widest animate-pulse">Analizando Activo...</span>
                             </div>
                         ) : (
                             <>
-                                <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300">
-                                    <Upload className="w-7 h-7 text-white" />
+                                <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center shadow-md group-hover:scale-105 transition-all duration-300">
+                                    <Upload className="w-5 h-5 text-white" />
                                 </div>
                                 <div className="text-center space-y-1">
-                                    <p className="text-sm font-bold text-slate-900">Click para subir</p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">MP4, MOV hasta 500MB</p>
+                                    <p className="text-[9px] font-black text-slate-900 uppercase tracking-widest">Sincronizar Video</p>
+                                    <p className="text-[7px] text-slate-400 font-bold uppercase tracking-[0.15em]">MP4, MOV • Máx 500MB</p>
                                 </div>
                             </>
                         )}
-                    </CardContent>
-                </Card>
-
-                <div className="flex items-center gap-4 py-2">
-                    <div className="h-px bg-slate-100 flex-1" />
-                    <span className="text-[10px] text-slate-300 uppercase font-black tracking-widest leading-none">O importa de</span>
-                    <div className="h-px bg-slate-100 flex-1" />
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                    <Button variant="outline" className="border-slate-200 bg-white hover:bg-slate-50 text-slate-900 h-11 text-xs font-bold rounded-xl shadow-sm hover:border-pink-500/30 transition-all">
-                        <Play className="w-4 h-4 mr-2 text-pink-500 fill-pink-500" /> TikTok
+                <div className="grid grid-cols-2 gap-2 mt-auto">
+                    <Button variant="outline" className="border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-800 h-9 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm">
+                        <Play className="w-3 h-3 mr-2 text-rose-500 fill-rose-500" /> TikTok
                     </Button>
-                    <Button variant="outline" className="border-slate-200 bg-white hover:bg-slate-50 text-slate-900 h-11 text-xs font-bold rounded-xl shadow-sm hover:border-blue-500/30 transition-all">
-                        <MonitorPlay className="w-4 h-4 mr-2 text-blue-500 fill-blue-500" /> Meta Ads
+                    <Button variant="outline" className="border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-800 h-9 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm">
+                        <MonitorPlay className="w-3 h-3 mr-2 text-rose-500 fill-rose-500" /> Meta Ads
                     </Button>
                 </div>
             </div>
 
-            <div className="col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-slate-900 tracking-tight">Cola de Procesamiento</h3>
-                    <Badge variant="outline" className="bg-indigo-50 text-indigo-600 border-indigo-100 font-bold h-6 px-3 rounded-full">
-                        {isIngesting ? "1 Activo" : "0 Activos"}
+            <div className="col-span-8 bg-white rounded-xl border border-slate-200 p-4 shadow-sm overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center border border-rose-100">
+                            <Layers className="w-4 h-4 text-rose-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-[11px] font-black text-slate-900 uppercase italic tracking-tight">Cola de Procesamiento</h3>
+                            <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Estado del Renderizado Híbrido</p>
+                        </div>
+                    </div>
+                    <Badge className="bg-rose-50 text-rose-600 border border-rose-100 font-black h-6 px-3 rounded-lg text-[8px] tracking-widest shadow-sm">
+                        {isIngesting ? "1 ACTIVO" : "0 ACTIVOS"}
                     </Badge>
                 </div>
 
-                <div className="flex flex-col items-center justify-center h-[340px] text-slate-400 gap-4 border-2 border-dashed border-slate-50 rounded-2xl bg-[#FBFDFF]">
-                    <Database className="w-12 h-12 opacity-10" />
-                    <p className="text-sm font-bold tracking-tight text-slate-400 flex items-center gap-2">
-                        {isIngesting ? "Procesando video local..." : "No hay assets en cola"}
-                    </p>
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-3 border border-dashed border-slate-200 rounded-xl bg-slate-50 min-h-[200px]">
+                    <Database className="w-10 h-10 opacity-20" />
+                    <div className="text-center">
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
+                            {isIngesting ? "Procesando flujo de datos..." : "Cola de Trabajo Vacía"}
+                        </p>
+                        {!isIngesting && <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Los activos aparecerán aquí tras la ingesta</p>}
+                    </div>
                 </div>
             </div>
         </div>
@@ -382,68 +502,78 @@ function IngestPanel({ onIngest, isIngesting }: { onIngest: (f: File) => void, i
 
 function AnalyzePanel({ onAnalyze, isAnalyzing, result, hasAsset }: any) {
     return (
-        <div className="grid grid-cols-12 gap-6 h-full">
-            <div className="col-span-12 md:col-span-8 lg:col-span-9 space-y-6">
-                <Card className="bg-white border-slate-200 shadow-sm border text-slate-900 h-[500px] flex items-center justify-center relative overflow-hidden rounded-2xl">
+        <div className="grid grid-cols-12 gap-3 h-full">
+            <div className="col-span-12 md:col-span-8 lg:col-span-9 space-y-3">
+                <div className="bg-white border border-slate-200 shadow-sm text-slate-900 h-[450px] flex items-center justify-center relative overflow-hidden rounded-xl">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rose-500/20 to-transparent" />
+
                     {result ? (
-                        <div className="text-center p-10 animate-in fade-in zoom-in duration-500">
-                            <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-6 border border-emerald-100">
-                                <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                        <div className="text-center p-8 animate-in fade-in zoom-in duration-700">
+                            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-sm border border-emerald-100">
+                                <CheckCircle2 className="w-8 h-8" />
                             </div>
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Análisis Completado</h3>
-                            <div className="flex items-center justify-center gap-2 mt-3">
-                                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 font-bold px-3 py-1">CONFIRMADO</Badge>
-                                <p className="text-slate-500 font-medium">Se han detectado {result.hooks.length} Hooks Virales.</p>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase italic leading-none">Análisis Maestro Completado</h3>
+                            <div className="flex flex-col items-center gap-3 mt-4">
+                                <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-100 font-black px-3 py-1 text-[9px] tracking-widest rounded-lg">INTELIGENCIA CONFIRMADA</Badge>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em] max-w-[400px]">Se han detectado {result.hooks.length} Ganchos Virales de alta retención optimizados para el algoritmo.</p>
                             </div>
                         </div>
                     ) : (
                         <div className="text-center space-y-6 z-10 px-6">
-                            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mx-auto border border-slate-100 shadow-xl shadow-slate-200/50">
-                                {isAnalyzing ? <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" /> : <Sparkles className="w-8 h-8 text-indigo-600" />}
+                            <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center mx-auto border border-slate-200 shadow-sm">
+                                {isAnalyzing ? <RefreshCw className="w-6 h-6 text-rose-500 animate-spin" /> : <Brain className="w-6 h-6 text-rose-500" />}
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black tracking-tight">Gemini 3.5 Vision Ready</h3>
-                                <p className="text-slate-400 text-sm mt-2 max-w-[320px] mx-auto font-medium leading-relaxed">
-                                    {hasAsset ? "El video está listo para ser analizado. Detectaremos los momentos más virales automáticamente." : "Sube un video en la pestaña Ingesta primero."}
+                                <h3 className="text-xl font-black tracking-widest uppercase italic leading-none text-slate-900">Gemini 3.5 <span className="text-rose-500">Vision</span> Ready</h3>
+                                <p className="text-slate-500 text-[9px] font-bold uppercase tracking-[0.2em] mt-3 max-w-[360px] mx-auto leading-relaxed">
+                                    {hasAsset ? "El activo visual ha sido sincronizado correctamente. El Agente Maestro procederá a la extracción de triggers psicológicos." : "Sincroniza un activo visual en la pestaña de Ingesta para iniciar el protocolo."}
                                 </p>
                             </div>
                             {hasAsset && (
                                 <Button
                                     onClick={onAnalyze}
                                     disabled={isAnalyzing}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/20 h-12 px-8 font-bold rounded-xl text-base transition-all scale-100 hover:scale-[1.02]"
+                                    className="bg-slate-900 hover:bg-black text-white shadow-md h-10 px-8 font-black uppercase text-[9px] tracking-widest rounded-xl transition-all group gap-2"
                                 >
-                                    {isAnalyzing ? "Analizando Video..." : "Iniciar Análisis Profundo"}
+                                    {isAnalyzing ? "PROCESANDO MATRIZ..." : "INICIAR ANÁLISIS PROFUNDO"}
+                                    {!isAnalyzing && <Sparkles className="w-3.5 h-3.5 text-rose-500 group-hover:animate-pulse" />}
                                 </Button>
                             )}
                         </div>
                     )}
-                </Card>
+                </div>
             </div>
-            <div className="col-span-12 md:col-span-4 lg:col-span-3 space-y-4">
-                <Card className="bg-white border-slate-200 p-5 shadow-sm rounded-2xl">
-                    <div className="flex items-center justify-between mb-6">
-                        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">Magic Hooks</h4>
-                        <Badge variant="outline" className="text-[10px] font-bold border-slate-100 text-slate-400">SCORE 0-100</Badge>
+
+            <div className="col-span-12 md:col-span-4 lg:col-span-3 space-y-3">
+                <div className="bg-white border border-slate-200 p-4 shadow-sm rounded-xl flex flex-col h-full border-t-rose-500">
+                    <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                        <div className="flex flex-col">
+                            <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">Ganchos Mágicos</h4>
+                            <span className="text-[7px] text-slate-500 font-bold uppercase tracking-widest">Score de Retención IA</span>
+                        </div>
+                        <Badge className="bg-slate-100 text-slate-600 border-none text-[8px] font-black tracking-widest px-2 h-5 rounded-lg">V.1.0</Badge>
                     </div>
-                    <div className="space-y-3">
-                        {result ? result.hooks.map((h: any) => (
-                            <div key={h.id} className="p-4 bg-[#FBFDFF] border border-indigo-100 rounded-xl animate-in slide-in-from-right-2 hover:border-indigo-600 hover:shadow-md transition-all group">
-                                <div className="flex justify-between items-center mb-2">
-                                    <Badge className="h-5 px-2 bg-indigo-600 text-[10px] font-black">{h.score}</Badge>
-                                    <Badge variant="outline" className="text-[9px] font-black text-emerald-600 border-emerald-100 bg-emerald-50">TOP</Badge>
+
+                    <ScrollArea className="flex-1 -mr-2 pr-2">
+                        <div className="space-y-3">
+                            {result ? result.hooks.map((h: any) => (
+                                <div key={h.id} className="p-3 bg-slate-50 border border-slate-200 transform transition-all hover:-translate-y-0.5 hover:border-rose-300 rounded-xl group cursor-pointer shadow-sm">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <Badge className="h-4 px-1.5 bg-rose-50/80 text-rose-600 border border-rose-100 text-[8px] font-black shadow-sm italic tracking-widest">+{h.score}</Badge>
+                                        <Badge className="text-[7px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 uppercase tracking-widest px-1.5 h-4 rounded-md">GANADOR</Badge>
+                                    </div>
+                                    <p className="text-[10px] text-slate-700 font-bold leading-relaxed italic uppercase tracking-tight">"{h.text}"</p>
                                 </div>
-                                <p className="text-xs text-slate-900 font-bold leading-relaxed">{h.text}</p>
-                            </div>
-                        )) : (
-                            [1, 2, 3].map(i => (
-                                <div key={i} className="h-24 bg-slate-50 rounded-xl border border-slate-100 opacity-50 flex items-center justify-center">
-                                    <div className="w-px h-px bg-slate-200" />
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </Card>
+                            )) : (
+                                [1, 2, 3, 4].map(i => (
+                                    <div key={i} className="h-20 bg-slate-50 rounded-xl border border-slate-200 border-dashed animate-pulse flex items-center justify-center group">
+                                        <div className="w-2 h-2 bg-slate-200 rounded-full group-hover:bg-rose-200 transition-colors" />
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </ScrollArea>
+                </div>
             </div>
         </div>
     )
@@ -451,110 +581,222 @@ function AnalyzePanel({ onAnalyze, isAnalyzing, result, hasAsset }: any) {
 
 function ScriptPanel({ isGenerating, onGenerate, script }: any) {
     return (
-        <div className="grid grid-cols-12 gap-6 h-full">
-            <div className="col-span-8 space-y-4">
-                <Card className="bg-white border border-slate-200 shadow-sm border-slate-200 text-slate-900 h-[600px] flex flex-col p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-slate-900/50 border-slate-200">V1</Badge>
-                            <h3 className="text-sm font-medium">Guion Maestro</h3>
+        <div className="grid grid-cols-12 gap-3 h-full">
+            <div className="col-span-8 space-y-3">
+                <div className="bg-white border border-slate-200 shadow-sm text-slate-900 h-[500px] flex flex-col p-4 rounded-xl">
+                    <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-200">
+                                <FileText className="w-4 h-4 text-slate-600" />
+                            </div>
+                            <div className="flex flex-col">
+                                <h3 className="text-[11px] font-black uppercase italic text-slate-900 tracking-tight">Guion Maestro</h3>
+                                <p className="text-[7px] text-slate-500 font-bold uppercase tracking-widest">Protocolo de Conversión V.4</p>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
+                            <Badge className="bg-rose-50 text-rose-600 border border-rose-100 font-black text-[8px] px-2 h-5 tracking-widest rounded-md uppercase shadow-sm">BETA</Badge>
                             {script ? (
-                                <Button size="sm" variant="outline" className="h-7 text-xs border-indigo-500/30 text-indigo-700 bg-indigo-500/10">Generar Variantes (3)</Button>
+                                <Button size="sm" variant="outline" className="h-7 text-[8px] font-black border-slate-200 text-slate-700 bg-white hover:bg-slate-50 rounded-lg px-3 uppercase tracking-widest transition-all shadow-sm">Variaciones (3)</Button>
                             ) : (
                                 <Button
                                     size="sm"
                                     onClick={onGenerate}
                                     disabled={isGenerating}
-                                    className="h-7 text-xs bg-indigo-600 hover:bg-indigo-500 text-slate-900"
+                                    className="h-8 text-[9px] font-black bg-slate-900 hover:bg-black text-white rounded-lg px-4 uppercase tracking-[0.1em] transition-all shadow-md"
                                 >
-                                    {isGenerating ? "Escribiendo..." : "Generar Guion desde Clips"}
+                                    {isGenerating ? "REDACTANDO..." : "GENERAR GUION"}
                                 </Button>
                             )}
                         </div>
                     </div>
-                    <Textarea
-                        placeholder="El guion aparecerá aquí..."
-                        className="flex-1 bg-transparent border-emerald-500/20 resize-none focus:ring-1 focus:ring-emerald-500/40 text-base leading-relaxed font-mono text-slate-900 placeholder:text-emerald-200/40"
-                        value={script}
-                        readOnly
-                    />
-                </Card>
-            </div>
-            <div className="col-span-4 space-y-4">
-                <Card className="bg-slate-100 border-slate-200 p-2">
-                    <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-4">Estructura Viral</h4>
-                    <div className="space-y-2 opacity-50 hover:opacity-100 transition-opacity">
-                        <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg">
-                            <span className="text-[11px] font-bold text-emerald-200">HOOK (0-3s)</span>
-                        </div>
-                        <div className="p-3 bg-slate-100 border border-emerald-500/20 rounded-lg">
-                            <span className="text-[11px] font-bold text-blue-200">BODY (3-15s)</span>
-                        </div>
-                        <div className="p-3 bg-slate-100 border border-emerald-500/20 rounded-lg">
-                            <span className="text-[11px] font-bold text-purple-200">CTA (15-20s)</span>
-                        </div>
-                    </div>
-                </Card>
-            </div>
-        </div>
-    )
-}
-
-function VariantsPanel() {
-    return (
-        <div className="grid grid-cols-12 gap-6 h-full">
-            {[1, 2, 3].map(i => (
-                <div key={i} className="col-span-4">
-                    <Card className="bg-white border border-slate-200 shadow-sm border-slate-200 group hover:border-indigo-500/50 transition-all cursor-pointer">
-                        <div className="aspect-[9/16] bg-slate-100 relative overflow-hidden">
-                            {/* Thumbnail Placeholder */}
-                            <div className="absolute inset-0 flex items-center justify-center text-slate-900/10 group-hover:text-indigo-700/50 transition-colors">
-                                <Play className="w-12 h-12" />
-                            </div>
-                            <div className="absolute top-2 right-2">
-                                <Badge className="bg-black/50 backdrop-blur-md border px-1.5 py-0.5 text-[10px]">V{i}</Badge>
-                            </div>
-                        </div>
-                        <CardContent className="p-4 space-y-2">
-                            <h4 className="text-sm font-medium text-slate-900 truncate">Variant {i} - Aggressive Hook</h4>
-                            <div className="flex items-center justify-between text-xs text-slate-900/40">
-                                <span>00:30</span>
-                                <span>Pending</span>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <ScrollArea className="flex-1">
+                        <Textarea
+                            placeholder="El guion magistral aparecerá aquí tras el análisis..."
+                            className="w-full bg-slate-50/50 border-none resize-none focus:ring-1 focus:ring-rose-500/20 text-[13px] font-medium leading-relaxed font-mono text-slate-800 placeholder:text-slate-400 p-3 rounded-lg selection:bg-rose-500/20 h-full"
+                            value={script}
+                            readOnly
+                        />
+                    </ScrollArea>
                 </div>
-            ))}
+            </div>
+
+            <div className="col-span-4 space-y-3">
+                <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Zap className="w-4 h-4 text-rose-500 fill-rose-500" />
+                        <h4 className="text-[10px] font-black text-rose-900 uppercase tracking-[0.2em] italic">Estructura de Retención</h4>
+                    </div>
+                    <div className="space-y-2">
+                        <StructureStep label="GANCHO VIRAL (0-3s)" active />
+                        <StructureStep label="CUERPO DEL MENSAJE (3-15s)" />
+                        <StructureStep label="CTA / CIERRE (15-20s)" />
+                    </div>
+                </div>
+
+                <div className="bg-slate-900 p-4 rounded-xl shadow-md text-white overflow-hidden relative group border border-slate-800">
+                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                        <Sparkles className="w-16 h-16" />
+                    </div>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-1.5 text-rose-400">Optimización Pro</h4>
+                    <p className="text-[11px] font-medium leading-relaxed text-slate-300 relative z-10">Este guion ha sido optimizado para la psicología de recompensa dopaminérgica.</p>
+                    <Button variant="link" className="p-0 text-rose-400 text-[9px] font-black uppercase tracking-widest mt-2 h-auto hover:text-rose-300 relative z-10">Ver Detalles Técnicos <ChevronRight className="w-3 h-3 ml-1" /></Button>
+                </div>
+            </div>
         </div>
     )
 }
 
-// Icon for Analysis
-function BrainCircuit(props: any) {
+function StructureStep({ label, active = false }: { label: string, active?: boolean }) {
     return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
-            <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
-            <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
-            <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" />
-            <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" />
-            <path d="M3.477 10.896a4 4 0 0 1 .585-.396" />
-            <path d="M19.938 10.5a4 4 0 0 1 .585.396" />
-            <path d="M6 18a4 4 0 0 1-1.97-3.484" />
-            <path d="M20 18a4 4 0 0 0 1.97-3.484" />
-        </svg>
+        <div className={cn(
+            "p-4 rounded-2xl border transition-all flex items-center gap-3",
+            active ? "bg-white border-rose-200 shadow-md translate-x-1" : "bg-white/40 border-slate-100 opacity-50"
+        )}>
+            <div className={cn("w-1.5 h-1.5 rounded-full", active ? "bg-rose-500 animate-pulse" : "bg-slate-300")} />
+            <span className={cn("text-[9px] font-black uppercase tracking-widest", active ? "text-slate-900" : "text-slate-400")}>{label}</span>
+        </div>
+    );
+}
+
+function VariantsPanel({ variants, onGenerate, onAddCaptions, isGenerating, defaultScript }: any) {
+    const [concept, setConcept] = useState("Versión Alfa");
+    const [script, setScript] = useState(defaultScript || "");
+    const [prompt, setPrompt] = useState("Retrato hiperrealista de alta fidelidad, iluminación cinematográfica, 8k, fondo profesional difuminado.");
+
+    useEffect(() => {
+        if (defaultScript && !script) setScript(defaultScript);
+    }, [defaultScript]);
+
+    return (
+        <div className="grid grid-cols-12 gap-3 h-full">
+            <div className="col-span-12 lg:col-span-4 space-y-3">
+                <div className="bg-white border border-slate-200 p-4 shadow-sm rounded-xl space-y-5">
+                    <div className="space-y-1 border-b border-slate-100 pb-3">
+                        <h3 className="text-xs font-black text-slate-900 uppercase italic tracking-tight">Clonación Maestra</h3>
+                        <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Motor de Síntesis Avatar + Lip-Sync</p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Concepto del Activo</label>
+                            <Input
+                                value={concept}
+                                onChange={(e) => setConcept(e.target.value)}
+                                className="h-9 text-[11px] font-bold bg-slate-50 border-slate-200 rounded-lg px-3 focus:bg-white transition-all shadow-sm uppercase tracking-widest text-slate-900"
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Instrucciones Visuales (Prompt)</label>
+                            <Textarea
+                                value={prompt}
+                                onChange={(e) => setPrompt(e.target.value)}
+                                className="min-h-[80px] text-[11px] font-medium bg-slate-50 border-slate-200 rounded-lg resize-none p-3 focus:bg-white transition-all shadow-sm text-slate-900"
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Guion Maquinado</label>
+                            <Textarea
+                                value={script}
+                                onChange={(e) => setScript(e.target.value)}
+                                className="min-h-[100px] text-[11px] font-medium bg-slate-50 border-slate-200 rounded-lg resize-none p-3 focus:bg-white transition-all shadow-sm text-slate-900"
+                            />
+                        </div>
+
+                        <Button
+                            className="w-full h-10 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-[9px] rounded-lg shadow-md transition-all gap-2 active:scale-95"
+                            disabled={isGenerating}
+                            onClick={() => onGenerate({ concept, avatarPrompt: prompt, script })}
+                        >
+                            {isGenerating ? (
+                                <>
+                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                    SINTETIZANDO...
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-4 h-4 text-rose-500" />
+                                    GENERAR ACTIVO IA
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="col-span-12 lg:col-span-8 flex flex-col gap-3">
+                <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-3">
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-tighter italic">Biblioteca de Variantes</h3>
+                        <Badge className="bg-rose-50 text-rose-600 border border-rose-100 font-black px-2 h-5 rounded-md text-[8px] tracking-widest">{variants.length} ARCHIVOS</Badge>
+                    </div>
+                    <div className="flex gap-2">
+                        <Badge className="h-5 text-[8px] font-black uppercase tracking-widest bg-white border border-slate-200 text-slate-500 px-2 flex items-center gap-1.5 rounded-md shadow-sm">
+                            <div className="w-1.5 h-1.5 bg-rose-500 rounded-full" /> FILTRO: TODOS
+                        </Badge>
+                    </div>
+                </div>
+
+                <ScrollArea className="flex-1 -m-1 p-1">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                        {variants.length === 0 ? (
+                            <div className="col-span-full h-[400px] border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400 gap-4 bg-slate-50/50">
+                                <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100">
+                                    <Clapperboard className="w-8 h-8 opacity-40 text-slate-400" />
+                                </div>
+                                <div className="text-center space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Cola de Variantes Vacía</p>
+                                    <p className="text-[8px] font-bold uppercase tracking-widest opacity-60 text-slate-400">Inicia una clonación para ver resultados aquí</p>
+                                </div>
+                            </div>
+                        ) : (
+                            variants.map((v: any) => (
+                                <div key={v.id} className="bg-white border border-slate-200 shadow-sm group hover:border-rose-300 transition-all overflow-hidden rounded-xl flex flex-col">
+                                    <div className="aspect-[9/16] bg-slate-100 relative overflow-hidden">
+                                        <img
+                                            src={v.thumbnailUrl || "/api/placeholder/400/711"}
+                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                                            alt={v.name}
+                                        />
+                                        <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
+                                            <Button size="icon" variant="secondary" className="rounded-full w-10 h-10 shadow-lg scale-75 group-hover:scale-100 transition-transform duration-300" onClick={() => window.open(v.videoUrl, '_blank')}>
+                                                <Play className="w-5 h-5 fill-slate-900 text-slate-900" />
+                                            </Button>
+                                            <span className="text-[8px] font-black text-white uppercase tracking-[0.2em] translate-y-2 group-hover:translate-y-0 transition-transform duration-300">Previsualizar</span>
+                                        </div>
+                                        <div className="absolute top-3 right-3 flex flex-col gap-2">
+                                            <Badge className="bg-slate-900/80 border border-slate-700 px-2 h-5 text-[7px] font-black text-white uppercase tracking-[0.2em] rounded-md shadow-sm">
+                                                {v.status === 'COMPLETED' ? 'FINALIZADO' : 'PROCESANDO'}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 space-y-3 bg-white">
+                                        <div className="space-y-1">
+                                            <h4 className="text-[10px] font-black text-slate-900 truncate uppercase tracking-tight italic">{v.name}</h4>
+                                            <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">{new Date(v.createdAt).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                                            <Button variant="outline" className="flex-1 h-8 rounded-lg text-[8px] font-black uppercase tracking-widest gap-2 bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm transition-all md:flex-none md:w-10 md:px-0 justify-center">
+                                                <Download className="w-3.5 h-3.5" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="flex-1 h-8 rounded-lg text-[8px] font-black uppercase tracking-widest gap-1.5 bg-rose-50 border-rose-100 text-rose-600 hover:bg-rose-100 transition-all shadow-sm"
+                                                onClick={() => onAddCaptions(v.id)}
+                                            >
+                                                <Wand2 className="w-3 h-3" /> SUBTÍTULOS
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </ScrollArea>
+            </div>
+        </div>
     )
 }
+

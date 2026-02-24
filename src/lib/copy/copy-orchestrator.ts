@@ -1,7 +1,7 @@
 import { prisma } from '../prisma';
 import { AiRouter } from '../ai/router';
 import { TaskType, AIResponse } from '../ai/providers/interfaces';
-import { CLAUDE_PROMPTS_V3 } from './v3-prompts';
+import { CLAUDE_PROMPTS_V3 } from './copy-v3-prompts';
 import { CopywriterAgent } from '../ai/agents/specialist-agents';
 
 export interface CopyGenerationParams {

@@ -76,10 +76,10 @@ export default function EbookManager({ storeId }: { storeId: string }) {
 
             {isEditing && (
                 <Card className="rounded-[32px] border-blue-200 bg-blue-50/30 overflow-hidden border-2 shadow-xl shadow-blue-500/5 transition-all">
-                    <CardHeader className="bg-white border-b border-blue-100 p-8">
+                    <CardHeader className="bg-white border-b border-blue-100 p-6">
                         <CardTitle className="text-xl font-black text-slate-800">CONFIGURAR NUEVA GUIA</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-8 space-y-6">
+                    <CardContent className="p-6 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-black uppercase tracking-widest text-slate-400">Nombre de la Plantilla</label>

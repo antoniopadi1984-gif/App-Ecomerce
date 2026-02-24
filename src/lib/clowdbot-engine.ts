@@ -24,7 +24,12 @@ export async function processClowdbotMessage(customerId: string, content: string
             include: { items: true, store: true }
         });
 
-        const storeId = order?.storeId || "default-store";
+        const storeId = order?.storeId;
+
+        if (!storeId) {
+            console.error(`[CLOWDBOT] No order or store context found for customer ${customerId}. Aborting.`);
+            return "Lo siento, no he podido localizar tus datos para ayudarte mejor. ¿Podrías indicarme tu número de pedido?";
+        }
 
         // 2. Select Agent using Router
         const agent = await AgentRouter.route('MESSAGE', {

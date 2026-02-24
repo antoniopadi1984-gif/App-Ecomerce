@@ -1,5 +1,7 @@
 import { google } from 'googleapis';
 import { prisma } from './prisma';
+import { getConnectionSecret } from '@/lib/server/connections';
+import { getGoogleAuth } from './google-auth';
 
 /**
  * Google Sheets Service
@@ -9,25 +11,7 @@ import { prisma } from './prisma';
  */
 export class GoogleSheetsService {
     private static async getAuth() {
-        // Load Service Account from database
-        const sa = await prisma.connection.findFirst({
-            where: { provider: "GOOGLE_SERVICE_ACCOUNT", isActive: true }
-        });
-
-        if (!sa || !sa.extraConfig) {
-            throw new Error('Service Account not configured');
-        }
-
-        const credentials = JSON.parse(sa.extraConfig as string);
-        const auth = new google.auth.GoogleAuth({
-            credentials,
-            scopes: [
-                'https://www.googleapis.com/auth/spreadsheets',
-                'https://www.googleapis.com/auth/drive'
-            ]
-        });
-
-        return auth;
+        return getGoogleAuth('store-main');
     }
 
     /**

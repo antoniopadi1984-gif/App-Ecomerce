@@ -13,8 +13,7 @@ export interface ModuleHealth {
     lastChecked: string;
 }
 
-import { modelRegistry, BudgetMode } from "./ai/model-registry";
-import { TaskType } from "./ai/providers/interfaces";
+
 import { agentDispatcher } from "./agents/agent-dispatcher";
 import { getAgentStats } from "./agents/agent-registry";
 import { API_CONFIG } from "./config/api-config";

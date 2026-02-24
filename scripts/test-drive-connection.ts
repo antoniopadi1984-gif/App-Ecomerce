@@ -5,7 +5,7 @@
  * and can connect to Google Drive API
  */
 
-import { prisma } from './src/lib/prisma';
+import { prisma } from '../src/lib/prisma.ts';
 import { google } from 'googleapis';
 
 async function testDriveConnection() {

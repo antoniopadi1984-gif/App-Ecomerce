@@ -64,7 +64,7 @@ export function HealthDashboard() {
         return (
             <div className={cn(
                 "group flex items-center gap-2 px-2 py-1.5 rounded-lg border transition-all duration-300",
-                "bg-white/40 backdrop-blur-md border-slate-100/40 hover:bg-white hover:border-slate-200 hover:shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)]",
+                "bg-white/40 border-slate-100/40 hover:bg-white hover:border-slate-200 hover:shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)]",
                 isOffline && "border-rose-100 bg-rose-50/20",
                 isDegraded && "border-amber-100 bg-amber-50/20"
             )}>

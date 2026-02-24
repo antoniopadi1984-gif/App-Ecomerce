@@ -11,6 +11,8 @@ export interface AgentRequest {
     temperature?: number;
     maxTokens?: number;
     jsonSchema?: boolean; // Habilitar modo JSON
+    images?: string[];    // URLs o base64 de imágenes para visión
+    locale?: string;      // Código de país (ES, MX, etc.) para localización
 }
 
 export interface AgentResponse {
@@ -54,6 +56,21 @@ export class AgentDispatcher {
         this.replicateProvider = new ReplicateProvider();
     }
 
+    private getCulturalDirectives(locale?: string): string {
+        const country = (locale || 'ES').toUpperCase();
+
+        const directives: Record<string, string> = {
+            'ES': "IDOMA: Español de ESPAÑA (ES-ES). Directrices: Usa 'vosotros', tuteo profesional, léxico peninsular (ej. 'ordenador', 'móvil', 'zapatillas'). Tono: Directo y experto.",
+            'MX': "IDIOMA: Español de MÉXICO (ES-MX). Directrices: Usa 'ustedes', léxico mexicano (ej. 'computadora', 'celular', 'tenis'). Tono: Cálido y atento.",
+            'CO': "IDIOMA: Español de COLOMBIA (ES-CO). Directrices: Usa 'ustedes', léxico colombiano. Tono: Muy formal y educado.",
+            'AR': "IDIOMA: Español de ARGENTINA (ES-AR). Directrices: Usa 'ustedes' (aunque puedes usar vos si es B2C), léxico rioplatense (ej. 'computadora', 'celu'). Tono: Apasionado y directo.",
+            'US': "LANGUAGE: American English (en-US). Tone: Direct, punchy, benefit-driven.",
+            'UK': "LANGUAGE: British English (en-GB). Tone: Professional, slightly formal, reliable."
+        };
+
+        return directives[country] || directives['ES'];
+    }
+
     /**
      * Despachar a agente apropiado
      */
@@ -94,9 +111,10 @@ export class AgentDispatcher {
             throw new Error('REPLICATE_API_TOKEN not configured');
         }
 
+        const culturalDirectives = this.getCulturalDirectives(request.locale);
         const prompt = request.context
-            ? `CONTEXTO:\n${request.context}\n\nTAREA:\n${request.prompt}${request.jsonSchema ? '\n\nIMPORTANTE: Responde ÚNICAMENTE en formato JSON válido según el esquema solicitado.' : ''}`
-            : request.prompt;
+            ? `LOCALIZACIÓN: ${culturalDirectives}\n\nCONTEXTO:\n${request.context}\n\nTAREA:\n${request.prompt}${request.jsonSchema ? '\n\nIMPORTANTE: Responde ÚNICAMENTE en formato JSON válido según el esquema solicitado.' : ''}`
+            : `LOCALIZACIÓN: ${culturalDirectives}\n\nTAREA:\n${request.prompt}`;
 
         const result = await this.replicateProvider.invokeText({
             model: config.model,
@@ -136,7 +154,8 @@ export class AgentDispatcher {
                 const token = await client.getAccessToken();
                 if (!token.token) throw new Error("Failed to get access token");
 
-                const fullPrompt = `${config.systemPrompt}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
+                const culturalDirectives = this.getCulturalDirectives(request.locale);
+                const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
 
                 // Normalizar nombre del modelo para Vertex AI
                 let vertexModel = config.model;
@@ -145,6 +164,42 @@ export class AgentDispatcher {
                 }
 
                 const endpoint = `https://${API_CONFIG.vertexAI.location}-aiplatform.googleapis.com/v1/projects/${API_CONFIG.vertexAI.projectId}/locations/${API_CONFIG.vertexAI.location}/publishers/google/models/${vertexModel}:generateContent`;
+
+                const parts: any[] = [{ text: fullPrompt }];
+
+                // Add images if provided
+                if (request.images && request.images.length > 0) {
+                    for (const imgUrl of request.images) {
+                        try {
+                            // Si es una URL, intentamos fetch y convertir a base64
+                            // Si ya es base64 (data:image/...), lo procesamos
+                            if (imgUrl.startsWith('data:')) {
+                                const mimeType = imgUrl.split(';')[0].split(':')[1];
+                                const data = imgUrl.split(',')[1];
+                                parts.push({
+                                    inlineData: {
+                                        mimeType,
+                                        data
+                                    }
+                                });
+                            } else if (imgUrl.startsWith('http')) {
+                                // En el servidor, deberíamos bajarnos la imagen
+                                const imgRes = await fetch(imgUrl);
+                                const buffer = await imgRes.arrayBuffer();
+                                const base64 = Buffer.from(buffer).toString('base64');
+                                const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+                                parts.push({
+                                    inlineData: {
+                                        mimeType,
+                                        data: base64
+                                    }
+                                });
+                            }
+                        } catch (imgError) {
+                            console.error("[AgentDispatcher] Failed to process image:", imgUrl, imgError);
+                        }
+                    }
+                }
 
                 const response = await fetch(endpoint, {
                     method: 'POST',
@@ -155,7 +210,7 @@ export class AgentDispatcher {
                     body: JSON.stringify({
                         contents: [{
                             role: 'user',
-                            parts: [{ text: fullPrompt }]
+                            parts
                         }],
                         generationConfig: {
                             temperature: request.temperature ?? config.temperature,
@@ -193,9 +248,30 @@ export class AgentDispatcher {
 
             const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-            const fullPrompt = `${config.systemPrompt}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
+            const culturalDirectives = this.getCulturalDirectives(request.locale);
+            const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
 
-            console.log(`[AgentDispatcher] Calling Gemini Studio API: ${endpoint.split('?')[0]}`);
+            const parts: any[] = [{ text: fullPrompt }];
+
+            if (request.images && request.images.length > 0) {
+                for (const imgUrl of request.images) {
+                    try {
+                        if (imgUrl.startsWith('data:')) {
+                            const mimeType = imgUrl.split(';')[0].split(':')[1];
+                            const data = imgUrl.split(',')[1];
+                            parts.push({ inlineData: { mimeType, data } });
+                        } else if (imgUrl.startsWith('http')) {
+                            const imgRes = await fetch(imgUrl);
+                            const buffer = await imgRes.arrayBuffer();
+                            const base64 = Buffer.from(buffer).toString('base64');
+                            const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+                            parts.push({ inlineData: { mimeType, data: base64 } });
+                        }
+                    } catch (e) {
+                        console.error("[AgentDispatcher] AI Studio Image Error:", e);
+                    }
+                }
+            }
 
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -203,7 +279,7 @@ export class AgentDispatcher {
                 body: JSON.stringify({
                     contents: [{
                         role: 'user',
-                        parts: [{ text: fullPrompt }]
+                        parts
                     }],
                     generationConfig: {
                         temperature: request.temperature ?? config.temperature,

@@ -1,5 +1,5 @@
 
-import { decrypt } from '../security';
+import { getConnectionSecret } from '../server/connections';
 
 const META_API_VERSION = 'v21.0';
 const BASE_URL = `https://graph.facebook.com/${META_API_VERSION}`;
@@ -122,20 +122,13 @@ export class MetaAdsService {
  * Helper to get a Meta service instance for a store
  */
 export async function getMetaAdsService(prisma: any, storeId: string): Promise<MetaAdsService> {
-    const connection = await prisma.connection.findUnique({
-        where: { storeId_provider: { storeId, provider: 'META_ADS' } }
-    });
+    const token = await getConnectionSecret(storeId, 'META');
 
-    if (connection && connection.accessToken) {
-        try {
-            const token = decrypt(connection.accessToken);
-            return new MetaAdsService(token);
-        } catch (e) {
-            console.warn('[MetaAdsService] Decryption failed for dynamic token, falling back to env');
-        }
+    if (token) {
+        return new MetaAdsService(token);
     }
 
-    // Fallback to Env
+    // Fallback to Env for development or global config
     const envToken = process.env.META_ACCESS_TOKEN;
     if (envToken) {
         return new MetaAdsService(envToken);

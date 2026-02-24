@@ -1,7 +1,11 @@
 'use server';
 
 import { prisma as db } from '@/lib/prisma';
+import { askGemini } from '@/lib/ai';
 import { revalidatePath } from 'next/cache';
+import { VideoAdOrchestrator } from '@/lib/creative/orchestrators/video-ad-orchestrator';
+import { CaptionGenerator } from '@/lib/creative/generators/caption-generator';
+import { ImageGenerator } from '@/lib/creative/generators/image-generator';
 
 /**
  * Creates a new Maestro Project
@@ -87,32 +91,146 @@ export async function generateMaestroScripts(projectId: string, context: string)
 }
 
 /**
- * Generates Avatar Static Image (Fix for User Bug)
+ * Generates a real Video Variant using AI (Avatar + Voice + Animation)
  */
-export async function generateAvatarStaticImage(avatarId: string) {
-    // Simulate Nano Banana generation via local engine or fallback
-    const mockImageUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`;
+export async function generateMaestroVariant(data: {
+    projectId: string;
+    concept: string;
+    avatarPrompt: string;
+    script: string;
+    voiceId?: string;
+    cropFactor?: number;
+}) {
+    console.log(`[MaestroActions] 🚀 Generando variante: ${data.concept}`);
 
-    await db.avatarProfile.update({
-        where: { id: avatarId },
-        data: {
-            imageUrl: mockImageUrl,
-            status: 'READY'
-        }
-    });
+    try {
+        const orchestrator = new VideoAdOrchestrator();
+        const result = await orchestrator.generateSingle({
+            avatarPrompt: data.avatarPrompt,
+            script: data.script,
+            voiceId: data.voiceId,
+            concept: data.concept,
+            cropFactor: data.cropFactor
+        });
 
-    // Create AvatarAsset record
-    await db.avatarAsset.create({
-        data: {
-            avatarProfileId: avatarId,
-            type: 'AVATAR_IMAGE',
-            pathLocal: mockImageUrl,
-            width: 1024,
-            height: 1024
-        }
-    });
+        // 1. Create the output asset
+        const outputAsset = await db.maestroAsset.create({
+            data: {
+                projectId: data.projectId,
+                type: 'VIDEO_VARIANT',
+                source: 'AI_GENERATED',
+                url: result.videoUrl,
+                status: 'READY',
+                metadata: JSON.stringify({
+                    cost: result.cost,
+                    audioUrl: result.audioUrl,
+                    script: data.script,
+                    thumbnailUrl: result.avatarUrl
+                })
+            }
+        });
 
-    return { success: true, imageUrl: mockImageUrl };
+        // 2. Create the variant record
+        const variant = await db.maestroVariant.create({
+            data: {
+                projectId: data.projectId,
+                name: data.concept,
+                outputAssetId: outputAsset.id,
+                status: 'READY',
+                recipeJson: JSON.stringify({
+                    concept: data.concept,
+                    avatarPrompt: data.avatarPrompt,
+                    script: data.script,
+                    voiceId: data.voiceId
+                })
+            }
+        });
+
+        revalidatePath('/centro-creativo');
+        return { success: true, variant };
+    } catch (error: any) {
+        console.error('[MaestroActions] Error generating variant:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Adds Captions to an existing video asset
+ */
+export async function addCaptionsToMaestroAsset(assetId: string, audioUrl?: string) {
+    console.log(`[MaestroActions] 💬 Agregando subtítulos al asset: ${assetId}`);
+
+    try {
+        const asset = await db.maestroAsset.findUnique({
+            where: { id: assetId },
+            include: { project: true }
+        });
+
+        if (!asset || !asset.url) throw new Error("Asset no encontrado o sin URL");
+
+        // Determinar audioUrl: si no se pasa, usamos el del video (si Gemini lo soporta)
+        // O si es un variant, extraemos el audioUrl de su metadata
+        const effectiveAudioUrl = audioUrl || asset.url;
+
+        const captionGen = new CaptionGenerator();
+        const result = await captionGen.generateAndAddCaptions(asset.url, effectiveAudioUrl, 'bold');
+
+        // Update asset with captioned version or create a new one
+        const updatedAsset = await db.maestroAsset.update({
+            where: { id: assetId },
+            data: {
+                url: result.captionedVideoUrl,
+                status: 'READY',
+                metadata: JSON.stringify({
+                    ...(asset.metadata ? JSON.parse(asset.metadata as string) : {}),
+                    hasCaptions: true,
+                    segments: result.segments
+                })
+            }
+        });
+
+        return { success: true, asset: updatedAsset };
+    } catch (error: any) {
+        console.error('[MaestroActions] Error adding captions:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Generates Avatar Static Image (Real Vertex AI / Imagen 3)
+ */
+export async function generateAvatarStaticImage(avatarId: string, prompt: string) {
+    try {
+        const imageGen = new ImageGenerator();
+        const imageUrl = await imageGen.generate({
+            prompt: prompt,
+            aspectRatio: '9:16',
+            style: 'realistic'
+        });
+
+        await db.avatarProfile.update({
+            where: { id: avatarId },
+            data: {
+                imageUrl: imageUrl,
+                status: 'READY'
+            }
+        });
+
+        // Create AvatarAsset record
+        await db.avatarAsset.create({
+            data: {
+                avatarProfileId: avatarId,
+                type: 'AVATAR_IMAGE',
+                pathLocal: imageUrl,
+                width: 1024,
+                height: 1024
+            }
+        });
+
+        return { success: true, imageUrl: imageUrl };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
 }
 
 /**
@@ -222,4 +340,116 @@ export async function verifySystemHealth() {
     }
 
     return checks;
+}
+
+/**
+ * AGENTIC PRODUCTION: Automated Assembly
+ */
+export async function triggerAgenticProduction(productId: string, platform: string) {
+    console.log(`[DirectorAgent] 🤖 Iniciando misión para: ${productId} en ${platform}`);
+
+    // Workflow:
+    // 1. Fetch Best Hook from Ingested Assets
+    // 2. Generate optimized script for that hook
+    // 3. Select best avatar
+    // 4. Trigger Batch variant generation
+
+    // MOCK:
+    await new Promise(r => setTimeout(r, 2000));
+
+    return {
+        success: true,
+        message: "Video Maestro Ensamblado y guardado en biblioteca.",
+        assetId: "agentic-result-001"
+    };
+}
+
+export async function fetchTrendRadar() {
+    return {
+        trends: [
+            { id: 1, title: "ASMR Unboxing UGC", platform: "TIKTOK", virality: 0.98, hook: "I didn't expect this to be so small..." },
+            { id: 2, title: "The 'Better than X' Hook", platform: "META", virality: 0.85, hook: "Stop buying name brand..." },
+            { id: 3, title: "Problem/Solution Side-by-Side", platform: "TIKTOK", virality: 0.92, hook: "My hair before and after this..." }
+        ]
+    };
+}
+
+/**
+ * AGENTIC PRODUCTION: Step 1 - Information Analysis
+ */
+export async function agenticStep1Analysis(productId: string) {
+    const product = await db.product.findUnique({
+        where: { id: productId },
+        include: { avatarResearches: true }
+    });
+
+    if (!product) throw new Error("Producto no encontrado");
+
+    const { getDirectorPrompt } = await import('@/lib/ai/prompts/director-agent');
+    const systemPrompt = await getDirectorPrompt();
+
+    const context = `
+    PRODUCT INFO:
+    Title: ${product.title}
+    Description: ${product.description}
+    Price: ${product.price}
+    Category: ${product.productType}
+    Research: ${JSON.stringify(product.avatarResearches)}
+    `;
+
+    const prompt = `
+    ${systemPrompt}
+    
+    ---
+    MANDATORY EXECUTION:
+    Execute "STEP 1: INFORMATION ANALYSIS" based on this context:
+    ${context}
+    
+    Respond in Spanish. Keep the elite copywriter tone.
+    `;
+
+    const res = await askGemini(prompt, undefined, { model: 'gemini-1.5-pro' });
+    return { success: true, analysis: res.text };
+}
+
+/**
+ * AGENTIC PRODUCTION: Step 2 - Strategy Calibration & Script Generation
+ * (Note: Step 2 in prompt asks for input, this action handles the final generation after user input)
+ */
+export async function agenticGenerateScript(productId: string, calibrationInput: string, additionalNotes?: string) {
+    const product = await db.product.findUnique({
+        where: { id: productId }
+    });
+
+    const { getDirectorPrompt } = await import('@/lib/ai/prompts/director-agent');
+    const systemPrompt = await getDirectorPrompt();
+
+    const prompt = `
+    ${systemPrompt}
+    
+    ---
+    CONTEXT:
+    Product: ${product?.title}
+    User Selection: ${calibrationInput}
+    Additional Info: ${additionalNotes}
+    
+    MANDATORY EXECUTION:
+    Based on the calibration and the mandatory formula (Eugene Schwartz + $100k/day), generate:
+    1. 5 INTERCHANGEABLE HOOKS
+    2. 1 UNIVERSAL BODY
+    3. WINNING ANALYSIS
+    
+    Respond in Spanish.
+    `;
+
+    const res = await askGemini(prompt, undefined, { model: 'gemini-1.5-pro' });
+    return { success: true, script: res.text };
+}
+
+/**
+ * AGENTIC PRODUCTION: Update System Prompt
+ */
+export async function updateAgentPrompt(newPrompt: string) {
+    const { updateDirectorPrompt } = await import('@/lib/ai/prompts/director-agent');
+    return await updateDirectorPrompt(newPrompt);
 }

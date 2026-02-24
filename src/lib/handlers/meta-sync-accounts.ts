@@ -4,7 +4,7 @@ import { prisma } from "../prisma";
 import { getMetaAdsService } from "../marketing/meta-ads";
 
 const metaSyncAccountsHandler: JobHandler = {
-    handle: async (payload, onProgress) => {
+    handle: async (payload, onProgress, jobId) => {
         let storeId = payload.storeId;
         const db = prisma as any;
 

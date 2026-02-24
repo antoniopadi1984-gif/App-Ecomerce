@@ -1,7 +1,7 @@
 
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { SnapshotService } from "@/lib/services/snapshot-service";
+import { MetricsSnapshotService } from "@/lib/services/metrics-snapshot-service";
 import { FinancialAdviser } from "@/lib/services/financial-adviser";
 import { ThresholdService } from "@/lib/threshold-service";
 
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
         // --- PREFERRED PATH: SNAPSHOTS (Global Store View) ---
         if (!productId || productId === 'GLOBAL') {
             console.log(`[Accounting API] Loading SNAPSHOT summary for store ${storeId} (${month}/${year})`);
-            const summary = await SnapshotService.getMonthlySummary(storeId, month, year);
+            const summary = await MetricsSnapshotService.getMonthlySummary(storeId, month, year);
             const thresholds = await ThresholdService.getActiveThreshold(storeId);
 
             // Re-run AI analysis on the summary days

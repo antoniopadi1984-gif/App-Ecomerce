@@ -15,11 +15,13 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const replicateToken = process.env.REPLICATE_API_TOKEN;
+        const { getConnectionSecret } = await import("@/lib/server/connections");
+        const replicateToken = await getConnectionSecret("store-main", "REPLICATE") || process.env.REPLICATE_API_TOKEN;
+
         if (!replicateToken) {
             return NextResponse.json(
-                { error: "REPLICATE_API_TOKEN not configured" },
-                { status: 500 }
+                { error: "Replicate Master Engine no configurado. Ve a Conexiones." },
+                { status: 400 }
             );
         }
 

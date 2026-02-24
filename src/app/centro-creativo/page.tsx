@@ -3,147 +3,180 @@
 import React, { useState } from "react";
 import { useProduct } from "@/context/ProductContext";
 import {
-    Layout,
-    Video,
-    Users,
-    Grid3X3,
-    Bot,
-    FileText,
-    Sparkles,
-    AlertCircle,
-    Clapperboard,
-    BookOpen,
-    Rocket
+    Layout, Video, Users, Grid3X3, Bot, FileText, Sparkles, AlertCircle,
+    Clapperboard, BookOpen, Rocket, Zap, MessageSquare, Compass, RefreshCw,
+    Settings, Brain, ShieldCheck, Target, Link2, Image
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { MarketingHubClient } from "@/components/marketing/MarketingHubClient";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { CreativeFactoryPanel } from "@/components/creative/CreativeFactoryPanel";
 import { LandingLabModule } from "@/components/marketing/LandingLabModule";
 import { VideoLabModule } from "@/components/marketing/VideoLabModule";
-import { AvatarsLabModule } from "@/components/marketing/AvatarsLabModule";
-import { ClowdbotLabModule } from "@/components/marketing/ClowdbotLabModule";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useCreative } from "@/hooks/useCreative";
+import { StaticAdsModule } from "@/components/marketing/StaticAdsModule";
+import { ResourcesModule } from "@/components/marketing/ResourcesModule";
+import { AgencyControlPanel } from "@/components/creative/AgencyControlPanel";
 import { CreativeHeader } from "@/components/creative/CreativeHeader";
 import { AssetGrid } from "@/components/creative/AssetGrid";
 import { AssetDetailModal } from "@/components/creative/AssetDetailModal";
+import { BibliotecaModule } from "@/components/creative/BibliotecaModule";
+import { useCreative } from "@/hooks/useCreative";
 import { ds } from "@/lib/styles/design-system";
+import { PageShell } from "@/components/ui/PageShell";
+import { ModuleHeader } from "@/components/ui/ModuleHeader";
+import Link from "next/link";
+import { useStore } from "@/lib/store/store-context";
+import { cn } from "@/lib/utils";
+
+/* ─────────────────────────────────────
+   TAB CONFIG
+   ───────────────────────────────────── */
+const CREATIVE_TABS = [
+    { id: "landing", icon: Brain, label: "Landing Builder", color: "from-indigo-600 to-blue-600" },
+    { id: "static", icon: Image, label: "Ads Estáticos", color: "from-amber-600 to-orange-600" },
+    { id: "video", icon: Zap, label: "Video Lab", color: "from-violet-600 to-purple-600" },
+    { id: "resources", icon: BookOpen, label: "Recursos", color: "from-cyan-600 to-sky-600" },
+    { id: "library", icon: Clapperboard, label: "Biblioteca", color: "from-slate-700 to-slate-900" },
+] as const;
+
+type TabId = typeof CREATIVE_TABS[number]["id"];
 
 export default function CentroCreativoPage() {
+    const { activeStoreId: storeId } = useStore();
     const { productId, product, allProducts } = useProduct();
-    const [activeTab, setActiveTab] = useState("landings");
+    const [activeTab, setActiveTab] = useState<TabId>("landing");
     const [selectedAsset, setSelectedAsset] = useState<any>(null);
+    const [metaConnected, setMetaConnected] = useState<boolean | null>(null);
 
-    // We reuse logic from MarketingHub but presenting it with the new layout
+    React.useEffect(() => {
+        if (storeId) {
+            fetch(`/api/connections/status?storeId=${storeId}&service=META_ADS`)
+                .then(res => res.json())
+                .then(data => setMetaConnected(data.isConnected))
+                .catch(() => setMetaConnected(false));
+        }
+    }, [storeId]);
+
     const { creativeData, loading, generating, generateVideos, performAction } = useCreative(productId || "");
 
     if (!productId) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center animate-in fade-in duration-700">
-                <div className="w-16 h-16 bg-indigo-50 rounded-lg flex items-center justify-center">
-                    <Sparkles className="w-8 h-8 text-indigo-500" />
+            <PageShell>
+                <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center animate-in fade-in duration-700">
+                    <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100">
+                        <Sparkles className="w-8 h-8 text-indigo-500" />
+                    </div>
+                    <div className="space-y-2 text-center">
+                        <h2 className="text-lg font-black text-slate-900 tracking-tight italic uppercase">Factoría Creativa</h2>
+                        <p className="text-sm text-slate-500 max-w-sm mx-auto font-medium">Selecciona un producto para acceder a todas las herramientas de creación.</p>
+                    </div>
                 </div>
-                <div className="space-y-2">
-                    <h2 className="text-lg font-black text-slate-900 tracking-tight italic uppercase">Factoría Creativa</h2>
-                    <p className="text-sm text-slate-500 max-w-sm mx-auto font-medium">Selecciona un producto para acceder a todas las herramientas de creación.</p>
-                </div>
-            </div>
+            </PageShell>
         );
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-100px)] space-y-4">
-            {/* Header / Nav */}
-            <div className="bg-white rounded-lg border border-slate-200 px-4 py-3 flex items-center justify-between shadow-xs">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center shadow-md shadow-slate-200">
-                        <Sparkles className="w-4 h-4 text-indigo-400" />
+        <PageShell>
+            <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 px-1 pt-3 pb-2">
+                    <div className="space-y-1">
+                        <Badge className="bg-slate-900 text-white border-none font-black text-[7px] uppercase tracking-[0.2em] px-2 py-0.5 rounded-sm">
+                            Creative OS v4.0
+                        </Badge>
+                        <h1 className="text-lg font-black tracking-tighter italic uppercase text-slate-900 leading-none flex items-center gap-2">
+                            <Brain className="h-4 w-4" /> CENTRO <span className="text-slate-400">CREATIVO</span>
+                        </h1>
+                        <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400">{product?.title} • Protocolo Unificado</p>
                     </div>
-                    <div>
-                        <h1 className="text-xs font-black text-slate-900 uppercase tracking-tighter leading-none italic">Centro <span className="text-indigo-600 not-italic">Creativo</span></h1>
-                        <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.1em] mt-1 shrink-0">Creative Hub & AI Factory</p>
-                    </div>
-                </div>
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-                <div className="px-0.5 py-0.5 bg-slate-100 border border-slate-200 rounded-lg mb-3 shadow-xs inline-flex overflow-x-auto no-scrollbar max-w-full">
-                    <TabsList className="bg-transparent h-8 gap-0.5">
-                        {[
-                            { value: 'landings', icon: Layout, label: 'LANDING BUILDER' },
-                            { value: 'advertorials', icon: FileText, label: 'ADVERTORIAL BUILDER' },
-                            { value: 'listicles', icon: BookOpen, label: 'LISTICLE BUILDER' },
-                            { value: 'avatars', icon: Users, label: 'AVATARES IA' },
-                            { value: 'video', icon: Video, label: 'VIDEO EDITOR' },
-                            { value: 'library', icon: Grid3X3, label: 'LIBRARY' },
-                        ].map((t) => (
-                            <TabsTrigger key={t.value} value={t.value} className="rounded-md px-3 py-1 text-[8px] font-black uppercase tracking-widest data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all whitespace-nowrap">
-                                <t.icon className="w-3 h-3 mr-1.5" />
-                                {t.label}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
-                </div>
-
-                <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col min-h-0 overflow-hidden relative">
-                    <ScrollArea className="flex-1">
-                        <div className="p-4">
-                            <TabsContent value="landings" className="m-0 animate-in fade-in duration-500">
-                                <LandingLabModule productId={productId} productTitle={product?.title} />
-                            </TabsContent>
-
-                            <TabsContent value="advertorials" className="m-0 animate-in fade-in duration-500">
-                                <ClowdbotLabModule />
-                            </TabsContent>
-
-                            <TabsContent value="listicles" className="m-0 animate-in fade-in duration-500">
-                                <div className="py-10 text-center space-y-4">
-                                    <BookOpen className="w-12 h-12 text-slate-200 mx-auto" />
-                                    <div>
-                                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Listicle Builder</h3>
-                                        <p className="text-xs text-slate-300 italic mt-1">Configura estructuras de comparación y recomendaciones.</p>
-                                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="flex gap-1 items-center bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                            {["Respuesta Directa", "Alto CTR"].map(tag => (
+                                <span key={tag} className="text-slate-400 text-[7px] font-black uppercase tracking-widest border-r border-slate-200 last:border-none pr-1.5 last:pr-0">{tag}</span>
+                            ))}
+                        </div>
+                        <IntelligenceBadge icon={Target} value="Impulsivos" />
+                        <IntelligenceBadge icon={Zap} value="Élite" />
+                        {/* Meta connection status - non-blocking */}
+                        {metaConnected === false && (
+                            <Link href="/connections">
+                                <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-2 py-0.5 cursor-pointer hover:bg-amber-100 transition-colors">
+                                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                                    <span className="text-[7px] font-black uppercase tracking-widest text-amber-700">Meta Offline</span>
                                 </div>
-                            </TabsContent>
+                            </Link>
+                        )}
+                        {metaConnected === true && (
+                            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-0.5">
+                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                <span className="text-[7px] font-black uppercase tracking-widest text-emerald-700">Meta Live</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
-                            <TabsContent value="avatars" className="m-0 animate-in fade-in duration-500">
-                                <AvatarsLabModule />
-                            </TabsContent>
+                {/* TAB BAR — Premium gradient style */}
+                <div className="flex gap-1 p-1 bg-slate-100/80 rounded-lg mx-1 mb-2 border border-slate-200/60">
+                    {CREATIVE_TABS.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={cn(
+                                    "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[8px] font-black uppercase tracking-widest transition-all duration-300",
+                                    isActive
+                                        ? `bg-gradient-to-r ${tab.color} text-white shadow-lg`
+                                        : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                                )}
+                            >
+                                <Icon className="h-3 w-3" />
+                                <span className="hidden lg:inline">{tab.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
 
-                            <TabsContent value="video" className="m-0 animate-in fade-in duration-500">
-                                <VideoLabModule productId={productId} productTitle={product?.title} allProducts={allProducts} />
-                            </TabsContent>
-
-                            <TabsContent value="library" className="m-0 space-y-4 animate-in fade-in duration-500">
-                                <CreativeHeader
-                                    stats={creativeData?.stats || { totalSpend: 0, totalRevenue: 0, avgCtr: 0, count: 0 }}
-                                    onGenerate={() => generateVideos({ maxVideos: 3 })}
-                                    onUpload={() => { }}
-                                    isGenerating={generating}
+                {/* TAB CONTENT */}
+                <div className="flex-1 overflow-hidden relative">
+                    <ScrollArea className="h-full">
+                        <div className="px-1 pb-4">
+                            {activeTab === "landing" && <LandingLabModule productId={productId} productTitle={product?.title} storeId={storeId || ''} />}
+                            {activeTab === "static" && <StaticAdsModule productId={productId} productTitle={product?.title} storeId={storeId || ''} />}
+                            {activeTab === "video" && <VideoLabModule productId={productId} productTitle={product?.title} allProducts={allProducts} storeId={storeId || ''} />}
+                            {activeTab === "resources" && <ResourcesModule productId={productId} productTitle={product?.title} storeId={storeId || ''} />}
+                            {activeTab === "library" && (
+                                <BibliotecaModule
+                                    storeId={storeId || ''}
+                                    productId={productId}
+                                    productTitle={product?.title}
                                 />
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <h2 className={ds.typography.h2}>Biblioteca de Activos</h2>
-                                        <span className="px-2 py-0.5 bg-slate-200 text-slate-600 text-[8px] font-black rounded-md uppercase">
-                                            {creativeData?.assets?.length || 0} Archivos
-                                        </span>
-                                    </div>
-                                    <AssetGrid assets={creativeData?.assets || []} onAssetClick={setSelectedAsset} />
-                                </div>
-                            </TabsContent>
+                            )}
                         </div>
                     </ScrollArea>
-                </div>
-            </Tabs>
 
-            {selectedAsset && (
-                <AssetDetailModal
-                    asset={selectedAsset}
-                    onClose={() => setSelectedAsset(null)}
-                    onAudit={(id) => performAction('AUDIT', { id })}
-                    onClip={(id) => performAction('CLIP', { id })}
-                    isLoading={loading}
-                />
-            )}
+                    {selectedAsset && (
+                        <AssetDetailModal
+                            asset={selectedAsset}
+                            onClose={() => setSelectedAsset(null)}
+                            onAudit={(id) => performAction('AUDIT', { id })}
+                            onClip={(id) => performAction('CLIP', { id })}
+                            isLoading={loading}
+                        />
+                    )}
+                </div>
+            </div>
+        </PageShell>
+    );
+}
+
+function IntelligenceBadge({ icon: Icon, value }: { icon: any, value: string }) {
+    return (
+        <div className="bg-white border border-slate-200 rounded-lg px-2 py-0.5 flex items-center gap-1.5 shadow-xs">
+            <Icon className="w-2.5 h-2.5 text-rose-500" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-600">{value}</span>
         </div>
     );
 }

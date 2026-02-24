@@ -163,6 +163,38 @@ ${(researchData.voc?.dictionary || []).slice(0, 5).map((d: any) => `- "${d.phras
 `;
             exportPromises.push(uploadDoc('00_BRIEFING_CREATIVO', creativeBrief));
 
+            // --- 00.2 VISUAL IDENTITY GUIDE ---
+            if (researchData.visual_branding) {
+                const vb = researchData.visual_branding;
+                const visualGuide = `# 🎨 GUÍA DE IDENTIDAD VISUAL: ${product.title}
+## 1. PALETA DE COLORES
+- **Primario:** ${vb.palette?.primary || '#000000'}
+- **Secundario:** ${vb.palette?.secondary || '#FFFFFF'}
+- **Acento:** ${vb.palette?.accent || '#FF0000'}
+
+**Psicología:** ${vb.palette?.rationale || 'N/A'}
+
+## 2. TIPOGRAFÍA RECOMENDADA
+- **Titulares:** ${vb.typography?.heading || 'Sans-serif'}
+- **Cuerpo:** ${vb.typography?.body || 'Serif'}
+
+**Notas de Estilo:** ${vb.typography?.style_notes || 'N/A'}
+
+## 3. DIRECCIÓN CREATIVA (VISUAL STYLE)
+**Estilo de Anuncios:** ${vb.visual_style?.creative_direction || 'N/A'}
+**Iluminación y Vibe:** ${vb.visual_style?.lighting_and_vibe || 'N/A'}
+**Diferenciación Visual:** ${vb.visual_style?.competitor_contrast || 'N/A'}
+
+## 4. PACKAGING & LOGO
+**Sugerencias de Empaque:** ${vb.packaging_guidelines || 'N/A'}
+**Análisis de Logo:** ${vb.logo_critique_or_suggestion || 'N/A'}
+
+---
+*Esta guía debe ser entregada al Editor de Video y Diseñador Web.*
+`;
+                exportPromises.push(uploadDoc('00_GUIA_IDENTIDAD_VISUAL', visualGuide));
+            }
+
             // --- 01. ADN PRODUCTO ---
             if (researchData.product_core) {
                 const pc = researchData.product_core;
@@ -229,11 +261,11 @@ ${(researchData.voc?.desires || []).map((d: any) => `- ${d.name || d}`).join('\n
             if (researchData.marketing_angles?.angle_tree) {
                 const content = `# 🏹 INGENIERÍA DE ÁNGULOS
 ${(researchData.marketing_angles.angle_tree || []).map((a: any, i: number) => `
-## ÁNGULO #${i + 1}: ${a.type}
+## ÁNGULO #${i + 1}: ${a.type} [${a.spencer_angle_code || 'N/A'}]
 **Concepto:** ${a.concept}
 **Lead (Apertura):** "${a.lead_lines}"
 ### Hooks Sugeridos:
-${(a.hooks || []).map((h: any) => `- ${h.text || h} (${h.logic || ''})`).join('\n')}
+${(a.hooks || []).map((h: any) => `- **${h.spencer_hook_code || 'N/A'}**: ${h.text || h} (${h.logic || ''})`).join('\n')}
 `).join('\n---\n')}
 `;
                 exportPromises.push(uploadDoc('05_MARKETING_ANGLES', content));

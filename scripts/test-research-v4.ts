@@ -1,4 +1,4 @@
-gemini#!/usr/bin / env tsx
+#!/usr/bin/env tsx
 /**
  * Test script para Research Lab V4 Services
  * 

@@ -1,14 +1,14 @@
 /**
- * getActiveConnection — Resolver de conexiones por store.
- *
- * Regla: si hay Connection activa del store → usarla.
- *        Si no hay → devolver null (caller decide si STUB/FAIL).
- *
- * Nunca lee .env directamente para credenciales de provider
- * (excepto REPLICATE_API_TOKEN que es global, no per-store).
+ * COMPAT LAYER - RE-EXPORTS FROM CANONICAL @/lib/server/connections
+ * All new code should import from @/lib/server/connections directly.
  */
 
-import prisma from "@/lib/prisma";
+import {
+    getStoreConnections as getStoreConnectionsCanonical,
+    hasActiveConnection as hasActiveConnectionCanonical,
+    getConnectionSecret,
+    getConnectionMeta
+} from "@/lib/server/connections";
 
 export interface ConnectionCredentials {
     provider: string;
@@ -22,75 +22,29 @@ export interface ConnectionCredentials {
 }
 
 /**
- * Obtener credenciales de una conexión activa por store y provider.
+ * Legacy wrapper for getActiveConnection.
+ * Converts canonical secret into legacy structure for compatibility.
  */
 export async function getActiveConnection(
     storeId: string,
     provider: string
 ): Promise<ConnectionCredentials | null> {
-    const connection = await prisma.connection.findFirst({
-        where: {
-            storeId,
-            provider: provider.toUpperCase(),
-            isActive: true,
-        },
-    });
+    const meta = await getConnectionMeta(storeId, provider);
+    if (!meta) return null;
 
-    if (!connection) return null;
-
-    let extraConfig: Record<string, any> | null = null;
-    if (connection.extraConfig) {
-        try {
-            extraConfig = JSON.parse(connection.extraConfig);
-        } catch (_) {
-            extraConfig = null;
-        }
-    }
+    const secret = await getConnectionSecret(storeId, provider);
 
     return {
-        provider: connection.provider,
-        apiKey: connection.apiKey,
-        apiSecret: connection.apiSecret,
-        accessToken: connection.accessToken,
-        webhookSecret: connection.webhookSecret,
-        webhookUrl: connection.webhookUrl,
-        extraConfig,
-        connectionId: connection.id,
+        provider: meta.provider,
+        apiKey: secret, // En el legacy se devolvía apiKey como el secreto principal
+        apiSecret: null,
+        accessToken: null,
+        webhookSecret: null,
+        webhookUrl: null,
+        extraConfig: meta.extraConfig ? JSON.parse(meta.extraConfig as string) : null,
+        connectionId: meta.id,
     };
 }
 
-/**
- * Obtener todas las conexiones activas de un store.
- */
-export async function getStoreConnections(storeId: string) {
-    const connections = await prisma.connection.findMany({
-        where: { storeId, isActive: true },
-        select: {
-            id: true,
-            provider: true,
-            isActive: true,
-            lastSyncedAt: true,
-            createdAt: true,
-            // NO devolver apiKey, apiSecret, accessToken, webhookSecret
-        },
-    });
-
-    return connections;
-}
-
-/**
- * Verificar si un store tiene una conexión activa para un provider.
- */
-export async function hasActiveConnection(
-    storeId: string,
-    provider: string
-): Promise<boolean> {
-    const count = await prisma.connection.count({
-        where: {
-            storeId,
-            provider: provider.toUpperCase(),
-            isActive: true,
-        },
-    });
-    return count > 0;
-}
+export const getStoreConnections = getStoreConnectionsCanonical;
+export const hasActiveConnection = hasActiveConnectionCanonical;

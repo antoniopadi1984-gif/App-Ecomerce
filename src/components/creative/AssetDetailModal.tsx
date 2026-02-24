@@ -34,7 +34,7 @@ export function AssetDetailModal({ asset, onClose, onAudit, onClip, isLoading }:
     if (!asset) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 flex items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden border border-white shadow-indigo-900/10">
                 {/* Modal Header */}
                 <div className="px-10 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -63,7 +63,7 @@ export function AssetDetailModal({ asset, onClose, onAudit, onClip, isLoading }:
 
                 <div className="flex-1 flex overflow-hidden">
                     {/* Left Side: Video Preview */}
-                    <div className="w-[45%] bg-slate-900 flex flex-col p-8">
+                    <div className="w-[45%] bg-slate-900 flex flex-col p-6">
                         <div className="relative flex-1 rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50 bg-black group">
                             {asset.driveUrl ? (
                                 <video

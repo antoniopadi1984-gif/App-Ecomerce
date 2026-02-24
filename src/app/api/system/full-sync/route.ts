@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { syncShopifyHistory, syncBeepingStatuses } from "@/app/logistics/orders/actions";
-import { SnapshotService } from "@/lib/services/snapshot-service";
+import { syncShopifyHistory, syncBeepingStatuses } from "@/app/pedidos/actions";
+import { MetricsSnapshotService } from "@/lib/services/metrics-snapshot-service";
 import { subDays } from "date-fns";
 
 export async function GET(req: NextRequest) {
@@ -20,16 +20,16 @@ export async function GET(req: NextRequest) {
 
         // 2. Beeping Status Sync (Fetch logistics updates)
         console.log("🚚 [FullSync] Syncing Beeping statuses...");
-        await syncBeepingStatuses(0);
+        await syncBeepingStatuses(store.id, 0);
 
         // 3. Regenerate Snapshots (Today & Yesterday)
-        // This also triggers Meta Ads sync inside SnapshotService
+        // This also triggers Meta Ads sync inside MetricsSnapshotService
         console.log("📊 [FullSync] Regenerating snapshots (Today & Yesterday)...");
         const today = new Date();
         const yesterday = subDays(today, 1);
 
-        await SnapshotService.generateDailySnapshot(store.id, yesterday, true);
-        await SnapshotService.generateDailySnapshot(store.id, today, true);
+        await MetricsSnapshotService.generateDailySnapshot(store.id, yesterday, true);
+        await MetricsSnapshotService.generateDailySnapshot(store.id, today, true);
 
         return NextResponse.json({
             success: true,

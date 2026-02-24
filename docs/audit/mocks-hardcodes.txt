@@ -1,0 +1,75 @@
+src/app/settings/notifications/actions.ts:9:            where: { storeId: "default-store" }
+src/app/settings/clowdbot/actions.ts:70:            avgResponseTime: 0 // Mocked for now
+src/app/analiticas/page.tsx:49:    // Mock data for now, similar to PerformanceMaster but filtered for this product
+src/app/analiticas/page.tsx:51:        const timer = setTimeout(() => {
+src/app/connections/page.tsx:113:        const url = "https://app.nanobanana.com/api/webhooks/master";
+src/app/connections/page.tsx:117:        setTimeout(() => setIsCopied(false), 2000);
+src/app/connections/page.tsx:361:                                https://app.nanobanana.com/api/webhooks/master
+src/app/team/actions.ts:39:    // Mock invitation
+src/app/api/settings/alert-thresholds/route.ts:10:        const storeId = searchParams.get("storeId") || "default-store";
+src/app/api/auth/google/callback/route.ts:22:        // Hardcoded to match the start route exactly
+src/app/api/pricing-offers/route.ts:60:        const storeId = request.nextUrl.searchParams.get('storeId') || 'default-store';
+src/app/api/test-agents/route.ts:4:const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+src/app/api/marketing/sync/route.ts:8:        const storeId = "default-store"; // For now, or get from session
+src/app/api/marketing/sync/route.ts:31:                await new Promise(r => setTimeout(r, 1000));
+src/app/api/finances/sync-today/route.ts:5:    const storeId = request.nextUrl.searchParams.get('storeId') || 'default-store';
+src/app/api/finances/expenses/route.ts:8:    const storeId = searchParams.get('storeId') || 'default-store';
+src/app/api/finances/expenses/route.ts:32:        const { storeId = 'default-store', amount, category, description, date } = body;
+src/app/api/webhooks/master-listener/route.ts:60:            storeId = firstStore ? firstStore.id : (await prisma.store.create({ data: { id: "default-store", name: "Mi Tienda Webhook", currency: "EUR" } })).id;
+src/app/marketing/ads-moderator/page.tsx:23:const MOCK_COMMENTS = [
+src/app/marketing/ads-moderator/page.tsx:60:    const [comments, setComments] = useState(MOCK_COMMENTS);
+src/app/marketing/ads-moderator/page.tsx:73:        setTimeout(() => {
+src/app/marketing/ads-moderator/page.tsx:390:                                            <Input placeholder="estafa, mentira, fake..." className="h-12 bg-black border-white/10 rounded-xl" />
+src/app/marketing/ads-moderator/page.tsx:413:                                    setTimeout(() => {
+src/app/marketing/branding/page.tsx:39:            setTimeout(() => {
+src/app/marketing/maestro/actions.ts:40:            url: `/uploads/${fileName}`, // Mock path
+src/app/marketing/maestro/actions.ts:46:    // Trigger Analysis Job (Mock)
+src/app/marketing/maestro/actions.ts:62:    // Create mock clips
+src/app/marketing/maestro/actions.ts:94:    const mockImageUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`;
+src/app/marketing/maestro/actions.ts:99:            imageUrl: mockImageUrl,
+src/app/marketing/maestro/actions.ts:109:            pathLocal: mockImageUrl,
+src/app/marketing/maestro/actions.ts:115:    return { success: true, imageUrl: mockImageUrl };
+src/app/marketing/landing-lab/actions.ts:74:    await new Promise(r => setTimeout(r, 1500));
+src/app/marketing/landing-lab/actions.ts:123:        // Fallback to varied mock if AI fails
+src/app/marketing/landing-lab/actions.ts:156:        // Convert structure to HTML mock for the page
+src/app/marketing/video-lab/VideoLabClient.tsx:95:        await new Promise(r => setTimeout(r, 2000));
+src/app/marketing/video-lab/VideoLabClient.tsx:193:            p += Math.random() * 5;
+src/app/marketing/video-lab/actions.ts:82:                nomenclatura: `VM-${Math.random().toString(36).substring(7).toUpperCase()}`,
+src/app/marketing/facebook-ads/page.tsx:43:const MOCK_CAMPAIGNS = [
+src/app/marketing/facebook-ads/page.tsx:48:const MOCK_ADS = [
+src/app/finances/page.tsx:62:        const timeoutId = setTimeout(() => controller.abort(), 4000);
+src/app/logistics/settings/page.tsx:22:        setTimeout(() => {
+src/app/logistics/orders/actions.ts:350:    // 3. Last resort: Create the default-store record
+src/app/logistics/orders/actions.ts:351:    console.log("[Store] Creating default-store record as fallback...");
+src/app/logistics/orders/actions.ts:353:        data: { id: "default-store", name: "Tienda Principal", currency: "EUR" }
+src/app/logistics/orders/actions.ts:779:        if (processed < effectiveLimit) await new Promise(r => setTimeout(r, 200));
+src/app/logistics/orders/actions.ts:1394:            // Estimate Ad Spend from Creative Assets for that day (Mocked as real-time pull not active)
+src/app/logistics/orders/actions.ts:1395:            const dailyAdSpend = 0;
+src/app/logistics/orders/actions.ts:1985:            // 1. Hardcoded Defaults
+src/app/communications/inbox/page.tsx:96:            setTimeout(() => {
+src/app/communications/inbox/page.tsx:185:        setTimeout(() => loadMessages(selectedId), 1000);
+src/components/research/ModuleCard.tsx:64:                        <span className="text-[6px] font-black text-indigo-500 uppercase tracking-tighter">0{Math.floor(Math.random() * 5) + 1}</span>
+src/components/logistics/system-status.tsx:37:            await new Promise(r => setTimeout(r, 1000));
+src/lib/research/search-orchestrator.ts:382:        return new Promise(resolve => setTimeout(resolve, ms));
+src/lib/clowdbot-engine.ts:27:        const storeId = order?.storeId || "default-store";
+src/lib/video/processing-pipeline.ts:134:            // TODO: Remove hardcoded subtitles using ffmpeg filter
+src/lib/geocoding.ts:121:            // We construct a mock response that guarantees validation passes if we already have coords
+src/lib/geocoding.ts:200:            lat = fallback[1].lat + (Math.random() - 0.5) * 0.1;
+src/lib/geocoding.ts:201:            lng = fallback[1].lng + (Math.random() - 0.5) * 0.1;
+src/lib/envato.ts:17:    // Mocking results for the Studio experience
+src/lib/envato.ts:19:    const mocks: Record<string, EnvatoAsset[]> = {
+src/lib/envato.ts:32:    return mocks[type] || [];
+src/lib/ai/model-registry.ts:11:// Mock registry state. In real app, this syncs with DB or periodic checks.
+src/lib/ai.ts:36:        // 3. Active Campaigns (Mocked or DB if available)
+src/lib/health.ts:92:    setTimeout(() => { isRecovering = false; }, 30000);
+src/lib/creative/generators/voice-generator.ts:103:        const filename = `audio/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.mp3`;
+src/lib/creative/generators/image-generator.ts:132:        const filename = `images/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.png`;
+src/lib/handlers/generate-avatar-image.ts:76:            // Download real asset from engine or simulate if it's a mock url
+src/lib/services/snapshot-service.ts:157:        let spend = 0;
+src/lib/services/backfill-service.ts:114:            await new Promise(resolve => setTimeout(resolve, 500));
+src/lib/worker.ts:161:                await new Promise(r => setTimeout(r, 5000)); // Sleep if no jobs
+src/lib/worker.ts:233:            await new Promise(r => setTimeout(r, 2000));
+src/engine/server.py:168:        # But per user request "Nano Banana Prom", we will try the mock *unless* we can hit the real one.
+src/engine/server.py:226:        # Mocking the content for reliability unless valid
+src/engine/server.py:274:    # Simulation FX - Mock Success for UI
+src/engine/server.py:283:    # Interaction synthesis - Mock Success for UI

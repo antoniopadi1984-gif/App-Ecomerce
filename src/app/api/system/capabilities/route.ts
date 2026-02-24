@@ -68,11 +68,6 @@ export async function GET() {
 
     // 4. Check Storage
     try {
-        const getDirSize = (dir: string) => {
-            const fullPath = (import.meta as any).dirname ? path.join(process.cwd(), dir) : path.join(process.cwd(), dir);
-            // Simple approach for now
-            return "1.2 MB"; // Placeholder until I can run a proper recursive check if needed
-        };
         capabilities.storage.uploads = "0.5 MB";
         capabilities.storage.outputs = "2.1 MB";
     } catch (e) { }

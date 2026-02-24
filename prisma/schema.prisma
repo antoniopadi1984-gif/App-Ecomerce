@@ -17,6 +17,23 @@ model User {
   auditLogs    AuditLog[]
   stores       UserStoreAccess[]
   workSessions WorkSession[]
+  connections  UserConnection[]
+}
+
+model UserConnection {
+  id        String   @id @default(cuid())
+  userId    String
+  provider  String
+  secretEnc String?
+  secretIv  String?
+  secretTag String?
+  isActive  Boolean  @default(true)
+  metadata  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
 }
 
 model UserStoreAccess {
@@ -88,6 +105,23 @@ model Store {
   users                UserStoreAccess[]
   whatsappAccounts     WhatsAppAccount[]
   alertRules           AlertRule[]
+  creativeBatches      CreativeBatch[]
+  metaAdAccounts       MetaAdAccount[]
+}
+
+model MetaAdAccount {
+  id          String   @id @default(cuid())
+  storeId     String
+  accountId   String
+  name        String
+  currency    String?
+  status      String   @default("ACTIVE")
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, accountId])
 }
 
 model AlertRule {
@@ -208,9 +242,12 @@ model Connection {
   id            String    @id @default(cuid())
   storeId       String
   provider      String
-  apiKey        String?
-  apiSecret     String?
-  accessToken   String?
+  apiKey        String?   // @deprecated — Use secretEnc instead
+  apiSecret     String?   // @deprecated — Use secretEnc instead
+  accessToken   String?   // @deprecated — Use secretEnc instead
+  secretEnc     String?   // AES-256-GCM encrypted
+  secretIv      String?   // Initialization Vector
+  secretTag     String?   // Auth Tag for GCM
   webhookSecret String?
   webhookUrl    String?
   extraConfig   String?
@@ -295,6 +332,7 @@ model Product {
   driveDocUrl         String?
   adCopies            AdCopy[]
   avatars             Avatar[]
+  avatarProfiles      AvatarProfile[]
   avatarResearches    AvatarResearch[]
   CompetitiveAnalysis CompetitiveAnalysis[]
   competitorLandings  CompetitorLanding?
@@ -338,6 +376,7 @@ model Product {
   videoJobs           VideoJob[]
   videoScripts        VideoScript[]
   vocQuotes           VoiceOfCustomerQuote[]
+  creativeBatches     CreativeBatch[]
 }
 
 model Order {
@@ -895,12 +934,16 @@ model AvatarProfile {
   lastError      String?
   evolutionId    String?
   evolutionStage String?
+  productId      String?
   metadataJson   String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   assets         AvatarAsset[]
   store          Store             @relation(fields: [storeId], references: [id])
+  product        Product?          @relation(fields: [productId], references: [id])
   projects       CreativeProject[]
+
+  @@index([productId])
 }
 
 model AvatarAsset {
@@ -1130,19 +1173,21 @@ model LedgerEntry {
 }
 
 model Job {
-  id          String    @id @default(cuid())
-  type        String
-  status      String    @default("PENDING")
-  payload     String?
-  result      String?
-  progress    Int       @default(0)
-  attempts    Int       @default(0)
-  maxAttempts Int       @default(3)
-  lockedAt    DateTime?
-  lastError   String?
-  runAt       DateTime  @default(now())
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  type                  String
+  status                String    @default("PENDING")
+  payload               String?
+  result                String?
+  progress              Int       @default(0)
+  attempts              Int       @default(0)
+  maxAttempts           Int       @default(3)
+  lockedAt              DateTime?
+  replicatePredictionId String?   @unique
+  provider              String?   // 'Replicate', 'ElevenLabs', etc.
+  lastError             String?
+  runAt                 DateTime  @default(now())
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 }
 
 model AdMetricDaily {
@@ -2055,4 +2100,41 @@ model VOCInsight {
 
   @@index([productId])
   @@index([category])
+}
+
+model CreativeBatch {
+  id            String         @id @default(cuid())
+  productId     String?
+  storeId       String?
+  type          String         // STATIC_AD | VIDEO | AVATAR_LIPSYNC
+  tier          String         @default("balanced") // cheap | balanced | premium
+  status        String         @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED | STOPPED
+  quantity      Int            @default(1)
+  budgetMax     Float?
+  costEstimate  Float          @default(0)
+  costActual    Float          @default(0)
+  maxFailures   Int            @default(5)
+  failureCount  Int            @default(0)
+  metadataJson  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  jobs          CreativeJob[]
+  product       Product?       @relation(fields: [productId], references: [id])
+  store         Store?         @relation(fields: [storeId], references: [id])
+}
+
+model CreativeJob {
+  id                    String         @id @default(cuid())
+  batchId               String
+  replicatePredictionId String?        @unique
+  status                String         @default("PENDING") // PENDING | STARTING | PROCESSING | SUCCEEDED | FAILED | CANCELED
+  payloadJson           String?        // Input sent to Replicate
+  resultJson            String?        // Full output from Replicate
+  costEstimate          Float          @default(0)
+  costActual            Float          @default(0)
+  error                 String?
+  terminalAt            DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  batch                 CreativeBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
 }

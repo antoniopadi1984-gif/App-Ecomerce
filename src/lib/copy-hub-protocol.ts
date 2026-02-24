@@ -25,9 +25,16 @@ export async function generateMasterCopy(params: {
     context: ContentContext,
     isSafeMode: boolean,
     brandVoice?: string,
-    researchData?: any
+    researchData?: any,
+    sophisticationLevel?: number,
+    mechanism?: string,
+    customPrompt?: string,
+    competitorExamples?: string[]
 }) {
-    const { productName, context, isSafeMode, brandVoice, researchData } = params;
+    const {
+        productName, context, isSafeMode, brandVoice, researchData,
+        sophisticationLevel, mechanism, customPrompt, competitorExamples
+    } = params;
 
     let systemPrompt = `Actúa como un Copywriter de Respuesta Directa de Clase Mundial especializado en eCommerce.`;
 
@@ -41,14 +48,27 @@ export async function generateMasterCopy(params: {
         systemPrompt += `\nMODO AGRESIVO ACTIVADO: ${COMPLIANCE_RULES.AGGRESSIVE_LANDING.instructions}`;
     }
 
+    // Import constants locally to avoid circular deps if any
+    const { CLAUDE_PROMPTS_V3 } = require('./copy/copy-v3-prompts');
+    const sophisticationDesc = sophisticationLevel ? (CLAUDE_PROMPTS_V3.SOPHISTICATION_LEVELS as any)[sophisticationLevel] : "General";
+
     const userPrompt = `
         PRODUCTO: ${productName}
         FORMATO: ${context}
         RESEARCH DATA: ${JSON.stringify(researchData || {})}
+        SOFISTICACION DE MERCADO (EUGENE SCHWARTZ): ${sophisticationDesc}
+        MECANISMO UNICO / BIG IDEA: ${mechanism || "No especificado - Dedúcelo del producto"}
         
-        Tu tarea es generar el copy final. Si es una Landing Page o Advertorial, incluye la estructura de secciones [SECTION_NAME].
+        ${competitorExamples && competitorExamples.length > 0 ? `\nEJEMPLOS DE COMPETENCIA (Sigue este estilo o mejora sobre ello):\n${competitorExamples.join('\n')}` : ""}
+        
+        ${customPrompt ? `\nINSTRUCCIONES ADICIONALES DEL USUARIO (PRIORIDAD ALTA):\n${customPrompt}` : ""}
+
+        Tu tarea es generar el copy final siguiendo el nivel de sofisticación indicado.
+        Si es una Landing Page o Advertorial, incluye la estructura de secciones [SECTION_NAME].
         Asegúrate de incluir Hooks potentes y CTAs claros.
-        Detecta similitud y evita copiar literalmente a la competencia, innova en el ángulo.
+        
+        ENFOQUE PSICOLOGICO:
+        ${sophisticationLevel === 5 ? "Enfócate 100% en la identificación con el avatar. Olvida las promesas directas exageradas." : "Sigue el estándar del nivel de sofisticación."}
     `;
 
     const response = await askGemini(userPrompt, systemPrompt);

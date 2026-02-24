@@ -20,116 +20,375 @@
   --color-input: var(--surface);
   --color-ring: var(--primary);
 
-  --radius-xl: 0.5rem;
-  /* 8px */
-  --radius-lg: 0.5rem;
-  /* 8px */
-  --radius-md: 0.375rem;
-  /* 6px */
-  --radius-sm: 0.25rem;
-  /* 4px */
+  --radius-xl: 12px;
+  --radius-lg: 10px;
+  --radius-md: 8px;
+  --radius-sm: 6px;
 
   --shadow-premium: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
 :root {
-  --bg: #F6F7F9;
-  --surface: #FFFFFF;
-  --surface-2: #F9FAFB;
-  --border: #E5E7EB;
-  --text: #111827;
-  --muted-text: #6B7280;
-  --primary: #1D4ED8;
-  --primary-2: #2563EB;
+  /* Glass performance levels */
+  --glass-blur-xs: 4px;
+  --glass-blur-sm: 8px;
+  --glass-blur-md: 12px;
+  --glass-blur-lg: 16px;
 
-  /* Alert Scalation (Alerts Only) */
-  --alert-critical: #DC2626;
-  --alert-warning: #D97706;
-  --alert-ok: #16A34A;
-  --alert-info: #2563EB;
+  /* Default blur (desktop) */
+  --glass-blur: var(--glass-blur-md);
 
-  --radius: 8px;
+  /* Premium Glassmorphism & High-Density Palette */
+  --bg: #F0F2F5;
+  /* Slightly grayer to make white glass pop */
+  --surface: rgba(255, 255, 255, 0.75);
+  --surface-opaque: #FFFFFF;
+  --surface-2: rgba(241, 245, 249, 0.5);
+
+  --border: rgba(226, 232, 240, 0.6);
+  --border-highlight: rgba(255, 255, 255, 0.8);
+
+  --text: #0f172a;
+  --muted-text: #475569;
+
+  --primary: #fb7185;
+  --primary-foreground: #ffffff;
+  --accent-pastel: #fff1f2;
+  --accent-strong: #e11d48;
+
+  --alert-critical: #e11d48;
+  --alert-warning: #d97706;
+  --alert-ok: #10b981;
+  --alert-info: #3b82f6;
+
+  --radius: 10px;
+  /* Slightly tighter radius for professional feel */
+
+  /* High-Density System - Extreme Mode Phase 1.3 */
+  --header-height: 48px;
+  /* Ultra tight header */
+  --sidebar-width: 180px;
+  /* Narrower sidebar */
+  --sidebar-collapsed: 48px;
+  --row-height: 24px;
+  /* Professional list height */
+  --input-height: 24px;
+  /* Professional input height */
+  --card-padding: 0.25rem;
+  /* 4px - Extreme */
+  --card-padding-tight: 0.125rem;
+  /* 2px - Micro */
+  --section-gap: 0.375rem;
+  /* 6px */
+  --section-gap-tight: 0.25rem;
+  /* 4px */
+  --item-gap: 0.125rem;
+  /* 2px */
+  --item-gap-tight: 0.0625rem;
+  /* 1px */
+  --kpi-height-sm: auto;
+  --font-heading: 'Outfit', sans-serif;
+
+  /* Glassmorphism Presets */
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-blur: 16px;
+  /* Shadow Presets */
+  --primary-shadow: rgba(251, 113, 133, 0.25);
+  --info-shadow: rgba(59, 130, 246, 0.25);
+  --warning-shadow: rgba(217, 119, 6, 0.25);
+  --glass-shadow: 0 2px 12px -1px rgba(0, 0, 0, 0.03);
+
+  /* Phase 2.1: Structural Density (Typography Restoration + Radical Layout) (IN PROGRESS)
+
+- [ ] Restore Typography Legibility:
+    - [ ] h1 -> 18px-20px (italic, bold).
+    - [ ] Subtitle -> 12px-13px.
+- [ ] Radical Container Squashing:
+    - [ ] Card Paddings: Fixed at 4px.
+    - [ ] Section Gaps: Fixed at 2px-4px.
+- [ ] Module Optimization (No Dead Space):
+    - [ ] Dashboard: Remove internal card margins.
+    - [ ] Research Lab: Re-align phases to use 100% width/height efficienty.
+    - [ ] Centro Creativo: Fix tab alignment.
+- [ ] Final Hard-Lock Verification.
+*/
+
+  /* Typography Hierarchy - Phase 1.1 */
+  --text-h1: 1.25rem;
+  /* 20px */
+  --text-subtitle: 0.8125rem;
+  /* 13px */
+  --text-label: 0.6875rem;
+  /* 11px */
+  --text-micro: 0.625rem;
+  /* 10px */
+  --text-muted-foreground: #64748b;
+  /* text-slate-500 */
+}
+
+@media (max-width: 768px) {
+  :root {
+    --glass-blur: var(--glass-blur-xs);
+
+    --header-height: 56px;
+    /* Taller header for mobile touch targets */
+    --sidebar-width: 0px;
+    /* Hidden by default */
+    --sidebar-collapsed: 0px;
+    --radius: 12px;
+    /* Softer corners on mobile */
+
+    /* Increase base font size for readability */
+    font-size: 14px;
+  }
 }
 
 @layer base {
   body {
-    background-color: var(--bg);
+    background: radial-gradient(circle at top right, rgba(251, 113, 133, 0.05), transparent 400px),
+      radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.05), transparent 400px),
+      var(--bg);
     color: var(--text);
-    @apply font-sans antialiased;
-    font-size: 12px;
+    font-family: inherit;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 11px;
     font-weight: 500;
+    letter-spacing: -0.015em;
   }
 
   h1 {
-    font-size: 18px;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
     font-weight: 800;
-    @apply tracking-tight mb-4;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.75rem;
+    color: var(--color-foreground);
+  }
+
+  h2 {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
+    color: var(--color-foreground);
   }
 }
 
-/* Standard Density & Typography Classes */
+@layer utilities {
+
+  /* ✅ Standard Glass - FAST */
+  .glass-card {
+    background-color: rgb(255 255 255 / 0.75);
+    border: 1px solid rgb(255 255 255 / 0.5);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+  }
+
+  .glass-panel {
+    background-color: rgb(255 255 255 / 0.8);
+    border: 1px solid rgb(255 255 255 / 0.55);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+  }
+
+  .glass-header {
+    background-color: rgb(255 255 255 / 0.7);
+    border-bottom: 1px solid rgb(226 232 240 / 0.4);
+    position: sticky;
+    top: 0px;
+    z-index: 50;
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+  }
+
+  .glass-input {
+    background-color: rgb(255 255 255 / 0.6);
+    border: 1px solid rgb(226 232 240 / 0.5);
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    backdrop-filter: blur(var(--glass-blur-xs));
+    -webkit-backdrop-filter: blur(var(--glass-blur-xs));
+  }
+
+  .glass-input:focus {
+    border-color: rgb(251 113 133 / 0.5);
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  }
+
+  /* ✅ Fallback rápido si el blur causa lag */
+  .no-glass {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+::selection {
+  background-color: #ffe4e6;
+  color: #881337;
+}
+
+/* COMPACT UTILITIES */
+
+/* Standard Text Styles */
 .text-label {
   font-size: 10px;
   font-weight: 700;
-  @apply uppercase tracking-wider text-muted-foreground;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .text-label {
+    font-size: 11px;
+  }
 }
 
 .text-value {
-  font-size: 12px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   font-weight: 600;
-  @apply text-foreground;
+  color: #0f172a;
 }
 
-.text-metric {
-  font-size: 16px;
+@media (max-width: 768px) {
+  .text-value {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+/* Compact Inputs & Buttons */
+.btn-compact {
+  height: 2rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 10px;
   font-weight: 700;
-  @apply tracking-tighter text-foreground;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
 }
 
-/* Component Overrides for Density */
-.btn-standard {
-  @apply h-8 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5;
+.btn-compact:active {
+  transform: scale(0.95);
 }
 
-.input-standard {
-  @apply h-8 px-3 bg-white border-border rounded-md text-xs font-medium focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all;
+.input-compact {
+  height: 2rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
-.table-row-standard {
-  @apply h-9 py-0;
+.input-compact::placeholder {
+  color: #cbd5e1;
 }
 
-.card-standard {
-  @apply bg-white border border-border shadow-premium rounded-lg overflow-hidden;
+.input-compact:focus {
+  border-color: #0f172a;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) rgb(15 23 42 / 0.2);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
 
-.card-padding {
-  @apply p-3 sm:p-4;
+/* DATA TABLE STANDARD (Sticky, Compact, Monochrome) */
+.data-table-container {
+  width: 100%;
+  overflow: auto;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(226 232 240 / 0.6);
+  background-color: rgb(255 255 255 / 0.8);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-.page-padding {
-  @apply p-4;
+.data-table {
+  width: 100%;
+  caption-side: bottom;
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
-/* Global Grid Gaps */
-.gap-standard {
-  @apply gap-2 sm:gap-3;
+.data-table thead th {
+  height: 2rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+  background-color: rgb(248 250 252 / 0.5);
+  position: sticky;
+  top: 0px;
+  z-index: 10;
+  border-bottom: 1px solid rgb(226 232 240 / 0.5);
 }
 
-/* Sidebar Active Item */
+.data-table tbody tr {
+  border-bottom: 1px solid rgb(241 245 249 / 0.5);
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  height: var(--row-height);
+}
+
+.data-table tbody tr:hover {
+  background-color: rgb(255 241 242 / 0.3);
+}
+
+.data-table tbody tr[data-state="selected"] {
+  background-color: #fff1f2;
+}
+
+.data-table td {
+  padding: 0.5rem;
+  vertical-align: middle;
+  font-weight: 500;
+  color: #334155;
+}
+
+/* Layout Hacks */
 .sidebar-active {
-  @apply bg-slate-950 text-white shadow-md font-semibold;
+  background-color: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  font-weight: 600;
 }
 
-/* Utilities */
-.monochrome-table {
-  @apply text-slate-900 border-separate border-spacing-0;
+/* Scrollbar Hide */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-.monochrome-table th {
-  @apply bg-slate-50 font-bold uppercase tracking-widest text-[10px] text-slate-500 border-b border-border;
-}
-
-.monochrome-table td {
-  @apply border-b border-slate-100 py-2.5 px-4;
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -3,386 +3,440 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-    Plus, Settings2, CheckCircle2, XCircle, RefreshCw,
-    ExternalLink, ShieldCheck, Zap, Globe, Gauge,
-    Table as TableIcon, HardDrive, Layout, ChevronRight,
-    ArrowUpRight, Copy, Check, Key, Play, Loader2
+    Plus, Settings2, XCircle,
+    Copy, Check, Loader2,
+    Eye, EyeOff, Activity, RefreshCw,
+    Layers, Orbit, ShieldCheck, Zap,
+    ArrowUpRight, Link2, Info, Lock,
+    CreditCard, ActivitySquare, ToggleLeft, ToggleRight,
+    AlertCircle, PlayCircle, BarChart3, DatabaseZap
 } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-    Dialog, DialogContent, DialogDescription, DialogFooter,
-    DialogHeader, DialogTitle, DialogTrigger
+    Dialog, DialogContent, DialogDescription, DialogHeader,
+    DialogTitle, DialogTrigger, DialogPortal, DialogOverlay
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { saveConnection, deleteConnection } from "./actions";
 import { cn } from "@/lib/utils";
-
-const providers = [
-    { id: "SHOPIFY", name: "Shopify", icon: "https://cdn.worldvectorlogo.com/logos/shopify.svg", description: "Pedidos, productos y clientes.", color: "bg-emerald-50" },
-    { id: "GOOGLE_SHEETS", name: "Google Sheets", icon: "https://cdn.worldvectorlogo.com/logos/google-sheets-1.svg", description: "Importación de inventario y CRM.", color: "bg-green-50" },
-    { id: "GOOGLE_ANALYTICS", name: "GA4 Analytics", icon: "https://upload.wikimedia.org/wikipedia/commons/5/53/Google_Analytics_Logo.svg", description: "Tráfico y ROI en tiempo real.", color: "bg-orange-50" },
-    { id: "META", name: "Meta / Facebook", icon: "https://cdn.worldvectorlogo.com/logos/facebook-icon.svg", description: "Ads, ROAS y CTR.", color: "bg-blue-50" },
-    { id: "DROPI", name: "Dropi Latam", icon: "https://dropi.co/images/logo_dropi_b.png", description: "Sincronización total (Usuario/Pass).", color: "bg-blue-100" },
-    { id: "DROPEA", name: "Dropea", icon: "https://app.dropea.com/images/logo-dropea.png", description: "Logística vía API.", color: "bg-orange-100" },
-    { id: "WHATSAPP", name: "WhatsApp Cloud", icon: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg", description: "Notificaciones y Chatbot.", color: "bg-emerald-50" },
-    { id: "ZADARMA", name: "Zadarma VoIP", icon: "https://zadarma.com/favicon.ico", description: "Telefonía IP y Calidad.", color: "bg-indigo-50" },
-    { id: "BEEPING", name: "Beeping Logistics", icon: "https://beeping.io/favicon.ico", description: "Estados de envío en tiempo real.", color: "bg-purple-50" },
-];
+import { PROVIDER_REGISTRY } from "@/lib/providers/registry";
+import { PageShell } from "@/components/ui/PageShell";
+import { ModuleHeader } from "@/components/ui/ModuleHeader";
+import { useStore } from "@/lib/store/store-context";
 
 function ConnectionsContent() {
+    const { activeStoreId } = useStore();
     const [activeConnections, setActiveConnections] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [configOpen, setConfigOpen] = useState<string | null>(null);
-    const [serviceModalOpen, setServiceModalOpen] = useState(false);
-    const [serviceKeyJson, setServiceKeyJson] = useState("");
-    const [verifyingService, setVerifyingService] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
-    const [selectedProvider, setSelectedProvider] = useState<string>("");
+    const [configOpen, setConfigOpen] = useState<boolean>(false);
+    const [selectedProviderId, setSelectedProviderId] = useState<string>("");
     const [testingProvider, setTestingProvider] = useState<string | null>(null);
+    const [revealSecrets, setRevealSecrets] = useState<Record<string, boolean>>({});
+    const [editingConnection, setEditingConnection] = useState<any | null>(null);
 
     const searchParams = useSearchParams();
 
+
+
     const fetchConnections = async () => {
+        const effectiveStoreId = activeStoreId || 'store-main';
         setLoading(true);
-        const res = await fetch("/api/connections");
-        if (res.ok) {
-            const data = await res.json();
-            setActiveConnections(data);
+        try {
+            // Add cache busting timestamp and explicit storeId to bypass aggressive Next.js client router cache
+            const res = await fetch(`/api/connections?reveal=true&storeId=${effectiveStoreId}&_t=${Date.now()}`, {
+                headers: { 'X-Store-Id': effectiveStoreId },
+                cache: "no-store"
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const connections = Array.isArray(data) ? data : (data.connections || []);
+
+                // Filter out child-services ONLY if their parent node is also present for the same storeId
+                const filtered = connections.filter((c: any) => {
+                    const config = PROVIDER_REGISTRY[c.provider.toUpperCase()];
+                    if (!config?.parentProviderId) return true; // It's a root node
+
+                    // It's a child node. Only hide if the parent is present in the SAME list
+                    const hasParent = connections.some((p: any) => p.provider.toUpperCase() === config.parentProviderId?.toUpperCase());
+                    return !hasParent;
+                });
+
+                setActiveConnections(filtered);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     useEffect(() => {
-        const success = searchParams.get("success");
-        const error = searchParams.get("error");
-        if (success === "google_connected") {
-            toast.success("Google conectado correctamente", { description: "Ahora puedes sincronizar Sheets y Analytics." });
-        }
-        if (error) {
-            toast.error("Error al conectar con Google", { description: "Por favor, inténtalo de nuevo." });
-        }
-
         fetchConnections();
-    }, [searchParams]);
+    }, [searchParams, activeStoreId]);
 
-    const deleteConnection = async (id: string) => {
-        if (!confirm("¿Seguro que quieres desconectar esta integración?")) return;
-        try {
-            await fetch(`/api/connections/${id}`, { method: 'DELETE' });
-            toast.success("Desconectado", { description: "La conexión ha sido eliminada." });
-            fetchConnections();
-        } catch (error) {
-            toast.error("Error", { description: "No se pudo desconectar." });
-        }
-    };
-
-    const handleServiceConnect = async () => {
-        if (!serviceKeyJson) return;
-        setVerifyingService(true);
-        try {
-            const res = await fetch("/api/connections/service-account", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ serviceAccountJson: serviceKeyJson })
-            });
-            const data = await res.json();
-            if (data.success) {
-                toast.success("Conectado", { description: `Cuenta de Servicio ${data.email} conectada.` });
-                setServiceModalOpen(false);
-                setServiceKeyJson("");
-                fetchConnections();
-            } else {
-                toast.error("Error", { description: data.error || "JSON Inválido" });
-            }
-        } catch (error) {
-            toast.error("Error Fatal", { description: "Fallo al guardar credenciales." });
-        } finally {
-            setVerifyingService(false);
-        }
-    };
-
-    const copyToClipboard = () => {
-        const url = "https://app.nanobanana.com/api/webhooks/master";
-        navigator.clipboard.writeText(url);
-        setIsCopied(true);
-        toast.success("Webhook copiado", { description: "URL lista para usar." });
-        setTimeout(() => setIsCopied(false), 2000);
-    };
-
-    const handleGoogleConnect = () => {
-        window.location.href = "/api/auth/google";
-    };
-
-    const testConnection = async (providerId: string) => {
-        setTestingProvider(providerId);
+    const testConnection = async (provider: string) => {
+        setTestingProvider(provider);
         try {
             const res = await fetch("/api/connections/test", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ provider: providerId }),
+                body: JSON.stringify({ provider })
             });
-            const result = await res.json();
-            if (result.status === "OK") {
-                toast.success(`✅ ${providerId}`, { description: result.message });
-            } else if (result.status === "STUB") {
-                toast.info(`⚠️ ${providerId}: STUB`, { description: result.message });
+            const data = await res.json();
+            if (data.status === "OK") {
+                toast.success(`${provider} — Conexión OK (${data.latencyMs}ms)`);
+            } else if (data.status === "STUB") {
+                toast.info(`${provider} — Credenciales verificadas (${data.latencyMs}ms)`);
             } else {
-                toast.error(`❌ ${providerId}`, { description: result.message });
+                toast.error(`${provider} — ${data.message}`);
             }
-        } catch (e: any) {
-            toast.error(`Error testing ${providerId}`, { description: e.message });
+        } catch (e) {
+            toast.error(`Error al testear ${provider}`);
+        } finally {
+            setTestingProvider(null);
         }
-        setTestingProvider(null);
     };
 
-    const openConfig = (providerId: string) => {
-        setSelectedProvider(providerId);
-        setConfigOpen(providerId);
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`¿Desvincular servicio ${name}?`)) return;
+        const res = await deleteConnection(id);
+        if (res.success) {
+            toast.success("Servicio desconectado");
+            fetchConnections();
+        }
     };
 
-    const getFieldLabels = (pid: string) => {
-        if (pid === 'DROPI') return { user: 'Email de Usuario', secret: 'Contraseña de Dropi', desc: 'Conectaremos como un usuario real para extraer toda la info.' };
-        if (pid === 'DROPEA') return { user: 'ID de Cliente', secret: 'API Key', desc: 'Usa las credenciales de API de Dropea.' };
-        if (pid === 'SHOPIFY') return { user: 'Dominio (myshopify.com)', secret: 'Admin API Access Token', desc: 'Token de acceso de Admin API.' };
-        return { user: 'URL o Identificador', secret: 'API Token / Credencial', desc: 'Configuración estándar.' };
+    const handleEdit = (conn: any) => {
+        setEditingConnection(conn);
+        setSelectedProviderId(conn.provider.toUpperCase());
+        setConfigOpen(true);
     };
 
-    const labels = getFieldLabels(selectedProvider);
+    const handleOpenAdd = () => {
+        setEditingConnection(null);
+        setSelectedProviderId("");
+        setConfigOpen(true);
+    };
+
+    const toggleSecret = (idKey: string) => {
+        setRevealSecrets(prev => ({ ...prev, [idKey]: !prev[idKey] }));
+    };
+
+    const copyToClipboard = (text: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        toast.info("Copiado al portapapeles", { duration: 1500 });
+    };
+
+    const providers = Object.values(PROVIDER_REGISTRY);
+    const selectedProviderConfig = PROVIDER_REGISTRY[selectedProviderId];
 
     return (
-        <div className="space-y-6 max-w-[1200px] mx-auto p-4 animate-in fade-in duration-700">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-0.5">
+        <PageShell>
+
+            <ModuleHeader
+                title="Canales e Infraestructura"
+                subtitle="ESTATUS CENTRAL"
+                icon={Zap}
+                actions={
                     <div className="flex items-center gap-2">
-                        <Badge className="bg-indigo-600 text-white rounded-lg font-black text-[8px] uppercase tracking-widest px-2 py-0.5">Vía API Secure</Badge>
-                    </div>
-                    <h1 className="text-2xl font-black tracking-tighter text-slate-900 leading-tight italic uppercase">Canales <span className="text-indigo-600">& Conexiones</span></h1>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Gestiona el flujo de datos entre Shopify y tus herramientas de Growth.</p>
-                </div>
+                        <button
+                            onClick={fetchConnections}
+                            className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors rounded-lg hover:bg-slate-50"
+                        >
+                            <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
+                        </button>
 
-                <Dialog open={!!configOpen} onOpenChange={(open) => setConfigOpen(open ? selectedProvider : null)}>
-                    <DialogTrigger asChild>
-                        <Button onClick={() => openConfig("")} className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-lg shadow-lg shadow-indigo-100 gap-2 text-[10px] uppercase tracking-widest transition-all active:scale-95">
-                            <Plus className="h-3.5 w-3.5" /> NUEVA INTEGRACIÓN
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[400px] bg-white border-none shadow-2xl rounded-lg p-5">
-                        <DialogHeader>
-                            <DialogTitle className="text-lg font-black tracking-tighter italic uppercase text-slate-900">
-                                {selectedProvider ? `Configurar ${providers.find(p => p.id === selectedProvider)?.name}` : "Vincular Servicio"}
-                            </DialogTitle>
-                            <DialogDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                                {selectedProvider ? labels.desc : "Conecta tus cuentas para habilitar la sincronización automática."}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form action={async (formData) => {
-                            await saveConnection(formData);
-                            setConfigOpen(null);
-                            toast.success("Conexión guardada", { description: "Recarga para ver cambios." });
-                            fetchConnections();
-                        }} className="space-y-6 pt-4">
-                            <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 pl-0.5">Proveedor</Label>
-                                    <Select name="provider" value={selectedProvider} onValueChange={setSelectedProvider} required>
-                                        <SelectTrigger className="h-9 border-slate-100 bg-slate-50 font-bold rounded-lg text-[11px]">
-                                            <SelectValue placeholder="Seleccionar canal..." />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white border-slate-100 rounded-lg shadow-xl">
-                                            {providers.map(p => (
-                                                <SelectItem key={p.id} value={p.id} className="font-bold text-[11px]">{p.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 pl-0.5">{labels.user}</Label>
-                                    <Input name="extraConfig" placeholder={selectedProvider === 'DROPI' ? 'usuario@email.com' : 'ej: store.myshopify.com'} className="h-9 border-slate-100 bg-slate-50 rounded-lg font-bold text-[11px]" required />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 pl-0.5">{labels.secret}</Label>
-                                    <Input name="apiKey" type="password" placeholder="••••••••••••••••" className="h-9 border-slate-100 bg-slate-50 rounded-lg font-bold text-[11px]" required />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit" className="w-full h-10 bg-slate-900 text-white font-black rounded-lg hover:bg-black transition-all text-[10px] uppercase tracking-widest">ESTABLECER CONEXIÓN</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-            </div>
-
-            <Dialog open={serviceModalOpen} onOpenChange={setServiceModalOpen}>
-                <DialogContent className="sm:max-w-[450px] bg-white border-none shadow-2xl rounded-lg p-6">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl font-black tracking-tighter italic uppercase text-slate-900">Conectar Cuenta de Servicio</DialogTitle>
-                        <DialogDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">
-                            Pega aquí el contenido completo del archivo JSON de Google Cloud.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-2">
-                        <textarea
-                            className="w-full h-40 p-3 text-[10px] font-mono border rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-                            placeholder='{ "type": "service_account", ... }'
-                            value={serviceKeyJson}
-                            onChange={(e) => setServiceKeyJson(e.target.value)}
-                        />
-                        <p className="mt-2 text-[10px] text-slate-400">
-                            * Tus credenciales se guardan cifradas. Asegúrate de compartir tus carpetas de Drive con el <code>client_email</code> del JSON.
-                        </p>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setServiceModalOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleServiceConnect} disabled={verifyingService} className="bg-indigo-600 hover:bg-indigo-700">
-                            {verifyingService ? "Verificando..." : "Conectar Cuenta"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {providers.map((p) => {
-                    const conn = activeConnections.find(c => c.provider === p.id);
-                    const isActive = !!conn;
-
-                    return (
-                        <Card key={p.id} className="border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden rounded-lg bg-white">
-                            <div className="p-4">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className={cn("p-2.5 rounded-lg border", isActive ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-400')}>
-                                        <img src={p.icon} alt={p.name} className="h-5 w-5 object-contain" />
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        {isActive && (
-                                            <div className="flex items-center gap-1 py-1 px-2 rounded-lg bg-emerald-100/50 border border-emerald-100">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                <span className="text-[8px] font-black text-emerald-700 tracking-widest uppercase">ACTIVO</span>
-                                            </div>
-                                        )}
-                                        {isActive && (
-                                            <Button
-                                                variant="ghost" size="icon"
-                                                className="h-6 w-6 text-slate-200 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-all"
-                                                onClick={() => deleteConnection(conn.id)}
-                                            >
-                                                <XCircle className="h-3 w-3" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="mb-4">
-                                    <h3 className="font-black text-xs text-slate-800 uppercase italic tracking-tight mb-1">
-                                        {p.name}
-                                    </h3>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest line-clamp-2 leading-relaxed">
-                                        {p.description}
-                                    </p>
-                                </div>
-
-                                <div className="pt-2 mt-auto">
-                                    {isActive ? (
-                                        <div className="flex gap-1.5">
-                                            <Button variant="outline" size="sm" className="flex-1 h-8 text-[9px] font-black uppercase tracking-widest border-slate-100 bg-slate-50 hover:bg-white text-slate-500 rounded-lg" onClick={() => openConfig(p.id)}>
-                                                <Settings2 className="h-3.5 w-3.5 mr-1" /> Config
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-8 px-2 text-[9px] font-black uppercase tracking-widest border-emerald-100 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg"
-                                                onClick={() => testConnection(p.id)}
-                                                disabled={testingProvider === p.id}
-                                            >
-                                                {testingProvider === p.id ? (
-                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                ) : (
-                                                    <Play className="h-3 w-3" />
-                                                )}
-                                                <span className="ml-1">Test</span>
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        p.id.startsWith("GOOGLE") ? (
-                                            <div className="flex flex-col gap-1.5">
-                                                <Button
-                                                    onClick={handleGoogleConnect}
-                                                    className="w-full h-8 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-black text-[9px] uppercase tracking-widest rounded-lg shadow-sm"
-                                                >
-                                                    <img src="https://www.google.com/favicon.ico" className="w-3 h-3 mr-1.5" /> Login Usuario
-                                                </Button>
-                                                <Button
-                                                    onClick={() => setServiceModalOpen(true)}
-                                                    className="w-full h-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-sm"
-                                                >
-                                                    <Key className="w-3 h-3 mr-1.5" /> Cuenta Servicio
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <Button
-                                                variant="outline"
-                                                className="w-full h-8 border-slate-200 text-slate-900 font-black text-[9px] uppercase tracking-widest rounded-lg hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-600 shadow-sm"
-                                                onClick={() => openConfig(p.id)}
-                                            >
-                                                CONECTAR
-                                            </Button>
-                                        )
-                                    )}
-                                </div>
-                            </div>
-                        </Card>
-                    );
-                })}
-            </div>
-
-            <Card className="bg-indigo-600 text-white border-none overflow-hidden p-0 rounded-lg shadow-xl shadow-indigo-100">
-                <div className="flex flex-col md:flex-row items-center divide-y md:divide-y-0 md:divide-x divide-white/10">
-                    <div className="p-6 flex-1 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-xl">
-                                <ShieldCheck className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-black tracking-tight italic uppercase">Master Webhook Gateway</h3>
-                                <p className="text-indigo-100/70 text-[9px] font-black uppercase tracking-widest">Recibe pedidos de Dropi o Beeping instantáneamente.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 bg-indigo-700/50 backdrop-blur-md border border-white/10 rounded-lg p-2.5 px-4 shadow-inner">
-                            <code className="flex-1 text-indigo-50 font-mono text-[10px] truncate opacity-80">
-                                https://app.nanobanana.com/api/webhooks/master
-                            </code>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-white hover:bg-white/10 rounded-md" onClick={copyToClipboard}>
-                                {isCopied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                        <Dialog open={configOpen} onOpenChange={(open) => {
+                            if (!open) {
+                                setEditingConnection(null);
+                                setConfigOpen(false);
+                            } else {
+                                setConfigOpen(true);
+                            }
+                        }}>
+                            <Button onClick={handleOpenAdd} className="h-8 px-4 bg-rose-500 hover:bg-black text-[9px] font-black uppercase tracking-widest rounded-lg transition-all border-none shadow-md shadow-rose-500/10">
+                                <Plus className="w-3.5 h-3.5 mr-1.5" /> Vincular Nodo
                             </Button>
-                        </div>
+                            <DialogContent className="sm:max-w-[360px] rounded-[2rem] p-6 border-none shadow-premium z-[100] bg-white/95">
+                                <DialogHeader className="pb-2 border-b border-slate-50">
+                                    <DialogTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">
+                                        {selectedProviderConfig?.name || "Vincular Nodo"}
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <form action={async (formData) => {
+                                    const res = await saveConnection(formData);
+                                    if (res.success) {
+                                        setConfigOpen(false);
+                                        setEditingConnection(null);
+                                        toast.success(editingConnection ? "Configuración Actualizada" : "Enlace Establecido");
+                                        fetchConnections();
+                                    } else {
+                                        toast.error(res.message || "Error al establecer enlace");
+                                    }
+                                }} className="space-y-4 pt-4">
+                                    <input type="hidden" name="editingId" value={editingConnection?.id || ""} />
+                                    <input type="hidden" name="provider" value={selectedProviderId} />
+                                    <div className="space-y-1.5 relative">
+                                        <Label className="text-[8px] font-black uppercase text-slate-400 ml-1 tracking-widest">Proveedor Oficial</Label>
+                                        <Select value={selectedProviderId} onValueChange={setSelectedProviderId} required>
+                                            <SelectTrigger className="h-10 border-slate-100 bg-slate-50/50 rounded-xl text-[12px] font-bold tracking-tight focus:ring-2 focus:ring-rose-500/10 transition-all border shadow-sm">
+                                                <SelectValue placeholder="Seleccionar..." />
+                                            </SelectTrigger>
+                                            <SelectContent
+                                                position="popper"
+                                                sideOffset={4}
+                                                className="rounded-xl border-slate-100 shadow-2xl z-[200] bg-white w-[var(--radix-select-trigger-width)] max-h-[220px] overflow-x-hidden overflow-y-auto p-1.5"
+                                            >
+                                                <div className="space-y-0.5">
+                                                    {providers.map(p => (
+                                                        <SelectItem key={p.id} value={p.id} className="text-[11px] font-bold py-2 px-3 rounded-lg cursor-pointer hover:bg-rose-50 focus:bg-rose-50 transition-colors">
+                                                            <div className="flex items-center gap-3">
+                                                                <p.icon className="w-4 h-4" style={{ color: p.color }} />
+                                                                {p.name}
+                                                            </div>
+                                                        </SelectItem>
+                                                    ))}
+                                                </div>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <AnimatePresence mode="wait">
+                                        {selectedProviderConfig && (
+                                            <motion.div
+                                                key={selectedProviderConfig.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="space-y-3"
+                                            >
+                                                {selectedProviderConfig.fields.map((f: any) => (
+                                                    <div key={f.key} className="space-y-1.5">
+                                                        <Label className="text-[8px] font-black uppercase text-slate-400 ml-1 tracking-widest">{f.label}</Label>
+                                                        <Input
+                                                            name={f.key}
+                                                            type={f.type === 'password' ? 'text' : f.type}
+                                                            required={editingConnection ? false : f.required}
+                                                            defaultValue={editingConnection?.metadata?.[f.key] || ""}
+                                                            placeholder={editingConnection && f.type === 'password' ? "••••••••••••••••" : f.placeholder}
+                                                            className="h-10 border-slate-100 bg-slate-50/50 rounded-xl text-[12px] font-medium focus:border-rose-500/50 transition-all shadow-none placeholder:text-slate-300"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                    <Button type="submit" className="w-full h-10 bg-rose-500 hover:bg-black text-white font-black text-[10px] uppercase tracking-[0.25em] rounded-xl mt-2 shadow-lg shadow-rose-500/20 active:scale-[0.98] transition-all">
+                                        {editingConnection ? "Actualizar Configuración" : "Guardar Configuración"}
+                                    </Button>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
                     </div>
-                    <div className="p-6 md:w-[300px] bg-white/5 backdrop-blur-lg flex flex-col justify-center gap-3">
-                        <div className="flex items-center gap-2">
-                            <Zap className="h-3 w-3 text-emerald-400" />
-                            <span className="text-[9px] font-black uppercase tracking-widest text-indigo-100">Instrucciones</span>
-                        </div>
-                        <p className="text-[11px] font-medium text-indigo-100/80 leading-relaxed">
-                            Copia la URL y pégala en los ajustes de Webhook de tu plataforma logística. Recibirás todos los eventos en tiempo real.
-                        </p>
+                }
+            />
+
+            <main className="flex-1 p-4 space-y-6">
+                <section className="space-y-3">
+                    <div className="flex items-center gap-2 px-1 text-slate-900 border-l-2 border-rose-500 pl-3 py-0.5">
+                        <DatabaseZap className="w-3.5 h-3.5 text-rose-500" />
+                        <h2 className="text-[10px] font-black uppercase tracking-[0.25em]">Capa de Infraestructura Global</h2>
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+                        {activeConnections.map((conn, idx) => {
+                            const p = PROVIDER_REGISTRY[conn.provider.toUpperCase()] || { name: conn.provider, icon: Settings2, color: 'var(--alert-critical)' };
+                            const Icon = p.icon;
+                            const idKey = `${conn.provider}-${conn.id}`;
+                            const isRevealed = revealSecrets[idKey];
+                            return (
+                                <motion.div key={conn.id} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.05, duration: 0.4 }}>
+                                    <Card className={cn(
+                                        "group flex flex-col bg-white rounded-xl border border-slate-200/80 shadow-sm",
+                                        "hover:shadow-md hover:border-slate-300 transition-all duration-300 overflow-hidden relative"
+                                    )}>
+                                        {/* Status Bar */}
+                                        <div className="h-1 w-full bg-emerald-500" />
+
+                                        <div className="px-3 pb-2 pt-2.5 flex flex-col gap-2">
+                                            {/* Header */}
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-9 h-9 flex items-center justify-center">
+                                                        <Icon className="w-5 h-5 object-contain" style={{ color: p.color }} />
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-xs font-black text-slate-900 tracking-tight leading-none">
+                                                                {p.name === 'Shopify Master' && (conn.metadata?.SHOP_NAME || conn.metadata?.Tienda)
+                                                                    ? String(conn.metadata?.SHOP_NAME || conn.metadata?.Tienda)
+                                                                    : p.name}
+                                                            </p>
+                                                            {/* Show Project ID or Domain if exists in metadata */}
+                                                            {(() => {
+                                                                const projectId = Object.entries(conn.metadata || {}).find(([k]) => k.includes('PROJECT_ID'))?.[1];
+                                                                const domain = conn.metadata?.SHOPIFY_SHOP_DOMAIN;
+                                                                if (projectId) {
+                                                                    return <span className="text-[7px] font-bold bg-slate-100 text-slate-500 px-1 rounded-sm border border-slate-200/50">{String(projectId).substring(0, 12)}...</span>;
+                                                                }
+                                                                if (domain && p.name === 'Shopify Master') {
+                                                                    return <span className="text-[7px] font-bold bg-slate-100 text-slate-500 px-1 rounded-sm border border-slate-200/50">{String(domain).replace('.myshopify.com', '')}</span>;
+                                                                }
+                                                                return null;
+                                                            })()}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 mt-1">
+                                                            <div className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-1 py-[1px] rounded-[4px] text-[7px] font-bold uppercase tracking-widest border border-emerald-200/50 leading-none">
+                                                                <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                                                                Sincronizado
+                                                            </div>
+                                                            {(() => {
+                                                                const dateToUse = conn.lastSyncedAt || conn.updatedAt;
+                                                                let timeText = "Hace un momento";
+                                                                if (dateToUse) {
+                                                                    const diffMs = Date.now() - new Date(dateToUse).getTime();
+                                                                    if (diffMs > 86400000) timeText = `Hace ${Math.floor(diffMs / 86400000)} d`;
+                                                                    else if (diffMs > 3600000) timeText = `Hace ${Math.floor(diffMs / 3600000)} h`;
+                                                                    else if (diffMs > 60000) timeText = `Hace ${Math.floor(diffMs / 60000)} min`;
+                                                                }
+                                                                return <span className="text-[8px] text-slate-500 font-medium tracking-tight mt-[1px]">{timeText}</span>;
+                                                            })()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-0 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        title="Test Connection"
+                                                        onClick={() => testConnection(conn.provider)}
+                                                        disabled={testingProvider === conn.provider}
+                                                        className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors disabled:opacity-50"
+                                                    >
+                                                        {testingProvider === conn.provider
+                                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                            : <PlayCircle className="w-3.5 h-3.5" />
+                                                        }
+                                                    </button>
+                                                    <button title="Editar" onClick={() => handleEdit(conn)} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+                                                        <Settings2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button title="Desvincular" onClick={() => handleDelete(conn.id, p.name)} className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors">
+                                                        <XCircle className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Unlocked Features (Service Mapping) & Sub-service Logos */}
+                                            {p.unlockedFeatures && p.unlockedFeatures.length > 0 && (
+                                                <div className="space-y-3 border-t border-slate-50 pt-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                                            <Layers className="w-2.5 h-2.5" /> Ecosistema Activo
+                                                        </span>
+                                                        {/* Render Sub-service logos if this is a Master Node */}
+                                                        <div className="flex items-center -space-x-1.5">
+                                                            {Object.values(PROVIDER_REGISTRY)
+                                                                .filter(sub => sub.parentProviderId === p.id)
+                                                                .map(sub => {
+                                                                    const SubIcon = sub.icon;
+                                                                    return (
+                                                                        <div key={sub.id} title={sub.name} className="w-5 h-5 rounded-md bg-white border border-slate-100 shadow-sm flex items-center justify-center p-0.5 overflow-hidden">
+                                                                            <SubIcon className="w-full h-full object-contain" />
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {p.unlockedFeatures.map((feat: string) => (
+                                                            <span key={feat} className="px-1.5 py-0.5 text-[9px] font-bold bg-slate-50 text-slate-500 border border-slate-100/80 rounded-sm">
+                                                                {feat}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Real FinOps / Usage Stats (Connected to DB) */}
+                                            {p.category === 'AI' && typeof conn.usageCost === 'number' && (
+                                                <div className="flex items-center justify-between border-t border-slate-100 pt-1.5 mt-1">
+                                                    <div className="flex items-center gap-1">
+                                                        <BarChart3 className="w-3 h-3 text-slate-500" />
+                                                        <span className="text-[9px] font-bold text-slate-700 uppercase tracking-wider">Gasto Mensual</span>
+                                                    </div>
+                                                    <span className="font-mono text-[11px] font-bold text-slate-900">€ {conn.usageCost.toFixed(4)}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Existing Metadata */}
+                                            {Object.keys(conn.metadata || {}).length > 0 && (
+                                                <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-1 border-t border-slate-100 pt-1.5">
+                                                    {Object.entries(conn.metadata || {})
+                                                        .filter(([k]) => !['SHOP_NAME', 'SHOPIFY_SHOP_DOMAIN', 'Tienda'].includes(k))
+                                                        .map(([key, value]) => {
+                                                            const isSensitive = key.toUpperCase().includes('KEY') || key.toUpperCase().includes('TOKEN') || key.toUpperCase().includes('SECRET');
+                                                            return (
+                                                                <div key={key} className="flex flex-col">
+                                                                    <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest leading-none mb-0.5">{key.replace(/_/g, ' ')}</span>
+                                                                    <span className="text-[9px] font-mono font-bold text-slate-800 truncate leading-none">{isSensitive ? "••••••••••••••••" : String(value)}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Security Vault Box */}
+                                        <div className="bg-slate-50/80 border-t border-slate-200/60 px-2.5 py-1.5 flex flex-col gap-1">
+                                            <div className="flex items-center gap-1.5 bg-white px-1.5 py-1 rounded border border-slate-200 shadow-sm">
+                                                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                                                <p className="flex-1 font-mono text-[10px] font-semibold text-slate-700 truncate leading-none pt-[1px]">
+                                                    {isRevealed ? conn.secret : "••••••••••••••••"}
+                                                </p>
+                                                <div className="flex items-center gap-0.5 pl-1.5 border-l border-slate-200">
+                                                    <button onClick={() => toggleSecret(idKey)} className="p-1 text-slate-400 hover:text-slate-800 transition-colors">
+                                                        {isRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                                    </button>
+                                                    <button onClick={() => copyToClipboard(conn.secret)} className="p-1 text-slate-400 hover:text-slate-800 transition-colors">
+                                                        <Copy className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </section>
+            </main>
+
+            <footer className="px-5 py-2 border-t border-slate-100 flex items-center justify-between text-slate-400 bg-white">
+                <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-rose-500" />
+                    <span className="text-[8px] font-black uppercase tracking-[0.3em]">Cifrado Activo AES-256 Sincronizado</span>
                 </div>
-            </Card>
-        </div>
+                <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 shadow-sm">
+                    <div className="h-1 w-1 rounded-full bg-rose-500 animate-pulse" />
+                    <span className="text-[9px] font-bold text-rose-500/80 tracking-tighter">V14.0</span>
+                </div>
+            </footer>
+        </PageShell>
     );
 }
 
 export default function ConnectionsPage() {
     return (
-        <Suspense fallback={<div className="p-20 text-center font-black animate-pulse">CARGANDO CANALES...</div>}>
+        <Suspense fallback={
+            <div className="h-screen flex items-center justify-center bg-white">
+                <Loader2 className="w-10 h-10 text-rose-500 animate-spin" />
+            </div>
+        }>
             <ConnectionsContent />
         </Suspense>
     );

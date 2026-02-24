@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAgentPerformance } from "@/app/logistics/orders/actions";
+import { getAgentPerformance } from "@/app/pedidos/actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ export function AgentPerformance() {
         });
     }, []);
 
-    if (loading) return <div className="p-8 text-center text-xs uppercase animate-pulse">Calculando Rendimiento...</div>;
+    if (loading) return <div className="p-6 text-center text-xs uppercase animate-pulse">Calculando Rendimiento...</div>;
 
     return (
         <Card className="bg-gradient-to-br from-slate-900 to-black border-white/10 shadow-2xl">

@@ -34,19 +34,18 @@ export async function POST(req: Request) {
             where: {
                 storeId_provider: {
                     storeId: store.id,
-                    provider: "GOOGLE_SERVICE_ACCOUNT"
+                    provider: "GOOGLE_CLOUD"
                 }
             },
             update: {
                 apiKey: parsedJson.client_id || "SERVICE_ACCOUNT",
-                apiSecret: "HIDDEN_PRIVATE_KEY", // We don't expose the private key easily in the secret field if not needed, but we need to store the whole JSON usually.
-                // Actually, let's store the whole JSON in extraConfig for safety and ease of use with google-auth-library
+                apiSecret: "HIDDEN_PRIVATE_KEY",
                 extraConfig: JSON.stringify(parsedJson),
                 isActive: true
             },
             create: {
                 storeId: store.id,
-                provider: "GOOGLE_SERVICE_ACCOUNT",
+                provider: "GOOGLE_CLOUD",
                 apiKey: parsedJson.client_id || "SERVICE_ACCOUNT",
                 apiSecret: "HIDDEN_PRIVATE_KEY",
                 extraConfig: JSON.stringify(parsedJson),

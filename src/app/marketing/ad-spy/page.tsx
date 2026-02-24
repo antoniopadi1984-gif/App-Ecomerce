@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageShell } from "@/components/ui/PageShell";
+import { ModuleHeader } from "@/components/ui/ModuleHeader";
 import { toast } from "sonner";
 
 export default function AdSpyPage() {
@@ -47,55 +49,43 @@ export default function AdSpyPage() {
     });
 
     return (
-        <div className="flex flex-col h-[calc(100vh-2rem)] bg-white rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-2xl">
-
-            {/* HEADER */}
-            <header className="p-8 border-b border-slate-100 bg-slate-50/20 shrink-0">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
-                            <Video className="h-6 w-6 text-white" />
+        <PageShell>
+            <ModuleHeader
+                title="Intelligence Spy Hub"
+                subtitle={`Interceptando ${captures.length} Activos de la Competencia`}
+                icon={Video}
+                actions={
+                    <div className="flex items-center gap-4 w-full md:w-auto">
+                        <div className="flex flex-1 max-w-md gap-2">
+                            <div className="relative flex-1 group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+                                <Input
+                                    placeholder="BUSCAR..."
+                                    className="h-9 pl-9 bg-white border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest placeholder:text-slate-300 focus:ring-indigo-500/10 focus:border-indigo-500/50 shadow-sm"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                            </div>
+                            <Button variant="outline" className="h-9 w-9 rounded-lg border-slate-200 bg-white shadow-sm p-0">
+                                <Filter className="h-4 w-4 text-slate-400" />
+                            </Button>
                         </div>
-                        <div>
-                            <h1 className="text-xl font-black uppercase tracking-tight text-slate-900 leading-none">Intelligence <span className="text-indigo-600">Spy Hub</span></h1>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Interceptando {captures.length} Activos de la Competencia
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-1 max-w-xl gap-2">
-                        <div className="relative flex-1 group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
-                            <Input
-                                placeholder="BUSCAR POR TEXTO O NICHO..."
-                                className="h-12 pl-12 bg-white border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest placeholder:text-slate-300 focus:ring-indigo-500/10 focus:border-indigo-500/50 shadow-sm"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                            />
-                        </div>
-                        <Button variant="outline" className="h-12 w-12 rounded-2xl border-slate-200 bg-white shadow-sm p-0">
-                            <Filter className="h-4 w-4 text-slate-400" />
-                        </Button>
-                    </div>
-
-                    <div className="flex items-center gap-2">
                         <TabsList filter={filter} setFilter={setFilter} />
                     </div>
-                </div>
-            </header>
+                }
+            />
 
             {/* MAIN CONTENT: MASONRY-LIKE GRID */}
-            <ScrollArea className="flex-1 bg-slate-50/10">
-                <div className="p-8">
+            <ScrollArea className="flex-1 bg-slate-50/10 min-h-[600px]">
+                <div className="p-6">
                     {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {Array.from({ length: 8 }).map((_, i) => (
                                 <div key={i} className="h-96 rounded-[2.5rem] bg-slate-100 animate-pulse" />
                             ))}
                         </div>
                     ) : filtered.length > 0 ? (
-                        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-8 space-y-8">
+                        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-8">
                             {filtered.map((item) => (
                                 <AdCard key={item.id} item={item} />
                             ))}
@@ -111,7 +101,7 @@ export default function AdSpyPage() {
                     )}
                 </div>
             </ScrollArea>
-        </div>
+        </PageShell>
     );
 }
 
@@ -130,7 +120,7 @@ function TabsList({ filter, setFilter }: any) {
                     key={tab.id}
                     onClick={() => setFilter(tab.id)}
                     className={cn(
-                        "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                        "px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
                         filter === tab.id
                             ? "bg-white text-slate-900 shadow-sm"
                             : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
@@ -159,7 +149,7 @@ function AdCard({ item }: { item: any }) {
 
             {/* ACTION MENU */}
             <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-xl text-slate-900">
+                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 shadow-xl text-slate-900">
                     <MoreVertical className="h-4 w-4" />
                 </Button>
             </div>

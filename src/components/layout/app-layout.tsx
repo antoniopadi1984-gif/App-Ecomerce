@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { ProductProvider } from "@/context/ProductContext";
 import { StoreProvider } from "@/lib/store/store-context";
 
+import { AgentCompanion } from "@/components/layout/agent-companion";
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
@@ -36,8 +38,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <StoreProvider>
             <ProductProvider>
-                <div className="min-h-screen bg-[#F7F8FA] font-sans antialiased text-foreground">
-                    <TopBar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+                <div className="min-h-screen bg-[#f4f7fb] font-sans antialiased text-foreground">
+                    <TopBar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isExpanded={isExpanded} />
 
                     <Sidebar
                         isOpen={isSidebarOpen}
@@ -48,18 +50,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
                     <main
                         className={cn(
-                            "transition-all duration-300 ease-in-out pt-14 min-h-screen",
-                            isExpanded ? "md:ml-60" : "md:ml-[72px]"
+                            "transition-all duration-300 ease-in-out pt-[var(--header-height)] min-h-screen relative overflow-x-hidden",
+                            isExpanded ? "ml-[var(--sidebar-width)]" : "ml-[var(--sidebar-collapsed)]",
+                            "max-md:ml-0"
                         )}
                     >
-                        {/* HIGH DENSITY CONTAINER: Apple Dashboard Style */}
-                        <div className="px-2 md:px-4 py-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        {/* Mobile Sidebar Backdrop */}
+                        {isSidebarOpen && (
+                            <div
+                                className="fixed inset-0 bg-black/10 z-40 md:hidden"
+                                onClick={() => setIsSidebarOpen(false)}
+                            />
+                        )}
+
+                        <div className="h-full">
                             {children}
                         </div>
                     </main>
+
+                    <AgentCompanion />
                 </div>
             </ProductProvider>
         </StoreProvider>
     );
 }
-

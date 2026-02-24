@@ -28,7 +28,7 @@ export const MAIN_NAV = {
             section: 'Logística',
             items: [
                 { label: 'Dashboard', href: '/logistics/dashboard', icon: 'Truck' },
-                { label: 'Pedidos', href: '/logistics/orders', icon: 'ShoppingCart' },
+                { label: 'Pedidos', href: '/pedidos', icon: 'ShoppingCart' },
                 { label: 'Costos', href: '/logistics/costs', icon: 'DollarSign' },
             ]
         },

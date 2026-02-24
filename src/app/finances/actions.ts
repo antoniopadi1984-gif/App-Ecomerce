@@ -2,7 +2,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { SnapshotService } from "@/lib/services/snapshot-service";
+import { MetricsSnapshotService } from "@/lib/services/metrics-snapshot-service";
 import { ThresholdService } from "@/lib/threshold-service";
 import { revalidatePath } from "next/cache";
 
@@ -27,7 +27,7 @@ export async function triggerHistoricalSync(storeId: string, month: number, year
         if (date > today) break;
 
         try {
-            await SnapshotService.generateDailySnapshot(storeId, date);
+            await MetricsSnapshotService.generateDailySnapshot(storeId, date);
             results.push(date.toISOString());
         } catch (e) {
             console.error(`Sync error for ${date.toISOString()}:`, e);
@@ -40,7 +40,7 @@ export async function triggerHistoricalSync(storeId: string, month: number, year
 
 export async function rebuildAccounting(storeId: string) {
     try {
-        await SnapshotService.rebuildFullHistory(storeId);
+        await MetricsSnapshotService.rebuildFullHistory(storeId);
         revalidatePath("/finances");
         return { success: true, message: "Reconstrucción completada. Revisa los logs para detalles." };
     } catch (e: any) {

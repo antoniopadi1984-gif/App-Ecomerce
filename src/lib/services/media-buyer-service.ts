@@ -1,5 +1,5 @@
 
-import { GeminiService } from "../gemini";
+import { GeminiAdapter } from "../gemini-adapter";
 
 export interface MediaBuyingInsight {
     title: string;
@@ -9,7 +9,7 @@ export interface MediaBuyingInsight {
 }
 
 export class MediaBuyingAdviser {
-    private static gemini = new GeminiService();
+    private static gemini = new GeminiAdapter();
 
     /**
      * Expert analysis of Meta Ads metrics.

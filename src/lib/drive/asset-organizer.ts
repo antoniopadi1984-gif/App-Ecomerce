@@ -36,7 +36,7 @@ export class AssetOrganizer {
 
         try {
             // 1. Classify the file
-            const classification = await this.classifyFile(fileName, fileBuffer);
+            const classification = await this.aiClassify(fileName, fileBuffer, productId);
             console.log(`[AssetOrganizer] Classification:`, classification);
 
             // 2. Get target folder
@@ -95,7 +95,17 @@ export class AssetOrganizer {
         fileBuffer?: Buffer
     ): Promise<ClassificationResult> {
 
-        // Strategy 1: Parse filename (NAD_C3_V12.mp4 → Concept 3)
+        // Strategy 1: Parse filename (Spencer Pawlin Style: [DATE]_[BRAND]_[ANGLE]_[HOOK]_[VAR])
+        const spencerMatch = fileName.match(/^(\d{6})_([^_]*)_([^_]*)_([^_]*)_([^_]*)/i);
+        if (spencerMatch) {
+            return {
+                category: 'creative_asset',
+                subcategory: spencerMatch[3], // Angle
+                confidence: 0.99
+            };
+        }
+
+        // Strategy 1.1: Legacy patterns (NAD_C3_V12.mp4 → Concept 3)
         const filenameMatch = fileName.match(/_C(\d)_V?\d*/i);
         if (filenameMatch) {
             const concept = parseInt(filenameMatch[1]);
@@ -158,14 +168,33 @@ export class AssetOrganizer {
      */
     private async aiClassify(
         fileName: string,
-        fileBuffer: Buffer
+        fileBuffer?: Buffer,
+        productId?: string
     ): Promise<ClassificationResult> {
+        let researchContext = "";
+        if (productId) {
+            try {
+                const latestResearch = await (prisma as any).researchRun.findFirst({
+                    where: { productId, status: 'READY' },
+                    orderBy: { createdAt: 'desc' }
+                });
+                if (latestResearch) {
+                    const data = JSON.parse(latestResearch.results);
+                    researchContext = `CONOCIMIENTO ESTRATÉGICO:\nÁngulos: ${JSON.stringify(data.marketing_angles || {})}`;
+                }
+            } catch (e) {
+                console.warn('[AssetOrganizer] Error fetching research context:', e);
+            }
+        }
 
-        const prompt = `Classify this file for marketing asset organization.
+        const prompt = `Classify this file for marketing asset organization using SPENCER PAWLIN standards.
+        
+${researchContext}
 
 Filename: ${fileName}
 
 Categories:
+- creative_asset: Final ad/creative (matches spencer nomenclature)
 - concept_1: Problema (pain points)
 - concept_2: Solucion (solution presentation)
 - concept_3: Mecanismo (how it works, unique mechanism)
@@ -178,15 +207,17 @@ Categories:
 - clip: Short video clip
 - static: Static ad/image
 
-Based on the filename, what category is this? 
+If the filename follows [DATE]_[BRAND]_[ANGLE]_[HOOK]_[VAR], it is a 'creative_asset'.
+
+Based on the filename and strategic context, what category is this? 
 
 Return JSON:
 {
-  "category": "concept_3",
-  "concept": 3,
-  "subcategory": null,
+  "category": "creative_asset",
+  "concept": null,
+  "subcategory": "ANGLE_NAME",
   "confidence": 0.8,
-  "reasoning": "Filename suggests mechanism explanation"
+  "reasoning": "Fits Spencer nomenclature and matches strategic research"
 }`;
 
         const result = await AiRouter.dispatch(

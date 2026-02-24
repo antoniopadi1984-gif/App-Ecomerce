@@ -214,7 +214,7 @@ export class GmailService {
                     </table>
                     
                     ${data.sheetUrl ? `
-                        <a href="${data.sheetUrl}" style="color: #3b82f6;">Ver métricas completas en Google Sheets →</a>
+                        <a href="${data.sheetUrl}" style="color: var(--alert-info);">Ver métricas completas en Google Sheets →</a>
                     ` : ''}
                 </div>
             `

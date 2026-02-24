@@ -1,11 +1,11 @@
-
 import { NextResponse } from "next/server";
 import { IntradaySyncService } from "@/lib/services/intraday-service";
+import { requireStoreIdNext } from "@/lib/server/store-context";
 
 export async function POST(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const storeId = "default-store"; // For now, or get from session
+        const storeId = await requireStoreIdNext();
         const win = (searchParams.get('window') || 'DAY') as any;
         const days = parseInt(searchParams.get('days') || '1');
         const force = searchParams.get('force') === 'true';

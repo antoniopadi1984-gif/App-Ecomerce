@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "../../../lib/prisma";
-import { ResearchOrchestrator } from "../../../lib/research/orchestrator";
+import { ResearchOrchestrator } from "../../../lib/research/research-orchestrator";
 import { generateStaticAdsFromResearchAction as generateStaticAds } from "../static-ads/actions";
 import { generateProLayout, pushToShopify } from "../../marketing/landing-lab/actions";
 // DriveSync will be imported dynamically

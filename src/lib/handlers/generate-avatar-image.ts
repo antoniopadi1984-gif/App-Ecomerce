@@ -1,12 +1,13 @@
-
 import { JobHandler } from "../worker";
 import prisma from "../prisma";
 import fs from "fs";
 import path from "path";
+import { replicateClient } from "../ai/replicate-client";
+import { resolveModel } from "../ai/model-registry";
 
 const generateAvatarImageHandler: JobHandler = {
-    handle: async (payload, onProgress) => {
-        const { avatarProfileId } = payload;
+    handle: async (payload, onProgress, jobId) => {
+        const { avatarProfileId, tier = 'premium' } = payload;
         if (!avatarProfileId) throw new Error("Missing avatarProfileId in payload");
 
         const db = prisma as any;
@@ -33,83 +34,136 @@ const generateAvatarImageHandler: JobHandler = {
         }
 
         try {
-            // 3. Call Python Engine
             const metadata = JSON.parse(profile.metadataJson || "{}");
             const traits = metadata.traits || {};
             const customPrompt = metadata.customPrompt || "";
 
-            const formData = new URLSearchParams();
-            formData.append("name", profile.name);
-            formData.append("sex", profile.sex);
-            formData.append("ageRange", profile.ageRange || "25");
-            formData.append("country", profile.region || "Global");
+            // --- ADVANCED PROMPT ENGINEERING FOR FLUX PRO ---
+            const gender = profile.sex === 'MALE' ? 'man' : 'woman';
+            const age = profile.ageRange || "35";
+            let region = profile.region || "";
 
-            // Inyectar modificadores ultra-realistas
-            const baseStyle = "photorealistic, 8k resolution, raw photo, highly detailed skin textures, cinematic lighting, masterpiece, sharp focus";
-            formData.append("style", customPrompt ? `${customPrompt}, ${baseStyle}` : baseStyle);
+            // Mapping common regions to adjectives
+            const regionMap: Record<string, string> = {
+                'España': 'Spanish',
+                'Spain': 'Spanish',
+                'Italia': 'Italian',
+                'Italy': 'Italian',
+                'Francia': 'French',
+                'France': 'French',
+                'Alemania': 'German',
+                'Germany': 'German',
+                'Portugal': 'Portuguese',
+                'México': 'Mexican',
+                'Mexico': 'Mexican',
+                'EEUU': 'American',
+                'USA': 'American'
+            };
 
-            formData.append('hasGreyHair', (traits.hasGreyHair || false).toString());
-            formData.append('hasWrinkles', (traits.hasWrinkles || false).toString());
-            formData.append('hasAcne', (traits.hasAcne || false).toString());
-            if (profile.evolutionStage) formData.append('evolutionStage', profile.evolutionStage);
-            if (metadata.voiceId) formData.append('voiceId', metadata.voiceId);
+            const regionAdj = regionMap[region] || region;
 
-            console.log(`🚀 [Worker] Requesting image generation for: ${profile.name}`);
-            const engineRes = await fetch("http://localhost:8000/avatar/image", {
-                method: "POST",
-                body: formData
-            });
+            // Generate a random seed if none exists to force variation
+            const seed = Math.floor(Math.random() * 1000000);
 
-            if (!engineRes.ok) throw new Error(`Engine Error: ${engineRes.statusText}`);
-            const engineData = await engineRes.json();
+            let promptParts = [
+                `High-end premium commercial portrait of a ${age} year old ${regionAdj} ${gender}.`,
+                `Cinematic lighting, fashion photography style, professional studio background with soft bokeh, 8k resolution, masterpiece.`,
+                `Sharp focus on eyes, highly detailed skin texture, pores visible, natural and hyper-realistic facial features.`,
+                `Wearing stylish elegant clothing, professional and confident expression, looking directly into the camera.`
+            ];
 
-            if (!engineData.success) throw new Error(engineData.error || "Generation failed in engine");
-            await onProgress(60);
+            if (traits.hasGreyHair) promptParts.push("Salt and pepper hair, visible grey roots, realistic hair texture.");
+            if (traits.hasWrinkles) promptParts.push("Visible wrinkles, crow's feet, realistic aged skin patterns, fine lines around eyes and forehead.");
+            if (traits.hasAcne) promptParts.push("Skin imperfections, visible acne scars, slight redness, textured skin with blemishes.");
+            if (traits.hasHairLoss) promptParts.push("Receding hairline, thinning hair on top, visible scalp through hair, realistic balding pattern.");
 
-            // 4. Handle Asset Storage
-            const avatarDir = path.resolve(process.cwd(), "data", "avatars", avatarProfileId);
-            if (!fs.existsSync(avatarDir)) fs.mkdirSync(avatarDir, { recursive: true });
+            const skinTone = traits.skinTone || 'CLARO';
+            promptParts.push(`${skinTone.toLowerCase()} skin tone.`);
 
-            const localPath = path.join(avatarDir, "avatar.png");
-            const publicPath = `/api/avatars/asset/${avatarProfileId}`; // Internal API route
-
-            // Download real asset from engine or simulate if it's a mock url
-            // In this specific system, /static in the engine is often available or we fetch it.
-            let imageUrl = engineData.preview_url;
-            if (imageUrl.startsWith("/")) {
-                imageUrl = `http://localhost:8000${imageUrl}`;
+            if (customPrompt) {
+                promptParts.push(`Atmosphere: ${customPrompt}`);
             }
 
-            console.log(`📥 [Worker] Downloading asset from: ${imageUrl}`);
-            const imgRes = await fetch(imageUrl);
-            if (!imgRes.ok) throw new Error("Failed to download generated image");
+            const finalPrompt = promptParts.join(" ");
 
-            const buffer = await imgRes.arrayBuffer();
-            fs.writeFileSync(localPath, Buffer.from(buffer));
-            await onProgress(90);
+            // 3. Resolve Model
+            const model = resolveModel('AVATAR_PORTRAIT', tier);
 
-            // 5. Update DB (Asset + Profile)
-            await db.avatarAsset.create({
+            // 4. Trigger Replicate Prediction
+            console.log(`🚀 [Worker] Triggering REPLICATE for: ${profile.name} Tier: ${tier}`);
+            const prediction = await replicateClient.createPrediction({
+                jobId: avatarProfileId, // Using profileId as reference for the webhook
+                ref: model.ref,
+                version: model.version,
+                input: {
+                    prompt: finalPrompt,
+                    aspect_ratio: "3:4",
+                    output_format: "png",
+                    output_quality: 100,
+                    seed: seed
+                },
+                isImage: true
+            });
+
+            // 4.5. Store Prediction ID in Job record immediately for auditing
+            await db.job.update({
+                where: { id: jobId },
                 data: {
-                    avatarProfileId,
-                    type: "AVATAR_IMAGE",
-                    pathLocal: publicPath,
-                    mime: "image/png"
+                    replicatePredictionId: prediction.id,
+                    provider: 'Replicate'
                 }
             });
 
-            if (!publicPath) throw new Error("Generated Image URL is empty");
+            await onProgress(80);
 
+            // 5. Update Profile with Prediction ID
             await db.avatarProfile.update({
                 where: { id: avatarProfileId },
                 data: {
-                    status: 'READY_IMAGE',
-                    imageUrl: publicPath // Update main image for quick access
+                    metadataJson: JSON.stringify({
+                        ...metadata,
+                        replicatePredictionId: prediction.id,
+                        modelUsed: model.ref,
+                        finalPrompt
+                    })
                 }
             });
 
+            // 6. ROBUST FALLBACK: Wait for completion and finalize (Required for Local Dev)
+            // Even if webhooks work, doing it here in the worker ensures completion
+            console.log(`⏳ [Worker] Waiting for Replicate prediction ${prediction.id} to complete...`);
+            const finalPrediction = await replicateClient.waitForPrediction(prediction.id);
+
+            if (finalPrediction.status === 'succeeded' && finalPrediction.output) {
+                console.log(`✅ [Worker] Prediction succeeded! Finalizing image for ${avatarProfileId}`);
+
+                const output = finalPrediction.output;
+                const primaryUrl = Array.isArray(output) ? output[0] : output;
+
+                const storageDir = path.resolve(process.cwd(), "data", "avatars", avatarProfileId);
+                const localPath = path.join(storageDir, "avatar.png");
+
+                await replicateClient.downloadFile(primaryUrl, localPath);
+
+                await db.avatarProfile.update({
+                    where: { id: avatarProfileId },
+                    data: {
+                        imageUrl: `/api/avatars/asset/${avatarProfileId}`,
+                        status: 'READY_IMAGE'
+                    }
+                });
+
+                console.log(`✨ [Worker] Avatar ${avatarProfileId} is now READY.`);
+            }
+
             await onProgress(100);
-            return { success: true, localPath: publicPath };
+            return {
+                success: true,
+                predictionId: prediction.id,
+                replicatePredictionId: prediction.id, // For Job worker auto-save
+                provider: 'Replicate',
+                status: 'READY_IMAGE'
+            };
 
         } catch (error: any) {
             console.error(`❌ [Worker] Generation Job Failed:`, error.message);
@@ -122,7 +176,7 @@ const generateAvatarImageHandler: JobHandler = {
                 }
             });
 
-            throw error; // Re-throw to mark job as FAILED
+            throw error;
         }
     }
 };

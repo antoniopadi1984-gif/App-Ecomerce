@@ -45,7 +45,7 @@ export default function LogisticsSettingsPage() {
     ];
 
     return (
-        <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+        <div className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
             <header className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-black tracking-tight uppercase italic flex items-center gap-3">
@@ -67,7 +67,7 @@ export default function LogisticsSettingsPage() {
                         Copia estas URLs y pégalas en el panel de configuración de tu proveedor logístico para recibir actualizaciones en tiempo real.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="p-8 grid gap-6">
+                <CardContent className="p-6 grid gap-6">
                     {providers.map((p) => (
                         <div key={p.name} className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
                             <div className={`h-10 w-10 flex items-center justify-center rounded-lg font-black text-xs uppercase ${p.icon}`}>
@@ -102,7 +102,7 @@ export default function LogisticsSettingsPage() {
             <div className="grid grid-cols-1 gap-6">
                 {rules.map((rule) => (
                     <Card key={rule.id} className="overflow-hidden border-border bg-card shadow-lg rounded-[2.5rem]">
-                        <div className="p-8 flex flex-col sm:flex-row gap-8">
+                        <div className="p-6 flex flex-col sm:flex-row gap-6">
                             <div className="w-full sm:w-64 space-y-4">
                                 <div className="h-14 w-full bg-muted flex items-center justify-center rounded-2xl">
                                     <span className="text-xl font-black italic">{rule.provider}</span>

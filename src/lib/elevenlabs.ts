@@ -2,20 +2,21 @@
  * ElevenLabs API Client for EcomBoom Control
  * Handles voice synthesis and cloning.
  */
+import { getConnectionSecret } from '@/lib/server/connections';
 
 export class ElevenLabsClient {
-    private apiKey: string;
     private baseUrl = "https://api.elevenlabs.io/v1";
 
-    constructor(apiKey?: string) {
-        this.apiKey = apiKey || process.env.ELEVENLABS_API_KEY || "";
+    private async getApiKey(): Promise<string> {
+        return await getConnectionSecret('store-main', 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY || "";
     }
 
     async getVoices() {
-        if (!this.apiKey) return { success: false, error: "No API Key" };
+        const apiKey = await this.getApiKey();
+        if (!apiKey) return { success: false, error: "No API Key configuration in Database" };
         try {
             const response = await fetch(`${this.baseUrl}/voices`, {
-                headers: { "xi-api-key": this.apiKey }
+                headers: { "xi-api-key": apiKey }
             });
             const data = await response.json();
             return { success: true, voices: data.voices };
@@ -24,21 +25,38 @@ export class ElevenLabsClient {
         }
     }
 
-    async textToSpeech(text: string, voiceId: string, stability = 0.5, similarity = 0.75) {
-        if (!this.apiKey) return { success: false, error: "No API Key" };
+    async textToSpeech(text: string, voiceId: string, options: {
+        stability?: number,
+        similarity?: number,
+        style?: number,
+        use_speaker_boost?: boolean,
+        model_id?: string
+    } = {}) {
+        const apiKey = await this.getApiKey();
+        if (!apiKey) return { success: false, error: "No API Key in Database" };
+        const {
+            stability = 0.5,
+            similarity = 0.75,
+            style = 0,
+            use_speaker_boost = true,
+            model_id = "eleven_multilingual_v2"
+        } = options;
+
         try {
             const response = await fetch(`${this.baseUrl}/text-to-speech/${voiceId}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "xi-api-key": this.apiKey
+                    "xi-api-key": apiKey
                 },
                 body: JSON.stringify({
                     text,
-                    model_id: "eleven_multilingual_v2",
+                    model_id,
                     voice_settings: {
                         stability,
-                        similarity_boost: similarity
+                        similarity_boost: similarity,
+                        style,
+                        use_speaker_boost
                     }
                 })
             });

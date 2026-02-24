@@ -1,6 +1,6 @@
 
 import { NextResponse } from "next/server";
-import { SnapshotService } from "@/lib/services/snapshot-service";
+import { MetricsSnapshotService } from "@/lib/services/metrics-snapshot-service";
 import { prisma } from "@/lib/prisma";
 import { startOfMonth, subMonths } from "date-fns";
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
         // This is a long-running task, ideally it should be a job
         // For now, we run it for the current month for speed in the API response
-        await SnapshotService.generateRangeSnapshots(
+        await MetricsSnapshotService.generateRangeSnapshots(
             storeId,
             startDate,
             new Date()

@@ -55,9 +55,10 @@ async function handleShopifyWebhook(topic: string, data: any) {
         // Determine Store ID robustly
         let storeId = connection.storeId;
         const storeExists = await prisma.store.findUnique({ where: { id: storeId } });
+
         if (!storeExists) {
-            const firstStore = await prisma.store.findFirst();
-            storeId = firstStore ? firstStore.id : (await prisma.store.create({ data: { id: "default-store", name: "Mi Tienda Webhook", currency: "EUR" } })).id;
+            console.error(`[Webhook] Target store ${storeId} not found for provider SHOPIFY`);
+            return;
         }
 
         // Detect Logistics Provider (Priority: Line Item Service > Fulfillment Company > Manual)
@@ -167,7 +168,7 @@ async function handleShopifyWebhook(topic: string, data: any) {
         // IMMEDIATE DISPATCH TO BEEPING (Regardless of Payment Status)
         if (detectedProvider === "BEEPING") {
             try {
-                const { pushOrderToBeeping } = await import("@/app/logistics/orders/actions");
+                const { pushOrderToBeeping } = await import("@/app/pedidos/actions");
                 console.log(`[Webhook] Auto-dispatching Order ${order.orderNumber} to BEEPING...`);
                 await pushOrderToBeeping(order.id);
             } catch (dispatchErr) {
@@ -176,7 +177,7 @@ async function handleShopifyWebhook(topic: string, data: any) {
         }
 
         // CRITICAL FIX: Sync Line Items for Statistics
-        const { syncOrderItemsAndProducts } = await import("@/app/logistics/orders/actions");
+        const { syncOrderItemsAndProducts } = await import("@/app/pedidos/actions");
         await syncOrderItemsAndProducts(data, order.id, storeId);
     }
 }
@@ -190,7 +191,7 @@ async function handleBeepingWebhook(data: any) {
     const order = await prisma.order.findUnique({ where: { shopifyId: externalId.toString() } });
     if (!order) return;
 
-    const { syncSingleOrderBeeping } = await import("@/app/logistics/orders/actions");
+    const { syncSingleOrderBeeping } = await import("@/app/pedidos/actions");
     await syncSingleOrderBeeping(order.id);
 }
 

@@ -1,0 +1,15 @@
+
+🔍 LISTADO DE CONEXIONES POR STORE (Real DB Inventory)
+--------------------------------------------------------------------------------
+
+🏪 STORE: Mi Tienda (store-main)
+Provider                 | Enabled | HasSecret      | Updated
+-------------------------|---------|----------------|------------
+GOOGLE_SERVICE_ACCOUNT   | ✅      | ❌ Missing     | 2026-02-08
+META_ADS                 | ✅      | ❌ Missing     | 2026-02-10
+SHOPIFY                  | ✅      | 🔐 Encrypted   | 2026-02-15
+
+🏪 STORE: Tienda Limpia (Fase 0) (store-limpio)
+Provider                 | Enabled | HasSecret      | Updated
+-------------------------|---------|----------------|------------
+(No connections active or all missing secrets)

@@ -141,10 +141,10 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
     return (
         <div className="h-full flex gap-6 overflow-hidden relative">
             {/* 1. LATERAL FOLDERS - Real Product Categories */}
-            <div className="w-60 shrink-0 flex flex-col gap-6">
-                <div className="space-y-4">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Estructura Drive</h4>
-                    <nav className="space-y-1">
+            <div className="w-56 shrink-0 flex flex-col gap-5">
+                <div className="space-y-3">
+                    <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] px-3">Estructura Drive</h4>
+                    <nav className="space-y-0.5 px-1">
                         {[
                             { id: 'root', label: 'Raíz del Producto', icon: Database },
                             { id: 'conceptos', label: '04_CONCEPTOS', icon: Sparkles },
@@ -159,14 +159,14 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
                                     else toast.info(`Navegando a ${item.label}...`);
                                 }}
                                 className={cn(
-                                    "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all",
+                                    "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
                                     (item.id === 'root' && !currentFolderId)
-                                        ? "bg-indigo-50 text-indigo-600"
-                                        : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
+                                        ? "bg-rose-500 text-white shadow-md shadow-rose-500/20"
+                                        : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
                                 )}
                             >
-                                <div className="flex items-center gap-2.5">
-                                    <item.icon className={cn("w-4 h-4", (item.id === 'root' && !currentFolderId) ? "text-indigo-600" : "text-slate-400")} />
+                                <div className="flex items-center gap-3">
+                                    <item.icon className={cn("w-3.5 h-3.5", (item.id === 'root' && !currentFolderId) ? "text-white" : "text-rose-500/50")} />
                                     {item.label}
                                 </div>
                             </button>
@@ -174,19 +174,19 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
                     </nav>
                 </div>
 
-                <div className="mt-auto p-4 bg-white/50 rounded-2xl border border-slate-200/50 space-y-3 shadow-sm">
-                    <div className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest">
-                        <Zap className="w-3 h-3 fill-indigo-600" />
-                        Espacio Drive
+                <div className="mt-auto p-4 bg-white/40 rounded-2xl border border-slate-100/50 space-y-3 shadow-sm mx-1">
+                    <div className="flex items-center gap-2 text-rose-500 font-black text-[9px] uppercase tracking-widest">
+                        <Zap className="w-3 h-3 fill-rose-500" />
+                        ESPACIO DRIVE
                     </div>
                     <div className="space-y-1.5">
-                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                                className="h-full bg-rose-500 rounded-full transition-all duration-500"
                                 style={{ width: `${storagePercentage}%` }}
                             />
                         </div>
-                        <p className="text-[10px] text-slate-500 font-bold leading-tight flex justify-between">
+                        <p className="text-[9px] text-slate-500 font-black leading-tight flex justify-between uppercase tracking-tighter">
                             <span>{formatBytes(storageInfo.usage)}</span>
                             <span className="opacity-40">{storageInfo.limit !== "0" ? `/ ${formatBytes(storageInfo.limit)}` : "Limitado"}</span>
                         </p>
@@ -195,38 +195,38 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
             </div>
 
             {/* 2. MAIN CONTENT AREA */}
-            <div className="flex-1 flex flex-col gap-4 min-w-0 bg-white rounded-[32px] border border-slate-100 shadow-sm p-4 overflow-hidden relative">
+            <div className="flex-1 flex flex-col gap-4 min-w-0 bg-white/40 rounded-[2.5rem] border border-slate-100/50 shadow-sm p-4 overflow-hidden relative">
                 {/* Header & Controls */}
-                <div className="flex items-center justify-between gap-4 shrink-0">
+                <div className="flex items-center justify-between gap-4 shrink-0 px-2">
                     <div className="flex items-center gap-3">
                         {currentFolderId && (
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={handleBack}
-                                className="h-8 w-8 rounded-lg hover:bg-slate-100"
+                                className="h-8 w-8 rounded-xl hover:bg-white text-slate-400 hover:text-rose-500 transition-all shadow-sm border border-transparent hover:border-slate-100"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
                         )}
-                        <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                        <h3 className="text-xs font-black text-slate-900 uppercase italic tracking-tighter flex items-center gap-2">
                             {currentFolderId ? (parentInfo?.name || "Carpeta") : "Biblioteca"}
-                            <span className="text-slate-300 font-medium">/</span>
+                            <span className="text-slate-300 font-medium not-italic">/</span>
                             <div className="flex items-center gap-2">
-                                <span className="text-indigo-600/50 text-[10px] tracking-widest uppercase">{files.length} ITEMS</span>
-                                {loading && <RefreshCw className="w-3 h-3 text-indigo-400 animate-spin" />}
+                                <span className="text-rose-500 text-[9px] tracking-widest uppercase not-italic no-italic">{files.length} ITEMS</span>
+                                {loading && <RefreshCw className="w-3 h-3 text-rose-500 animate-spin" />}
                             </div>
                         </h3>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <div className="relative w-64">
+                        <div className="relative w-56">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                             <Input
-                                placeholder="Buscar archivos..."
+                                placeholder="BUSCAR ARCHIVOS..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 h-9 bg-slate-50/50 border-slate-100 text-xs font-medium rounded-xl focus:ring-indigo-500/10"
+                                className="pl-9 h-8 bg-white/60 border-slate-100 text-[10px] font-black uppercase tracking-widest rounded-xl focus:ring-rose-500/10 placeholder:text-slate-300"
                             />
                         </div>
                         <Button
@@ -234,27 +234,27 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
                             size="icon"
                             onClick={() => loadFiles(currentFolderId)}
                             disabled={loading}
-                            className="h-8 w-8 text-slate-400 hover:text-indigo-600"
+                            className="h-8 w-8 text-slate-400 hover:text-rose-500 hover:bg-white rounded-xl transition-all"
                         >
-                            <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+                            <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
                         </Button>
-                        <div className="h-8 w-px bg-slate-100 mx-1" />
-                        <div className="flex bg-slate-100/50 p-1 rounded-lg border border-slate-100">
+                        <div className="h-6 w-px bg-slate-100 mx-1" />
+                        <div className="flex bg-slate-50/50 p-1 rounded-xl border border-slate-100 shadow-inner">
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setViewMode("grid")}
-                                className={cn("h-7 w-7 rounded-md", viewMode === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400")}
+                                className={cn("h-6 w-6 rounded-lg transition-all", viewMode === "grid" ? "bg-white text-rose-500 shadow-sm" : "text-slate-400 hover:text-slate-600")}
                             >
-                                <LayoutGrid className="w-3.5 h-3.5" />
+                                <LayoutGrid className="w-3 h-3" />
                             </Button>
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setViewMode("list")}
-                                className={cn("h-7 w-7 rounded-md", viewMode === "list" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400")}
+                                className={cn("h-6 w-6 rounded-lg transition-all", viewMode === "list" ? "bg-white text-rose-500 shadow-sm" : "text-slate-400 hover:text-slate-600")}
                             >
-                                <List className="w-3.5 h-3.5" />
+                                <List className="w-3 h-3" />
                             </Button>
                         </div>
                     </div>
@@ -264,16 +264,18 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
                 <div className="flex-1 overflow-y-auto no-scrollbar pb-20">
                     {loading ? (
                         <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-300">
-                            <span className="relative flex h-10 w-10">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-20"></span>
-                                <Database className="relative inline-flex w-10 h-10 text-indigo-600/30" />
-                            </span>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Consultando Drive...</span>
+                            <div className="relative flex h-12 w-12">
+                                <div className="animate-ping absolute inline-flex h-full w-full rounded-2xl bg-rose-400 opacity-20" />
+                                <div className="relative inline-flex items-center justify-center w-12 h-12 bg-white/60 rounded-2xl shadow-xl border border-slate-100">
+                                    <Database className="w-6 h-6 text-rose-500/40" />
+                                </div>
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-[0.3em] animate-pulse text-slate-400">SINCRONIZANDO DRIVE...</span>
                         </div>
                     ) : (
                         <div className={cn(
                             viewMode === "grid"
-                                ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-6"
+                                ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4"
                                 : "flex flex-col gap-1"
                         )}>
                             {filteredFiles.map((file) => (
@@ -281,19 +283,19 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
                                     key={file.id}
                                     onClick={() => file.isFolder ? handleFolderClick(file.id) : null}
                                     className={cn(
-                                        "group relative transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm",
+                                        "group relative transition-all duration-500 cursor-pointer overflow-hidden",
                                         viewMode === "grid"
-                                            ? "aspect-[3/4] bg-slate-50/50 rounded-2xl border border-slate-100 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1"
-                                            : "flex items-center gap-4 p-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100"
+                                            ? "aspect-[4/5] bg-white/40 rounded-2xl border border-slate-100/50 hover:border-rose-300 hover:shadow-xl hover:shadow-rose-500/5 hover:-translate-y-1"
+                                            : "flex items-center gap-4 p-2 rounded-xl hover:bg-white/60 border border-transparent hover:border-slate-100"
                                     )}
                                 >
                                     {/* SELECTION OVERLAY */}
                                     <div
                                         onClick={(e) => handleToggleSelect(file.id, e)}
                                         className={cn(
-                                            "absolute top-3 left-3 z-30 w-5 h-5 rounded-lg border-2 transition-all flex items-center justify-center",
+                                            "absolute top-2.5 left-2.5 z-30 w-5 h-5 rounded-lg border-2 transition-all flex items-center justify-center",
                                             selectedFiles.has(file.id)
-                                                ? "bg-indigo-600 border-indigo-600 shadow-lg"
+                                                ? "bg-rose-500 border-rose-500 shadow-lg scale-110"
                                                 : "bg-white/80 border-slate-200 opacity-0 group-hover:opacity-100"
                                         )}
                                     >
@@ -334,26 +336,26 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
 
                                             {/* Action Buttons Overlay - Smaller */}
                                             {!file.isFolder && (
-                                                <div className="absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 flex flex-col gap-1 z-20">
-                                                    <Button size="icon" className="w-7 h-7 rounded-lg bg-white/95 text-indigo-600 hover:bg-white shadow-lg border border-slate-100">
-                                                        <Wand2 className="w-3.5 h-3.5" />
+                                                <div className="absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 flex flex-col gap-1.5 z-20">
+                                                    <Button size="icon" className="w-8 h-8 rounded-xl bg-slate-900/90 text-rose-500 hover:text-rose-400 hover:bg-slate-900 shadow-xl">
+                                                        <Wand2 className="w-4 h-4" />
                                                     </Button>
-                                                    <Button size="icon" className="w-7 h-7 rounded-lg bg-white/95 text-emerald-600 hover:bg-white shadow-lg border border-slate-100">
-                                                        <Eye className="w-3.5 h-3.5" />
+                                                    <Button size="icon" className="w-8 h-8 rounded-xl bg-white/90 text-rose-500 hover:text-rose-600 hover:bg-white shadow-xl border border-slate-100">
+                                                        <Eye className="w-4 h-4" />
                                                     </Button>
                                                 </div>
                                             )}
 
-                                            <div className="absolute bottom-0 inset-x-0 h-24 p-3 z-10 bg-gradient-to-t from-white via-white/80 to-transparent flex flex-col items-center justify-end">
-                                                <div className="flex flex-col items-center gap-1.5 text-center w-full">
+                                            <div className="absolute bottom-0 inset-x-0 h-20 p-2.5 z-10 bg-gradient-to-t from-white via-white/90 to-transparent flex flex-col items-center justify-end">
+                                                <div className="flex flex-col items-center gap-1 text-center w-full">
                                                     <Badge className={cn(
                                                         "w-fit h-4 px-2 text-[7px] font-black uppercase tracking-widest leading-none",
-                                                        file.isFolder ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-indigo-600 text-white border-none"
+                                                        file.isFolder ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-rose-500 text-white border-none shadow-sm shadow-rose-500/20"
                                                     )}>
-                                                        {file.isFolder ? "Carpeta" : file.type}
+                                                        {file.isFolder ? "CARPETA" : file.type.toUpperCase()}
                                                     </Badge>
-                                                    <div className="min-h-[2.4rem] flex items-center justify-center w-full">
-                                                        <span className="text-[10px] font-black text-slate-900 leading-tight whitespace-normal break-all line-clamp-2 max-w-[95%]">
+                                                    <div className="min-h-[1.5rem] flex items-center justify-center w-full">
+                                                        <span className="text-[9px] font-black text-slate-900 uppercase tracking-tighter leading-tight line-clamp-2 max-w-[95%]">
                                                             {file.name}
                                                         </span>
                                                     </div>
@@ -363,15 +365,15 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
                                     ) : (
                                         /* CONTENT - LIST VIEW */
                                         <>
-                                            <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                                                {file.isFolder ? <Folder className="w-5 h-5 text-amber-500 fill-amber-50" /> : <Video className="w-5 h-5 text-indigo-600" />}
+                                            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 shadow-sm border border-slate-800">
+                                                {file.isFolder ? <Folder className="w-4 h-4 text-rose-500 fill-rose-500/20" /> : <Video className="w-4 h-4 text-rose-500" />}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-slate-900 truncate">{file.name}</p>
-                                                <p className="text-[10px] text-slate-400 font-medium">{file.type.toUpperCase()} • {new Date(file.createdTime).toLocaleDateString()}</p>
+                                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-tight truncate">{file.name}</p>
+                                                <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">{file.type} • {new Date(file.createdTime).toLocaleDateString()}</p>
                                             </div>
                                             <div className="flex items-center gap-2 pr-2">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400"><MoreVertical className="w-4 h-4" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-rose-500 rounded-xl"><MoreVertical className="w-4 h-4" /></Button>
                                             </div>
                                         </>
                                     )}
@@ -383,18 +385,18 @@ export default function BibliotecaPanel({ productId }: { productId: string }) {
 
                 {/* BULK ACTION BAR - Real Implementation */}
                 {selectedFiles.size > 0 && (
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-6 animate-in slide-in-from-bottom-8 duration-500 z-[60] backdrop-blur-xl">
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-6 animate-in slide-in-from-bottom-8 duration-500 z-[60]">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{selectedFiles.size} SELECCIONADOS</span>
-                            <span className="text-[9px] text-white/40 font-bold italic">Acciones rápidas en lote</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 ml-0.5">{selectedFiles.size} SELECCIONADOS</span>
+                            <span className="text-[8px] text-white/40 font-bold italic uppercase tracking-widest">Acciones rápidas en lote</span>
                         </div>
                         <div className="h-8 w-px bg-white/10" />
                         <div className="flex items-center gap-2">
-                            <Button size="sm" className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold text-xs gap-2">
-                                <BrainCircuit className="w-4 h-4" /> Clasificar IA
+                            <Button size="sm" className="h-9 px-4 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg transition-all hover:scale-105">
+                                <BrainCircuit className="w-3.5 h-3.5 mr-2" /> Clasificar IA
                             </Button>
-                            <Button size="sm" className="h-9 px-4 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-xs gap-2">
-                                <Trash2 className="w-4 h-4 text-rose-400" /> Eliminar
+                            <Button size="sm" variant="ghost" className="h-9 px-4 hover:bg-white/10 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">
+                                <Trash2 className="w-3.5 h-3.5 mr-2 text-rose-500" /> Eliminar
                             </Button>
                         </div>
                     </div>

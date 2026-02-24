@@ -11,10 +11,17 @@ export async function generateProductCopy(params: {
     productId: string,
     context: ContentContext,
     conceptId: string,
-    storeId: string
+    storeId: string,
+    sophisticationLevel?: number,
+    mechanism?: string,
+    customPrompt?: string,
+    competitorExamples?: string[]
 }) {
     try {
-        const { productId, context, conceptId, storeId } = params;
+        const {
+            productId, context, conceptId, storeId,
+            sophisticationLevel, mechanism, customPrompt, competitorExamples
+        } = params;
 
         // 1. Get Product & Store Data
         const product = await prisma.product.findUnique({
@@ -32,7 +39,11 @@ export async function generateProductCopy(params: {
             productName: product.title,
             context,
             isSafeMode,
-            researchData: (product.avatarResearches?.[0] as any) || {}
+            researchData: (product.avatarResearches?.[0] as any) || {},
+            sophisticationLevel,
+            mechanism,
+            customPrompt,
+            competitorExamples
         });
 
         // 4. Save to Database with Traceability

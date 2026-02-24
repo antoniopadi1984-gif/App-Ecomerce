@@ -58,7 +58,7 @@ export default function EagleEyePage() {
             </div>
 
             {/* REAL-TIME PULSE (GA4) */}
-            <Card className="premium-card overflow-hidden border-none vibrant-shadow-indigo bg-white/80 backdrop-blur-xl">
+            <Card className="premium-card overflow-hidden border-none vibrant-shadow-indigo bg-white">
                 <CardHeader className="bg-slate-50/50 py-5 flex flex-row items-center justify-between border-b border-slate-100">
                     <CardTitle className="text-[10px] font-black flex items-center gap-2 tracking-[0.2em] text-slate-400 uppercase">
                         <BarChart3 className="h-4 w-4 text-indigo-600" /> GOOGLE ANALYTICS 4 • REAL-TIME PULSE
@@ -146,7 +146,7 @@ function MetricRow({ label, value, target, status }: any) {
                 )} />
                 <span className="text-sm font-black text-slate-500 group-hover:text-slate-900 transition-colors uppercase tracking-tight">{label}</span>
             </div>
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-6">
                 <div className="text-right">
                     <span className="text-[10px] font-black text-slate-300 uppercase block tracking-wider">Actual</span>
                     <span className="text-lg font-black text-slate-900 tracking-tighter italic">{value}</span>

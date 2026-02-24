@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
             payload: payload
         });
 
-        revalidatePath("/logistics/orders");
+        revalidatePath("/pedidos");
         revalidatePath("/logistics/dashboard");
 
         return NextResponse.json({ success: true });

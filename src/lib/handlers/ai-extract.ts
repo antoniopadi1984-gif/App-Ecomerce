@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 
 const aiExtractHandler: JobHandler = {
-    handle: async (payload, onProgress) => {
+    handle: async (payload, onProgress, jobId) => {
         let { imageBase64, productId, productName, language } = payload;
 
         await onProgress(10);

@@ -1,21 +1,16 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import VideoLabClient from "./VideoLabClient";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+export default async function VideoLabPage() {
+    const products = await prisma.product.findMany({
+        select: {
+            id: true,
+            title: true
+        },
+        orderBy: {
+            createdAt: 'desc'
+        }
+    });
 
-export default function LegacyVideoLabRedirect() {
-    const router = useRouter();
-
-    useEffect(() => {
-        router.replace("/marketing");
-    }, [router]);
-
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-50">
-            <div className="animate-pulse flex flex-col items-center gap-4">
-                <div className="w-12 h-12 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Redirigiendo a Video Lab Unificado...</p>
-            </div>
-        </div>
-    );
+    return <VideoLabClient initialProducts={products} />;
 }

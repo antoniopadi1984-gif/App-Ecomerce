@@ -2,8 +2,8 @@
  * TEST SIMPLE: ¿Drive sync crea carpetas al terminar investigación?
  */
 
-import { prisma } from '../src/lib/prisma';
-import { ResearchLabIntegration } from '../src/lib/research/research-lab-integration';
+import { prisma } from '../src/lib/prisma.ts';
+import { ResearchLabIntegration } from '../src/lib/research/research-lab-integration.ts';
 
 async function testDriveFolderCreation() {
     console.log('\n📁 ========== TEST DRIVE FOLDER CREATION ==========\n');
@@ -12,13 +12,7 @@ async function testDriveFolderCreation() {
     const product = await prisma.product.findFirst({
         where: {
             researchProjects: {
-                some: {
-                    versions: {
-                        some: {
-                            status: 'READY'
-                        }
-                    }
-                }
+                status: 'READY'
             }
         },
         select: {

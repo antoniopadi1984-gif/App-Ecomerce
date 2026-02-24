@@ -8,7 +8,10 @@ import {
     Eye,
     CheckCircle2,
     AlertCircle,
-    Info
+    Info,
+    Clapperboard,
+    TrendingUp,
+    Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +50,7 @@ function AssetCard({ asset, onClick }: { asset: any, onClick: () => void }) {
     return (
         <div
             onClick={onClick}
-            className="group bg-white/60 backdrop-blur-md rounded-xl overflow-hidden border border-white/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer relative"
+            className="group glass-panel rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer relative"
         >
             {/* Visual Preview Container */}
             <div className="relative aspect-[9/11] bg-slate-900 group-hover:scale-[1.01] transition-transform duration-500">
@@ -92,7 +95,7 @@ function AssetCard({ asset, onClick }: { asset: any, onClick: () => void }) {
                         <span className="text-[9px] font-black text-white/60 uppercase tracking-widest truncate">{asset.nomenclatura || "UGC_GEN_01"}</span>
                         <h3 className="text-white font-bold text-xs truncate leading-tight mt-0.5">{asset.name}</h3>
                     </div>
-                    <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white scale-0 group-hover:scale-100 transition-transform duration-300">
+                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white scale-0 group-hover:scale-100 transition-transform duration-300">
                         <Play className="w-2.5 h-2.5 fill-current ml-0.5" />
                     </div>
                 </div>
@@ -129,4 +132,4 @@ function AssetCard({ asset, onClick }: { asset: any, onClick: () => void }) {
     );
 }
 
-import { Clapperboard, TrendingUp, Sparkles } from "lucide-react";
+

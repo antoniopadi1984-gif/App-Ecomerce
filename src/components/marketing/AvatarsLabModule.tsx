@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import AvatarStudioPage from "@/app/marketing/avatars-lab/page";
+import AvatarStudioPage from "@/app/marketing/avatars/page";
 
-export function AvatarsLabModule() {
+export function AvatarsModule() {
     return (
-        <div className="bg-slate-50 -mx-8 -my-8 min-h-[800px] overflow-hidden p-8">
-            <AvatarStudioPage />
+        <div className="bg-slate-50/30 -m-3 p-3 min-h-[800px] overflow-hidden">
+            <AvatarStudioPage isEmbedded={true} />
         </div>
     );
 }

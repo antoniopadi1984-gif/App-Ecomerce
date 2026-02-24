@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ResearchSnapshotService } from '@/lib/research/snapshot-service';
+import { ResearchMetricsSnapshotService } from '@/lib/research/research-snapshot-service';
 
 /**
  * Research Snapshot API
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const snapshot = await ResearchSnapshotService.createSnapshot({
+        const snapshot = await ResearchMetricsSnapshotService.createSnapshot({
             productId,
             productDNA,
             vocInsights,
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
         }
 
         if (action === 'compare' && version1 && version2) {
-            const comparison = await ResearchSnapshotService.compare(
+            const comparison = await ResearchMetricsSnapshotService.compare(
                 productId,
                 parseInt(version1),
                 parseInt(version2)
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
         }
 
         if (action === 'latest') {
-            const snapshot = await ResearchSnapshotService.getLatest(productId);
+            const snapshot = await ResearchMetricsSnapshotService.getLatest(productId);
             return NextResponse.json({
                 success: true,
                 snapshot
@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
 
         // Default: return history
         const limit = parseInt(searchParams.get('limit') || '10');
-        const history = await ResearchSnapshotService.getHistory(productId, limit);
+        const history = await ResearchMetricsSnapshotService.getHistory(productId, limit);
 
         return NextResponse.json({
             success: true,
@@ -132,7 +132,7 @@ export async function PUT(req: NextRequest) {
             );
         }
 
-        const newSnapshot = await ResearchSnapshotService.rollback(
+        const newSnapshot = await ResearchMetricsSnapshotService.rollback(
             productId,
             targetVersion
         );

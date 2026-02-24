@@ -36,7 +36,7 @@ export async function GET() {
         fs.writeFileSync(path.join(uploadsDir, safeFile), "safe");
         await db.adSpyCapture.create({ data: { type: 'VIDEO', platform: 'TIKTOK', url: safeFile } });
 
-        await maintenanceHandler.handle({}, async () => { });
+        await maintenanceHandler.handle({}, async () => { }, "test-job-id");
         results.maintenance_safety = fs.existsSync(path.join(uploadsDir, safeFile));
 
         // Cleanup

@@ -23,6 +23,7 @@ import { STATIC_ADS_PROTOCOL } from "@/lib/static-ads-protocol";
 import { generateStaticConcepts, getProducts } from "./actions";
 import { Textarea } from "@/components/ui/textarea";
 import { AiCollaborationPanel } from "@/components/marketing/ai-collaboration-panel";
+import { CreativeFactoryPanel } from "@/components/creative/CreativeFactoryPanel";
 
 export default function StaticAdsPage() {
     const [productName, setProductName] = useState("");
@@ -198,6 +199,11 @@ export default function StaticAdsPage() {
 
                 {/* Main Results Area */}
                 <div className="col-span-12 lg:col-span-8 xl:col-span-9 space-y-6">
+                    <CreativeFactoryPanel
+                        productId={selectedProductId}
+                        productName={productName}
+                    />
+
                     {!concepts.length && !isGenerating ? (
                         <div className="h-[500px] border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50 flex flex-col items-center justify-center relative overflow-hidden">
                             <div className="relative text-center space-y-4">

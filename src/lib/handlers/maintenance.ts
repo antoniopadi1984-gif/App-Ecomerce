@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 
 const maintenanceHandler: JobHandler = {
-    handle: async (payload, onProgress) => {
+    handle: async (payload, onProgress, jobId) => {
         const stats = {
             deletedFiles: 0,
             freedBytes: 0,

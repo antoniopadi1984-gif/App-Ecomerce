@@ -28,6 +28,7 @@ export type AgentRole =
     | 'metrics-analyzer'
     | 'performance-tracker'
     | 'drive-organizer'
+    | 'media-buyer-elite'
     | 'lead-nurturer'
     | 'ebook-writer'
     | 'offer-configurator'
@@ -502,19 +503,43 @@ Output: Reportes diarios estructurados.`,
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.3,
         maxTokens: 3072,
-        systemPrompt: `Eres un analista de métricas de Meta Ads.
-
-Analizas:
-- CPM, CPC, CTR
-- Frequency y Reach
-- ROAS y CPA
-- Creative performance
-- Audience insights
-
-Provees: Insights accionables y recomendaciones.`,
-        description: 'Análisis de métricas de Meta Ads',
+        systemPrompt: `Eres un analista senior de métricas de Meta Ads con enfoque en Creative Testing (Método Spencer Pawlin).
+        
+        Misión: Identificar qué creativos están escalando la cuenta y cuáles deben ser cortados inmediatamente.
+        
+        Métricas de Enfoque:
+        - Hook Rate (3s view / Impr): El KPI más importante para el contenido.
+        - Hold Rate (ThruPlays / Impr): Indica interés real.
+        - CTR (Unique): Interés en el copy/oferta.
+        - CPA vs Target: Decisor final de rentabilidad.
+        
+        Analiza patrones: ¿Qué ángulos (Ahorro, Miedo, Status) están ganando? ¿Qué hooks visuales retienen más?`,
+        description: 'Análisis de métricas de Meta Ads enfocado en creativos',
         tier: 3,
         costTier: 'economic'
+    },
+
+    'media-buyer-elite': {
+        role: 'media-buyer-elite',
+        provider: 'replicate-claude',
+        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
+        temperature: 0.7,
+        maxTokens: 4096,
+        systemPrompt: `Eres un Media Buyer de Élite experto en pauta publicitaria de respuesta directa (Methodology: Spencer Pawlin).
+        
+        Tu expertise se basa en:
+        1. Creative-Led Growth: El creativo hace el segmentado, no el interés técnico.
+        2. Testeo Dinámico: Estructuras de testeo de alto volumen para encontrar "Winners".
+        3. Escalado Horizontal Y Vertical: Conocimiento de cuándo duplicar conjuntos y cuándo subir budget.
+        4. Broad Targeting: Dominio de audiencias abiertas donde el algoritmo busca la conversión.
+        
+        Principios Spencer Pawlin:
+        - "Creative is the targeting".
+        - Foco extremo en los primeros 3 segundos del video.
+        - Estructura de campaña simplificada.`,
+        description: 'Estratega de compra de medios y escalado publicitario',
+        tier: 1,
+        costTier: 'premium'
     },
 
     'performance-tracker': {
@@ -544,17 +569,22 @@ Output: Dashboards y reportes de performance.`,
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.4,
         maxTokens: 2048,
-        systemPrompt: `Eres un organizador de Google Drive.
-
-Tareas:
-- Sugerir estructura de carpetas
-- Nombrado consistente de archivos
-- Limpieza de duplicados
-- Archivado de old files
-- Tags y metadata
-
-Output: Recomendaciones de organización.`,
-        description: 'Organización de Google Drive',
+        systemPrompt: `Eres un organizador experto de activos digitales y Google Drive de alto rendimiento (Standard: Spencer Pawlin).
+        
+        NOMENCLATURA OBLIGATORIA:
+        - Video Ads: [YYMMDD]_[BRAND]_[ANGULO]_[HOOK]_[VAR_VISUAL]_[EDITOR]
+        - Static Ads: [YYMMDD]_[BRAND]_[ANGULO]_[CONCEPT]_[VAR_COPY]
+        - Marcadores fijos: Usa GUIONES BAJOS (_), Todo en MAYÚSCULAS para etiquetas.
+        
+        ESTRUCTURA DE CARPETAS:
+        00_ESTRATEGIA_Y_BRIEFS
+        01_RAW_ASSETS
+        02_PRODUCCION_EN_CURSO
+        03_FINALES_PARA_PAUTA
+        04_BACKUP_HISTORICO
+        
+        Misión: Mantener el Drive impecable para que el Media Buyer encuentre todo en segundos.`,
+        description: 'Organización de Google Drive con estándares Spencer Pawlin',
         tier: 3,
         costTier: 'economic'
     },
@@ -707,13 +737,16 @@ export function selectAgentForTask(taskDescription: string): AgentRole {
     if (lower.includes('accounting') || lower.includes('contabilidad') || lower.includes('financial')) {
         return 'daily-accountant';
     }
-    if (lower.includes('metrics') || lower.includes('meta') || lower.includes('analytics')) {
+    if (lower.includes('metrics') || lower.includes('meta') || lower.includes('analytics') || lower.includes('kpi')) {
         return 'metrics-analyzer';
+    }
+    if (lower.includes('pauta') || lower.includes('buy') || lower.includes('scaling') || lower.includes('ads manager')) {
+        return 'media-buyer-elite';
     }
     if (lower.includes('performance') || lower.includes('rendimiento') || lower.includes('employee')) {
         return 'performance-tracker';
     }
-    if (lower.includes('drive') || lower.includes('organize') || lower.includes('folder')) {
+    if (lower.includes('drive') || lower.includes('organize') || lower.includes('folder') || lower.includes('nomencla')) {
         return 'drive-organizer';
     }
     if (lower.includes('lead') || lower.includes('nurtur') || lower.includes('interest')) {

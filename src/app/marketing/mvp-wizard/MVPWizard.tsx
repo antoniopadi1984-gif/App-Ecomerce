@@ -132,15 +132,26 @@ export default function MVPWizard({ stores }: { stores: any[] }) {
 
                                 <div className="grid grid-cols-2 gap-2">
                                     <div className="space-y-0.5">
-                                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">País / Mercado</Label>
-                                        <div className="relative">
-                                            <Globe className="absolute left-2.5 top-2 w-3.5 h-3.5 text-slate-400" />
-                                            <Input
-                                                value={formData.country}
-                                                onChange={e => setFormData({ ...formData, country: e.target.value })}
-                                                className="h-8 pl-8 rounded-lg border-slate-200 font-bold text-xs"
-                                            />
-                                        </div>
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">País / Localización</Label>
+                                        <Select
+                                            value={formData.country}
+                                            onValueChange={val => setFormData({ ...formData, country: val })}
+                                        >
+                                            <SelectTrigger className="h-8 rounded-lg border-slate-200 font-bold text-xs bg-white">
+                                                <div className="flex items-center gap-2">
+                                                    <Globe className="w-3.5 h-3.5 text-slate-400" />
+                                                    <SelectValue placeholder="Selecciona país..." />
+                                                </div>
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-lg border-slate-100 shadow-xl">
+                                                <SelectItem value="ES" className="text-xs font-bold py-1.5 flex items-center gap-2">🇪🇸 España (Peninsular)</SelectItem>
+                                                <SelectItem value="MX" className="text-xs font-bold py-1.5">🇲🇽 México</SelectItem>
+                                                <SelectItem value="CO" className="text-xs font-bold py-1.5">🇨🇴 Colombia</SelectItem>
+                                                <SelectItem value="AR" className="text-xs font-bold py-1.5">🇦🇷 Argentina</SelectItem>
+                                                <SelectItem value="US" className="text-xs font-bold py-1.5">🇺🇸 USA (English)</SelectItem>
+                                                <SelectItem value="UK" className="text-xs font-bold py-1.5">🇬🇧 UK (English)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="space-y-0.5">
                                         <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Nicho</Label>

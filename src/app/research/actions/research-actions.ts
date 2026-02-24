@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { askGemini } from "@/lib/ai";
 import { HealthCheck } from "@/lib/research/health-check";
 import { DriveSync } from "@/lib/research/drive-sync";
-import { ResearchOrchestrator } from "@/lib/research/orchestrator";
+import { ResearchOrchestrator } from "@/lib/research/research-orchestrator";
+import { ResearchLabIntegration } from "@/lib/research/research-lab-integration";
 
 /**
  * Legacy Actions (Restored & Enhanced)
@@ -175,8 +176,8 @@ export async function startResearchV3Action(productId: string) {
     try {
         const orchestrator = new ResearchOrchestrator(productId);
 
-        // Start research in background (promise not awaited for immediate response)
-        orchestrator.runFullResearch().catch(err => {
+        // Start research in background
+        orchestrator.executeResearchPipelineV3().catch(err => {
             console.error(`[Background Research Error] Product ${productId}:`, err);
         });
 
@@ -273,7 +274,18 @@ export async function deleteCompetitorLink(id: string) {
 }
 
 export async function generateMasterDoc(productId: string) {
-    return { success: true, message: "Master Doc generado en Google Drive", error: null };
+    try {
+        const run = await prisma.researchRun.findFirst({
+            where: { productId, status: 'READY' },
+            orderBy: { createdAt: 'desc' }
+        });
+        if (!run || !run.results) throw new Error("No hay investigación finalizada para exportar.");
+
+        await ResearchLabIntegration.exportResearchToDrive(productId, JSON.parse(run.results));
+        return { success: true, message: "Master Doc generado en Google Drive" };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
 }
 
 export async function regenerateAvatarsAction(productId: string, params: any) {
@@ -289,11 +301,65 @@ export async function generateCopyVariationsAction(params: any) {
 }
 
 export async function generateAnglesAction(productId: string, versionId: string, avatarId: string) {
-    return { success: true, error: null };
+    try {
+        const orchestrator = new ResearchOrchestrator(productId);
+        // This usually happens during full research, but can be forced
+        await orchestrator.executeResearchPipelineV3(); // Re-run or resume
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
 }
 
 export async function generateGodTierCopyAction(params: { productId: string, avatarIndex: number, angleIndex: number }) {
-    return { success: true, error: null };
+    try {
+        const run = await prisma.researchRun.findFirst({
+            where: { productId: params.productId, status: 'READY' },
+            orderBy: { createdAt: 'desc' }
+        });
+        if (!run || !run.results) throw new Error("Investigación no encontrada");
+
+        const data = JSON.parse(run.results);
+        const avatar = data.v3_avatars?.[params.avatarIndex];
+        const angle = data.marketing_angles?.angle_tree?.[params.angleIndex];
+
+        if (!avatar || !angle) throw new Error("Avatar o Ángulo no seleccionado correctamente.");
+
+        const product = await prisma.product.findUnique({ where: { id: params.productId } });
+
+        const prompt = `
+            ACTÚA COMO UN COPYWRITER GOD-TIER (ESCUELA EUGENE SCHWARTZ / GARY HALBERT).
+            GENERA UN COPY DE VENTAS PARA ESTE ÁNGULO ESPECÍFICO.
+            
+            PRODUCTO: ${product?.title}
+            AVATAR: ${JSON.stringify(avatar)}
+            ÁNGULO: ${JSON.stringify(angle)}
+            VOC (Voz del Cliente): ${JSON.stringify(data.v3_language_bank?.[0] || {})}
+            
+            ESTRUCTURA REQUERIDA:
+            1. HOOK DISRUPTIVO (Basado en el Lead Line del ángulo).
+            2. AGITACIÓN DEL DOLOR (Física del mercado).
+            3. INTRODUCCIÓN DEL MECANISMO ÚNICO (Vehículo de transformación).
+            4. OFERTA IRRESISTIBLE (Estructura Hormozi).
+            5. CTA DE ALTA TENSIÓN.
+            
+            ESTILO: Directo, visceral, sin "pelusa" corporativa.
+        `;
+
+        const res = await askGemini(prompt, "Eres un copywriter letal.");
+
+        // Save to Drive
+        await ResearchLabIntegration.saveGodTierCopyToDrive(
+            params.productId,
+            res.text || "",
+            avatar.name || "Avatar",
+            angle.concept || "Angle"
+        );
+
+        return { success: true, copy: res.text };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
 }
 
 export async function updateProduct(productId: string, data: any) {

@@ -4,10 +4,10 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
-export type JobType = 'VIDEO_STT' | 'VIDEO_RENDER' | 'SHOPIFY_SYNC' | 'LOGISTICS_SYNC' | 'AI_EXTRACT' | 'MAINTENANCE' | 'UPDATE_CHECK' | 'META_SYNC_ACCOUNTS' | 'GENERATE_AVATAR_IMAGE';
+export type JobType = 'VIDEO_STT' | 'VIDEO_RENDER' | 'SHOPIFY_SYNC' | 'LOGISTICS_SYNC' | 'AI_EXTRACT' | 'MAINTENANCE' | 'UPDATE_CHECK' | 'META_SYNC_ACCOUNTS' | 'GENERATE_AVATAR_IMAGE' | 'CONTENT_ALMANAC' | 'CONTENT_COURSE' | 'CONTENT_EBOOK' | 'REPLICATE_CREATIVE' | 'REPLICATE_FINALIZE';
 
 export interface JobHandler {
-    handle: (payload: any, onProgress: (p: number) => Promise<void>) => Promise<any>;
+    handle: (payload: any, onProgress: (p: number) => Promise<void>, jobId: string) => Promise<any>;
 }
 
 const Handlers: Record<string, JobHandler> = {
@@ -21,6 +21,16 @@ export async function initHandlers() {
     registerHandler('SHOPIFY_SYNC', (await import("./handlers/shopify-sync")).default);
     registerHandler('META_SYNC_ACCOUNTS', (await import("./handlers/meta-sync-accounts")).default);
     registerHandler('GENERATE_AVATAR_IMAGE', (await import("./handlers/generate-avatar-image")).default);
+
+    // Content Factory Handlers
+    const contentGen = (await import("./handlers/content-gen")).default;
+    registerHandler('CONTENT_ALMANAC', contentGen);
+    registerHandler('CONTENT_COURSE', contentGen);
+    registerHandler('CONTENT_EBOOK', contentGen);
+
+    // Replicate Factory
+    registerHandler('REPLICATE_CREATIVE', (await import("./handlers/replicate-creative")).default);
+    registerHandler('REPLICATE_FINALIZE', (await import("./handlers/replicate-finalize")).default);
 }
 
 export function registerHandler(type: JobType, handler: JobHandler) {
@@ -59,11 +69,14 @@ export async function createJob(type: JobType, payload: any) {
     });
 }
 
+const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const JOB_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+
 /**
  * Sequential Worker Loop
  */
 export async function startWorker() {
-    console.log("🚀 [Worker] Starting Job Processor...");
+    console.log("🚀 [Worker] Starting Robust Job Processor...");
 
     // Start Heartbeat Timer
     let isHeartbeating = false;
@@ -76,7 +89,6 @@ export async function startWorker() {
                 update: { timestamp: new Date(), status: 'OK' },
                 create: { id: 'singleton', timestamp: new Date(), status: 'OK' }
             });
-            console.log("💓 [Worker] Heartbeat updated");
         } catch (e) {
             console.error("💔 [Worker] Heartbeat failed:", e);
         } finally {
@@ -84,24 +96,22 @@ export async function startWorker() {
         }
     };
 
-    // --- INTELLIGENT SCHEDULER (5/15 Min Polling) ---
+    // --- INTELLIGENT SCHEDULER ---
     let lastFullLogisticsSync = 0;
     let lastPriorityLogisticsSync = 0;
 
     const runScheduler = async () => {
-        console.log("⏰ [Worker] Running Intelligent Scheduler...");
         const now = Date.now();
         try {
-            // 1. Shopify Sync (Every 2 min, as before)
+            // Shopify Sync
             const shopifyExisting = await prisma.job.findFirst({
                 where: { type: 'SHOPIFY_SYNC', status: { in: ['PENDING', 'PROCESSING'] } }
             });
             if (!shopifyExisting) {
-                console.log(`🆕 [Worker] Auto-Enqueuing critical job: SHOPIFY_SYNC`);
                 await createJob('SHOPIFY_SYNC', {});
             }
 
-            // 2. Logistics Sync (Intelligent Polling - Hardening 6.4)
+            // Logistics Sync
             const logisticsExisting = await prisma.job.findFirst({
                 where: { type: 'LOGISTICS_SYNC', status: { in: ['PENDING', 'PROCESSING'] } }
             });
@@ -111,43 +121,51 @@ export async function startWorker() {
                 const tenMin = 10 * 60 * 1000;
                 const sixtyMin = 60 * 60 * 1000;
 
-                // Priority 1: PREPARACION / ACTIVE (5 min)
                 if (now - lastPriorityLogisticsSync > fiveMin) {
-                    console.log(`🆕 [Worker] Auto-Enqueuing PRIORITY Logistics Sync (Active/5m)`);
                     await createJob('LOGISTICS_SYNC', { segment: 'ACTIVE', priority: true });
                     lastPriorityLogisticsSync = now;
                 }
-                // Priority 2: EN TRANSITO (10 min)
                 else if (now - lastFullLogisticsSync > tenMin) {
-                    console.log(`🆕 [Worker] Auto-Enqueuing TRANSIT Logistics Sync (10m)`);
                     await createJob('LOGISTICS_SYNC', { segment: 'TRANSIT' });
                     lastFullLogisticsSync = now;
                 }
-                // Priority 3: FINAL RECONCILLATION (60 min)
                 else if (now - (global as any).lastFinalLogisticsSync > sixtyMin) {
-                    console.log(`🆕 [Worker] Auto-Enqueuing FINAL Logistics Reconcillation (60m)`);
                     await createJob('LOGISTICS_SYNC', { segment: 'FINAL' });
                     (global as any).lastFinalLogisticsSync = now;
                 }
             }
-
-            // 3. Meta Sync (Every 30-60 min - let's do 30 min)
-            // ... can add similar logic for Meta if needed
         } catch (e) {
             console.error("❌ [Worker] Scheduler Error:", e);
         }
     };
 
-    // Initial run and interval
+    // Start background loops
     updateHeartbeat();
     runScheduler();
-
-    setInterval(updateHeartbeat, 60000); // 60s
-    setInterval(runScheduler, 60000); // 1 minute (Near-Instant)
+    setInterval(updateHeartbeat, 60000);
+    setInterval(runScheduler, 60000);
 
     while (true) {
         let job: any = null;
+        let startTimestamp = Date.now();
+
         try {
+            // 0. Recovery: Reset stale jobs
+            const staleJobs = await prisma.job.findMany({
+                where: {
+                    status: 'PROCESSING',
+                    lockedAt: { lt: new Date(Date.now() - LOCK_TIMEOUT_MS) }
+                }
+            });
+
+            for (const stale of staleJobs) {
+                console.warn(`♻️ [Worker] Recovering stale job ${stale.id} (${stale.type})`);
+                await prisma.job.update({
+                    where: { id: stale.id },
+                    data: { status: 'PENDING', lockedAt: null }
+                });
+            }
+
             // 1. Find a pending job
             job = await prisma.job.findFirst({
                 where: {
@@ -158,7 +176,11 @@ export async function startWorker() {
             });
 
             if (!job) {
-                await new Promise(r => setTimeout(r, 5000)); // Sleep if no jobs
+                // Heartbeat log every 30 seconds if idle
+                if (Date.now() % 30000 < 5000) {
+                    console.log("💤 [Worker] Idle - Waiting for jobs...");
+                }
+                await new Promise(r => setTimeout(r, 5000));
                 continue;
             }
 
@@ -172,64 +194,66 @@ export async function startWorker() {
                 }
             });
 
-            console.log(`📦 [Worker] Processing Job ${job.id} (${job.type})`);
+            console.log(`📦 [Worker] [START] job=${job.id} type=${job.type} payload=${job.payload?.substring(0, 100)}...`);
 
-            // 3. Execute
+            // 3. Execute with Timeout
             const handler = Handlers[job.type];
-            if (!handler) {
-                throw new Error(`No handler registered for type ${job.type}`);
-            }
+            if (!handler) throw new Error(`No handler for type ${job.type}`);
 
             const payload = JSON.parse(job.payload || '{}');
-            const result = await handler.handle(payload, async (p) => {
-                await prisma.job.update({
-                    where: { id: job.id },
-                    data: { progress: p }
-                });
+
+            // Promise race for execution timeout
+            const executionPromise = handler.handle(payload, async (p) => {
+                await prisma.job.update({ where: { id: job.id }, data: { progress: p } });
+            }, job.id);
+
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error("TIMEOUT")), JOB_TIMEOUT_MS);
             });
 
+            const result = await Promise.race([executionPromise, timeoutPromise]);
+
             // 4. Complete
+            const durationMs = Date.now() - startTimestamp;
             await prisma.job.update({
                 where: { id: job.id },
                 data: {
                     status: 'COMPLETED',
                     progress: 100,
                     result: JSON.stringify(result),
-                    lockedAt: null
+                    lockedAt: null,
+                    // Auto-extract auditing fields if handler returned them
+                    ...(result?.replicatePredictionId ? { replicatePredictionId: result.replicatePredictionId } : {}),
+                    ...(result?.provider ? { provider: result.provider } : {})
                 }
             });
 
-            console.log(`✅ [Worker] Job ${job.id} Completed`);
+            console.log(`✅ [Worker] [DONE] job=${job.id} type=${job.type} duration=${durationMs}ms`);
 
         } catch (error: any) {
-            console.error(`❌ [Worker] Job Error:`, error);
+            const durationMs = Date.now() - startTimestamp;
+            console.error(`❌ [Worker] [ERROR] job=${job?.id || 'none'} type=${job?.type || 'none'} duration=${durationMs}ms error=`, error.message || error);
 
             if (job) {
-                // 5. Handle failure with granular reporting
                 const errorMessage = error.message || String(error);
-                const isQuotaError = errorMessage.includes('quota') || errorMessage.includes('rate limit');
-                const isAuthError = errorMessage.includes('token') || errorMessage.includes('unauthorized') || errorMessage.includes('permission');
-
                 try {
-                    await (prisma as any).job.update({
+                    await prisma.job.update({
                         where: { id: job.id },
                         data: {
                             status: 'FAILED',
                             lastError: errorMessage,
                             lockedAt: null,
                             result: JSON.stringify({
-                                errorType: isQuotaError ? 'QUOTA_EXCEEDED' : isAuthError ? 'AUTH_FAILED' : 'INTERNAL_ERROR',
-                                errorCode: error.code || 'UNKNOWN',
+                                error: errorMessage,
                                 timestamp: new Date().toISOString()
                             })
                         }
                     });
                 } catch (updateError) {
-                    console.error("💔 [Worker] Critical: Failed to update job status to FAILED:", updateError);
+                    console.error("💔 [Worker] Critical failure updating job status:", updateError);
                 }
             }
 
-            // SAFETY: Always sleep on error to prevent CPU-killing infinite loops
             await new Promise(r => setTimeout(r, 2000));
         }
     }

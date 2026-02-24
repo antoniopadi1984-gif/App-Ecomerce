@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SnapshotService } from "@/lib/services/snapshot-service";
+import { MetricsSnapshotService } from "@/lib/services/metrics-snapshot-service";
+import { requireStoreIdNext } from "@/lib/server/store-context";
 
 export async function GET(request: NextRequest) {
-    const storeId = request.nextUrl.searchParams.get('storeId') || 'default-store';
-
     try {
+        const storeId = await requireStoreIdNext();
+
         // Sincronizar los últimos 120 días para cubrir histórico (Oct, Nov, Dic, Ene, Feb)
         const today = new Date();
         const startPath = new Date();
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
         console.log(`[sync-today] Triggering backfill from ${startPath.toISOString()} to ${today.toISOString()}`);
 
         // Ejecutamos en segundo plano para no bloquear al usuario
-        SnapshotService.generateRangeSnapshots(storeId, startPath, today)
+        MetricsSnapshotService.generateRangeSnapshots(storeId, startPath, today)
             .then(() => console.log(`[sync-today] Full backfill completed`))
             .catch(e => console.error(`[sync-today] Full backfill failed:`, e));
 

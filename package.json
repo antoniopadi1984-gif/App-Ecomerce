@@ -12,7 +12,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "worker": "npx tsx worker-sidecar.ts"
+    "worker": "npx tsx worker-sidecar.ts",
+    "clean": "pkill -f 'next dev' || true; pkill -f 'python3 src/engine/server.py' || true; rm -rf .next/dev/lock"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.22",
@@ -41,6 +42,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "adm-zip": "^0.5.16",
     "ai": "^6.0.77",
+    "axios": "^1.13.5",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

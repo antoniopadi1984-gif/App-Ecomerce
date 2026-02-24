@@ -201,49 +201,49 @@ export default function FacebookAdsPage() {
 
     return (
         <TooltipProvider>
-            <div className="flex h-[calc(100vh-100px)] overflow-hidden bg-[#F7F8FA] -m-4">
+            <div className="flex flex-col h-full overflow-hidden bg-transparent">
                 {/* Main Content Area */}
                 <div className={cn(
                     "flex-1 flex flex-col min-w-0 transition-all duration-300",
                     isAiPanelOpen ? "mr-[320px]" : "mr-0"
                 )}>
                     {/* TOOLBAR / HEADER */}
-                    <div className="h-12 border-b border-slate-200 bg-white flex items-center justify-between px-4 shrink-0">
+                    <div className="h-12 glass-card border-none flex items-center justify-between px-4 shrink-0 rounded-b-none rounded-t-2xl shadow-none border-b border-slate-200/50">
                         <div className="flex items-center gap-2">
-                            <Button variant="default" size="sm" className="bg-green-600 hover:bg-green-700 h-8 rounded-md px-3 text-[11px] font-bold">
+                            <Button variant="default" size="sm" className="bg-primary hover:bg-rose-500 h-8 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-100">
                                 <Plus className="w-3.5 h-3.5 mr-1" /> CREAR
                             </Button>
-                            <Button variant="outline" size="sm" className="h-8 rounded-md px-3 text-[11px] font-bold border-slate-200" onClick={() => setVisibleColumns(DEFAULT_COLUMNS.map(c => c.id))}>
+                            <Button variant="outline" size="sm" className="h-8 rounded-xl px-3 text-[10px] font-black uppercase tracking-widest border-slate-200/50 hover:bg-slate-50" onClick={() => setVisibleColumns(DEFAULT_COLUMNS.map(c => c.id))}>
                                 <RefreshCcw className="w-3.5 h-3.5 mr-1" /> RESET
                             </Button>
-                            <div className="h-4 w-[1px] bg-slate-200 mx-1" />
+                            <div className="h-4 w-[1px] bg-slate-200/50 mx-1" />
                             <div className="relative">
-                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                                <Input placeholder="Buscar..." className="h-8 w-48 pl-8 text-[11px] bg-slate-50 border-none rounded-md" />
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                <Input placeholder="BUSCAR..." className="h-8 w-48 pl-8 text-[10px] font-bold uppercase tracking-widest bg-slate-50/50 border-none rounded-xl" />
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 text-[11px] font-bold text-slate-600">
+                            <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-primary hover:bg-rose-50/50 rounded-xl">
                                 <Filter className="w-3.5 h-3.5 mr-1" /> FILTROS
                             </Button>
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 text-[11px] font-bold text-slate-600">
+                                    <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-primary hover:bg-rose-50/50 rounded-xl">
                                         <Columns className="w-3.5 h-3.5 mr-1" /> COLUMNAS
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56 bg-white border-slate-200 shadow-xl rounded-lg">
-                                    <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-slate-400">Configurar Rejilla</DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-slate-100" />
-                                    <ScrollArea className="h-[300px]">
+                                <DropdownMenuContent align="end" className="w-56 glass-card p-1.5 border-none shadow-2xl rounded-2xl z-[80]">
+                                    <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 px-3 py-2">Configurar Rejilla</DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-slate-100/50 my-1" />
+                                    <ScrollArea className="h-[300px] no-scrollbar">
                                         {DEFAULT_COLUMNS.map(col => (
                                             <DropdownMenuCheckboxItem
                                                 key={col.id}
                                                 checked={visibleColumns.includes(col.id)}
                                                 onCheckedChange={() => toggleColumn(col.id)}
-                                                className="text-[11px] font-bold text-slate-600"
+                                                className="text-[10px] font-bold text-slate-600 rounded-lg focus:bg-rose-50 focus:text-primary"
                                             >
                                                 {col.label || col.id.toUpperCase()}
                                             </DropdownMenuCheckboxItem>
@@ -252,8 +252,8 @@ export default function FacebookAdsPage() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
-                            <Button variant="ghost" size="sm" className="h-8 text-[11px] font-bold text-slate-600" onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}>
-                                <Brain className={cn("w-4 h-4 mr-1", isAiPanelOpen ? "text-indigo-600" : "text-slate-400")} />
+                            <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-primary hover:bg-rose-50/50 rounded-xl" onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}>
+                                <Brain className={cn("w-4 h-4 mr-1", isAiPanelOpen ? "text-primary" : "text-slate-400")} />
                                 {isAiPanelOpen ? "OCULTAR IA" : "MOSTRAR IA"}
                             </Button>
                         </div>
@@ -261,12 +261,12 @@ export default function FacebookAdsPage() {
 
                     {/* HIERARCHICAL BREADCRUMBS */}
                     {(selectedCampaignId || selectedAdsetId) && (
-                        <div className="h-8 bg-slate-50 border-b border-slate-200 flex items-center px-4 gap-2">
+                        <div className="h-10 bg-white/40 border-b border-slate-200/50 flex items-center px-4 gap-2">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-2">Filtro:</span>
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 text-[9px] font-black uppercase tracking-tighter text-slate-500 hover:text-blue-600 p-0"
+                                className="h-6 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-primary p-0"
                                 onClick={() => { setSelectedCampaignId(null); setSelectedAdsetId(null); setActiveTab('campaigns'); }}
                             >
                                 Todas las Campañas
@@ -274,9 +274,9 @@ export default function FacebookAdsPage() {
                             {selectedCampaignId && (
                                 <>
                                     <ChevronRight className="w-3 h-3 text-slate-300" />
-                                    <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
-                                        <span className="text-[9px] font-bold text-indigo-700">CAMPAÑA SELECCIONADA</span>
-                                        <button onClick={() => { setSelectedCampaignId(null); setSelectedAdsetId(null); setActiveTab('campaigns'); }} className="text-indigo-400 hover:text-indigo-900 transition-colors">
+                                    <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-lg">
+                                        <span className="text-[9px] font-black uppercase tracking-tighter text-primary">CAMPAÑA ACTIVA</span>
+                                        <button onClick={() => { setSelectedCampaignId(null); setSelectedAdsetId(null); setActiveTab('campaigns'); }} className="text-primary hover:text-rose-900 transition-colors">
                                             <AlertCircle className="w-3 h-3 rotate-45" />
                                         </button>
                                     </div>
@@ -285,9 +285,9 @@ export default function FacebookAdsPage() {
                             {selectedAdsetId && (
                                 <>
                                     <ChevronRight className="w-3 h-3 text-slate-300" />
-                                    <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
-                                        <span className="text-[9px] font-bold text-indigo-700">CONJUNTO SELECCIONADO</span>
-                                        <button onClick={() => setSelectedAdsetId(null)} className="text-indigo-400 hover:text-indigo-900 transition-colors">
+                                    <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-lg">
+                                        <span className="text-[9px] font-black uppercase tracking-tighter text-primary">CONJUNTO ACTIVO</span>
+                                        <button onClick={() => setSelectedAdsetId(null)} className="text-primary hover:text-rose-900 transition-colors">
                                             <AlertCircle className="w-3 h-3 rotate-45" />
                                         </button>
                                     </div>
@@ -296,22 +296,22 @@ export default function FacebookAdsPage() {
                         </div>
                     )}
 
-                    {/* TABS SELECTOR */}
-                    <div className="bg-white px-4 border-b border-slate-200 shrink-0">
+                    {/* TABS SELECTOR (Campaigns, Adsets, Ads) */}
+                    <div className="bg-white/60 px-4 border-b border-slate-200/50 shrink-0">
                         <Tabs value={activeTab} onValueChange={(v) => {
                             setActiveTab(v);
                             // Auto-reset lower level filters if jumping up
                             if (v === 'campaigns') { setSelectedCampaignId(null); setSelectedAdsetId(null); }
                             if (v === 'adsets') { setSelectedAdsetId(null); }
                         }}>
-                            <TabsList className="bg-transparent h-10 p-0 gap-8">
-                                <TabsTrigger value="campaigns" className="h-10 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 text-[11px] font-bold uppercase tracking-wider">
+                            <TabsList className="bg-transparent h-10 p-0 gap-6">
+                                <TabsTrigger value="campaigns" className="h-10 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary text-[10px] font-black uppercase tracking-[0.15em]">
                                     Campañas
                                 </TabsTrigger>
-                                <TabsTrigger value="adsets" className="h-10 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 text-[11px] font-bold uppercase tracking-wider">
+                                <TabsTrigger value="adsets" className="h-10 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary text-[10px] font-black uppercase tracking-[0.15em]">
                                     Conjuntos
                                 </TabsTrigger>
-                                <TabsTrigger value="ads" className="h-10 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 text-[11px] font-bold uppercase tracking-wider">
+                                <TabsTrigger value="ads" className="h-10 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary text-[10px] font-black uppercase tracking-[0.15em]">
                                     Anuncios
                                 </TabsTrigger>
                             </TabsList>
@@ -319,7 +319,7 @@ export default function FacebookAdsPage() {
                     </div>
 
                     {/* TABLE CONTAINER */}
-                    <div className="flex-1 overflow-auto bg-white relative no-scrollbar">
+                    <div className="flex-1 overflow-auto bg-white relative no-scrollbar rounded-b-2xl">
                         <Table className="border-separate border-spacing-0">
                             <TableHeader className="sticky top-0 z-20 bg-slate-50 shadow-sm">
                                 <TableRow className="h-8 hover:bg-slate-50 border-none">
@@ -328,7 +328,7 @@ export default function FacebookAdsPage() {
                                             key={col.id}
                                             className={cn(
                                                 "border-r border-b border-slate-200 px-2 text-[10px] font-black text-slate-500 uppercase tracking-tighter leading-none h-8",
-                                                col.sticky && "sticky left-0 bg-slate-50 z-30 shadow-[1px_0_0_0_#e2e8f0]",
+                                                col.sticky && "sticky left-0 bg-slate-50 z-30 shadow-[1px_0_0_0_var(--border)]",
                                                 col.align === 'right' && "text-right"
                                             )}
                                         >

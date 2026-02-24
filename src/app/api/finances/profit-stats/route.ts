@@ -3,13 +3,18 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { calculateOrderProfit } from "@/lib/finances";
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const storeId = request.headers.get("X-Store-Id");
         const db = prisma as any;
+
+        const where: any = { status: { not: 'CANCELLED' } };
+        if (storeId) where.storeId = storeId;
+
         const recentOrders = await db.order.findMany({
             take: 20,
             orderBy: { createdAt: 'desc' },
-            where: { status: { not: 'CANCELLED' } }
+            where
         });
 
         let totalRevenue = 0;

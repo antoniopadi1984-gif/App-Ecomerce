@@ -29,8 +29,7 @@ export function ModuleCard({
 
     return (
         <div
-            onClick={onClick}
-            className="group relative bg-white/60 backdrop-blur-md rounded-xl border border-slate-200/50 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-400/30 hover:bg-white transition-all duration-500 cursor-pointer p-2.5 flex flex-col justify-between min-h-[105px] overflow-hidden"
+            className="group relative bg-white/60 rounded-xl border border-slate-200/50 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-400/30 hover:bg-white transition-all duration-500 cursor-pointer p-2.5 flex flex-col justify-between min-h-[105px] overflow-hidden"
         >
             {/* Ambient Background Detail */}
             <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full -mr-8 -mt-8 pointer-events-none group-hover:bg-indigo-500/10 transition-colors duration-700" />

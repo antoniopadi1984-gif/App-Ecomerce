@@ -7,11 +7,12 @@ import { Loader2 } from "lucide-react";
 import { t } from "@/lib/constants/translations";
 
 interface SalesModuleProps {
+    storeId: string;
     productId: string;
     forcedStatus?: string;
 }
 
-export function SalesModule({ productId, forcedStatus }: SalesModuleProps) {
+export function SalesModule({ storeId, productId, forcedStatus }: SalesModuleProps) {
     const {
         orders,
         loading,
@@ -19,7 +20,7 @@ export function SalesModule({ productId, forcedStatus }: SalesModuleProps) {
         statusFilter,
         setStatusFilter,
         loadOrders
-    } = useProductOrders(productId, forcedStatus);
+    } = useProductOrders(storeId, productId, forcedStatus);
 
     useEffect(() => {
         if (forcedStatus) setStatusFilter(forcedStatus);

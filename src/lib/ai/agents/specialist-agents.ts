@@ -15,6 +15,8 @@ export class CopywriterAgent {
             - Estructura: Hook -> Problema -> Agitación -> Mecanismo Único -> Oferta -> Garantía.
             - Tono: Directo, visceral, rompiendo creencias limitantes.
             - Metodología: Investigación Profunda real.
+            - NOMENCLATURA SPENCER PAWLIN: Asegúrate de referenciar el Spencer Angle Code y Spencer Hook Code en los borradores para trazabilidad.
+            - IDENTIDAD VISUAL: Si la investigación incluye paleta de colores y tipografía, úsalas para sugerir la apariencia de la página y elementos de diseño.
         `;
 
         const prompt = `
@@ -43,6 +45,8 @@ export class ScriptWriterAgent {
             - Minuto 0-5s: Hook visual y verbal disruptivo.
             - Storytelling basado en la "Capa de Verdad" de la investigación.
             - Llamada a la acción clara y potente.
+            - NOMENCLATURA OBLIGATORIA (Spencer Pawlin): Los guiones generados DEBEN proponer un nombre de archivo siguiendo el patrón: [YYMMDD]_[BRAND]_[ANGULO]_[HOOK]_[VAR_VISUAL]_[EDITOR].
+            - DIRECCIÓN DE ARTE: Incorpora las directrices visuales (estilo de video, iluminación, vibe) en las descripciones de escena del guion.
         `;
 
         const prompt = `

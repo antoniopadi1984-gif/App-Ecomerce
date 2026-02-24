@@ -6,12 +6,12 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
-  LayoutDashboard, ShoppingCart, Truck, Wallet, BarChart3, Users,
-  Sparkles, Video, MessageSquare, FolderOpen, Target, Laptop,
-  Microscope, FileText, Globe, TrendingUp, Search, Eye,
-  Bot, Settings, Activity, LinkIcon, Sliders, UserCog,
-  ChevronDown, Pin, PinOff, Check, Package, Brain
+  PinOff,
+  Pin,
+  UserCircle,
+  Rocket
 } from 'lucide-react';
+import { navigation } from '@/lib/nav';
 
 export function Sidebar({
   isOpen: isMobileOpen,
@@ -35,109 +35,55 @@ export function Sidebar({
 
   const isOpen = isMobileOpen || isPinned || isHovering;
 
-  // Layers based on UX Architect Specs - PHASE 2 v1.8 UNIFIED
-  const layers = [
-    {
-      id: 'operations',
-      label: 'Operations',
-      items: [
-        { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { href: '/pedidos', icon: ShoppingCart, label: 'Pedidos', badge: 'v2' },
-        { href: '/customers', icon: Users, label: 'Customers' },
-      ]
-    },
-    {
-      id: 'finance',
-      label: 'Finance',
-      items: [
-        { href: '/finances', icon: Wallet, label: 'Contabilidad' },
-      ]
-    },
-    {
-      id: 'marketing',
-      label: 'Marketing',
-      items: [
-        { href: '/marketing/facebook-ads', icon: BarChart3, label: 'Ads Manager' },
-        { href: '/marketing/ads-moderator', icon: MessageSquare, label: 'Moderador' },
-        { href: '/centro-creativo', icon: Laptop, label: 'Creative Hub' },
-      ]
-    },
-    {
-      id: 'communication',
-      label: 'Communication',
-      items: [
-        { href: '/communications/inbox', icon: MessageSquare, label: 'Central Inbox' },
-        { href: '/communications/templates', icon: FileText, label: 'Plantillas' },
-      ]
-    },
-    {
-      id: 'ai',
-      label: 'AI',
-      items: [
-        { href: '/marketing/product-brain', icon: Brain, label: 'Brain Hub' },
-        { href: '/agentes-ia', icon: Bot, label: 'Agentes IA' },
-        { href: '/research', icon: Microscope, label: 'Research Lab' },
-        { href: '/eagle-eye', icon: Eye, label: 'Eagle Eye' },
-      ]
-    },
-    {
-      id: 'admin',
-      label: 'Admin',
-      items: [
-        { href: '/system/health', icon: Activity, label: 'System Health' },
-        { href: '/connections', icon: LinkIcon, label: 'Connections' },
-        { href: '/settings', icon: Settings, label: 'Settings' },
-      ]
-    }
-  ];
-
   return (
     <aside
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      onMouseEnter={() => handleHover(true)}
+      onMouseLeave={() => handleHover(false)}
       className={cn(
-        "fixed left-0 top-0 z-50 bg-white border-r border-slate-200 h-screen flex flex-col overflow-visible transition-all duration-300 shadow-sm",
-        "max-md:z-[100]",
-        isOpen ? "w-60 translate-x-0" : "w-[72px] max-md:-translate-x-full"
+        "fixed left-0 top-0 z-[100] glass-panel border-r border-white/40 h-screen flex flex-col transition-all duration-300 ease-in-out shadow-none",
+        "max-md:shadow-2xl max-md:w-[280px]",
+        isOpen ? "w-[var(--sidebar-width)] translate-x-0" : "w-[var(--sidebar-collapsed)] max-md:-translate-x-full"
       )}
     >
       {/* Logo Section */}
-      <div className="px-4 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 h-14 bg-slate-50/30">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-slate-200">
-            <span className="text-white font-black text-xs tracking-tighter italic">EB</span>
+      <div className={cn(
+        "border-b border-white/20 flex items-center shrink-0 h-[var(--header-height)] bg-transparent transition-all",
+        isOpen ? "px-3 justify-between" : "justify-center"
+      )}>
+        <div className={cn("flex items-center overflow-hidden", isOpen ? "gap-2.5" : "gap-0")}>
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-rose-200/50">
+            <Rocket className="w-3.5 h-3.5 text-white" />
           </div>
           {isOpen && (
             <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-              <span className="font-black text-sm tracking-tighter uppercase italic leading-none text-slate-900">EcomBoom</span>
-              <p className="text-[8px] text-blue-600 font-bold uppercase tracking-widest leading-none">Control v2.1</p>
+              <span className="font-extrabold text-[11px] tracking-tight text-slate-900 uppercase italic leading-none">Factoría <span className="text-primary not-italic">X</span></span>
+              <p className="text-[7px] text-slate-500 font-black uppercase tracking-[0.2em] mt-0.5">Scale Protocol</p>
             </div>
           )}
         </div>
-        {isOpen && togglePinned && (
-          <button onClick={togglePinned} className="text-slate-300 hover:text-slate-900 transition-colors">
+        {isOpen && (
+          <button onClick={togglePinned} className="text-slate-500 hover:text-primary transition-colors mr-1">
             {isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
           </button>
         )}
       </div>
 
       {/* Navigation - Section Based */}
-      <nav className="flex-1 overflow-y-auto no-scrollbar pt-4">
-        {layers.map((layer) => (
-          <div key={layer.id} className="mb-4">
+      <nav className="flex-1 overflow-y-auto no-scrollbar pt-2 pb-2">
+        {navigation.map((layer) => (
+          <div key={layer.id} className="mb-2.5">
             {isOpen && (
-              <h3 className="px-5 mb-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">{layer.label}</h3>
+              <h3 className="px-3 mb-1 text-[10px] font-black text-slate-600 uppercase tracking-[0.15em]">{layer.label}</h3>
             )}
             <div className="px-2 space-y-0.5">
-              {layer.items.map((item: any, idx: number) => (
+              {layer.items.map((item, idx) => (
                 <NavItem
                   key={idx}
                   href={item.href}
                   icon={item.icon}
                   label={item.label}
                   isOpen={isOpen}
-                  isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))}
-                  badge={item.badge}
+                  isActive={item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)}
                 />
               ))}
             </div>
@@ -146,46 +92,52 @@ export function Sidebar({
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-slate-100 bg-slate-50 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center shrink-0">
-            <UserCog className="w-4 h-4 text-slate-900" />
+      <div className={cn(
+        "border-t border-slate-100/50 shrink-0 bg-transparent flex items-center transition-all",
+        isOpen ? "p-3 justify-start" : "py-3 justify-center"
+      )}>
+        <div className={cn("flex items-center", isOpen ? "gap-3" : "gap-0")}>
+          <div className="w-7 h-7 rounded-lg bg-white border border-slate-200/50 flex items-center justify-center shrink-0 shadow-sm overflow-hidden group">
+            <UserCircle className="w-4 h-4 text-slate-400" />
           </div>
           {isOpen && (
             <div className="flex flex-col min-w-0">
-              <span className="text-[11px] font-bold text-slate-900 truncate tracking-tight uppercase px-1">Enterprise Admin</span>
-              <span className="text-[9px] text-slate-500 truncate italic bg-slate-200/50 px-1.5 py-0.5 rounded-full w-fit mt-0.5">SaaS OS v1.0</span>
+              <span className="text-[10px] font-bold text-slate-900 truncate tracking-tight uppercase">Administrador</span>
+              <Badge variant="outline" className="text-[8px] h-3 px-1 mt-0.5 border-slate-200/50 text-slate-500 w-fit bg-white/70">PRO</Badge>
             </div>
           )}
         </div>
       </div>
-
-    </aside>
+    </aside >
   );
 }
 
-function NavItem({ href, icon: Icon, label, isOpen, isActive, badge }: any) {
+function NavItem({ href, icon: Icon, label, isOpen, isActive }: { href: string; icon: any; label: string; isOpen: boolean; isActive: boolean }) {
   return (
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-[11px] font-bold uppercase tracking-tight group",
+        "flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-200 group relative",
+        "max-md:py-3 max-md:my-1", // Larger touch target on mobile
         isActive
-          ? "bg-[#2563EB] text-white shadow-sm"
-          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          ? "bg-rose-500/10 text-rose-600 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] ring-1 ring-rose-500/20"
+          : "text-slate-700 hover:bg-white/60 hover:text-slate-900"
       )}
     >
-      <Icon className={cn("w-5 h-5 shrink-0 transition-colors", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-900")} />
+      <Icon
+        strokeWidth={1.5}
+        className={cn(
+          "w-6 h-6 shrink-0 transition-transform group-hover:scale-110",
+          isActive ? "text-rose-600" : "text-slate-950 group-hover:text-black"
+        )}
+      />
       {isOpen && (
-        <span className="truncate tracking-tight flex-1 ml-1">{label}</span>
+        <span className="text-[10px] font-bold tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300 uppercase">
+          {label}
+        </span>
       )}
-      {isOpen && badge && (
-        <Badge className={cn(
-          "h-4 px-1 text-[8px] border-none font-black uppercase",
-          "bg-slate-900 text-white"
-        )}>
-          {badge}
-        </Badge>
+      {!isOpen && isActive && (
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-3 bg-rose-500 rounded-l-full" />
       )}
     </Link>
   );

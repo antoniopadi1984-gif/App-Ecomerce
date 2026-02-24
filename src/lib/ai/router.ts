@@ -41,7 +41,8 @@ export class AiRouter {
             images?: string[],
             systemPrompt?: string,
             jsonSchema?: any,
-            context?: string
+            context?: string,
+            locale?: string
         } = {}
     ): Promise<AIResponse> {
 
@@ -72,9 +73,11 @@ export class AiRouter {
             result = await agentDispatcher.dispatch({
                 role: agentRole,
                 prompt: prompt,
+                images: options.images,
                 context: options.context || options.systemPrompt, // Legacy bridge
-                taskDescription: taskKey,
-                jsonSchema: !!options.jsonSchema
+                taskDescription: taskKey as string,
+                jsonSchema: !!options.jsonSchema,
+                locale: options.locale
             });
         } catch (e: any) {
             error = e.message;

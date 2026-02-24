@@ -128,7 +128,7 @@ export default function LedgerPage() {
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-md rounded-lg border-none shadow-2xl p-6 bg-white overflow-hidden">
-                            <div className="absolute top-0 right-0 p-8 opacity-5">
+                            <div className="absolute top-0 right-0 p-6 opacity-5">
                                 <Wallet className="h-40 w-40 text-indigo-600" />
                             </div>
                             <DialogHeader>

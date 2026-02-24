@@ -1,10 +1,10 @@
 
 import { JobHandler } from "../worker";
-import { syncShopifyHistory } from "../../app/logistics/orders/actions";
+import { syncShopifyHistory } from "../../app/pedidos/actions";
 import prisma from "../prisma";
 
 const shopifySyncHandler: JobHandler = {
-    handle: async (payload, onProgress) => {
+    handle: async (payload, onProgress, jobId) => {
         console.log("🚀 [Worker] Starting Automated Shopify Sync (Orders/History)...");
 
         await onProgress(10);

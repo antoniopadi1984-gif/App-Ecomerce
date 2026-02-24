@@ -1,4 +1,4 @@
-import { StrategyContext } from "./orchestrator";
+import { StrategyContext } from "./creative-orchestrator";
 
 export class VideoScriptGenerator {
     private strategy: any;

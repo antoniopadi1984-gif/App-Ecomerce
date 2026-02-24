@@ -204,7 +204,7 @@ export default function InboxPage() {
             <div className="flex flex-1 overflow-hidden">
                 {/* LEFT SIDEBAR: CONVERSATIONS / CRM */}
                 <div className="w-[380px] border-r border-slate-100 bg-slate-50/30 flex flex-col shrink-0">
-                    <div className="p-8 pb-4 flex flex-col gap-6">
+                    <div className="p-6 pb-4 flex flex-col gap-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-md shadow-slate-200">
@@ -350,7 +350,7 @@ export default function InboxPage() {
                         {selectedChat ? (
                             <>
                                 {/* CHAT HEADER */}
-                                <div className="p-4 border-b border-slate-100 bg-white/95 backdrop-blur-md flex items-center justify-between sticky top-0 z-20 shadow-xs">
+                                <div className="p-4 border-b border-slate-100 bg-white/95 flex items-center justify-between sticky top-0 z-20 shadow-xs">
                                     <div className="flex items-center gap-3">
                                         <div className="h-10 w-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shadow-xs relative">
                                             <User className="h-5 w-5 text-slate-400" />
@@ -388,7 +388,7 @@ export default function InboxPage() {
                                 </div>
 
                                 {/* MESSAGES AREA */}
-                                <ScrollArea className="flex-1 p-8" ref={scrollRef}>
+                                <ScrollArea className="flex-1 p-6" ref={scrollRef}>
                                     <div className="space-y-6 pb-10">
                                         {messages.map((msg, i) => {
                                             const isAi = msg.sender === 'AI';
@@ -435,7 +435,7 @@ export default function InboxPage() {
                                 </ScrollArea>
 
                                 {/* INPUT AREA */}
-                                <div className="p-8 bg-white border-t border-slate-100 flex flex-col gap-4">
+                                <div className="p-6 bg-white border-t border-slate-100 flex flex-col gap-4">
                                     <div className="flex items-center justify-between px-2">
                                         <div className="flex items-center gap-2">
                                             <div className={cn(
@@ -548,7 +548,7 @@ export default function InboxPage() {
                     {/* MANAGEMENT CONSOLE (RIGHT) */}
                     {selectedChat && (
                         <div className="w-[420px] bg-white shrink-0 animate-in slide-in-from-right duration-700 border-l border-slate-100 flex flex-col h-full overflow-hidden">
-                            <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
                                 <div className="flex items-center gap-3">
                                     <div className={cn(
                                         "h-2 w-2 rounded-full shadow-[0_0_10px]",
@@ -633,7 +633,7 @@ export default function InboxPage() {
                                                     </div>
                                                 </div>
                                             )) : (
-                                                <div className="text-center p-8 border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50">
+                                                <div className="text-center p-6 border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50">
                                                     <History className="h-8 w-8 text-slate-200 mx-auto mb-3" />
                                                     <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">NO HISTORY DATA</p>
                                                 </div>

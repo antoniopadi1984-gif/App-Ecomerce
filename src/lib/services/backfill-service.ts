@@ -2,9 +2,9 @@
 import { prisma } from "@/lib/prisma";
 import { ShopifyClient } from "@/lib/shopify";
 import { IntradaySyncService } from "./intraday-service";
-import { SnapshotService } from "./snapshot-service";
+import { MetricsSnapshotService } from "./metrics-snapshot-service";
 import { eachDayOfInterval, startOfDay, endOfDay, format } from "date-fns";
-import { upsertShopifyOrder } from "@/app/logistics/orders/actions";
+import { upsertShopifyOrder } from "@/app/pedidos/actions";
 
 export class BackfillService {
     /**
@@ -105,7 +105,7 @@ export class BackfillService {
             try {
                 // Task 5: Implement Snapshot Engine properly
                 // For now, call the generator to ensure daily data is coherent
-                await SnapshotService.generateDailySnapshot(storeId, day, true);
+                await MetricsSnapshotService.generateDailySnapshot(storeId, day, true);
             } catch (e) {
                 console.error(`[BackfillService] Snapshot generation failed for ${dateStr}:`, e);
             }

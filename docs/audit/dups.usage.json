@@ -1,0 +1,18 @@
+{
+  "gemini.ts": {
+    "src/lib/ai/providers/gemini.ts": 0,
+    "src/lib/gemini.ts": 0
+  },
+  "v3-prompts.ts": {
+    "src/lib/copy/v3-prompts.ts": 0,
+    "src/lib/research/v3-prompts.ts": 0
+  },
+  "orchestrator.ts": {
+    "src/lib/creative/orchestrator.ts": 0,
+    "src/lib/research/orchestrator.ts": 0
+  },
+  "snapshot-service.ts": {
+    "src/lib/research/snapshot-service.ts": 0,
+    "src/lib/services/snapshot-service.ts": 0
+  }
+}

@@ -27,6 +27,7 @@ export function useResearch(productId: string) {
     const [loading, setLoading] = useState(false);
     const [researchData, setResearchData] = useState<any>(null);
     const [progress, setProgress] = useState({ phase: 0, percent: 0, message: "" });
+    const [logs, setLogs] = useState<string[]>([]);
     const [isSystemHealthOk, setIsSystemHealthOk] = useState(true);
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -38,24 +39,32 @@ export function useResearch(productId: string) {
         pollingRef.current = setInterval(async () => {
             if (!productId) return;
             const status = await getLatestRunStatus(productId);
-            if (status && status.status === 'RUNNING') {
-                const results = typeof status.results === 'string' ? JSON.parse(status.results) : status.results;
-                setProgress({
-                    phase: results.currentPhase || 0,
-                    percent: results.completionPercentage || 0,
-                    message: results.statusMessage || "Procesando..."
-                });
-            } else if (status && status.status === 'READY') {
-                clearInterval(pollingRef.current!);
-                pollingRef.current = null;
-                setProgress({ phase: 0, percent: 100, message: "Completado" });
-                loadDataRef.current?.();
-                toast.success("Investigación finalizada");
-            } else if (status && status.status === 'FAILED') {
-                clearInterval(pollingRef.current!);
-                pollingRef.current = null;
-                setLoading(false);
-                toast.error("La investigación ha fallado");
+            if (status) {
+                // Update logs
+                if (status.logs) {
+                    const logsArray = status.logs.split('\n').filter(Boolean);
+                    setLogs(logsArray);
+                }
+
+                if (status.status === 'RUNNING') {
+                    const results = typeof status.results === 'string' ? JSON.parse(status.results) : status.results;
+                    setProgress({
+                        phase: status.currentPhase || (results?.currentPhase) || 0,
+                        percent: status.progress || (results?.completionPercentage) || 0,
+                        message: results?.statusMessage || "Procesando el escaneo forense..."
+                    });
+                } else if (status.status === 'READY') {
+                    clearInterval(pollingRef.current!);
+                    pollingRef.current = null;
+                    setProgress({ phase: 0, percent: 100, message: "Operación Finalizada con Éxito" });
+                    loadDataRef.current?.();
+                    toast.success("Investigación finalizada");
+                } else if (status.status === 'FAILED') {
+                    clearInterval(pollingRef.current!);
+                    pollingRef.current = null;
+                    setLoading(false);
+                    toast.error("La investigación ha fallado");
+                }
             }
         }, 3000);
     }, [productId]);
@@ -235,6 +244,7 @@ export function useResearch(productId: string) {
         researchData,
         loading,
         progress,
+        logs,
         isSystemHealthOk,
         startResearch,
         syncDrive,

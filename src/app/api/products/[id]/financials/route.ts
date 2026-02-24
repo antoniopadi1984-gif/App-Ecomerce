@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { SnapshotService } from '@/lib/services/snapshot-service';
+import { MetricsSnapshotService } from '@/lib/services/metrics-snapshot-service';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, startOfDay } from 'date-fns';
 
 export async function GET(

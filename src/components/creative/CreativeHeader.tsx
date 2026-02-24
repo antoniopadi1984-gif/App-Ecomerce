@@ -30,7 +30,7 @@ export function CreativeHeader({ stats, onGenerate, onUpload, isGenerating }: Cr
     return (
         <div className="flex flex-col gap-6">
             {/* Main Header Action Area - GLASS PRO */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/60 backdrop-blur-xl px-6 py-5 rounded-2xl border border-white/60 shadow-xl shadow-indigo-500/5 relative overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/60 px-6 py-5 rounded-2xl border border-white/60 shadow-xl shadow-indigo-500/5 relative overflow-hidden glass-panel">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -z-10 animate-pulse" />
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200 animate-in zoom-in duration-500">
@@ -116,7 +116,7 @@ function StatCard({ label, value, sub, icon: Icon, color }: { label: string, val
     };
 
     return (
-        <div className="bg-white/60 backdrop-blur-md p-4 rounded-xl border border-white/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 group overflow-hidden relative hover:-translate-y-1">
+        <div className="bg-white/60 p-4 rounded-xl border border-white/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 group overflow-hidden relative hover:-translate-y-1 glass-card">
             <div className="absolute -right-1 -top-1 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
                 <Icon className="w-16 h-16 rotate-12" />
             </div>

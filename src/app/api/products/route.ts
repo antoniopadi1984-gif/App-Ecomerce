@@ -16,27 +16,19 @@ export async function GET(request: NextRequest) {
                 productFamily: true,
                 createdAt: true
             },
-            orderBy: {
-                createdAt: 'desc'
-            }
+            orderBy: { createdAt: 'desc' }
         });
 
         return NextResponse.json({
             success: true,
             products: products.map(p => ({
-                id: p.id,
-                title: p.title,
-                status: p.status,
-                imageUrl: p.imageUrl,
-                productFamily: p.productFamily
+                id: p.id, title: p.title, status: p.status,
+                imageUrl: p.imageUrl, productFamily: p.productFamily
             }))
         });
     } catch (error) {
         console.error('[API] Error fetching products:', error);
-        return NextResponse.json(
-            { success: false, error: 'Failed to fetch products' },
-            { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: 'Failed to fetch products' }, { status: 500 });
     }
 }
 
@@ -49,79 +41,89 @@ export async function POST(request: NextRequest) {
 
         const body = await request.json();
         const {
-            title,
-            category,
-            imageUrl,
-            description,
-            unitCost,
-            shippingCost,
-            sellingPrice,
-            market,
-            language,
-            amazonLinks,
-            competitorLinks,
-            forceTranslation
+            title, country, niche, productFamily, pvpEstimated, price,
+            unitCost, shippingCost, cvrExpected, cpaMax, breakevenCPC, breakevenROAS,
+            landingUrl, description, imageUrl, googleDocUrl, foreplayBoardUrl,
+            adLibraryUrls, amazonLinks, landingUrls, competitorLinks, agentDescription,
+            marketLanguage, interfaceLanguage,
+            // legacy compat
+            category, market, sellingPrice,
         } = body;
 
         if (!title) {
             return NextResponse.json({ success: false, error: 'Title is required' }, { status: 400 });
         }
 
-        // Basic AI calculations (mocked or real logic depending on environment)
-        // BE ROAS = Sale Price / (Sale Price - (Unit Cost + Shipping Cost))
-        const totalCost = (Number(unitCost) || 0) + (Number(shippingCost) || 0);
-        const salePrice = Number(sellingPrice) || 0;
-        let breakevenROAS = 0;
-        let maxCPA = 0;
+        const pvp = pvpEstimated || Number(sellingPrice) || Number(price) || 0;
+        const cvr = cvrExpected ? Number(cvrExpected) : 2.0;
 
-        if (salePrice > totalCost) {
-            maxCPA = salePrice - totalCost;
-            breakevenROAS = salePrice / maxCPA;
-        }
+        // Compute breakevens if not already provided
+        const computedCpaMax = cpaMax ?? (pvp > 0 ? pvp * 0.4 : 0);
+        const computedROASBE = breakevenROAS ?? (computedCpaMax > 0 ? pvp / computedCpaMax : 0);
+        const computedCPCBE = breakevenCPC ?? (computedCpaMax > 0 ? computedCpaMax * (cvr / 100) : 0);
 
         const newProduct = await prisma.product.create({
             data: {
                 storeId,
                 title,
-                productFamily: category,
-                imageUrl,
-                description,
+                country: country || market || 'ES',
+                niche: niche || null,
+                productFamily: productFamily || category || null,
+                marketLanguage: marketLanguage || 'ES',
+                interfaceLanguage: interfaceLanguage || 'ES',
+                pvpEstimated: pvp || null,
+                price: pvp,
                 unitCost: Number(unitCost) || 0,
                 shippingCost: Number(shippingCost) || 0,
-                price: salePrice,
-                breakevenROAS,
-                breakevenCPC: maxCPA > 0 ? maxCPA * 0.05 : 0,
-                country: market || 'ES',
-                tags: language,
+                cvrExpected: cvrExpected ? Number(cvrExpected) : null,
+                cpaMax: computedCpaMax || null,
+                breakevenCPC: computedCPCBE || null,
+                breakevenROAS: computedROASBE || null,
+                landingUrl: landingUrl || null,
+                description: description || agentDescription || null,
+                agentDescription: agentDescription || null,
+                imageUrl: imageUrl || null,
+                googleDocUrl: googleDocUrl || null,
+                foreplayBoardUrl: foreplayBoardUrl || null,
+                adLibraryUrls: adLibraryUrls || null,
+                amazonLinks: amazonLinks || null,
+                landingUrls: landingUrls || null,
                 status: 'ACTIVE',
-                amazonLinks: amazonLinks && amazonLinks.length > 0 ? JSON.stringify(amazonLinks) : null,
                 competitorLinks: competitorLinks && competitorLinks.length > 0 ? {
-                    create: competitorLinks.map((url: string) => ({
-                        url,
-                        type: 'COMPETITOR_LIBRARY'
-                    }))
-                } : undefined
+                    create: competitorLinks.map((url: string) => ({ url, type: 'COMPETITOR_LIBRARY' }))
+                } : undefined,
             }
         });
 
-        // Trigger background drive sync
-        try {
-            fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/drive/organize`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'organize_all', productId: newProduct.id })
-            }).catch(e => console.error("Drive sync error:", e));
-        } catch (e) {
-            console.error("Failed to trigger drive sync:", e);
+        // Auto-create ThresholdConfig from breakeven values
+        if (computedROASBE > 0) {
+            try {
+                await (prisma as any).thresholdConfig.create({
+                    data: {
+                        storeId,
+                        type: 'PRODUCT',
+                        scenarioName: `BE Alerts — ${title}`,
+                        minRoas: computedROASBE * 0.75,
+                        maxCpa: computedCpaMax * 1.2,
+                        maxCpc: computedCPCBE * 1.3,
+                    }
+                });
+            } catch (e) {
+                console.warn('[API] ThresholdConfig creation skipped:', (e as any)?.message);
+            }
         }
+
+        // Background: trigger Drive organize (fire & forget)
+        fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/drive/organize`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'organize_all', productId: newProduct.id })
+        }).catch(() => { });
 
         return NextResponse.json({ success: true, product: newProduct });
 
     } catch (error) {
         console.error('[API] Error creating product:', error);
-        return NextResponse.json(
-            { success: false, error: 'Failed to create product' },
-            { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: 'Failed to create product' }, { status: 500 });
     }
 }

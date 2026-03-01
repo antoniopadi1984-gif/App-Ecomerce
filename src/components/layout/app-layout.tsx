@@ -38,7 +38,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <StoreProvider>
             <ProductProvider>
-                <div className="min-h-screen bg-[#f4f7fb] font-sans antialiased text-foreground">
+                <div className="min-h-screen bg-[var(--bg)] font-[family-name:var(--font)] antialiased text-[var(--text)]">
                     <TopBar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isExpanded={isExpanded} />
 
                     <Sidebar
@@ -49,10 +49,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
                     <main
                         className={cn(
-                            "transition-all duration-300 ease-in-out pt-[var(--header-height)] min-h-screen relative overflow-x-hidden",
-                            isExpanded ? "ml-[var(--sidebar-width)]" : "ml-[var(--sidebar-collapsed)]",
+                            "transition-all duration-200 ease-in-out min-h-screen relative overflow-x-hidden",
                             "max-md:ml-0"
                         )}
+                        style={{
+                            paddingTop: 'var(--topbar-h)',
+                            marginLeft: isExpanded ? 'var(--sidebar-w-exp)' : 'var(--sidebar-w)',
+                        }}
                     >
                         {/* Mobile Sidebar Backdrop */}
                         {isSidebarOpen && (

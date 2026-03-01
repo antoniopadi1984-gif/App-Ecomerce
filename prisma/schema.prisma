@@ -113,7 +113,11 @@ model Store {
   performanceRecs      PerformanceRecord[]
   perceivedValues      PerceivedValue[]
   automations          Automation[]
+  competitorAnalyses   CompetitorAnalysis[]
+  driveFiles           DriveFile[]
+  driveSetupDone       Boolean                 @default(false)
 }
+
 
 model MetaAdAccount {
   id        String   @id @default(cuid())
@@ -336,6 +340,15 @@ model Product {
   productFamily       String?
   driveDocId          String?
   driveDocUrl         String?
+  marketLanguage      String   @default("ES")  // idioma del mercado (EN, FR, IT, DE, etc.)
+  interfaceLanguage   String   @default("ES")  // idioma de la interfaz (siempre ES)
+  pvpEstimated        Float?
+  cvrExpected         Float?
+  cpaMax              Float?
+  adLibraryUrls       String?  // JSON array of Facebook Ad Library URLs
+  foreplayBoardUrl    String?  // Foreplay board URL for spy ads
+  googleDocUrl        String?  // External research doc
+  agentDescription    String?  // AI-generated description
   adCopies            AdCopy[]
   avatars             Avatar[]
   avatarProfiles      AvatarProfile[]
@@ -386,6 +399,11 @@ model Product {
   concepts            Concept[]
   combos              ComboMatrix[]
   researchSteps       ResearchStep[]
+  competitorAnalyses  CompetitorAnalysis[]
+  amazonReviews       AmazonReview[]
+  driveFiles          DriveFile[]
+  driveSetupDone      Boolean?          @default(false)
+  driveIndexPath      String?           // ruta del index.json en Drive
 }
 
 model Order {
@@ -799,28 +817,42 @@ model MarketingAngle {
 }
 
 model CreativeAsset {
-  id           String              @id @default(cuid())
-  productId    String
-  storeId      String?
-  type         String
-  name         String
-  driveUrl     String?
-  nomenclatura String?
-  editor       String?
-  angulo       String?
-  language     String              @default("es")
-  spend        Float               @default(0)
-  revenue      Float               @default(0)
-  purchases    Int                 @default(0)
-  hookRate     Float?
-  ctr          Float?
-  verdict      String?
-  conceptId    String?
-  createdAt    DateTime            @default(now())
-  product      Product             @relation(fields: [productId], references: [id])
-  store        Store?              @relation(fields: [storeId], references: [id])
-  dailyStats   CreativeDailyStat[]
-  concept      Concept?            @relation(fields: [conceptId], references: [id])
+  id               String              @id @default(cuid())
+  productId        String
+  storeId          String?
+  type             String
+  name             String
+  driveUrl         String?
+  nomenclatura     String?
+  editor           String?
+  angulo           String?
+  language         String              @default("es")
+  spend            Float               @default(0)
+  revenue          Float               @default(0)
+  purchases        Int                 @default(0)
+  hookRate         Float?
+  ctr              Float?
+  verdict          String?
+  conceptId        String?
+  scriptEs         String?
+  conceptCode      String?             // C01, C02, C03
+  versionNumber    Int                 @default(1)  // V01, V02
+  driveFileId      String?             // ID en Google Drive
+  drivePath        String?             // ruta completa en Drive
+  transcription    String?             // texto completo Whisper
+  shotlistJson     String?             // JSON tomas separadas
+  clipsJson        String?             // JSON paths clips
+  hookText         String?             // hook extraído primeros 3s
+  funnelStage      String?             // TOF | MOF | BOF | RT-CART | RT-VIEW | RT-BUYER
+  processingStatus String              @default("PENDING")
+  // PENDING → PROCESSING → TRANSCRIBED → ANALYZED → ORGANIZED → DONE
+  avatarId         String?
+  angleId          String?
+  createdAt        DateTime            @default(now())
+  product          Product             @relation(fields: [productId], references: [id])
+  store            Store?              @relation(fields: [storeId], references: [id])
+  dailyStats       CreativeDailyStat[]
+  concept          Concept?            @relation(fields: [conceptId], references: [id])
 }
 
 model CreativeProject {
@@ -2190,10 +2222,11 @@ model ComboMatrix {
   productId      String
   avatarId       String
   angleId        String
-  hookBank       String? // JSON array 50 hooks
-  painStatements String? // JSON array 20
-  proofAngles    String? // JSON array 10
-  ctas           String? // JSON array 10
+  hookBank       String?  // JSON array 50 hooks (market language)
+  hookBankEs     String?  // Cached ES translation of hookBank
+  painStatements String?  // JSON array 20
+  proofAngles    String?  // JSON array 10
+  ctas           String?  // JSON array 10
   funnelStage    String?
   trafficType    String?
   createdAt      DateTime @default(now())
@@ -2257,17 +2290,82 @@ model Automation {
 
 // ─── ResearchStep (God Tier Pipeline) ─────────────────────────
 model ResearchStep {
-  id         String   @id @default(cuid())
-  productId  String
-  runId      String
-  stepKey    String
-  inputRefs  String? // JSON references to previous outputs
-  outputText String?
-  outputJson String? // JSON parsed object
-  version    Int      @default(1)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  product    Product  @relation(fields: [productId], references: [id])
+  id            String   @id @default(cuid())
+  productId     String
+  runId         String
+  stepKey       String
+  inputRefs     String?  // JSON references to previous outputs
+  outputText    String?
+  outputJson    String?  // JSON parsed object
+  translationEs String?  // Cached ES translation of outputText
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  product       Product  @relation(fields: [productId], references: [id])
 
   @@unique([productId, runId, stepKey, version])
+}
+
+model CompetitorAnalysis {
+  id            String   @id @default(cuid())
+  productId     String
+  storeId       String
+  url           String
+  country       String?
+  price         Float?
+  headline      String?
+  offer         String?
+  guarantee     String?
+  socialProof   String?
+  cta           String?
+  pageStructure String?  // JSON
+  brandingNotes String?
+  adLibraryUrls String?  // JSON array
+  scrapedAt     DateTime @default(now())
+  createdAt     DateTime @default(now())
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store         Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([storeId])
+}
+
+model AmazonReview {
+  id          String   @id @default(cuid())
+  productId   String
+  url         String
+  rating      Float?
+  painPoints  String?  // JSON extracted
+  language    String?  // JSON literal phrases
+  objections  String?  // JSON
+  scrapedAt   DateTime @default(now())
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+// ─── DriveFile — índice de archivos de Google Drive ───────────────
+model DriveFile {
+  id            String   @id @default(cuid())
+  storeId       String
+  productId     String?
+  driveFileId   String   @unique
+  drivePath     String
+  fileName      String
+  conceptCode   String?
+  funnelStage   String?
+  fileType      String
+  nomenclature  String?
+  sizeBytes     Int?
+  mimeType      String?
+  thumbnailUrl  String?
+  processedAt   DateTime?
+  createdAt     DateTime @default(now())
+  syncedAt      DateTime @default(now())
+  store         Store    @relation(fields: [storeId], references: [id])
+  product       Product? @relation(fields: [productId], references: [id])
+
+  @@index([storeId])
+  @@index([productId])
+  @@index([conceptCode])
 }

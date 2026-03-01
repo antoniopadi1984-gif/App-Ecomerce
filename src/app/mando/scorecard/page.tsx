@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/store-context';
-import { RefreshCw, Loader2, ChevronDown, ChevronRight, Zap } from 'lucide-react';
+import { RefreshCw, Loader2, ChevronDown, ChevronRight, Zap, Pencil, X, TrendingUp, Check, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getWeeksInMonth, getWeekRanges } from '@/lib/weekUtils';
-import { getStatus, getObjPct, getProjection, getNeededPerWeek, isOnTrack, getVariation, formatValue, METRICS_WITH_TARGET } from '@/lib/scorecardUtils';
+import { getStatus, getObjPct, getProjection, getNeededPerWeek, isOnTrack, getVariation, formatValue, METRICS_WITH_TARGET, TARGET_FIELD_MAP } from '@/lib/scorecardUtils';
 
 interface DataCellProps { value: number; unit: string; status: "green" | "yellow" | "red" | "neutral"; variation: number | null; isBest: boolean; }
 interface AccumCellProps { value: number; unit: string; status: "green" | "yellow" | "red" | "neutral"; }
@@ -174,20 +174,29 @@ function TargetCell({ target, unit, hasTarget, onEdit }: TargetCellProps) {
                     className="target-edit-btn"
                     onClick={onEdit}
                     style={{
-                        opacity: 0,
-                        transition: "opacity 0.15s",
-                        background: target ? "none" : "rgba(124,58,237,0.08)",
-                        border: target ? "none" : "1px dashed #c4b5fd",
-                        borderRadius: "4px",
+                        opacity: 0.3,
+                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        background: target ? "rgba(124,58,237,0.15)" : "rgba(124,58,237,0.08)",
+                        border: "1px solid rgba(124,58,237,0.3)",
+                        borderRadius: "8px",
                         cursor: "pointer",
                         color: "#7c3aed",
-                        padding: "1px 5px",
-                        fontSize: "10px",
+                        padding: "5px",
                         display: "flex",
-                        alignItems: "center"
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginLeft: "8px"
+                    }}
+                    onMouseEnter={e => {
+                        e.currentTarget.style.opacity = "1";
+                        e.currentTarget.style.background = "rgba(124,58,237,0.25)";
+                    }}
+                    onMouseLeave={e => {
+                        e.currentTarget.style.opacity = "0.3";
+                        e.currentTarget.style.background = target ? "rgba(124,58,237,0.15)" : "rgba(124,58,237,0.08)";
                     }}
                 >
-                    ✏️
+                    <Pencil size={12} strokeWidth={2.5} />
                 </button>
             </div>
         </td>
@@ -255,12 +264,38 @@ export default function ScorecardPage() {
     const isCOD = data.store?.isCOD;
 
     const handleSaveGoal = () => {
-        if (!modalData || inputValue <= 0) return;
+        if (!modalData) return;
+        const val = Number(inputValue);
+        if (isNaN(val)) return;
+
+        setLoading(true);
+        const mappedField = TARGET_FIELD_MAP[modalData.propId] || modalData.propId;
+
         fetch('/api/mando/scorecard', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ storeId, month, year, field: modalData.propId, value: inputValue }),
-        }).then(() => { setModalData(null); loadData(); });
+            body: JSON.stringify({
+                storeId,
+                month,
+                year,
+                field: mappedField,
+                value: val
+            }),
+        })
+            .then(r => r.json())
+            .then(d => {
+                if (d.ok) {
+                    setModalData(null);
+                    loadData();
+                } else {
+                    alert("Error: " + d.error);
+                    setLoading(false);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
     };
 
     const handleDeleteGoal = () => {
@@ -378,77 +413,185 @@ export default function ScorecardPage() {
                     </thead>
                     <tbody>
                         <CategoryRow label="🛒 Ventas y Pedidos" colSpan={totalWeeks + 7} />
-                        <RowInfo label="Facturación" propId="facturacion" unit="EUR" />
-                        <RowInfo label="Pedidos" propId="pedidos" unit="" />
-                        <RowInfo label="Ticket Medio" propId="ticket_medio" unit="EUR" />
+                        <RowInfo label="Facturación" propId="revenue" unit="EUR" />
+                        <RowInfo label="Pedidos" propId="orders" unit="" />
+                        <RowInfo label="Ticket Medio" propId="ticketMedio" unit="EUR" />
 
                         <CategoryRow label="📈 Marketing (Meta)" colSpan={totalWeeks + 7} />
-                        <RowInfo label="Inversión" propId="inversion" unit="EUR" />
+                        <RowInfo label="Inversión" propId="adSpend" unit="EUR" />
                         <RowInfo label="ROAS" propId="roas" unit="x" />
                         <RowInfo label="CPA" propId="cpa" unit="EUR" />
+                        <RowInfo label="ROI" propId="roi" unit="%" />
+                        <RowInfo label="Tasa Conversión" propId="tasaConversion" unit="%" />
+                        <RowInfo label="Coste Visita (CPC)" propId="costPerSession" unit="EUR" />
 
                         <CategoryRow label="📦 Logística y COD" colSpan={totalWeeks + 7} />
-                        <RowInfo label="Tasa de Envío" propId="tasa_envio" unit="%" />
-                        <RowInfo label="Tasa de Entrega" propId="tasa_entrega" unit="%" />
+                        <RowInfo label="Enviados" propId="enviados" unit="" />
+                        <RowInfo label="Entregados" propId="delivered" unit="" />
+                        <RowInfo label="Tasa de Envío" propId="deliveryRate" unit="%" />
+                        <RowInfo label="Tasa de Entrega" propId="confirmRate" unit="%" />
+                        <RowInfo label="Tasa de Rebote" propId="returnRate" unit="%" />
+                        <RowInfo label="Devoluciones" propId="returned" unit="" />
+                        <RowInfo label="Coste Envío Medio" propId="envioMedio" unit="EUR" />
 
                         <CategoryRow label="🎨 Creativos" colSpan={totalWeeks + 7} />
-                        <RowInfo label="Ratio Acierto" propId="ratio_acierto" unit="%" />
+                        <RowInfo label="Ratio Acierto" propId="ratioAcierto" unit="%" />
+                        <RowInfo label="Lanzados" propId="creativesLaunched" unit="" />
+                        <RowInfo label="Ganadores" propId="creativesWinner" unit="" />
+
+                        <CategoryRow label="💰 Economía y P&L" colSpan={totalWeeks + 7} />
+                        <RowInfo label="COGS (Producto)" propId="cogs" unit="EUR" />
+                        <RowInfo label="Shipping Total" propId="shippingCost" unit="EUR" />
+                        <RowInfo label="Beneficio Neto" propId="netProfit" unit="EUR" />
+                        <RowInfo label="Margen (%)" propId="netMargin" unit="%" />
                     </tbody>
                 </table>
             </div>
 
             {/* Target Definition Modal */}
             {modalData && (
-                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setModalData(null)}>
-                    <div style={{ background: "white", padding: "24px", borderRadius: "20px", width: "380px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
-                        <h3 style={{ fontSize: "14px", fontWeight: 900, color: "#1e293b", marginBottom: "16px", marginTop: 0 }}>
-                            Objetivo mensual — {modalData.label}
-                        </h3>
+                <div
+                    style={{
+                        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                        background: "rgba(15,23,42,0.4)",
+                        backdropFilter: "blur(4px)",
+                        zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center"
+                    }}
+                    onClick={() => setModalData(null)}
+                >
+                    <div
+                        style={{
+                            background: "rgba(255, 255, 255, 0.95)",
+                            backdropFilter: "blur(20px)",
+                            padding: "32px",
+                            borderRadius: "32px",
+                            width: "420px",
+                            boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.5)",
+                            display: "flex",
+                            flexDirection: "column",
+                            border: "1px solid rgba(255,255,255,0.3)",
+                            position: "relative",
+                            gap: "24px"
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setModalData(null)}
+                            style={{
+                                position: "absolute", top: "20px", right: "20px",
+                                background: "rgba(241,245,249,0.8)", border: "none",
+                                borderRadius: "12px", padding: "8px", cursor: "pointer",
+                                color: "#64748b", display: "flex", alignItems: "center",
+                                transition: "all 0.2s"
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = "#fee2e2"}
+                            onMouseLeave={e => e.currentTarget.style.background = "rgba(241,245,249,0.8)"}
+                        >
+                            <X size={18} />
+                        </button>
 
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                            <input
-                                type="number"
-                                autoFocus
-                                value={inputValue || ''}
-                                onChange={e => setInputValue(Number(e.target.value))}
-                                placeholder="0"
-                                style={{ fontSize: "22px", fontWeight: 700, width: "150px", padding: "10px 14px", border: "2px solid #7c3aed", borderRadius: "10px", outline: "none", color: "#1e293b" }}
-                            />
-                            <span style={{ fontSize: "18px", color: "#64748b", fontWeight: 700 }}>{modalData.unit}</span>
+                        <div>
+                            <h3 style={{ fontSize: "18px", fontWeight: 900, color: "#1e293b", margin: "0 0 4px 0", letterSpacing: "-0.02em" }}>
+                                Configurar Objetivo
+                            </h3>
+                            <p style={{ fontSize: "13px", color: "#64748b", margin: 0, fontWeight: 500 }}>
+                                Establecer meta mensual para <span style={{ color: "#7c3aed", fontWeight: 700 }}>{modalData.label}</span>
+                            </p>
                         </div>
 
-                        {/* Preview ritmo necesario en tiempo real */}
-                        {inputValue > 0 && weeksRemainingModal > 0 && (
-                            <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "11px", color: "#64748b", lineHeight: 1.6 }}>
-                                Para llegar a <strong style={{ color: "#1e293b" }}>{formatValue(inputValue, modalData.unit)}</strong> necesitas{" "}
-                                <strong style={{ color: "#7c3aed", fontSize: "13px" }}>
-                                    {formatValue(Math.round((inputValue - modalData.acumValue) / weeksRemainingModal), modalData.unit)} / semana
-                                </strong>{" "}
-                                en las <strong>{weeksRemainingModal}</strong> semanas restantes.
-                                <br />
-                                {(currentWeekInfo > 0 ? modalData.acumValue / currentWeekInfo : 0) >= Math.round((inputValue - modalData.acumValue) / weeksRemainingModal)
-                                    ? <span style={{ color: "#22c55e", fontWeight: 700 }}>✓ Tu ritmo actual lo cubre</span>
-                                    : <span style={{ color: "#ef4444", fontWeight: 700 }}>✗ Necesitas acelerar el ritmo</span>
-                                }
+                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#f8fafc", padding: "16px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", color: "#94a3b8", marginBottom: "4px", letterSpacing: "0.05em" }}>
+                                        Valor del Objetivo
+                                    </div>
+                                    <input
+                                        type="number"
+                                        autoFocus
+                                        value={inputValue || ''}
+                                        onChange={e => setInputValue(Number(e.target.value))}
+                                        placeholder="0.00"
+                                        style={{
+                                            fontSize: "24px", fontWeight: 900, width: "100%",
+                                            background: "none", border: "none", outline: "none", color: "#1e293b",
+                                            padding: 0
+                                        }}
+                                    />
+                                </div>
+                                <span style={{ fontSize: "14px", color: "#64748b", fontWeight: 900, background: "white", padding: "8px 12px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                                    {modalData.unit || "UNI"}
+                                </span>
                             </div>
-                        )}
 
-                        <textarea
-                            placeholder="Nota opcional: ¿por qué este objetivo?"
-                            style={{ width: "100%", boxSizing: "border-box", fontSize: "12px", padding: "10px", border: "1px solid #e2e8f0", borderRadius: "8px", resize: "none", height: "60px", marginBottom: "16px", fontFamily: "inherit" }}
-                        />
+                            {inputValue > 0 && weeksRemainingModal > 0 && (
+                                <div style={{
+                                    background: "rgba(124,58,237,0.05)",
+                                    borderRadius: "16px",
+                                    padding: "16px",
+                                    fontSize: "12px",
+                                    color: "#4c1d95",
+                                    border: "1px solid rgba(124,58,237,0.1)",
+                                    lineHeight: 1.5
+                                }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                        <TrendingUp size={14} />
+                                        <strong style={{ fontWeight: 800 }}>Ritmo Sugerido</strong>
+                                    </div>
+                                    Necesitas promediar <strong style={{ color: "#7c3aed", fontSize: "14px" }}>{formatValue((inputValue - modalData.acumValue) / weeksRemainingModal, modalData.unit)}</strong> por semana en las {weeksRemainingModal} semanas restantes.
+                                    <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
+                                        {(currentWeekInfo > 0 ? modalData.acumValue / currentWeekInfo : 0) >= ((inputValue - modalData.acumValue) / weeksRemainingModal)
+                                            ? <><Check size={14} color="#22c55e" /> <span style={{ color: "#166534" }}>Buen ritmo actual</span></>
+                                            : <><AlertCircle size={14} color="#ef4444" /> <span style={{ color: "#991b1b" }}>Requiere aceleración</span></>
+                                        }
+                                    </div>
+                                </div>
+                            )}
 
-                        <div style={{ display: "flex", gap: "8px" }}>
+                            <div>
+                                <div style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", color: "#94a3b8", marginBottom: "8px", letterSpacing: "0.05em", marginLeft: "4px" }}>
+                                    Notas de Estrategia
+                                </div>
+                                <textarea
+                                    placeholder="¿Cuál es el plan para alcanzar este objetivo?"
+                                    style={{
+                                        width: "100%", boxSizing: "border-box", fontSize: "13px", padding: "14px",
+                                        border: "1px solid #e2e8f0", borderRadius: "16px", resize: "none",
+                                        height: "80px", background: "#f8fafc", color: "#334155",
+                                        fontFamily: "inherit", outline: "none", transition: "border-color 0.2s"
+                                    }}
+                                    onFocus={e => e.currentTarget.style.borderColor = "#7c3aed"}
+                                    onBlur={e => e.currentTarget.style.borderColor = "#e2e8f0"}
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "12px" }}>
                             <button
                                 onClick={handleSaveGoal}
-                                style={{ flex: 1, background: "#7c3aed", color: "white", border: "none", borderRadius: "10px", padding: "11px", fontWeight: 900, fontSize: "13px", cursor: "pointer" }}
+                                disabled={loading}
+                                style={{
+                                    flex: 1, background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
+                                    color: "white", border: "none", borderRadius: "16px", padding: "14px",
+                                    fontWeight: 900, fontSize: "14px", cursor: "pointer",
+                                    boxShadow: "0 10px 15px -3px rgba(124,58,237,0.3)",
+                                    transition: "all 0.2s"
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+                                onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
                             >
-                                Guardar objetivo
+                                {loading ? "Guardando..." : "Confirmar Objetivo"}
                             </button>
                             {modalData.currentTarget !== null && (
                                 <button
                                     onClick={handleDeleteGoal}
-                                    style={{ background: "none", border: "1px solid #fca5a5", color: "#ef4444", borderRadius: "10px", padding: "11px 16px", fontWeight: 700, fontSize: "12px", cursor: "pointer" }}
+                                    style={{
+                                        background: "#fff", border: "1px solid #fee2e2", color: "#ef4444",
+                                        borderRadius: "16px", padding: "14px 20px", fontWeight: 800,
+                                        fontSize: "14px", cursor: "pointer", transition: "all 0.2s"
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#fef2f2"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "#fff"}
                                 >
                                     Eliminar
                                 </button>

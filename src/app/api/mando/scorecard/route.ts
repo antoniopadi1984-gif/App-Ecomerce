@@ -161,7 +161,10 @@ export async function GET(req: NextRequest) {
             const ratioAcierto = w.creativesLaunched > 0 ? (w.creativesWinner / w.creativesLaunched) * 100 : 0;
             const envioMedio = w.orders > 0 ? w.shippingCost / w.orders : 0;
             const recurrentes = w.orders - w.newCustomers;
-            return { ...w, roas, cpa, deliveryRate, returnRate, confirmRate, netMargin, costPerSession, ratioAcierto, envioMedio, recurrentes };
+            const roi = (w.adSpend + w.cogs + w.shippingCost) > 0 ? (w.netProfit / (w.adSpend + w.cogs + w.shippingCost)) * 100 : 0;
+            const tasaConversion = w.sessions > 0 ? (w.orders / w.sessions) * 100 : 0;
+            const ticketMedio = w.orders > 0 ? w.revenue / w.orders : 0;
+            return { ...w, roas, cpa, deliveryRate, returnRate, confirmRate, netMargin, costPerSession, ratioAcierto, envioMedio, recurrentes, roi, tasaConversion, ticketMedio };
         }
 
         const weeksD = weeks.map(deriveWeek);

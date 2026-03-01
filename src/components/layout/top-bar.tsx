@@ -52,16 +52,20 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
     );
 
     return (
-        <header className={cn(
-            "fixed top-0 right-0 z-40 h-[var(--header-height)] transition-all duration-300",
-            "w-full glass-header shadow-none border-white/20",
-            scrolled && "bg-white/40 border-b border-white/50 shadow-sm"
-        )}>
-            <div className={cn(
-                "h-full pr-4 flex items-center justify-between gap-4 transition-all duration-300",
-                isExpanded ? "pl-[var(--sidebar-width)]" : "pl-[var(--sidebar-collapsed)]",
-                "max-md:pl-12"
-            )}>
+        <header
+            className="fixed top-0 right-0 z-40 transition-all duration-200"
+            style={{
+                height: 'var(--topbar-h)',
+                width: '100%',
+                background: 'var(--surface)',
+                borderBottom: '1px solid var(--border)',
+                boxShadow: 'var(--sh-sm)',
+            }}
+        >
+            <div
+                className="h-full pr-4 flex items-center justify-between gap-4 transition-all duration-200 max-md:pl-12"
+                style={{ paddingLeft: isExpanded ? 'var(--sidebar-w-exp)' : 'var(--sidebar-w)' }}
+            >
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onMenuClick}
@@ -81,19 +85,18 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className={cn(
-                                "flex items-center gap-2 px-2.5 py-1.5 glass-card border-slate-200/50 rounded-xl hover:border-primary/20 transition-all group shrink min-w-0 shadow-sm max-w-[200px]",
-                                "max-md:py-2.5 max-md:px-3"
+                                "flex items-center gap-2 px-2.5 py-1.5 bg-[var(--surface2)] border border-[var(--border)] rounded-xl hover:border-[var(--inv)]/20 transition-all group shrink min-w-0 shadow-sm max-w-[200px]"
                             )}>
-                                <div className="w-5 h-5 rounded-lg bg-rose-50 flex items-center justify-center shrink-0 border border-rose-100">
-                                    <Store className="w-3 h-3 text-primary" />
+                                <div className="w-5 h-5 rounded-lg bg-[var(--bg)] flex items-center justify-center shrink-0 border border-[var(--border)]">
+                                    <Store className="w-3 h-3 text-[var(--mkt)]" />
                                 </div>
                                 <div className="flex flex-col items-start min-w-0 flex-1">
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">Tienda</span>
-                                    <span className="text-[11px] font-bold text-slate-900 truncate w-full text-left tracking-tight leading-none">
-                                        {activeStore?.name || "Seleccionar..."}
+                                    <span className="text-[8px] font-bold text-[var(--text-dim)] uppercase tracking-widest leading-none mb-0.5">Tienda</span>
+                                    <span className="text-[11px] font-bold text-[var(--text)] truncate w-full text-left tracking-tight leading-none">
+                                        {activeStore?.name || "SELECCIONAR..."}
                                     </span>
                                 </div>
-                                <ChevronDown className="w-3 h-3 text-slate-300 group-hover:text-primary transition-colors shrink-0" />
+                                <ChevronDown className="w-3 h-3 text-[var(--text-dim)] group-hover:text-[var(--inv)] transition-colors shrink-0" />
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[240px] glass-card p-1.5 z-[70] border-none rounded-2xl">
@@ -132,31 +135,25 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className={cn(
-                                "flex items-center gap-2 px-2.5 py-1.5 glass-card !bg-rose-50/75 border-rose-200/50 rounded-xl hover:border-primary/40 transition-all group shrink min-w-0 max-w-[220px] shadow-sm ring-1 ring-rose-500/10",
-                                "max-md:py-2.5 max-md:px-3" // Larger touch target
+                                "flex items-center gap-2 px-2.5 py-1.5 bg-[var(--surface2)] border border-[var(--border)] rounded-xl hover:border-[var(--inv)]/40 transition-all group shrink min-w-0 max-w-[220px] shadow-sm",
+                                productId === 'GLOBAL' && "opacity-80 border-dashed"
                             )}>
-                                <div className="w-6 h-6 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center overflow-hidden shrink-0">
+                                <div className="w-5 h-5 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center overflow-hidden shrink-0">
                                     {(productId === 'GLOBAL' || !product) ? (
-                                        <LayoutDashboard className="w-3 h-3 text-primary" />
+                                        <Package className="w-3 h-3 text-[var(--text-dim)]" />
                                     ) : product.imageUrl ? (
-                                        <Image
-                                            src={product.imageUrl}
-                                            alt={product.title || "Product"}
-                                            width={24}
-                                            height={24}
-                                            className="w-full h-full object-cover"
-                                        />
+                                        <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />
                                     ) : (
-                                        <Package className="w-3 h-3 text-primary" />
+                                        <Package className="w-3 h-3 text-[var(--inv)]" />
                                     )}
                                 </div>
                                 <div className="flex flex-col items-start min-w-0">
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mb-0.5">Producto</span>
-                                    <span className="text-[11px] font-bold text-slate-900 truncate max-w-full tracking-tight leading-none">
-                                        {productId === 'GLOBAL' ? "Tienda Global" : product?.title || "Seleccionar..."}
+                                    <span className="text-[8px] font-bold text-[var(--text-dim)] uppercase tracking-widest leading-none mb-0.5">Producto</span>
+                                    <span className="text-[11px] font-bold text-[var(--text)] truncate max-w-full tracking-tight leading-none">
+                                        {productId === 'GLOBAL' ? "SELECCIONAR PRODUCTO" : product?.title || "SELECCIONAR..."}
                                     </span>
                                 </div>
-                                <ChevronDown className="w-3 h-3 text-slate-300 group-hover:text-primary transition-colors shrink-0" />
+                                <ChevronDown className="w-3 h-3 text-[var(--text-dim)] group-hover:text-[var(--inv)] transition-colors shrink-0" />
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[280px] glass-card p-1.5 z-[70] border-none rounded-2xl">

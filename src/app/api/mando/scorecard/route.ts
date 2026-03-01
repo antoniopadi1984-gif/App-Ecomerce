@@ -151,35 +151,48 @@ export async function GET(req: NextRequest) {
 
         // ── Métricas derivadas por semana ─────────────────────────
         function deriveWeek(w: WeekData) {
-            const roas = w.adSpend > 0 ? w.revenue / w.adSpend : 0;
-            const cpa = w.orders > 0 ? w.adSpend / w.orders : 0;
-            const deliveryRate = w.orders > 0 ? (w.delivered / w.orders) * 100 : 0;
-            const returnRate = w.orders > 0 ? (w.returned / w.orders) * 100 : 0;
-            const confirmRate = w.orders > 0 ? (w.confirmadas / w.orders) * 100 : 0;
-            const netMargin = w.revenue > 0 ? (w.netProfit / w.revenue) * 100 : 0;
-            const costPerSession = w.sessions > 0 ? w.adSpend / w.sessions : 0;
-            const ratio_acierto = w.creativesLaunched > 0 ? (w.creativesWinner / w.creativesLaunched) * 100 : 0;
-            const coste_envio = w.orders > 0 ? w.shippingCost / w.orders : 0;
-            const recurrentes = w.orders - w.newCustomers;
-            const roi = (w.adSpend + w.cogs + w.shippingCost) > 0 ? (w.netProfit / (w.adSpend + w.cogs + w.shippingCost)) * 100 : 0;
-            const tasa_conversion = w.sessions > 0 ? (w.orders / w.sessions) * 100 : 0;
-            const ticket_medio = w.orders > 0 ? w.revenue / w.orders : 0;
+            const facturacion = w.revenue || 0;
+            const inversion = w.adSpend || 0;
+            const pedidos = w.orders || 0;
+            const entregados = w.delivered || 0;
+            const devoluciones = w.returned || 0;
+            const sesiones = w.sessions || 0;
+            const lanzados = w.creativesLaunched || 0;
+            const ganadores = w.creativesWinner || 0;
+            const enviados = w.orders || 0;
+
+            const roas = inversion > 0 ? facturacion / inversion : 0;
+            const cpa = pedidos > 0 ? inversion / pedidos : 0;
+            const confirmRate = pedidos > 0 ? (w.confirmadas / pedidos) * 100 : 0;
+            const deliveryRate = enviados > 0 ? (entregados / enviados) * 100 : 0;
+            const returnRate = enviados > 0 ? (devoluciones / enviados) * 100 : 0;
+            const netMargin = facturacion > 0 ? (w.netProfit / facturacion) * 100 : 0;
+            const costPerSession = sesiones > 0 ? inversion / sesiones : 0;
+            const ratio_acierto = lanzados > 0 ? (ganadores / lanzados) * 100 : 0;
+            const coste_envio = pedidos > 0 ? w.shippingCost / pedidos : 0;
+            const recurrentes = pedidos - w.newCustomers;
+
+            const roi = inversion > 0 ? ((facturacion - inversion) / inversion) * 100 : 0;
+            const tasa_conversion = sesiones > 0 ? (pedidos / sesiones) * 100 : 0;
+            const ticket_medio = pedidos > 0 ? facturacion / pedidos : 0;
+            const tasa_envio = pedidos > 0 ? (enviados / pedidos) * 100 : 0;
 
             return {
                 ...w,
-                facturacion: w.revenue,
-                inversion: w.adSpend,
-                entregados: w.delivered,
-                enviados: w.orders,
-                shipping_total: w.shippingCost,
-                lanzados: w.creativesLaunched,
-                ganadores: w.creativesWinner,
-                beneficio_neto: w.netProfit,
+                facturacion,
+                inversion,
+                pedidos,
+                entregados,
+                enviados,
+                shipping_total: w.shippingCost || 0,
+                lanzados,
+                ganadores,
+                beneficio_neto: w.netProfit || 0,
                 margen: netMargin,
-                tasa_envio: 100,
+                tasa_envio,
                 tasa_entrega: confirmRate,
                 tasa_rebote: returnRate,
-                devoluciones: w.returned,
+                devoluciones,
                 roas, cpa, deliveryRate, confirmRate, returnRate,
                 netMargin, costPerSession, ratio_acierto, coste_envio, recurrentes, roi, tasa_conversion, ticket_medio
             };

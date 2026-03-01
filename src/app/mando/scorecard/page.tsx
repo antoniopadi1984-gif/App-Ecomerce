@@ -192,7 +192,9 @@ function FaltanCell({ acum, target, unit }: FaltanCellProps) {
     )
 }
 
-function TargetCell({ target, unit, hasTarget, onEdit }: TargetCellProps) {
+interface TargetCellProps { target: number | null; unit: string; hasTarget: boolean; onEdit: () => void; isHovered: boolean; }
+
+function TargetCell({ target, unit, hasTarget, onEdit, isHovered }: TargetCellProps) {
     if (!hasTarget) return (
         <td style={{ textAlign: "right", padding: "5px 10px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>
             <span style={{ color: "#e2e8f0" }}>—</span>
@@ -206,37 +208,40 @@ function TargetCell({ target, unit, hasTarget, onEdit }: TargetCellProps) {
             borderBottom: "1px solid #f1f5f9",
             position: "relative"
         }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#334155", whiteSpace: "nowrap" }}>
-                {target ? formatValue(target, unit) : <span style={{ color: "#cbd5e1", fontSize: "11px" }}>Sin objetivo</span>}
-            </span>
+            {target ? (
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}>
+                    {formatValue(target, unit)}
+                </span>
+            ) : (
+                <span style={{ color: "#e2e8f0", fontSize: "12px" }}>—</span>
+            )}
 
-            <button
-                className="target-edit-btn"
-                onClick={onEdit}
-                style={{
-                    position: "absolute",
-                    top: "50%",
-                    right: "-20px",
-                    transform: "translateY(-50%)",
-                    opacity: 0,
-                    transition: "opacity 0.15s",
-                    background: "#7c3aed",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    color: "white",
-                    width: "18px",
-                    height: "18px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "9px",
-                    zIndex: 20,
-                    boxShadow: "0 1px 4px rgba(124,58,237,0.4)"
-                }}
-            >
-                ✏️
-            </button>
+            {hasTarget && isHovered && (
+                <button
+                    onClick={onEdit}
+                    style={{
+                        position: "absolute",
+                        right: "6px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "#7c3aed",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        color: "white",
+                        width: "20px",
+                        height: "20px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "10px",
+                        zIndex: 10,
+                        boxShadow: "0 2px 6px rgba(124,58,237,0.35)"
+                    }}
+                >
+                    ✏️
+                </button>
+            )}
         </td>
     )
 }
@@ -262,6 +267,7 @@ export default function ScorecardPage() {
     // Modal State
     const [modalData, setModalData] = useState<{ active: boolean; propId: string; label: string; unit: string; currentTarget: number | null; acumValue: number } | null>(null);
     const [inputValue, setInputValue] = useState<number>(0);
+    const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
     const MONTH_NAMES = [
         "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -392,8 +398,12 @@ export default function ScorecardPage() {
         const trackState = isOnTrack(acumValue, targetValue, currentWeekInfo, totalWeeks);
 
         return (
-            <tr style={{ cursor: "default" }}>
-                <td style={{ padding: "5px 12px", textAlign: "left", fontSize: "12px", fontWeight: 600, color: "#334155", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", borderBottom: "1px solid #f1f5f9" }}>
+            <tr
+                onMouseEnter={() => setHoveredRow(propId)}
+                onMouseLeave={() => setHoveredRow(null)}
+                style={{ borderBottom: "1px solid #f1f5f9", background: hoveredRow === propId ? "#fafbff" : "white" }}
+            >
+                <td style={{ padding: "5px 12px", textAlign: "left", fontSize: "12px", fontWeight: 600, color: "#334155", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {label}
                 </td>
                 {weeksArray.map((_, i) => {
@@ -407,13 +417,13 @@ export default function ScorecardPage() {
                 })}
 
                 <AccumCell value={acumValue} unit={unit} status={getStatus(acumValue, targetValue, propId)} />
-                <td style={{ textAlign: "center", borderBottom: "1px solid #f1f5f9" }}>
+                <td style={{ textAlign: "center" }}>
                     <ObjPctCell objPct={objPct} />
                 </td>
                 <ProyCell projection={projection} target={targetValue} unit={unit} />
                 <NeededCell needed={neededPerWeek} onTrack={trackState} achieved={achieved} unit={unit} />
                 <FaltanCell acum={acumValue} target={targetValue} unit={unit} />
-                <TargetCell target={targetValue} unit={unit} hasTarget={hasTarget} onEdit={() => {
+                <TargetCell target={targetValue} unit={unit} hasTarget={hasTarget} isHovered={hoveredRow === propId} onEdit={() => {
                     setInputValue(targetValue || 0);
                     setModalData({ active: true, propId, label, unit, currentTarget: targetValue, acumValue });
                 }} />
@@ -440,15 +450,15 @@ export default function ScorecardPage() {
             <div style={{ overflowY: "auto", maxHeight: "calc(100vh - 160px)" }}>
                 <table style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
                     <colgroup>
-                        <col style={{ width: "18%" }} />   {/* VARIABLE */}
+                        <col style={{ width: "17%" }} />   {/* VARIABLE */}
                         {weeksArray.map((_, i) => (
-                            <col key={i} style={{ width: `${42 / totalWeeks}%` }} />
+                            <col key={i} style={{ width: "7%" }} />
                         ))}
-                        <col style={{ width: "7%", background: "#f5f3ff" }} />  {/* ACUM */}
+                        <col style={{ width: "8%", background: "#f5f3ff" }} />  {/* ACUM */}
                         <col style={{ width: "5%" }} />    {/* OBJ % */}
-                        <col style={{ width: "7%" }} />    {/* PROY. */}
-                        <col style={{ width: "8%" }} />    {/* NEC./SEM */}
-                        <col style={{ width: "7%" }} />    {/* FALTAN */}
+                        <col style={{ width: "8%" }} />    {/* PROY. */}
+                        <col style={{ width: "9%" }} />    {/* NEC./SEM */}
+                        <col style={{ width: "8%" }} />    {/* FALTAN */}
                         <col style={{ width: "7%" }} />    {/* TARGET */}
                     </colgroup>
                     <thead>

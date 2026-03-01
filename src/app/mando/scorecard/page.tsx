@@ -302,9 +302,7 @@ export default function ScorecardPage() {
     const isCOD = data.store?.isCOD;
 
     const handleSaveGoal = () => {
-        if (!modalData) return;
-        const val = Number(inputValue);
-        if (isNaN(val)) return;
+        if (!modalData || !inputValue) return;
 
         setLoading(true);
         const mappedField = TARGET_FIELD_MAP[modalData.propId] || modalData.propId;
@@ -317,15 +315,21 @@ export default function ScorecardPage() {
                 month,
                 year,
                 field: mappedField,
-                value: val
+                value: inputValue
             }),
         })
             .then(r => r.json())
             .then(d => {
                 setLoading(false);
                 if (d.ok) {
+                    setData((prev: any) => ({
+                        ...prev,
+                        goal: {
+                            ...(prev.goal || {}),
+                            [mappedField]: inputValue
+                        }
+                    }));
                     setModalData(null);
-                    loadData();
                 } else {
                     alert("Error: " + (d.error || "No se pudo guardar el objetivo"));
                 }
@@ -356,8 +360,12 @@ export default function ScorecardPage() {
             .then(d => {
                 setLoading(false);
                 if (d.ok) {
+                    setData((prev: any) => {
+                        const newGoal = { ...(prev.goal || {}) };
+                        delete newGoal[mappedField];
+                        return { ...prev, goal: newGoal };
+                    });
                     setModalData(null);
-                    loadData();
                 } else {
                     alert("Error al eliminar: " + (d.error || "No se pudo eliminar"));
                 }
@@ -507,157 +515,136 @@ export default function ScorecardPage() {
                 </table>
             </div>
 
-            {/* Target Definition Modal */}
             {modalData && (
-                <div
-                    style={{
-                        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-                        background: "rgba(15,23,42,0.4)",
-                        backdropFilter: "blur(4px)",
-                        zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center"
-                    }}
-                    onClick={() => setModalData(null)}
-                >
+                <>
+                    {/* Overlay */}
                     <div
+                        onClick={() => setModalData(null)}
                         style={{
-                            background: "rgba(255, 255, 255, 0.98)",
-                            backdropFilter: "blur(25px)",
-                            padding: "24px",
-                            borderRadius: "28px",
-                            width: "360px",
-                            boxShadow: "0 20px 40px -12px rgba(15,23,42,0.3), inset 0 1px 0 rgba(255,255,255,1)",
-                            display: "flex",
-                            flexDirection: "column",
-                            border: "1px solid rgba(255,255,255,0.6)",
-                            position: "relative",
-                            gap: "20px"
+                            position: "fixed", inset: 0,
+                            background: "rgba(15,23,42,0.4)",
+                            zIndex: 50,
+                            backdropFilter: "blur(2px)"
                         }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Close Button */}
-                        <button
-                            onClick={() => setModalData(null)}
-                            style={{
-                                position: "absolute", top: "20px", right: "20px",
-                                background: "rgba(241,245,249,0.8)", border: "none",
-                                borderRadius: "12px", padding: "8px", cursor: "pointer",
-                                color: "#64748b", display: "flex", alignItems: "center",
-                                transition: "all 0.2s"
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = "#fee2e2"}
-                            onMouseLeave={e => e.currentTarget.style.background = "rgba(241,245,249,0.8)"}
-                        >
-                            <X size={18} />
-                        </button>
+                    />
 
-                        <div>
-                            <h3 style={{ fontSize: "18px", fontWeight: 900, color: "#1e293b", margin: "0 0 4px 0", letterSpacing: "-0.02em" }}>
-                                Configurar Objetivo
-                            </h3>
-                            <p style={{ fontSize: "13px", color: "#64748b", margin: 0, fontWeight: 500 }}>
-                                Establecer meta mensual para <span style={{ color: "#7c3aed", fontWeight: 700 }}>{modalData.label}</span>
-                            </p>
+                    {/* Modal compacto */}
+                    <div style={{
+                        position: "fixed",
+                        top: "50%", left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        zIndex: 51,
+                        background: "white",
+                        borderRadius: "16px",
+                        padding: "20px",
+                        width: "320px",
+                        boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+                        border: "1px solid #e2e8f0"
+                    }}>
+
+                        {/* Header */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+                            <div>
+                                <p style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "2px" }}>
+                                    Objetivo mensual
+                                </p>
+                                <h3 style={{ fontSize: "14px", fontWeight: 900, color: "#1e293b", margin: 0 }}>
+                                    {modalData.label}
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => setModalData(null)}
+                                style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: "18px", lineHeight: 1, padding: "2px" }}
+                            >
+                                ×
+                            </button>
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#f8fafc", padding: "16px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", color: "#94a3b8", marginBottom: "4px", letterSpacing: "0.05em" }}>
-                                        Valor del Objetivo
-                                    </div>
-                                    <input
-                                        type="number"
-                                        autoFocus
-                                        value={inputValue || ''}
-                                        onChange={e => setInputValue(Number(e.target.value))}
-                                        placeholder="0.00"
-                                        style={{
-                                            fontSize: "24px", fontWeight: 900, width: "100%",
-                                            background: "none", border: "none", outline: "none", color: "#1e293b",
-                                            padding: 0
-                                        }}
-                                    />
-                                </div>
-                                <span style={{ fontSize: "14px", color: "#64748b", fontWeight: 900, background: "white", padding: "8px 12px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-                                    {modalData.unit || "UNI"}
+                        {/* Input compacto */}
+                        <div style={{
+                            display: "flex", alignItems: "center", gap: "8px",
+                            background: "#f8fafc", borderRadius: "10px",
+                            border: "2px solid #7c3aed", padding: "8px 12px",
+                            marginBottom: "10px"
+                        }}>
+                            <input
+                                type="number"
+                                value={inputValue || ""}
+                                onChange={e => setInputValue(Number(e.target.value))}
+                                placeholder="0"
+                                autoFocus
+                                style={{
+                                    flex: 1, background: "none", border: "none", outline: "none",
+                                    fontSize: "20px", fontWeight: 800, color: "#1e293b",
+                                    width: "100%"
+                                }}
+                            />
+                            <span style={{ fontSize: "13px", fontWeight: 700, color: "#7c3aed" }}>
+                                {modalData.unit === "EUR" ? "€" : modalData.unit}
+                            </span>
+                        </div>
+
+                        {/* Preview ritmo necesario — solo si hay valor */}
+                        {inputValue > 0 && weeksRemainingModal > 0 && (
+                            <div style={{
+                                background: "#f8fafc", borderRadius: "8px",
+                                padding: "8px 10px", marginBottom: "10px",
+                                fontSize: "11px", color: "#64748b", lineHeight: 1.5
+                            }}>
+                                Necesitas{" "}
+                                <strong style={{ color: "#7c3aed" }}>
+                                    {formatValue(
+                                        Math.round((inputValue - modalData.acumValue) / weeksRemainingModal),
+                                        modalData.unit
+                                    )}
+                                </strong>
+                                {" "}/sem en {weeksRemainingModal} semanas restantes
+                                <br />
+                                <span style={{
+                                    fontSize: "10px", fontWeight: 700,
+                                    color: ((currentWeekInfo > 0 ? modalData.acumValue / currentWeekInfo : 0) >= ((inputValue - modalData.acumValue) / weeksRemainingModal)) ? "#22c55e" : "#ef4444"
+                                }}>
+                                    {((currentWeekInfo > 0 ? modalData.acumValue / currentWeekInfo : 0) >= ((inputValue - modalData.acumValue) / weeksRemainingModal)) ? "✓ Tu ritmo actual lo cubre" : "✗ Necesitas acelerar el ritmo"}
                                 </span>
                             </div>
+                        )}
 
-                            {inputValue > 0 && weeksRemainingModal > 0 && (
-                                <div style={{
-                                    background: "rgba(124,58,237,0.05)",
-                                    borderRadius: "16px",
-                                    padding: "16px",
-                                    fontSize: "12px",
-                                    color: "#4c1d95",
-                                    border: "1px solid rgba(124,58,237,0.1)",
-                                    lineHeight: 1.5
-                                }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                                        <TrendingUp size={14} />
-                                        <strong style={{ fontWeight: 800 }}>Ritmo Sugerido</strong>
-                                    </div>
-                                    Necesitas promediar <strong style={{ color: "#7c3aed", fontSize: "14px" }}>{formatValue((inputValue - modalData.acumValue) / weeksRemainingModal, modalData.unit)}</strong> por semana en las {weeksRemainingModal} semanas restantes.
-                                    <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
-                                        {(currentWeekInfo > 0 ? modalData.acumValue / currentWeekInfo : 0) >= ((inputValue - modalData.acumValue) / weeksRemainingModal)
-                                            ? <><Check size={14} color="#22c55e" /> <span style={{ color: "#166534" }}>Buen ritmo actual</span></>
-                                            : <><AlertCircle size={14} color="#ef4444" /> <span style={{ color: "#991b1b" }}>Requiere aceleración</span></>
-                                        }
-                                    </div>
-                                </div>
-                            )}
+                        {/* Sugerencia mes anterior (Placeholder if previous month not fetched, just use simple UI for now, logic can be added later if needed) Omitted as requested to keep UI minimal and match provided spec where prevMonthValue was shown */}
 
-                            <div>
-                                <div style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", color: "#94a3b8", marginBottom: "8px", letterSpacing: "0.05em", marginLeft: "4px" }}>
-                                    Notas de Estrategia
-                                </div>
-                                <textarea
-                                    placeholder="¿Cuál es el plan para alcanzar este objetivo?"
-                                    style={{
-                                        width: "100%", boxSizing: "border-box", fontSize: "13px", padding: "14px",
-                                        border: "1px solid #e2e8f0", borderRadius: "16px", resize: "none",
-                                        height: "80px", background: "#f8fafc", color: "#334155",
-                                        fontFamily: "inherit", outline: "none", transition: "border-color 0.2s"
-                                    }}
-                                    onFocus={e => e.currentTarget.style.borderColor = "#7c3aed"}
-                                    onBlur={e => e.currentTarget.style.borderColor = "#e2e8f0"}
-                                />
-                            </div>
-                        </div>
-
-                        <div style={{ display: "flex", gap: "12px" }}>
+                        {/* Botones */}
+                        <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
                             <button
                                 onClick={handleSaveGoal}
-                                disabled={loading}
+                                disabled={!inputValue || loading}
                                 style={{
-                                    flex: 1, background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
-                                    color: "white", border: "none", borderRadius: "16px", padding: "14px",
-                                    fontWeight: 900, fontSize: "14px", cursor: "pointer",
-                                    boxShadow: "0 10px 15px -3px rgba(124,58,237,0.3)",
-                                    transition: "all 0.2s"
+                                    flex: 1, background: inputValue ? "#7c3aed" : "#e2e8f0",
+                                    color: inputValue ? "white" : "#94a3b8",
+                                    border: "none", borderRadius: "10px",
+                                    padding: "10px", fontWeight: 900,
+                                    fontSize: "12px", cursor: inputValue ? "pointer" : "not-allowed",
+                                    transition: "all 0.15s"
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
-                                onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
                             >
-                                {loading ? "Guardando..." : "Confirmar Objetivo"}
+                                {loading ? "Guardando..." : "Guardar objetivo"}
                             </button>
+
                             {modalData.currentTarget !== null && (
                                 <button
                                     onClick={handleDeleteGoal}
                                     style={{
-                                        background: "#fff", border: "1px solid #fee2e2", color: "#ef4444",
-                                        borderRadius: "16px", padding: "14px 20px", fontWeight: 800,
-                                        fontSize: "14px", cursor: "pointer", transition: "all 0.2s"
+                                        background: "none", border: "1px solid #fca5a5",
+                                        color: "#ef4444", borderRadius: "10px",
+                                        padding: "10px 12px", fontWeight: 700,
+                                        fontSize: "11px", cursor: "pointer"
                                     }}
-                                    onMouseEnter={e => e.currentTarget.style.background = "#fef2f2"}
-                                    onMouseLeave={e => e.currentTarget.style.background = "#fff"}
                                 >
                                     Eliminar
                                 </button>
                             )}
                         </div>
+
                     </div>
-                </div>
+                </>
             )}
         </div>
     );

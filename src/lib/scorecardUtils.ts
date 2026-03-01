@@ -58,7 +58,7 @@ export function formatValue(value: number, unit: string): string {
   if (value === null || value === undefined) return "—"
 
   if (value === 0) {
-    if (unit === "EUR") return "€0"
+    if (unit === "EUR") return "0€"
     if (unit === "%") return "0%"
     if (unit === "x") return "0x"
     return "0"
@@ -66,8 +66,8 @@ export function formatValue(value: number, unit: string): string {
 
   if (unit === "EUR") {
     return value >= 1000
-      ? `€${(value / 1000).toFixed(1)}k`
-      : `€${Math.round(value)}`
+      ? `${(value / 1000).toFixed(1)}k€`
+      : `${Math.round(value)}€`
   }
   if (unit === "%") return `${Math.round(value * 10) / 10}%`
   if (unit === "x") return `${Math.round(value * 100) / 100}x`

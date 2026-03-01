@@ -67,22 +67,22 @@ function DataCell({ value, unit, status, variation, isBest }: DataCellProps) {
             <div style={{
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "flex-end",
+                alignItems: "center",
                 justifyContent: "center",
                 padding: "5px 12px",
                 height: "100%"
             }}>
                 <div style={{
-                    display: "flex",
+                    display: "inline-flex",
                     alignItems: "center",
-                    gap: "5px",
-                    justifyContent: "flex-end"
+                    gap: "3px",
+                    justifyContent: "center"
                 }}>
-                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: styles.dotBg, flexShrink: 0 }} />
-                    <span style={{ fontSize: "13px", fontWeight: 800, color: styles.color, whiteSpace: "nowrap" }}>
+                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: styles.dotBg, flexShrink: 0 }} />
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: styles.color, whiteSpace: "nowrap" }}>
                         {formatValue(value, unit)}
                     </span>
-                    {isBest && <span style={{ fontSize: "8px", color: "#eab308" }}>★</span>}
+                    {isBest && <span style={{ fontSize: "8px", color: "#eab308", marginLeft: "2px" }}>★</span>}
                 </div>
                 {variation !== null && (
                     <div style={{
@@ -106,11 +106,13 @@ function AccumCell({ value, unit, status }: AccumCellProps) {
 
     return (
         <td style={{ padding: "0", background: bg, borderBottom: "1px solid #ede9fe" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "5px", padding: "5px 12px", height: "100%" }}>
-                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: textColor === "#ffffff" ? "rgba(255,255,255,0.6)" : "#a78bfa", flexShrink: 0 }} />
-                <span style={{ fontSize: "13px", fontWeight: 900, color: textColor, whiteSpace: "nowrap" }}>
-                    {formatValue(value, unit)}
-                </span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: "5px 12px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "3px", justifyContent: "center" }}>
+                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: textColor === "#ffffff" ? "rgba(255,255,255,0.6)" : "#a78bfa", flexShrink: 0 }} />
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: textColor, whiteSpace: "nowrap" }}>
+                        {formatValue(value, unit)}
+                    </span>
+                </div>
             </div>
         </td>
     )
@@ -135,13 +137,13 @@ function ObjPctCell({ objPct }: { objPct: number | null }) {
 }
 
 function ProyCell({ projection, target, unit }: ProyCellProps) {
-    if (!projection) return <td style={{ textAlign: "right", padding: "5px 12px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>—</td>
+    if (!projection) return <td style={{ textAlign: "center", padding: "5px 12px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>—</td>
 
     const meetsTarget = target && projection >= target;
 
     return (
-        <td style={{ padding: "5px 12px", textAlign: "right", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "3px" }}>
+        <td style={{ padding: "5px 12px", textAlign: "center", borderBottom: "1px solid #f1f5f9" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "3px" }}>
                 <span style={{ fontSize: "12px", fontWeight: 700, color: "#6366f1", whiteSpace: "nowrap" }}>
                     {formatValue(projection, unit)}
                 </span>
@@ -168,8 +170,8 @@ function NeededCell({ needed, onTrack, achieved, unit }: NeededCellProps) {
 
     return (
         <td style={{ padding: "0", background: onTrack ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", height: "100%", padding: "5px 12px" }}>
-                <span style={{ fontSize: "12px", fontWeight: 800, color: onTrack ? "#166534" : "#ef4444", whiteSpace: "nowrap" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: "5px 12px" }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: onTrack ? "#166534" : "#ef4444", whiteSpace: "nowrap" }}>
                     {formatValue(needed, unit)}
                 </span>
             </div>
@@ -178,14 +180,14 @@ function NeededCell({ needed, onTrack, achieved, unit }: NeededCellProps) {
 }
 
 function FaltanCell({ acum, target, unit }: FaltanCellProps) {
-    if (!target) return <td style={{ textAlign: "right", padding: "5px 12px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>—</td>
+    if (!target) return <td style={{ textAlign: "center", padding: "5px 12px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>—</td>
 
     const diff = target - acum;
     const achieved = diff <= 0;
 
     return (
-        <td style={{ padding: "5px 12px", textAlign: "right", borderBottom: "1px solid #f1f5f9" }}>
-            <span style={{ fontSize: "12px", fontWeight: 800, color: achieved ? "#166534" : "#ef4444", whiteSpace: "nowrap" }}>
+        <td style={{ padding: "5px 12px", textAlign: "center", borderBottom: "1px solid #f1f5f9" }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: achieved ? "#166534" : "#ef4444", whiteSpace: "nowrap" }}>
                 {achieved ? "✓" : `-${formatValue(diff, unit)}`}
             </span>
         </td>
@@ -196,7 +198,7 @@ interface TargetCellProps { target: number | null; unit: string; hasTarget: bool
 
 function TargetCell({ target, unit, hasTarget, onEdit, isHovered }: TargetCellProps) {
     if (!hasTarget) return (
-        <td style={{ textAlign: "right", padding: "5px 10px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>
+        <td style={{ textAlign: "center", padding: "5px 10px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>
             <span style={{ color: "#e2e8f0" }}>—</span>
         </td>
     )
@@ -204,7 +206,7 @@ function TargetCell({ target, unit, hasTarget, onEdit, isHovered }: TargetCellPr
     return (
         <td style={{
             padding: "5px 10px",
-            textAlign: "right",
+            textAlign: "center",
             borderBottom: "1px solid #f1f5f9",
             position: "relative"
         }}>

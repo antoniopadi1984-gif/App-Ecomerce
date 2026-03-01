@@ -917,3 +917,22 @@
 tbody tr:hover .target-edit-btn {
   opacity: 1 !important;
 }
+
+/* Global Table Data Alignment (Scorecard v3) */
+table tbody td {
+  text-align: right !important;
+  padding-right: 12px !important;
+}
+
+table thead th {
+  text-align: right !important;
+  padding-right: 12px !important;
+}
+
+/* Solo VARIABLE va a la izquierda */
+table thead th:first-child,
+table tbody td:first-child {
+  text-align: left !important;
+  padding-left: 12px !important;
+  padding-right: 0 !important;
+}

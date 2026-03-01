@@ -463,31 +463,31 @@ export default function ScorecardPage() {
                         <col style={{ width: "6%" }} />    {/* TARGET */}
                     </colgroup>
                     <thead>
-                        <tr style={{ position: "sticky", top: 0, background: "white", zIndex: 10, borderBottom: "2px solid #e2e8f0" }}>
-                            <th style={{ textAlign: "left", padding: "8px 12px", fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", overflow: "hidden" }}>
+                        <tr style={{ position: "sticky", top: 0, background: "white", zIndex: 10, borderBottom: "2px solid #cbd5e1" }}>
+                            <th style={{ textAlign: "left", padding: "10px 12px", fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155", overflow: "hidden" }}>
                                 Variable
                             </th>
                             {weeksArray.map((w, i) => (
-                                <th key={i} title={w?.from ? `${w.from} - ${w.to}` : `Semana ${i + 1}`} style={{ textAlign: "right", padding: "8px 12px", fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8" }}>
+                                <th key={i} title={w?.from ? `${w.from} - ${w.to}` : `Semana ${i + 1}`} style={{ textAlign: "right", padding: "10px 12px", fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155" }}>
                                     Sem {i + 1}
                                 </th>
                             ))}
-                            <th style={{ textAlign: "right", padding: "8px 12px", fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#7c3aed", background: "#f5f3ff" }}>
+                            <th style={{ textAlign: "right", padding: "10px 12px", fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#7c3aed", background: "#f5f3ff" }}>
                                 Acum
                             </th>
-                            <th style={{ textAlign: "center", padding: "8px 4px", fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8" }}>
+                            <th style={{ textAlign: "center", padding: "10px 4px", fontSize: "11px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#334155" }}>
                                 Obj %
                             </th>
-                            <th style={{ textAlign: "right", padding: "8px 12px", fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#6366f1" }}>
+                            <th style={{ textAlign: "right", padding: "10px 12px", fontSize: "11px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#6366f1" }}>
                                 Proy.
                             </th>
-                            <th style={{ textAlign: "right", padding: "8px 12px", fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8" }}>
+                            <th style={{ textAlign: "right", padding: "10px 12px", fontSize: "11px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#334155" }}>
                                 Nec./Sem
                             </th>
-                            <th style={{ textAlign: "right", padding: "8px 12px", fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8" }}>
+                            <th style={{ textAlign: "right", padding: "10px 12px", fontSize: "11px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#334155" }}>
                                 Faltan
                             </th>
-                            <th style={{ textAlign: "right", padding: "8px 12px", fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8" }}>
+                            <th style={{ textAlign: "right", padding: "10px 12px", fontSize: "11px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#334155" }}>
                                 Target
                             </th>
                         </tr>

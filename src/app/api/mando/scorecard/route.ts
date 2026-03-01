@@ -198,7 +198,12 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: 'Parámetros requeridos: storeId, month, year, field' }, { status: 400 });
         }
 
-        const allowed = ['adSpendBudget', 'targetRoas', 'breakevenRoas', 'maxCpa', 'maxCpc', 'expectedConvRate', 'expectedAvgTicket'];
+        const allowed = [
+            'adSpendBudget', 'targetRoas', 'breakevenRoas', 'maxCpa', 'maxCpc', 'expectedConvRate', 'expectedAvgTicket',
+            'revenue', 'orders', 'ticketMedio', 'adSpend', 'roas', 'cpa', 'roi', 'tasaConversion', 'costPerSession',
+            'enviados', 'delivered', 'deliveryRate', 'confirmRate', 'returnRate', 'returned', 'envioMedio',
+            'ratioAcierto', 'creativesLaunched', 'creativesWinner', 'cogs', 'shippingCost', 'netProfit', 'netMargin'
+        ];
         if (!allowed.includes(field)) {
             return NextResponse.json({ error: `Campo no permitido: ${field}` }, { status: 400 });
         }

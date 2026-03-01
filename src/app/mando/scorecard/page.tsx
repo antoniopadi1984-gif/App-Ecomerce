@@ -174,14 +174,14 @@ function TargetCell({ target, unit, hasTarget, onEdit }: TargetCellProps) {
                     className="target-edit-btn"
                     onClick={onEdit}
                     style={{
-                        opacity: 0.3,
+                        opacity: 0.4,
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                        background: target ? "rgba(124,58,237,0.15)" : "rgba(124,58,237,0.08)",
-                        border: "1px solid rgba(124,58,237,0.3)",
+                        background: target ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.06)",
+                        border: "1px solid rgba(124,58,237,0.25)",
                         borderRadius: "8px",
                         cursor: "pointer",
                         color: "#7c3aed",
-                        padding: "5px",
+                        padding: "4px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -189,14 +189,14 @@ function TargetCell({ target, unit, hasTarget, onEdit }: TargetCellProps) {
                     }}
                     onMouseEnter={e => {
                         e.currentTarget.style.opacity = "1";
-                        e.currentTarget.style.background = "rgba(124,58,237,0.25)";
+                        e.currentTarget.style.background = "rgba(124,58,237,0.22)";
                     }}
                     onMouseLeave={e => {
-                        e.currentTarget.style.opacity = "0.3";
-                        e.currentTarget.style.background = target ? "rgba(124,58,237,0.15)" : "rgba(124,58,237,0.08)";
+                        e.currentTarget.style.opacity = "0.4";
+                        e.currentTarget.style.background = target ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.06)";
                     }}
                 >
-                    <Pencil size={12} strokeWidth={2.5} />
+                    <Pencil size={11} strokeWidth={2.8} />
                 </button>
             </div>
         </td>
@@ -284,27 +284,49 @@ export default function ScorecardPage() {
         })
             .then(r => r.json())
             .then(d => {
+                setLoading(false);
                 if (d.ok) {
                     setModalData(null);
                     loadData();
                 } else {
-                    alert("Error: " + d.error);
-                    setLoading(false);
+                    alert("Error: " + (d.error || "No se pudo guardar el objetivo"));
                 }
             })
             .catch(err => {
                 console.error(err);
+                alert("Error de conexión al guardar");
                 setLoading(false);
             });
     };
 
     const handleDeleteGoal = () => {
         if (!modalData) return;
+        setLoading(true);
+        const mappedField = TARGET_FIELD_MAP[modalData.propId] || modalData.propId;
+
         fetch('/api/mando/scorecard', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ storeId, month, year, field: modalData.propId, value: null }),
-        }).then(() => { setModalData(null); loadData(); });
+            body: JSON.stringify({
+                storeId,
+                month,
+                year,
+                field: mappedField,
+                value: null
+            }),
+        }).then(r => r.json())
+            .then(d => {
+                setLoading(false);
+                if (d.ok) {
+                    setModalData(null);
+                    loadData();
+                } else {
+                    alert("Error al eliminar: " + (d.error || "No se pudo eliminar"));
+                }
+            }).catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
     };
 
     const RowInfo = ({ label, propId, unit }: { label: string; propId: string; unit: string }) => {
@@ -461,17 +483,17 @@ export default function ScorecardPage() {
                 >
                     <div
                         style={{
-                            background: "rgba(255, 255, 255, 0.95)",
-                            backdropFilter: "blur(20px)",
-                            padding: "32px",
-                            borderRadius: "32px",
-                            width: "420px",
-                            boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.5)",
+                            background: "rgba(255, 255, 255, 0.98)",
+                            backdropFilter: "blur(25px)",
+                            padding: "24px",
+                            borderRadius: "28px",
+                            width: "360px",
+                            boxShadow: "0 20px 40px -12px rgba(15,23,42,0.3), inset 0 1px 0 rgba(255,255,255,1)",
                             display: "flex",
                             flexDirection: "column",
-                            border: "1px solid rgba(255,255,255,0.3)",
+                            border: "1px solid rgba(255,255,255,0.6)",
                             position: "relative",
-                            gap: "24px"
+                            gap: "20px"
                         }}
                         onClick={e => e.stopPropagation()}
                     >

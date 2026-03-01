@@ -269,7 +269,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                     <span className="text-[11px] font-bold text-slate-700">Estado Salud</span>
                                 </DropdownMenuItem>
 
-                                <DropdownMenuItem onClick={() => router.push('/connections')} className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
+                                <DropdownMenuItem onClick={() => router.push('/sistema/settings')} className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
                                     <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
                                         <LinkIcon className="w-3.5 h-3.5 text-blue-600" />
                                     </div>
@@ -278,7 +278,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
 
                                 <DropdownMenuSeparator className="bg-slate-100/50" />
 
-                                <DropdownMenuItem onClick={() => router.push('/settings')} className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
+                                <DropdownMenuItem onClick={() => router.push('/sistema/settings')} className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
                                     <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
                                         <Settings className="w-3.5 h-3.5 text-slate-600" />
                                     </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { syncShopifyHistory, syncBeepingStatuses } from "@/app/pedidos/actions";
+import { syncShopifyHistory, syncBeepingStatuses } from "@/app/operaciones/pedidos/actions";
 import { MetricsSnapshotService } from "@/lib/services/metrics-snapshot-service";
 import { subDays } from "date-fns";
 

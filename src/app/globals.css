@@ -1,389 +1,802 @@
+/* ============================================================
+   ECOMBOOM — DESIGN SYSTEM CENTRAL v7
+   Este archivo es la única fuente de verdad de diseño.
+   Los componentes NO tienen estilos propios.
+   Todo estilo viene de aquí.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
+/* ============================================================
+   SECCIÓN 1 — TAILWIND THEME BRIDGE
+   Conecta las variables CSS de EcomBoom con Tailwind v4
+   ============================================================ */
 @theme {
   --color-background: var(--bg);
   --color-foreground: var(--text);
-
   --color-card: var(--surface);
   --color-card-foreground: var(--text);
-
-  --color-primary: var(--primary);
+  --color-primary: var(--mando);
   --color-primary-foreground: #ffffff;
-
-  --color-secondary: var(--surface-2);
+  --color-secondary: var(--surface2);
   --color-secondary-foreground: var(--text);
-
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-text);
-
+  --color-muted: var(--surface2);
+  --color-muted-foreground: var(--text-muted);
   --color-border: var(--border);
   --color-input: var(--surface);
-  --color-ring: var(--primary);
-
+  --color-ring: var(--mando);
   --radius-xl: 12px;
   --radius-lg: 10px;
-  --radius-md: 8px;
-  --radius-sm: 6px;
-
-  --shadow-premium: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --radius-md: var(--r-md);
+  --radius-sm: var(--r-sm);
+  --shadow-premium: var(--sh-sm);
 }
 
+/* ============================================================
+   SECCIÓN 2 — VARIABLES GLOBALES (Design Tokens)
+   Cambia aquí → cambia en toda la app automáticamente.
+   ============================================================ */
 :root {
-  /* Glass performance levels */
-  --glass-blur-xs: 4px;
-  --glass-blur-sm: 8px;
-  --glass-blur-md: 12px;
-  --glass-blur-lg: 16px;
 
-  /* Default blur (desktop) */
-  --glass-blur: 10px;
+  /* ── Fuentes ── */
+  --font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
 
-  /* Premium Glassmorphism & High-Density Palette */
-  --bg: #f6f8fc;
-  /* Slightly grayer to make white glass pop */
-  --surface: rgba(255, 255, 255, 0.72);
-  --surface-opaque: #ffffff;
-  --surface-2: rgba(255, 255, 255, 0.55);
+  /* ── Paleta base ── */
+  --bg: #F5F6FA;
+  /* fondo general de la app */
+  --surface: #FFFFFF;
+  /* cards, sidebar, topbar */
+  --surface2: #F8F9FC;
+  /* hover states, inputs */
+  --border: #E8EAF0;
+  /* bordes suaves */
+  --border-high: #D0D4E0;
+  /* bordes con más contraste */
+  --text: #1A1D2E;
+  /* texto principal */
+  --text-muted: #6B7080;
+  /* texto secundario */
+  --text-dim: #A0A5B8;
+  /* texto apagado, labels */
 
-  --border: rgba(15, 23, 42, 0.10);
-  --border-highlight: rgba(109, 40, 217, 0.20);
+  /* ── Dimensiones del layout ── */
+  --sidebar-w: 52px;
+  /* sidebar colapsado */
+  --sidebar-w-exp: 204px;
+  /* sidebar expandido (hover) */
+  --topbar-h: 50px;
+  /* altura del topbar */
 
-  --text: #0f172a;
-  --muted-text: #475569;
+  /* ── Radios ── */
+  --r-sm: 6px;
+  --r-md: 9px;
+  --r-lg: 12px;
 
-  --primary: #6d28d9;
-  /* violeta premium */
-  --primary-foreground: #ffffff;
-  --accent-pastel: #fff1f2;
-  --accent-strong: #e11d48;
+  /* ── Sombras ── */
+  --sh-sm: 0 1px 4px rgba(0, 0, 0, 0.07);
+  --sh-md: 0 6px 20px rgba(0, 0, 0, 0.12);
 
-  --alert-critical: #e11d48;
-  --alert-warning: #d97706;
-  --alert-ok: #10b981;
-  --alert-info: #3b82f6;
+  /* ── Colores de módulos ──
+     Cada bloque tiene su color principal y su fondo pastel.
+     Úsalos siempre con var(--mando), var(--mando-bg), etc.
+     NUNCA hardcodees un color de módulo en un componente.
+  ── */
+  --mando: #6D5FD8;
+  --mando-bg: #F0EEFF;
+  /* Centro de Mando */
+  --crm: #D44F8E;
+  --crm-bg: #FDF0F6;
+  /* CRM Forense     */
+  --ops: #0F8FAD;
+  --ops-bg: #EDF8FB;
+  /* Operaciones     */
+  --inv: #C47D0A;
+  --inv-bg: #FEF7EC;
+  /* Investigación   */
+  --cre: #D45A0A;
+  --cre-bg: #FEF3EC;
+  /* Centro Creativo */
+  --mkt: #0F9E6B;
+  --mkt-bg: #EDF8F4;
+  /* Marketing       */
+  --sis: #8A8FA8;
+  --sis-bg: #F4F5F8;
+  /* Sistema         */
 
-  --radius: 10px;
-  /* Slightly tighter radius for professional feel */
+  /* ── Semáforo ──
+     SOLO para estados, alertas y variaciones.
+     NUNCA para decoración ni colores de módulo.
+  ── */
+  --s-ko: #E5372A;
+  /* crítico / error    */
+  --s-wa: #E07B00;
+  /* advertencia        */
+  --s-ok: #1A9E55;
+  /* correcto / ok      */
+  --s-in: #0A6FD8;
+  /* informativo        */
 
-  /* High-Density System - Extreme Mode Phase 1.3 */
-  --header-height: 48px;
-  /* Ultra tight header */
-  --sidebar-width: 180px;
-  /* Narrower sidebar */
-  --sidebar-collapsed: 48px;
-  --row-height: 24px;
-  /* Professional list height */
-  --input-height: 24px;
-  /* Professional input height */
-  --card-padding: 0.25rem;
-  /* 4px - Extreme */
-  --card-padding-tight: 0.125rem;
-  /* 2px - Micro */
-  --section-gap: 0.375rem;
-  /* 6px */
-  --section-gap-tight: 0.25rem;
-  /* 4px */
-  --item-gap: 0.125rem;
-  /* 2px */
-  --item-gap-tight: 0.0625rem;
-  /* 1px */
-  --kpi-height-sm: auto;
-  --font-heading: 'Outfit', sans-serif;
-
-  /* Glassmorphism Presets */
-  --glass-bg: rgba(255, 255, 255, 0.45);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  /* Shadow Presets */
-  --primary-shadow: rgba(251, 113, 133, 0.25);
-  --info-shadow: rgba(59, 130, 246, 0.25);
-  --warning-shadow: rgba(217, 119, 6, 0.25);
-  --glass-shadow: 0 2px 12px -1px rgba(0, 0, 0, 0.03);
-
-  /* Phase 2.1: Structural Density (Typography Restoration + Radical Layout) (IN PROGRESS)
-
-- [ ] Restore Typography Legibility:
-    - [ ] h1 -> 18px-20px (italic, bold).
-    - [ ] Subtitle -> 12px-13px.
-- [ ] Radical Container Squashing:
-    - [ ] Card Paddings: Fixed at 4px.
-    - [ ] Section Gaps: Fixed at 2px-4px.
-- [ ] Module Optimization (No Dead Space):
-    - [ ] Dashboard: Remove internal card margins.
-    - [ ] Research Lab: Re-align phases to use 100% width/height efficienty.
-    - [ ] Centro Creativo: Fix tab alignment.
-- [ ] Final Hard-Lock Verification.
-*/
-
-  /* Typography Hierarchy - Phase 1.1 */
+  /* ── Tipografía (escala) ── */
   --text-h1: 1.25rem;
-  /* 20px */
-  --text-subtitle: 0.8125rem;
-  /* 13px */
-  --text-label: 0.6875rem;
-  /* 11px */
-  --text-micro: 0.625rem;
-  /* 10px */
-  --text-muted-foreground: #64748b;
-  /* text-slate-500 */
+  /* 20px — títulos de página */
+  --text-h2: 1rem;
+  /* 16px — títulos de sección */
+  --text-body: 0.6875rem;
+  /* 11px — texto base */
+  --text-label: 0.625rem;
+  /* 10px — etiquetas, caps */
+  --text-micro: 0.5625rem;
+  /* 9px  — micro labels */
+
+  /* ── Densidad ── */
+  --row-height: 28px;
+  --input-height: 32px;
+  --section-gap: 14px;
+  --card-padding: 12px 14px;
 }
 
-@media (max-width: 768px) {
-  :root {
-    --glass-blur: 0px;
-
-    --header-height: 56px;
-    /* Taller header for mobile touch targets */
-    --sidebar-width: 0px;
-    /* Hidden by default */
-    --sidebar-collapsed: 0px;
-    --radius: 12px;
-    /* Softer corners on mobile */
-
-    /* Increase base font size for readability */
-    font-size: 14px;
-  }
-}
-
+/* ============================================================
+   SECCIÓN 3 — BASE STYLES
+   Estilos globales de elementos HTML.
+   ============================================================ */
 @layer base {
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
   body {
-    background: radial-gradient(circle at top right, rgba(251, 113, 133, 0.05), transparent 400px),
-      radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.05), transparent 400px),
-      var(--bg);
+    font-family: var(--font);
+    font-size: var(--text-body);
+    font-weight: 500;
     color: var(--text);
-    font-family: inherit;
+    background: var(--bg);
+    /* fondo plano — sin gradientes, sin imágenes */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
   }
 
   h1 {
-    font-size: 1.125rem;
-    line-height: 1.75rem;
+    font-size: var(--text-h1);
     font-weight: 800;
     letter-spacing: -0.025em;
-    margin-bottom: 0.75rem;
-    color: var(--color-foreground);
   }
 
   h2 {
-    font-size: 1rem;
-    line-height: 1.5rem;
+    font-size: var(--text-h2);
     font-weight: 700;
-    letter-spacing: -0.025em;
-    margin-bottom: 0.5rem;
-    color: var(--color-foreground);
+    letter-spacing: -0.02em;
+  }
+
+  button {
+    font-family: var(--font);
+    cursor: pointer;
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: var(--font);
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
   }
 }
 
-@layer utilities {
+/* ============================================================
+   SECCIÓN 4 — LAYOUT SHELL
+   Estructura principal de la app: sidebar + topbar + contenido.
+   No tocar sin entender el layout completo.
+   ============================================================ */
 
-  /* ✅ Standard Glass - FAST */
-  .glass-card {
-    background-color: rgb(255 255 255 / 0.75);
-    border: 1px solid rgb(255 255 255 / 0.5);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-  }
-
-  .glass-panel {
-    background-color: rgb(255 255 255 / 0.8);
-    border: 1px solid rgb(255 255 255 / 0.55);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-  }
-
-  .glass-header {
-    background-color: rgb(255 255 255 / 0.7);
-    border-bottom: 1px solid rgb(226 232 240 / 0.4);
-    position: sticky;
-    top: 0px;
-    z-index: 50;
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-  }
-
-  .glass-input {
-    background-color: rgb(255 255 255 / 0.6);
-    border: 1px solid rgb(226 232 240 / 0.5);
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-    outline: 2px solid transparent;
-    outline-offset: 2px;
-    backdrop-filter: blur(var(--glass-blur-xs));
-    -webkit-backdrop-filter: blur(var(--glass-blur-xs));
-  }
-
-  .glass-input:focus {
-    border-color: rgb(251 113 133 / 0.5);
-    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-  }
-
-  /* ✅ Fallback rápido si el blur causa lag */
-  .no-glass {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
+/* Contenedor raíz — flex horizontal */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
 }
 
-::selection {
-  background-color: #ffe4e6;
-  color: #881337;
+/* Área de contenido — offset de sidebar y topbar */
+.content-area {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  transition: margin-left 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* COMPACT UTILITIES */
-
-/* Standard Text Styles */
-.text-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #94a3b8;
+/* Padding interno del contenido */
+.content-main {
+  padding: 16px;
+  min-height: calc(100vh - var(--topbar-h));
 }
 
-@media (max-width: 768px) {
-  .text-label {
-    font-size: 11px;
-  }
+/* ============================================================
+   SECCIÓN 5 — TOPBAR
+   Barra superior fija. Izquierda: módulo activo.
+   Derecha: selectores de tienda y producto + acciones.
+   ============================================================ */
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-w);
+  right: 0;
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 0 14px;
+  z-index: 40;
+  box-shadow: var(--sh-sm);
+  gap: 12px;
 }
 
-.text-value {
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 600;
-  color: #0f172a;
+/* Lado izquierdo: dot de color + nombre de módulo */
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
 }
 
-@media (max-width: 768px) {
-  .text-value {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
+/* Lado derecho: selectores + iconos + avatar */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-/* Compact Inputs & Buttons */
-.btn-compact {
-  height: 2rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+/* Botones icono (campana, ajustes) */
+.topbar-icon-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.btn-compact:active {
-  transform: scale(0.95);
+.topbar-icon-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
-.input-compact {
-  height: 2rem;
-  padding-left: 0.625rem;
-  padding-right: 0.625rem;
-  background-color: #ffffff;
-  border-color: #e2e8f0;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 500;
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+.topbar-icon-btn:hover {
+  background: var(--surface2);
+  border-color: var(--border-high);
+  color: var(--text);
 }
 
-.input-compact::placeholder {
-  color: #cbd5e1;
+/* Selector pill (Tienda / Producto) */
+.topbar-selector {
+  height: 32px;
+  padding: 0 10px 0 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: var(--font);
+  white-space: nowrap;
 }
 
-.input-compact:focus {
-  border-color: #0f172a;
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) rgb(15 23 42 / 0.2);
-  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+.topbar-selector:hover {
+  background: var(--surface2);
+  border-color: var(--border-high);
 }
 
-/* DATA TABLE STANDARD (Sticky, Compact, Monochrome) */
-.data-table-container {
-  width: 100%;
-  overflow: auto;
-  border-radius: 0.75rem;
-  border: 1px solid rgb(226 232 240 / 0.6);
-  background-color: rgb(255 255 255 / 0.8);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+/* Icono cuadrado dentro del selector */
+.topbar-selector-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
-.data-table {
-  width: 100%;
-  caption-side: bottom;
-  font-size: 0.75rem;
-  line-height: 1rem;
+/* Textos del selector */
+.topbar-selector-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
 }
 
-.data-table thead th {
-  height: 2rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  text-align: left;
-  vertical-align: middle;
+.topbar-selector-label {
+  font-size: 8px;
   font-weight: 700;
-  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 10px;
-  background-color: rgb(248 250 252 / 0.5);
-  position: sticky;
-  top: 0px;
-  z-index: 10;
-  border-bottom: 1px solid rgb(226 232 240 / 0.5);
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
 }
 
-.data-table tbody tr {
-  border-bottom: 1px solid rgb(241 245 249 / 0.5);
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-  height: var(--row-height);
-}
-
-.data-table tbody tr:hover {
-  background-color: rgb(255 241 242 / 0.3);
-}
-
-.data-table tbody tr[data-state="selected"] {
-  background-color: #fff1f2;
-}
-
-.data-table td {
-  padding: 0.5rem;
-  vertical-align: middle;
-  font-weight: 500;
-  color: #334155;
-}
-
-/* Layout Hacks */
-.sidebar-active {
-  background-color: #0f172a;
-  color: #ffffff;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+.topbar-selector-value {
+  font-size: 11px;
   font-weight: 600;
+  color: var(--text);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Scrollbar Hide */
+/* KPI pills (ROAS BE, CPA BE) */
+.kpi-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+.kpi-pill-label {
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.kpi-pill-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--mono);
+}
+
+/* Avatar de usuario */
+.topbar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   SECCIÓN 6 — SIDEBAR
+   Sidebar fijo colapsado (52px). Hover → expand (204px).
+   Los iconos tienen el color del módulo cuando está activo.
+   La barra izquierda indica el módulo activo.
+   Modificar SOLO aquí — no en el componente sidebar.tsx.
+   ============================================================ */
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  z-index: 50;
+  overflow: hidden;
+  box-shadow: var(--sh-sm);
+  transition: width 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hover expand */
+.sidebar:hover {
+  width: var(--sidebar-w-exp);
+}
+
+/* Item de navegación */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 7px;
+  height: 36px;
+  margin: 1px 5px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+  position: relative;
+  white-space: nowrap;
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav-item:hover {
+  background: var(--surface2);
+}
+
+/* Estado activo del nav-item */
+.nav-item.active {
+  background: var(--item-bg, var(--surface2));
+}
+
+/* Barra vertical izquierda — indica módulo activo */
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  border-radius: 0 3px 3px 0;
+  background: var(--item-color, var(--mando));
+}
+
+/* Icono cuadrado del nav-item */
+.nav-ico {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  background: var(--item-bg, var(--surface2));
+  transition: background 0.12s;
+}
+
+/* Label del nav-item — visible solo al expandir */
+.nav-lbl {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color 0.12s;
+  overflow: hidden;
+}
+
+.nav-item:hover .nav-lbl,
+.nav-item.active .nav-lbl {
+  color: var(--item-color, var(--text));
+}
+
+/* ============================================================
+   SECCIÓN 7 — CARDS Y CONTENEDORES
+   Clases reutilizables para cualquier card de la app.
+   ============================================================ */
+
+/* Card base */
+.ds-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-sm);
+}
+
+/* Card con padding estándar */
+.ds-card-padded {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-sm);
+  padding: var(--card-padding);
+}
+
+/* Barra de métricas (6 KPIs en fila) */
+.metric-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  display: grid;
+  overflow: hidden;
+  box-shadow: var(--sh-sm);
+}
+
+/* Celda de métrica individual */
+.metric-cell {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-right: 1px solid var(--border);
+  position: relative;
+  cursor: default;
+  transition: background 0.12s;
+}
+
+.metric-cell:last-child {
+  border-right: none;
+}
+
+.metric-cell:hover {
+  background: var(--surface2);
+}
+
+/* Línea de color superior de la celda */
+.metric-cell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--cell-color, var(--mando));
+}
+
+.metric-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: var(--text);
+  font-family: var(--mono);
+}
+
+.metric-delta {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--mono);
+}
+
+.metric-delta.up {
+  color: var(--s-ok);
+}
+
+.metric-delta.dn {
+  color: var(--s-ko);
+}
+
+.metric-delta.fl {
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   SECCIÓN 8 — INPUTS Y FORMULARIOS
+   ============================================================ */
+
+.ds-input {
+  height: var(--input-height);
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface2);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+
+.ds-input::placeholder {
+  color: var(--text-dim);
+}
+
+.ds-input:focus {
+  border-color: var(--border-high);
+  background: var(--surface);
+}
+
+/* Botón primario */
+.ds-btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  border: none;
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ds-btn:hover {
+  opacity: 0.88;
+}
+
+.ds-btn:active {
+  opacity: 0.75;
+}
+
+/* ============================================================
+   SECCIÓN 9 — TABLAS DE DATOS
+   ============================================================ */
+
+.ds-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: var(--sh-sm);
+}
+
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.ds-table thead tr {
+  background: var(--surface2);
+}
+
+.ds-table thead th {
+  padding: 8px 14px;
+  text-align: left;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.ds-table tbody tr {
+  border-top: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.ds-table tbody tr:hover {
+  background: var(--surface2);
+}
+
+.ds-table tbody td {
+  padding: 9px 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.ds-table tbody td:first-child {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ============================================================
+   SECCIÓN 10 — TABS DE MÓDULO
+   Tabs horizontales dentro de cada página de módulo.
+   El color activo lo pasa el componente vía --tab-color.
+   ============================================================ */
+
+.module-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  width: fit-content;
+  flex-wrap: wrap;
+}
+
+.module-tab {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  font-family: var(--font);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.module-tab:hover {
+  color: var(--text-muted);
+  background: var(--surface);
+}
+
+.module-tab.active {
+  background: var(--surface);
+  color: var(--tab-color, var(--mando));
+  box-shadow: var(--sh-sm);
+}
+
+/* ============================================================
+   SECCIÓN 11 — ETIQUETAS DE ESTADO (Badges)
+   Usar siempre con las variables de semáforo.
+   ============================================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.badge-ok {
+  background: #1A9E5515;
+  color: var(--s-ok);
+}
+
+.badge-warn {
+  background: #E07B0015;
+  color: var(--s-wa);
+}
+
+.badge-ko {
+  background: #E5372A15;
+  color: var(--s-ko);
+}
+
+.badge-info {
+  background: #0A6FD815;
+  color: var(--s-in);
+}
+
+/* ============================================================
+   SECCIÓN 12 — SEPARADORES Y TÍTULOS DE SECCIÓN
+   ============================================================ */
+
+.section-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ============================================================
+   SECCIÓN 13 — UTILIDADES GENERALES
+   ============================================================ */
+
+/* Ocultar scrollbar manteniendo funcionalidad */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -391,4 +804,82 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Fade-in para dropdowns */
+.fade-in {
+  animation: fadeIn 0.12s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Selección de texto */
+::selection {
+  background-color: var(--mando-bg);
+  color: var(--mando);
+}
+
+/* Compatibilidad legacy — clases antiguas que aún pueden usarse en componentes */
+.btn-compact {
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  transition: all 0.15s;
+}
+
+.input-compact {
+  height: 2rem;
+  padding: 0 0.625rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.data-table-container {
+  width: 100%;
+  overflow: auto;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--sh-sm);
+}
+
+.sidebar-active {
+  background: var(--mando);
+  color: white;
+  font-weight: 600;
+}
+
+.text-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.text-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
 }

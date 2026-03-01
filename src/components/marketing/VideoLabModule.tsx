@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import MaestroWorkspace from "@/app/marketing/video-lab/MaestroWorkspace";
+import MaestroWorkspace from "@/app/creativo/video-lab/MaestroWorkspace";
 import { CreativeAgentPanel } from "@/components/creative/CreativeAgentPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

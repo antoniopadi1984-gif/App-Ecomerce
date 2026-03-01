@@ -23,8 +23,8 @@ import {
     generateProLayout,
     replicateCompetitorLanding,
     pushToShopify
-} from "@/app/marketing/landing-lab/actions";
-import { generateProductCopy } from "@/app/marketing/copy-hub/actions";
+} from "@/app/creativo/landing-lab/actions";
+import { generateProductCopy } from "@/app/creativo/copy-hub/actions";
 import { validateContent } from "@/lib/content-qa";
 import { BrandingContent } from "@/components/marketing/BrandingContent";
 

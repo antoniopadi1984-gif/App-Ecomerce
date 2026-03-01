@@ -168,7 +168,7 @@ async function handleShopifyWebhook(topic: string, data: any) {
         // IMMEDIATE DISPATCH TO BEEPING (Regardless of Payment Status)
         if (detectedProvider === "BEEPING") {
             try {
-                const { pushOrderToBeeping } = await import("@/app/pedidos/actions");
+                const { pushOrderToBeeping } = await import("@/app/operaciones/pedidos/actions");
                 console.log(`[Webhook] Auto-dispatching Order ${order.orderNumber} to BEEPING...`);
                 await pushOrderToBeeping(order.id);
             } catch (dispatchErr) {
@@ -177,7 +177,7 @@ async function handleShopifyWebhook(topic: string, data: any) {
         }
 
         // CRITICAL FIX: Sync Line Items for Statistics
-        const { syncOrderItemsAndProducts } = await import("@/app/pedidos/actions");
+        const { syncOrderItemsAndProducts } = await import("@/app/operaciones/pedidos/actions");
         await syncOrderItemsAndProducts(data, order.id, storeId);
     }
 }
@@ -191,7 +191,7 @@ async function handleBeepingWebhook(data: any) {
     const order = await prisma.order.findUnique({ where: { shopifyId: externalId.toString() } });
     if (!order) return;
 
-    const { syncSingleOrderBeeping } = await import("@/app/pedidos/actions");
+    const { syncSingleOrderBeeping } = await import("@/app/operaciones/pedidos/actions");
     await syncSingleOrderBeeping(order.id);
 }
 

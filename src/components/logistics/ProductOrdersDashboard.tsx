@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/table";
 import { TableAlert } from "@/components/ui/table-alert";
 import { useStore } from "@/lib/store/store-context";
-import { getAlertRules } from "@/app/settings/alerts/actions";
+import { getAlertRules } from "@/app/sistema/settings/alerts/actions";
 import { evaluateAlerts, AlertRule } from "@/lib/alerts";
 
 interface ProductOrdersDashboardProps {

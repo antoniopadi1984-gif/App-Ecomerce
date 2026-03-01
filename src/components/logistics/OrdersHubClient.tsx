@@ -21,7 +21,7 @@ import {
     syncBeepingStatuses,
     autoGeocodeAllPending,
     importCRMFile
-} from "@/app/pedidos/actions";
+} from "@/app/operaciones/pedidos/actions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";

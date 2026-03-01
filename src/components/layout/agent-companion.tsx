@@ -133,7 +133,7 @@ export function AgentCompanion() {
                                 <Zap className="w-3 h-3 mr-1" /> Wizard One-Click
                             </Button>
                         )}
-                        {(pathname.includes('/marketing/contents') || pathname.includes('/research')) && (
+                        {(pathname.includes('/creativo/contents') || pathname.includes('/research')) && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -142,7 +142,7 @@ export function AgentCompanion() {
                                     setIsLoading(true);
                                     setMessages(prev => [...prev, { role: 'user', content: "Generar Almanaque Visual de Transformación" }]);
                                     try {
-                                        const { generateAlmanacAction } = await import("@/app/marketing/contents/actions");
+                                        const { generateAlmanacAction } = await import("@/app/creativo/contents/actions");
                                         const res = await generateAlmanacAction(product.id, "30 Días de Cambio");
                                         setMessages(prev => [...prev, { role: 'agent', content: `🚀 ${res.message} Podrás verlo en la pestaña de Contenidos en unos instantes.` }]);
                                     } catch (err: any) {

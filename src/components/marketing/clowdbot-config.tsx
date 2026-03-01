@@ -23,7 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { updateClowdbotConfig, getClowdbotConfig, getWhatsAppAccounts, addWhatsAppAccount, deleteWhatsAppAccount } from "@/app/marketing/clowdbot-lab/actions";
+import { updateClowdbotConfig, getClowdbotConfig, getWhatsAppAccounts, addWhatsAppAccount, deleteWhatsAppAccount } from "@/app/creativo/clowdbot-lab/actions";
 import { Plus, Trash2, Smartphone } from "lucide-react";
 
 export function ClowdbotConfig() {

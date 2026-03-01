@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import ContentsDashboard from "@/app/marketing/contents/page";
+import ContentsDashboard from "@/app/creativo/contents/page";
 import { CreativeAgentPanel } from "@/components/creative/CreativeAgentPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

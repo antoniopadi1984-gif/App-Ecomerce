@@ -4,7 +4,7 @@ import { ShopifyClient } from "@/lib/shopify";
 import { IntradaySyncService } from "./intraday-service";
 import { MetricsSnapshotService } from "./metrics-snapshot-service";
 import { eachDayOfInterval, startOfDay, endOfDay, format } from "date-fns";
-import { upsertShopifyOrder } from "@/app/pedidos/actions";
+import { upsertShopifyOrder } from "@/app/operaciones/pedidos/actions";
 
 export class BackfillService {
     /**

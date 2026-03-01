@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { generateStaticConcepts, getProducts } from "@/app/marketing/static-ads/actions";
+import { generateStaticConcepts, getProducts } from "@/app/creativo/static-ads/actions";
 import { STATIC_ADS_PROTOCOL } from "@/lib/static-ads-protocol";
 import { CREATIVE_CONCEPTS } from "@/lib/creative/spencer-knowledge";
 

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { getFinancialAdvice } from "@/app/finances/ai-optimizer/actions";
+import { getFinancialAdvice } from "@/app/operaciones/finances/ai-optimizer/actions";
 import { cn } from "@/lib/utils";
 
 export function FinanceAiBunker() {

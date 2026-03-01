@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { generateProductCopy } from "@/app/marketing/copy-hub/actions";
+import { generateProductCopy } from "@/app/creativo/copy-hub/actions";
 import { validateContent } from "@/lib/content-qa";
 
 interface CopyHubProps {

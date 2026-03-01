@@ -58,44 +58,40 @@ function DataCell({ value, unit, status, variation, isBest }: DataCellProps) {
     }[status];
 
     return (
-        <td style={{
-            padding: "0",
-            background: isBest && status === "neutral" ? "rgba(234,179,8,0.08)" : styles.bg,
-            borderBottom: "1px solid rgba(0,0,0,0.04)",
-            position: "relative"
-        }}>
+        <td style={{ borderBottom: "1px solid rgba(0,0,0,0.04)", background: isBest && status === "neutral" ? "rgba(234,179,8,0.08)" : styles.bg }}>
             <div style={{
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: "5px 12px",
-                height: "100%"
+                gap: "3px"
             }}>
-                <div style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "3px",
-                    justifyContent: "center"
+                <span style={{
+                    width: "5px", height: "5px",
+                    borderRadius: "50%",
+                    background: styles.dotBg,
+                    flexShrink: 0
+                }} />
+                <span style={{
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: styles.color,
+                    whiteSpace: "nowrap"
                 }}>
-                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: styles.dotBg, flexShrink: 0 }} />
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: styles.color, whiteSpace: "nowrap" }}>
-                        {formatValue(value, unit)}
-                    </span>
-                    {isBest && <span style={{ fontSize: "8px", color: "#eab308", marginLeft: "2px" }}>★</span>}
-                </div>
-                {variation !== null && (
-                    <div style={{
-                        fontSize: "9px",
-                        fontWeight: 700,
-                        color: status === "red" ? "rgba(255,255,255,0.8)" : variation >= 0 ? "#22c55e" : "#ef4444",
-                        lineHeight: 1,
-                        marginTop: "1px"
-                    }}>
-                        {variation >= 0 ? "↑" : "↓"} {Math.abs(variation)}%
-                    </div>
-                )}
+                    {formatValue(value, unit)}
+                </span>
+                {isBest && <span style={{ fontSize: "8px", color: "#eab308", marginLeft: "2px" }}>★</span>}
             </div>
+            {variation !== null && (
+                <div style={{
+                    fontSize: "9px",
+                    fontWeight: 700,
+                    color: status === "red" ? "rgba(255,255,255,0.8)" : variation >= 0 ? "#22c55e" : "#ef4444",
+                    lineHeight: 1,
+                    marginTop: "1px"
+                }}>
+                    {variation >= 0 ? "↑" : "↓"} {Math.abs(variation)}%
+                </div>
+            )}
         </td>
     )
 }
@@ -106,13 +102,26 @@ function AccumCell({ value, unit, status }: AccumCellProps) {
 
     return (
         <td style={{ padding: "0", background: bg, borderBottom: "1px solid #ede9fe" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: "5px 12px" }}>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: "3px", justifyContent: "center" }}>
-                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: textColor === "#ffffff" ? "rgba(255,255,255,0.6)" : "#a78bfa", flexShrink: 0 }} />
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: textColor, whiteSpace: "nowrap" }}>
-                        {formatValue(value, unit)}
-                    </span>
-                </div>
+            <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "3px"
+            }}>
+                <span style={{
+                    width: "5px", height: "5px",
+                    borderRadius: "50%",
+                    background: textColor === "#ffffff" ? "rgba(255,255,255,0.6)" : "#a78bfa",
+                    flexShrink: 0
+                }} />
+                <span style={{
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: textColor,
+                    whiteSpace: "nowrap"
+                }}>
+                    {formatValue(value, unit)}
+                </span>
             </div>
         </td>
     )
@@ -196,62 +205,51 @@ function FaltanCell({ acum, target, unit }: FaltanCellProps) {
 
 interface TargetCellProps { target: number | null; unit: string; hasTarget: boolean; onEdit: () => void; isHovered: boolean; }
 
-function TargetCell({ target, unit, hasTarget, onEdit, isHovered }: TargetCellProps) {
-    if (!hasTarget) return (
-        <td style={{ textAlign: "center", padding: "5px 10px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>
-            <span style={{ color: "#e2e8f0" }}>—</span>
-        </td>
-    )
-
+function TargetCell({ target, unit, hasTarget, onEdit }: TargetCellProps) {
     return (
-        <td style={{
-            padding: "5px 10px",
-            textAlign: "center",
-            borderBottom: "1px solid #f1f5f9",
-            position: "relative"
-        }}>
-            {target ? (
-                <span style={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}>
-                    {formatValue(target, unit)}
-                </span>
-            ) : (
-                <span style={{ color: "#e2e8f0", fontSize: "12px" }}>—</span>
-            )}
+        <td style={{ borderBottom: "1px solid #f1f5f9" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+                {target ? (
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>
+                        {formatValue(target, unit)}
+                    </span>
+                ) : null}
 
-            {hasTarget && isHovered && (
-                <button
-                    onClick={onEdit}
-                    style={{
-                        position: "absolute",
-                        right: "6px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        background: "#7c3aed",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        color: "white",
-                        width: "20px",
-                        height: "20px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "10px",
-                        zIndex: 10,
-                        boxShadow: "0 2px 6px rgba(124,58,237,0.35)"
-                    }}
-                >
-                    ✏️
-                </button>
-            )}
+                {hasTarget && (
+                    <button
+                        onClick={onEdit}
+                        style={{
+                            background: target ? "none" : "#f5f3ff",
+                            border: target ? "none" : "1px dashed #c4b5fd",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            color: "#7c3aed",
+                            width: "18px",
+                            height: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "9px",
+                            flexShrink: 0,
+                            padding: 0
+                        }}
+                    >
+                        ✏️
+                    </button>
+                )}
+
+                {!hasTarget && (
+                    <span style={{ color: "#e2e8f0", fontSize: "12px" }}>—</span>
+                )}
+            </div>
         </td>
     )
 }
 
 function CategoryRow({ label, colSpan }: { label: string, colSpan: number }) {
     return (
-        <tr style={{ background: "#f8fafc", borderTop: "2px solid #e2e8f0" }}>
-            <td colSpan={colSpan} style={{ padding: "5px 12px", fontSize: "11px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>
+        <tr style={{ background: "#f1f5f9", borderTop: "2px solid #cbd5e1", borderBottom: "1px solid #cbd5e1" }}>
+            <td colSpan={colSpan} style={{ padding: "10px 12px", fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155" }}>
                 {label}
             </td>
         </tr>
@@ -391,7 +389,8 @@ export default function ScorecardPage() {
         const bestWeekValue = Math.max(...weeklyValues.filter(v => v !== null && v !== undefined && !isNaN(v) && v > 0));
 
         const acumValue = a[propId] || 0;
-        const targetValue = g[propId] || null;
+        const mappedField = TARGET_FIELD_MAP[propId] || propId;
+        const targetValue = g[mappedField] ?? g[propId] ?? null;
         const projection = getProjection(weeklyValues, currentWeekInfo, totalWeeks);
         const objPct = getObjPct(acumValue, targetValue);
         const neededPerWeek = getNeededPerWeek(acumValue, targetValue, currentWeekInfo, totalWeeks);
@@ -452,16 +451,16 @@ export default function ScorecardPage() {
             <div style={{ overflowY: "auto", maxHeight: "calc(100vh - 160px)" }}>
                 <table style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
                     <colgroup>
-                        <col style={{ width: "17%" }} />   {/* VARIABLE */}
+                        <col style={{ width: "15%" }} />   {/* VARIABLE */}
                         {weeksArray.map((_, i) => (
                             <col key={i} style={{ width: "7%" }} />
                         ))}
-                        <col style={{ width: "8%", background: "#f5f3ff" }} />  {/* ACUM */}
+                        <col style={{ width: "8%" }} />  {/* ACUM */}
                         <col style={{ width: "5%" }} />    {/* OBJ % */}
-                        <col style={{ width: "8%" }} />    {/* PROY. */}
-                        <col style={{ width: "9%" }} />    {/* NEC./SEM */}
-                        <col style={{ width: "8%" }} />    {/* FALTAN */}
-                        <col style={{ width: "7%" }} />    {/* TARGET */}
+                        <col style={{ width: "7%" }} />    {/* PROY. */}
+                        <col style={{ width: "8%" }} />    {/* NEC./SEM */}
+                        <col style={{ width: "7%" }} />    {/* FALTAN */}
+                        <col style={{ width: "6%" }} />    {/* TARGET */}
                     </colgroup>
                     <thead>
                         <tr style={{ position: "sticky", top: 0, background: "white", zIndex: 10, borderBottom: "2px solid #e2e8f0" }}>

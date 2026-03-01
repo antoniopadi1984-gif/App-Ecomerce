@@ -919,20 +919,41 @@ tbody tr:hover .target-edit-btn {
 }
 
 /* Global Table Data Alignment (Scorecard v3) */
-table tbody td {
-  text-align: right !important;
-  padding-right: 12px !important;
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
 }
 
 table thead th {
-  text-align: right !important;
-  padding-right: 12px !important;
+  text-align: center !important;
+  padding: 6px 4px !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  color: #94a3b8 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
 }
 
-/* Solo VARIABLE va a la izquierda */
+table tbody td {
+  text-align: center !important;
+  padding: 5px 4px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+/* VARIABLE — única columna a la izquierda */
 table thead th:first-child,
 table tbody td:first-child {
   text-align: left !important;
-  padding-left: 12px !important;
-  padding-right: 0 !important;
+  padding-left: 10px !important;
+}
+
+/* ACUM — violeta */
+table thead th:nth-child(7),
+table tbody td:nth-child(7) {
+  background: #f5f3ff !important;
+  color: #7c3aed !important;
 }

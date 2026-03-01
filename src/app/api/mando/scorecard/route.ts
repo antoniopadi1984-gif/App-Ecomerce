@@ -158,13 +158,31 @@ export async function GET(req: NextRequest) {
             const confirmRate = w.orders > 0 ? (w.confirmadas / w.orders) * 100 : 0;
             const netMargin = w.revenue > 0 ? (w.netProfit / w.revenue) * 100 : 0;
             const costPerSession = w.sessions > 0 ? w.adSpend / w.sessions : 0;
-            const ratioAcierto = w.creativesLaunched > 0 ? (w.creativesWinner / w.creativesLaunched) * 100 : 0;
-            const envioMedio = w.orders > 0 ? w.shippingCost / w.orders : 0;
+            const ratio_acierto = w.creativesLaunched > 0 ? (w.creativesWinner / w.creativesLaunched) * 100 : 0;
+            const coste_envio = w.orders > 0 ? w.shippingCost / w.orders : 0;
             const recurrentes = w.orders - w.newCustomers;
             const roi = (w.adSpend + w.cogs + w.shippingCost) > 0 ? (w.netProfit / (w.adSpend + w.cogs + w.shippingCost)) * 100 : 0;
-            const tasaConversion = w.sessions > 0 ? (w.orders / w.sessions) * 100 : 0;
-            const ticketMedio = w.orders > 0 ? w.revenue / w.orders : 0;
-            return { ...w, roas, cpa, deliveryRate, returnRate, confirmRate, netMargin, costPerSession, ratioAcierto, envioMedio, recurrentes, roi, tasaConversion, ticketMedio };
+            const tasa_conversion = w.sessions > 0 ? (w.orders / w.sessions) * 100 : 0;
+            const ticket_medio = w.orders > 0 ? w.revenue / w.orders : 0;
+
+            return {
+                ...w,
+                facturacion: w.revenue,
+                inversion: w.adSpend,
+                entregados: w.delivered,
+                enviados: w.orders,
+                shipping_total: w.shippingCost,
+                lanzados: w.creativesLaunched,
+                ganadores: w.creativesWinner,
+                beneficio_neto: w.netProfit,
+                margen: netMargin,
+                tasa_envio: 100,
+                tasa_entrega: confirmRate,
+                tasa_rebote: returnRate,
+                devoluciones: w.returned,
+                roas, cpa, deliveryRate, confirmRate, returnRate,
+                netMargin, costPerSession, ratio_acierto, coste_envio, recurrentes, roi, tasa_conversion, ticket_medio
+            };
         }
 
         const weeksD = weeks.map(deriveWeek);
@@ -200,9 +218,9 @@ export async function PATCH(req: NextRequest) {
 
         const allowed = [
             'adSpendBudget', 'targetRoas', 'breakevenRoas', 'maxCpa', 'maxCpc', 'expectedConvRate', 'expectedAvgTicket',
-            'revenue', 'orders', 'ticketMedio', 'adSpend', 'roas', 'cpa', 'roi', 'tasaConversion', 'costPerSession',
-            'enviados', 'delivered', 'deliveryRate', 'confirmRate', 'returnRate', 'returned', 'envioMedio',
-            'ratioAcierto', 'creativesLaunched', 'creativesWinner', 'cogs', 'shippingCost', 'netProfit', 'netMargin'
+            'facturacion', 'pedidos', 'ticket_medio', 'inversion', 'roas', 'cpa', 'roi', 'tasa_conversion', 'coste_visita',
+            'enviados', 'entregados', 'tasa_envio', 'tasa_entrega', 'tasa_rebote', 'devoluciones', 'coste_envio',
+            'ratio_acierto', 'lanzados', 'ganadores', 'cogs', 'shipping_total', 'beneficio_neto', 'margen'
         ];
         if (!allowed.includes(field)) {
             return NextResponse.json({ error: `Campo no permitido: ${field}` }, { status: 400 });

@@ -1,13 +1,13 @@
-export const METRICS_WITH_TARGET = ["revenue", "orders", "adSpend", "roas", "cpa", "costPerSession", "netMargin", "ratioAcierto", "deliveryRate", "returnRate"]
-export const LOWER_IS_BETTER = ["cpa", "costPerSession", "returnRate", "cogs", "shippingCost"]
+export const METRICS_WITH_TARGET = ["facturacion", "pedidos", "roas", "cpa", "ratio_acierto", "tasa_envio", "tasa_entrega"]
+export const LOWER_IS_BETTER = ["cpa", "coste_visita", "tasa_rebote", "cogs", "shipping_total"]
 
 export const TARGET_FIELD_MAP: Record<string, string> = {
-  revenue: "revenue", // This might need a custom mapping if API expects something else
-  adSpend: "adSpendBudget",
+  facturacion: "facturacion",
+  inversion: "adSpendBudget",
   roas: "targetRoas",
   cpa: "maxCpa",
-  costPerSession: "maxCpc",
-  netMargin: "targetProfitMargin"
+  coste_visita: "maxCpc",
+  margen: "targetProfitMargin"
 }
 
 export function getStatus(value: number, target: number, metricId: string): "green" | "yellow" | "red" | "neutral" {
@@ -56,8 +56,9 @@ export function getVariation(current: number, previous: number): number | null {
 
 export function formatValue(value: number, unit: string): string {
   if (value === null || value === undefined) return "—"
-  if (unit === "EUR") return `€${Math.round(value).toLocaleString("es-ES")}`
+  const formatted = Math.round(value).toLocaleString("es-ES")
+  if (unit === "EUR") return `${formatted}€`
   if (unit === "%") return `${value.toFixed(1)}%`
   if (unit === "x") return `${value.toFixed(2)}x`
-  return `${Math.round(value).toLocaleString("es-ES")}`
+  return formatted
 }

@@ -14,6 +14,41 @@ interface NeededCellProps { needed: number | null; onTrack: boolean; achieved: b
 interface FaltanCellProps { acum: number; target: number | null; unit: string; }
 interface TargetCellProps { target: number | null; unit: string; hasTarget: boolean; onEdit: () => void; }
 
+const SCORECARD_METRICS = [
+    // 🛒 VENTAS Y PEDIDOS
+    { id: "facturacion", label: "Facturación", unit: "EUR", group: "ventas", hasTarget: true },
+    { id: "pedidos", label: "Pedidos", unit: "", group: "ventas", hasTarget: true },
+    { id: "ticket_medio", label: "Ticket Medio", unit: "EUR", group: "ventas", hasTarget: false },
+
+    // 📈 MARKETING (META)
+    { id: "inversion", label: "Inversión", unit: "EUR", group: "marketing", hasTarget: false },
+    { id: "roas", label: "ROAS", unit: "x", group: "marketing", hasTarget: true },
+    { id: "cpa", label: "CPA", unit: "EUR", group: "marketing", hasTarget: true },
+    { id: "coste_visita", label: "Coste Visita", unit: "EUR", group: "marketing", hasTarget: false },
+    { id: "roi", label: "ROI", unit: "%", group: "marketing", hasTarget: false },
+    { id: "tasa_conversion", label: "Tasa Conversión", unit: "%", group: "marketing", hasTarget: false },
+
+    // 🎨 GESTIÓN DE CREATIVOS
+    { id: "lanzados", label: "Lanzados", unit: "", group: "creativos", hasTarget: false },
+    { id: "ganadores", label: "Ganadores (ROAS>2)", unit: "", group: "creativos", hasTarget: false },
+    { id: "ratio_acierto", label: "Ratio Acierto", unit: "%", group: "creativos", hasTarget: true },
+
+    // 📦 LOGÍSTICA Y COD
+    { id: "entregados", label: "Entregados", unit: "", group: "logistica", hasTarget: false },
+    { id: "enviados", label: "Enviados", unit: "", group: "logistica", hasTarget: false },
+    { id: "tasa_envio", label: "Tasa Envío", unit: "%", group: "logistica", hasTarget: true },
+    { id: "tasa_entrega", label: "Tasa Entrega", unit: "%", group: "logistica", hasTarget: true },
+    { id: "tasa_rebote", label: "Tasa Rebote", unit: "%", group: "logistica", hasTarget: false },
+    { id: "devoluciones", label: "Devoluciones", unit: "", group: "logistica", hasTarget: false },
+    { id: "coste_envio", label: "Coste Envío Medio", unit: "EUR", group: "logistica", hasTarget: false },
+
+    // 💰 ECONOMÍA Y P&L
+    { id: "cogs", label: "COGS (Producto)", unit: "EUR", group: "economia", hasTarget: false },
+    { id: "shipping_total", label: "Shipping Total", unit: "EUR", group: "economia", hasTarget: false },
+    { id: "beneficio_neto", label: "Beneficio Neto", unit: "EUR", group: "economia", hasTarget: false },
+    { id: "margen", label: "Margen (%)", unit: "%", group: "economia", hasTarget: false },
+]
+
 function DataCell({ value, unit, status, variation, isBest }: DataCellProps) {
     const styles = {
         green: { bg: "rgba(34,197,94,0.13)", color: "#166534", dotBg: "#22c55e" },
@@ -159,46 +194,49 @@ function FaltanCell({ acum, target, unit }: FaltanCellProps) {
 
 function TargetCell({ target, unit, hasTarget, onEdit }: TargetCellProps) {
     if (!hasTarget) return (
-        <td style={{ textAlign: "right", padding: "5px 12px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>—</td>
+        <td style={{ textAlign: "right", padding: "5px 10px", color: "#e2e8f0", fontSize: "12px", borderBottom: "1px solid #f1f5f9" }}>
+            <span style={{ color: "#e2e8f0" }}>—</span>
+        </td>
     )
 
     return (
-        <td style={{ padding: "5px 12px", textAlign: "right", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
-                {target ? (
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#334155", whiteSpace: "nowrap" }}>
-                        {formatValue(target, unit)}
-                    </span>
-                ) : null}
-                <button
-                    className="target-edit-btn"
-                    onClick={onEdit}
-                    style={{
-                        opacity: 0.4,
-                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                        background: target ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.06)",
-                        border: "1px solid rgba(124,58,237,0.25)",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        color: "#7c3aed",
-                        padding: "4px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginLeft: "8px"
-                    }}
-                    onMouseEnter={e => {
-                        e.currentTarget.style.opacity = "1";
-                        e.currentTarget.style.background = "rgba(124,58,237,0.22)";
-                    }}
-                    onMouseLeave={e => {
-                        e.currentTarget.style.opacity = "0.4";
-                        e.currentTarget.style.background = target ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.06)";
-                    }}
-                >
-                    <Pencil size={11} strokeWidth={2.8} />
-                </button>
-            </div>
+        <td style={{
+            padding: "5px 10px",
+            textAlign: "right",
+            borderBottom: "1px solid #f1f5f9",
+            position: "relative"
+        }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: "#334155", whiteSpace: "nowrap" }}>
+                {target ? formatValue(target, unit) : <span style={{ color: "#cbd5e1", fontSize: "11px" }}>Sin objetivo</span>}
+            </span>
+
+            <button
+                className="target-edit-btn"
+                onClick={onEdit}
+                style={{
+                    position: "absolute",
+                    top: "50%",
+                    right: "-20px",
+                    transform: "translateY(-50%)",
+                    opacity: 0,
+                    transition: "opacity 0.15s",
+                    background: "#7c3aed",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    color: "white",
+                    width: "18px",
+                    height: "18px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "9px",
+                    zIndex: 20,
+                    boxShadow: "0 1px 4px rgba(124,58,237,0.4)"
+                }}
+            >
+                ✏️
+            </button>
         </td>
     )
 }
@@ -330,7 +368,7 @@ export default function ScorecardPage() {
     };
 
     const RowInfo = ({ label, propId, unit }: { label: string; propId: string; unit: string }) => {
-        const hasTarget = METRICS_WITH_TARGET.includes(propId);
+        const hasTarget = SCORECARD_METRICS.find(m => m.id === propId)?.hasTarget || false;
 
         // Setup data arrays
         const weeklyValues = Array.from({ length: totalWeeks }).map((_, idx) => (w[idx] || {})[propId] || 0);
@@ -361,7 +399,9 @@ export default function ScorecardPage() {
                 })}
 
                 <AccumCell value={acumValue} unit={unit} status={getStatus(acumValue, targetValue, propId)} />
-                <ObjPctCell objPct={objPct} />
+                <td style={{ textAlign: "center", borderBottom: "1px solid #f1f5f9" }}>
+                    <ObjPctCell objPct={objPct} />
+                </td>
                 <ProyCell projection={projection} target={targetValue} unit={unit} />
                 <NeededCell needed={neededPerWeek} onTrack={trackState} achieved={achieved} unit={unit} />
                 <FaltanCell acum={acumValue} target={targetValue} unit={unit} />
@@ -434,38 +474,35 @@ export default function ScorecardPage() {
                         </tr>
                     </thead>
                     <tbody>
+                        {/* 🛒 VENTAS Y PEDIDOS */}
                         <CategoryRow label="🛒 Ventas y Pedidos" colSpan={totalWeeks + 7} />
-                        <RowInfo label="Facturación" propId="revenue" unit="EUR" />
-                        <RowInfo label="Pedidos" propId="orders" unit="" />
-                        <RowInfo label="Ticket Medio" propId="ticketMedio" unit="EUR" />
+                        {SCORECARD_METRICS.filter(m => m.group === 'ventas').map(m => (
+                            <RowInfo key={m.id} label={m.label} propId={m.id} unit={m.unit} />
+                        ))}
 
+                        {/* 📈 MARKETING (META) */}
                         <CategoryRow label="📈 Marketing (Meta)" colSpan={totalWeeks + 7} />
-                        <RowInfo label="Inversión" propId="adSpend" unit="EUR" />
-                        <RowInfo label="ROAS" propId="roas" unit="x" />
-                        <RowInfo label="CPA" propId="cpa" unit="EUR" />
-                        <RowInfo label="ROI" propId="roi" unit="%" />
-                        <RowInfo label="Tasa Conversión" propId="tasaConversion" unit="%" />
-                        <RowInfo label="Coste Visita (CPC)" propId="costPerSession" unit="EUR" />
+                        {SCORECARD_METRICS.filter(m => m.group === 'marketing').map(m => (
+                            <RowInfo key={m.id} label={m.label} propId={m.id} unit={m.unit} />
+                        ))}
 
+                        {/* 🎨 GESTIÓN DE CREATIVOS */}
+                        <CategoryRow label="🎨 Gestión de Creativos" colSpan={totalWeeks + 7} />
+                        {SCORECARD_METRICS.filter(m => m.group === 'creativos').map(m => (
+                            <RowInfo key={m.id} label={m.label} propId={m.id} unit={m.unit} />
+                        ))}
+
+                        {/* 📦 LOGÍSTICA Y COD */}
                         <CategoryRow label="📦 Logística y COD" colSpan={totalWeeks + 7} />
-                        <RowInfo label="Enviados" propId="enviados" unit="" />
-                        <RowInfo label="Entregados" propId="delivered" unit="" />
-                        <RowInfo label="Tasa de Envío" propId="deliveryRate" unit="%" />
-                        <RowInfo label="Tasa de Entrega" propId="confirmRate" unit="%" />
-                        <RowInfo label="Tasa de Rebote" propId="returnRate" unit="%" />
-                        <RowInfo label="Devoluciones" propId="returned" unit="" />
-                        <RowInfo label="Coste Envío Medio" propId="envioMedio" unit="EUR" />
+                        {SCORECARD_METRICS.filter(m => m.group === 'logistica').map(m => (
+                            <RowInfo key={m.id} label={m.label} propId={m.id} unit={m.unit} />
+                        ))}
 
-                        <CategoryRow label="🎨 Creativos" colSpan={totalWeeks + 7} />
-                        <RowInfo label="Ratio Acierto" propId="ratioAcierto" unit="%" />
-                        <RowInfo label="Lanzados" propId="creativesLaunched" unit="" />
-                        <RowInfo label="Ganadores" propId="creativesWinner" unit="" />
-
+                        {/* 💰 ECONOMÍA Y P&L */}
                         <CategoryRow label="💰 Economía y P&L" colSpan={totalWeeks + 7} />
-                        <RowInfo label="COGS (Producto)" propId="cogs" unit="EUR" />
-                        <RowInfo label="Shipping Total" propId="shippingCost" unit="EUR" />
-                        <RowInfo label="Beneficio Neto" propId="netProfit" unit="EUR" />
-                        <RowInfo label="Margen (%)" propId="netMargin" unit="%" />
+                        {SCORECARD_METRICS.filter(m => m.group === 'economia').map(m => (
+                            <RowInfo key={m.id} label={m.label} propId={m.id} unit={m.unit} />
+                        ))}
                     </tbody>
                 </table>
             </div>

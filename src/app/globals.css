@@ -911,4 +911,9 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text);
-}tbody tr:hover .target-edit-btn { opacity: 1 !important; }
+}
+
+/* Scorecard v3 Hover Effects */
+tbody tr:hover .target-edit-btn {
+  opacity: 1 !important;
+}

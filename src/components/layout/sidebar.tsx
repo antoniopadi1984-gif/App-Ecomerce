@@ -4,25 +4,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import {
-  PinOff,
-  Pin,
-  UserCircle,
-  Rocket
-} from 'lucide-react';
 import { navigation } from '@/lib/nav';
+import { Menu, X } from 'lucide-react';
 
 export function Sidebar({
   isOpen: isMobileOpen,
-  isPinned,
-  togglePinned,
+  toggleSidebar,
   onHoverChange
 }: {
   isOpen?: boolean;
   toggleSidebar?: () => void;
-  isPinned: boolean;
-  togglePinned: () => void;
   onHoverChange?: (hovering: boolean) => void;
 }) {
   const [isHovering, setIsHovering] = useState(false);
@@ -33,112 +24,97 @@ export function Sidebar({
     onHoverChange?.(h);
   };
 
-  const isOpen = isMobileOpen || isPinned || isHovering;
+  const isExpanded = isHovering || isMobileOpen;
 
   return (
-    <aside
-      onMouseEnter={() => handleHover(true)}
-      onMouseLeave={() => handleHover(false)}
-      className={cn(
-        "fixed left-0 top-0 z-[100] glass-panel border-r border-white/40 h-screen flex flex-col transition-all duration-300 ease-in-out shadow-none",
-        "max-md:shadow-2xl max-md:w-[280px]",
-        isOpen ? "w-[var(--sidebar-width)] translate-x-0" : "w-[var(--sidebar-collapsed)] max-md:-translate-x-full"
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={toggleSidebar}
+        />
       )}
-    >
-      {/* Logo Section */}
-      <div className={cn(
-        "border-b border-white/20 flex items-center shrink-0 h-[var(--header-height)] bg-transparent transition-all",
-        isOpen ? "px-3 justify-between" : "justify-center"
-      )}>
-        <div className={cn("flex items-center overflow-hidden", isOpen ? "gap-2.5" : "gap-0")}>
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-rose-200/50">
-            <Rocket className="w-3.5 h-3.5 text-white" />
-          </div>
-          {isOpen && (
-            <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-              <span className="font-extrabold text-[11px] tracking-tight text-slate-900 uppercase italic leading-none">Factoría <span className="text-primary not-italic">X</span></span>
-              <p className="text-[7px] text-slate-500 font-black uppercase tracking-[0.2em] mt-0.5">Scale Protocol</p>
-            </div>
-          )}
-        </div>
-        {isOpen && (
-          <button onClick={togglePinned} className="text-slate-500 hover:text-primary transition-colors mr-1">
-            {isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
-          </button>
-        )}
-      </div>
 
-      {/* Navigation - Section Based */}
-      <nav className="flex-1 overflow-y-auto no-scrollbar pt-2 pb-2">
-        {navigation.map((layer) => (
-          <div key={layer.id} className="mb-2.5">
-            {isOpen && (
-              <h3 className="px-3 mb-1 text-[10px] font-black text-slate-600 uppercase tracking-[0.15em]">{layer.label}</h3>
-            )}
-            <div className="px-2 space-y-0.5">
-              {layer.items.map((item, idx) => (
-                <NavItem
-                  key={idx}
-                  href={item.href}
-                  icon={item.icon}
-                  label={item.label}
-                  isOpen={isOpen}
-                  isActive={item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer */}
-      <div className={cn(
-        "border-t border-slate-100/50 shrink-0 bg-transparent flex items-center transition-all",
-        isOpen ? "p-3 justify-start" : "py-3 justify-center"
-      )}>
-        <div className={cn("flex items-center", isOpen ? "gap-3" : "gap-0")}>
-          <div className="w-7 h-7 rounded-lg bg-white border border-slate-200/50 flex items-center justify-center shrink-0 shadow-sm overflow-hidden group">
-            <UserCircle className="w-4 h-4 text-slate-400" />
-          </div>
-          {isOpen && (
-            <div className="flex flex-col min-w-0">
-              <span className="text-[10px] font-bold text-slate-900 truncate tracking-tight uppercase">Administrador</span>
-              <Badge variant="outline" className="text-[8px] h-3 px-1 mt-0.5 border-slate-200/50 text-slate-500 w-fit bg-white/70">PRO</Badge>
-            </div>
-          )}
-        </div>
-      </div>
-    </aside >
-  );
-}
-
-function NavItem({ href, icon: Icon, label, isOpen, isActive }: { href: string; icon: any; label: string; isOpen: boolean; isActive: boolean }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-200 group relative",
-        "max-md:py-3 max-md:my-1", // Larger touch target on mobile
-        isActive
-          ? "bg-rose-500/10 text-rose-600 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] ring-1 ring-rose-500/20"
-          : "text-slate-700 hover:bg-white/60 hover:text-slate-900"
-      )}
-    >
-      <Icon
-        strokeWidth={1.5}
+      {/* Sidebar - Desktop (hover expand) & Mobile (drawer) */}
+      <aside
+        onMouseEnter={() => handleHover(true)}
+        onMouseLeave={() => handleHover(false)}
         className={cn(
-          "w-6 h-6 shrink-0 transition-transform group-hover:scale-110",
-          isActive ? "text-rose-600" : "text-slate-950 group-hover:text-black"
+          "fixed left-0 top-0 z-50 h-[100dvh] bg-[var(--surface)] border-r border-[var(--border)] shadow-sm",
+          "flex flex-col overflow-hidden transition-[width,transform] duration-200 ease-in-out",
+          // Mobile state
+          "max-md:w-[240px] max-md:absolute",
+          isMobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
+          // Desktop state
+          "md:translate-x-0",
+          !isMobileOpen && (isExpanded ? "md:w-[var(--sidebar-w-exp,204px)]" : "md:w-[var(--sidebar-w,52px)]")
         )}
-      />
-      {isOpen && (
-        <span className="text-[10px] font-bold tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300 uppercase">
-          {label}
-        </span>
-      )}
-      {!isOpen && isActive && (
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-3 bg-rose-500 rounded-l-full" />
-      )}
-    </Link>
+      >
+        {/* Mobile Header (only visible on mobile) */}
+        <div className="md:hidden flex items-center justify-between h-[var(--topbar-h,50px)] px-4 border-b border-[var(--border)] shrink-0">
+          <span className="font-bold text-[var(--text)] text-[14px]">Menú</span>
+          <button onClick={toggleSidebar} className="text-[var(--text-muted)] hover:text-[var(--text)]">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Desktop Spacer (matches topbar height so items align below it ideally, or not - design preference) */}
+        <div className="hidden md:flex h-[var(--topbar-h,50px)] shrink-0 items-center justify-center border-b border-[var(--border)]">
+          {/* Optionally put a mini logo here, but ultra compact says just spacer */}
+        </div>
+
+        {/* Nav Items */}
+        <nav className="flex-1 overflow-y-auto no-scrollbar py-3 flex flex-col gap-1 px-[6px]">
+          {navigation.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                onClick={() => {
+                  if (window.innerWidth < 768 && toggleSidebar) {
+                    toggleSidebar();
+                  }
+                }}
+                className={cn(
+                  "flex items-center h-10 rounded-[var(--r-md)] transition-colors relative cursor-pointer",
+                  !isExpanded ? "justify-center" : "px-3 gap-3",
+                  isActive ? "bg-opacity-10" : "hover:bg-[var(--surface2)]"
+                )}
+                style={isActive ? { backgroundColor: `color-mix(in srgb, ${item.color} 10%, transparent)` } : {}}
+              >
+                {/* Active Indicator Bar (only when collapsed or as an accent) */}
+                {isActive && (
+                  <div
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-[60%] rounded-r-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                )}
+
+                {/* Icon */}
+                <div
+                  className="flex-shrink-0 flex items-center justify-center"
+                  style={{ color: isActive ? item.color : 'var(--text-muted)' }}
+                >
+                  <item.icon size={20} strokeWidth={2} />
+                </div>
+
+                {/* Label */}
+                {isExpanded && (
+                  <span
+                    className="text-[12px] font-semibold whitespace-nowrap overflow-hidden transition-colors"
+                    style={{ color: isActive ? item.color : 'var(--text-muted)' }}
+                  >
+                    {item.label}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
+        </nav>
+      </aside>
+    </>
   );
 }

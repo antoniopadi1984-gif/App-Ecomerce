@@ -107,19 +107,25 @@ model Store {
   alertRules           AlertRule[]
   creativeBatches      CreativeBatch[]
   metaAdAccounts       MetaAdAccount[]
+  storeType            String                  @default("HYBRID")
+  scoreCardConfig      ScoreCardConfig?
+  concepts             Concept[]
+  performanceRecs      PerformanceRecord[]
+  perceivedValues      PerceivedValue[]
+  automations          Automation[]
 }
 
 model MetaAdAccount {
-  id          String   @id @default(cuid())
-  storeId     String
-  accountId   String
-  name        String
-  currency    String?
-  status      String   @default("ACTIVE")
-  isActive    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  storeId   String
+  accountId String
+  name      String
+  currency  String?
+  status    String   @default("ACTIVE")
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@unique([storeId, accountId])
 }
@@ -127,9 +133,9 @@ model MetaAdAccount {
 model AlertRule {
   id        String   @id @default(cuid())
   storeId   String
-  scope     String   // ORDERS | PRODUCTS | FINANCES | MARKETING
-  field     String   // cpa, roas, cost, etc.
-  operator  String   // GT, GTE, LT, LTE, EQ
+  scope     String // ORDERS | PRODUCTS | FINANCES | MARKETING
+  field     String // cpa, roas, cost, etc.
+  operator  String // GT, GTE, LT, LTE, EQ
   threshold Float
   label     String
   enabled   Boolean  @default(true)
@@ -242,12 +248,12 @@ model Connection {
   id            String    @id @default(cuid())
   storeId       String
   provider      String
-  apiKey        String?   // @deprecated — Use secretEnc instead
-  apiSecret     String?   // @deprecated — Use secretEnc instead
-  accessToken   String?   // @deprecated — Use secretEnc instead
-  secretEnc     String?   // AES-256-GCM encrypted
-  secretIv      String?   // Initialization Vector
-  secretTag     String?   // Auth Tag for GCM
+  apiKey        String? // @deprecated — Use secretEnc instead
+  apiSecret     String? // @deprecated — Use secretEnc instead
+  accessToken   String? // @deprecated — Use secretEnc instead
+  secretEnc     String? // AES-256-GCM encrypted
+  secretIv      String? // Initialization Vector
+  secretTag     String? // Auth Tag for GCM
   webhookSecret String?
   webhookUrl    String?
   extraConfig   String?
@@ -377,6 +383,9 @@ model Product {
   videoScripts        VideoScript[]
   vocQuotes           VoiceOfCustomerQuote[]
   creativeBatches     CreativeBatch[]
+  concepts            Concept[]
+  combos              ComboMatrix[]
+  researchSteps       ResearchStep[]
 }
 
 model Order {
@@ -806,10 +815,12 @@ model CreativeAsset {
   hookRate     Float?
   ctr          Float?
   verdict      String?
+  conceptId    String?
   createdAt    DateTime            @default(now())
   product      Product             @relation(fields: [productId], references: [id])
   store        Store?              @relation(fields: [storeId], references: [id])
   dailyStats   CreativeDailyStat[]
+  concept      Concept?            @relation(fields: [conceptId], references: [id])
 }
 
 model CreativeProject {
@@ -1183,7 +1194,7 @@ model Job {
   maxAttempts           Int       @default(3)
   lockedAt              DateTime?
   replicatePredictionId String?   @unique
-  provider              String?   // 'Replicate', 'ElevenLabs', etc.
+  provider              String? // 'Replicate', 'ElevenLabs', etc.
   lastError             String?
   runAt                 DateTime  @default(now())
   createdAt             DateTime  @default(now())
@@ -1650,16 +1661,16 @@ model ProductMaturity {
 }
 
 model ProductBranding {
-  id              String   @id @default(cuid())
-  productId       String   @unique
-  palette         String?  // JSON: { primary, secondary, accent }
-  typography      String?  // JSON: { heading, body }
-  visualStyle     String?  // Text description
-  packagingDir    String?  // Text description
-  landingLayout   String?  // Text description
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  productId     String   @unique
+  palette       String? // JSON: { primary, secondary, accent }
+  typography    String? // JSON: { heading, body }
+  visualStyle   String? // Text description
+  packagingDir  String? // Text description
+  landingLayout String? // Text description
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model CopyJob {
@@ -2103,38 +2114,160 @@ model VOCInsight {
 }
 
 model CreativeBatch {
-  id            String         @id @default(cuid())
-  productId     String?
-  storeId       String?
-  type          String         // STATIC_AD | VIDEO | AVATAR_LIPSYNC
-  tier          String         @default("balanced") // cheap | balanced | premium
-  status        String         @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED | STOPPED
-  quantity      Int            @default(1)
-  budgetMax     Float?
-  costEstimate  Float          @default(0)
-  costActual    Float          @default(0)
-  maxFailures   Int            @default(5)
-  failureCount  Int            @default(0)
-  metadataJson  String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  jobs          CreativeJob[]
-  product       Product?       @relation(fields: [productId], references: [id])
-  store         Store?         @relation(fields: [storeId], references: [id])
+  id           String        @id @default(cuid())
+  productId    String?
+  storeId      String?
+  type         String // STATIC_AD | VIDEO | AVATAR_LIPSYNC
+  tier         String        @default("balanced") // cheap | balanced | premium
+  status       String        @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED | STOPPED
+  quantity     Int           @default(1)
+  budgetMax    Float?
+  costEstimate Float         @default(0)
+  costActual   Float         @default(0)
+  maxFailures  Int           @default(5)
+  failureCount Int           @default(0)
+  metadataJson String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  jobs         CreativeJob[]
+  product      Product?      @relation(fields: [productId], references: [id])
+  store        Store?        @relation(fields: [storeId], references: [id])
 }
 
 model CreativeJob {
-  id                    String         @id @default(cuid())
+  id                    String        @id @default(cuid())
   batchId               String
-  replicatePredictionId String?        @unique
-  status                String         @default("PENDING") // PENDING | STARTING | PROCESSING | SUCCEEDED | FAILED | CANCELED
-  payloadJson           String?        // Input sent to Replicate
-  resultJson            String?        // Full output from Replicate
-  costEstimate          Float          @default(0)
-  costActual            Float          @default(0)
+  replicatePredictionId String?       @unique
+  status                String        @default("PENDING") // PENDING | STARTING | PROCESSING | SUCCEEDED | FAILED | CANCELED
+  payloadJson           String? // Input sent to Replicate
+  resultJson            String? // Full output from Replicate
+  costEstimate          Float         @default(0)
+  costActual            Float         @default(0)
   error                 String?
   terminalAt            DateTime?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  batch                 CreativeBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  batch                 CreativeBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+}
+
+// ─── ScoreCardConfig ──────────────────────────────────────────
+model ScoreCardConfig {
+  id        String   @id @default(cuid())
+  storeId   String   @unique
+  metrics   String // JSON array de métricas activas
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store    @relation(fields: [storeId], references: [id])
+}
+
+// ─── Concept (Spencer Pawlin) ─────────────────────────────────
+model Concept {
+  id          String          @id @default(cuid())
+  productId   String
+  storeId     String
+  name        String
+  hypothesis  String?
+  emotion     String?
+  angle       String?
+  funnelStage String          @default("TOF") // TOF | MOF | BOF | RT
+  status      String          @default("TESTING") // TESTING | WINNER | LOSER | PAUSED
+  spend       Float           @default(0)
+  revenue     Float           @default(0)
+  roas        Float           @default(0)
+  ctr         Float           @default(0)
+  cpa         Float           @default(0)
+  hookRate    Float           @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  product     Product         @relation(fields: [productId], references: [id])
+  store       Store           @relation(fields: [storeId], references: [id])
+  creatives   CreativeAsset[]
+}
+
+// ─── ComboMatrix (Avatar x Angle) ────────────────────────────
+model ComboMatrix {
+  id             String   @id @default(cuid())
+  productId      String
+  avatarId       String
+  angleId        String
+  hookBank       String? // JSON array 50 hooks
+  painStatements String? // JSON array 20
+  proofAngles    String? // JSON array 10
+  ctas           String? // JSON array 10
+  funnelStage    String?
+  trafficType    String?
+  createdAt      DateTime @default(now())
+  product        Product  @relation(fields: [productId], references: [id])
+}
+
+// ─── PerformanceRecord ────────────────────────────────────────
+model PerformanceRecord {
+  id         String   @id @default(cuid())
+  storeId    String
+  entityType String // EMPLOYEE | CARRIER | AGENT | CREATIVE | PRODUCT
+  entityId   String
+  entityName String
+  metric     String
+  value      Float
+  date       DateTime
+  week       Int?
+  month      Int?
+  year       Int
+  createdAt  DateTime @default(now())
+  store      Store    @relation(fields: [storeId], references: [id])
+
+  @@index([storeId, entityType, date])
+}
+
+// ─── PerceivedValue ───────────────────────────────────────────
+model PerceivedValue {
+  id          String   @id @default(cuid())
+  storeId     String
+  productId   String?
+  type        String // EBOOK | MINICOURSE | COUPON | BONUS | TEMPLATE
+  title       String
+  description String?
+  avatarId    String?
+  researchRef String?
+  status      String   @default("GENERATING") // GENERATING | READY | SENT
+  fileUrl     String?
+  coverUrl    String?
+  pagesJson   String? // JSON estructura del ebook/curso
+  videoUrls   String? // JSON array para minicursos
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  store       Store    @relation(fields: [storeId], references: [id])
+}
+
+// ─── Automation ───────────────────────────────────────────────
+model Automation {
+  id         String    @id @default(cuid())
+  storeId    String
+  name       String
+  trigger    String // ORDER_CREATED | ABANDONED_CART | ORDER_DELIVERED | etc
+  conditions String? // JSON
+  actions    String // JSON array de acciones
+  isActive   Boolean   @default(true)
+  runs       Int       @default(0)
+  lastRunAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  store      Store     @relation(fields: [storeId], references: [id])
+}
+
+// ─── ResearchStep (God Tier Pipeline) ─────────────────────────
+model ResearchStep {
+  id         String   @id @default(cuid())
+  productId  String
+  runId      String
+  stepKey    String
+  inputRefs  String? // JSON references to previous outputs
+  outputText String?
+  outputJson String? // JSON parsed object
+  version    Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@unique([productId, runId, stepKey, version])
 }

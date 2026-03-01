@@ -1,12 +1,10 @@
 "use client";
-
 import React from "react";
-import PerformancePage from "@/app/marketing/performance/page";
 
 export function PerformanceModule() {
     return (
-        <div className="bg-slate-50 -mx-8 -my-8 min-h-[800px] overflow-hidden p-4">
-            <PerformancePage />
+        <div className="bg-white rounded-2xl flex items-center justify-center p-20 border border-slate-200">
+            <h2 className="text-xl font-bold text-slate-400 uppercase tracking-widest">Performance — Moved to CRM Forense</h2>
         </div>
     );
 }

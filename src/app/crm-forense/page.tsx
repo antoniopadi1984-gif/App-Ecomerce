@@ -1,374 +1,194 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import {
-    Search, User, Phone, Mail, MapPin,
-    History, MessageSquare, TrendingUp,
-    ChevronRight, Filter, Download, Plus,
-    Package, RefreshCw, MoreVertical, ExternalLink,
-    CreditCard, Calendar, ShoppingBag
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { toast } from "sonner";
-import { getCustomers, getCustomerDetail, syncCustomersFromOrders } from "./actions";
-import { PageShell } from "@/components/ui/PageShell";
-import { ModuleHeader } from "@/components/ui/ModuleHeader";
+import React, { useState, useEffect } from 'react';
+import { useStore } from '@/lib/store/store-context';
+import { Users, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { AgentCompanion } from '@/components/layout/agent-companion';
 
-export default function CustomersPage() {
-    const [customers, setCustomers] = useState<any[]>([]);
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [detail, setDetail] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [loadingDetail, setLoadingDetail] = useState(false);
-    const [query, setQuery] = useState("");
-    const [syncing, setSyncing] = useState(false);
+const TABS = [
+    { id: 'VENTAS', label: 'Ventas' },
+    { id: 'CLIENTES', label: 'Clientes' },
+    { id: 'TRANSPORTISTAS', label: 'Transportistas' },
+    { id: 'EMPLEADOS', label: 'Empleados' },
+    { id: 'AGENTES', label: 'Agentes IA' },
+    { id: 'CREATIVOS', label: 'Creativos' },
+    { id: 'PRODUCTOS', label: 'Productos' },
+    { id: 'COD_VS_CARD', label: 'COD vs Tarjeta' },
+];
 
-    useEffect(() => {
-        loadData();
-    }, [query]);
-
-    useEffect(() => {
-        if (selectedId) loadDetail(selectedId);
-    }, [selectedId]);
-
-    async function loadData() {
-        setLoading(true);
-        const res = await getCustomers(query);
-        if (res.success) setCustomers(res.data);
-        setLoading(false);
-    }
-
-    async function loadDetail(id: string) {
-        setLoadingDetail(true);
-        const res = await getCustomerDetail(id);
-        if (res.success) setDetail(res.data);
-        setLoadingDetail(false);
-    }
-
-    async function handleSync() {
-        setSyncing(true);
-        const res = await syncCustomersFromOrders();
-        if (res.success) {
-            toast.success(`Sincronizados ${res.count} clientes correctamente`);
-            loadData();
-        } else {
-            toast.error("Error al sincronizar: " + res.error);
-        }
-        setSyncing(false);
-    }
-
+function PillTab({ active, label, set }: { active: boolean; label: string; set: () => void }) {
     return (
-        <PageShell>
-            <ModuleHeader
-                title="Base CRM"
-                subtitle={`${customers.length} Clientes Unificados`}
-                icon={User}
-                actions={
-                    <Button
-                        variant="outline"
-                        className="h-7 px-3 rounded-lg border-slate-200 bg-white text-slate-700 font-black uppercase text-[8px] tracking-widest shadow-xs hover:bg-slate-50 transition-all"
-                        onClick={handleSync}
-                        disabled={syncing}
-                    >
-                        <RefreshCw className={cn("h-3 w-3 mr-2 text-emerald-500", syncing && "animate-spin")} />
-                        SYNC
-                    </Button>
-                }
-            />
-
-            <div className="flex-1 flex bg-white overflow-hidden relative border-t border-slate-200 min-h-[600px]">
-                {/* LEFT: CUSTOMER LIST */}
-                <div className={cn(
-                    "flex flex-col border-r border-slate-100 bg-slate-50/20 transition-all duration-500",
-                    selectedId ? "w-[400px]" : "w-full"
-                )}>
-                    <div className="p-4 flex flex-col gap-4">
-                        <div className="flex gap-2">
-                            <div className="relative flex-1 group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
-                                <Input
-                                    placeholder="BUSCAR POR NOMBRE, TLF O EMAIL..."
-                                    className="h-10 pl-12 bg-white border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest placeholder:text-slate-300 focus:ring-emerald-500/10 focus:border-emerald-500/50 shadow-sm"
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                />
-                            </div>
-                            <Button variant="outline" size="icon" className="h-10 w-10 rounded-lg border-slate-200 bg-white">
-                                <Filter className="h-4 w-4 text-slate-400" />
-                            </Button>
-                        </div>
-                    </div>
-
-                    <ScrollArea className="flex-1 px-4">
-                        <div className="space-y-2 pb-8">
-                            {loading ? (
-                                Array.from({ length: 8 }).map((_, i) => (
-                                    <div key={i} className="h-20 rounded-lg bg-slate-100 animate-pulse" />
-                                ))
-                            ) : customers.length === 0 ? (
-                                <div className="p-12 text-center flex flex-col items-center gap-4">
-                                    <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
-                                        <User className="h-8 w-8" />
-                                    </div>
-                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">No se encontraron clientes</p>
-                                    <Button size="sm" variant="ghost" className="text-emerald-600 font-bold text-[10px]" onClick={handleSync}>Intentar Sincronizar</Button>
-                                </div>
-                            ) : customers.map(c => (
-                                <div
-                                    key={c.id}
-                                    onClick={() => setSelectedId(c.id)}
-                                    className={cn(
-                                        "p-3 rounded-lg cursor-pointer transition-all border flex gap-4 group",
-                                        selectedId === c.id
-                                            ? "bg-white border-emerald-100 shadow-xl shadow-emerald-900/5 ring-1 ring-emerald-500/10"
-                                            : "bg-transparent border-transparent hover:bg-white hover:border-slate-100 hover:shadow-lg"
-                                    )}
-                                >
-                                    <Avatar className="h-10 w-10 border border-slate-100 shadow-xs">
-                                        <AvatarFallback className="bg-slate-50 text-slate-400 font-black text-[10px] uppercase italic">
-                                            {c.name.slice(0, 2)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <span className={cn(
-                                                "text-xs font-black uppercase tracking-tight truncate",
-                                                selectedId === c.id ? "text-emerald-600" : "text-slate-800"
-                                            )}>
-                                                {c.name}
-                                            </span>
-                                            <Badge variant="outline" className="text-[7px] font-black border-slate-100 text-slate-400 uppercase italic">
-                                                {c.totalOrders} Pedidos
-                                            </Badge>
-                                        </div>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mb-2">{c.phone}</p>
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 rounded-md">
-                                                <TrendingUp className="h-3 w-3 text-emerald-500" />
-                                                <span className="text-[9px] font-black text-slate-600 italic">€{c.totalSpent.toFixed(2)}</span>
-                                            </div>
-                                            <span className="text-[8px] font-bold text-slate-300 uppercase">Último: {c.lastOrderAt ? new Date(c.lastOrderAt).toLocaleDateString() : 'N/A'}</span>
-                                        </div>
-                                    </div>
-                                    <ChevronRight className={cn(
-                                        "h-4 w-4 self-center transition-all",
-                                        selectedId === c.id ? "text-emerald-500 translate-x-1" : "text-slate-200"
-                                    )} />
-                                </div>
-                            ))}
-                        </div>
-                    </ScrollArea>
-                </div>
-
-                {/* RIGHT: CUSTOMER DETAIL PANEL */}
-                <div className="flex-1 bg-white h-full relative overflow-hidden flex flex-col">
-                    {selectedId ? (
-                        loadingDetail ? (
-                            <div className="flex-1 flex flex-col items-center justify-center gap-6">
-                                <div className="relative">
-                                    <div className="h-20 w-20 rounded-full border-4 border-slate-100 border-t-emerald-600 animate-spin" />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <User className="h-8 w-8 text-slate-200" />
-                                    </div>
-                                </div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Cargando Ficha 360º...</p>
-                            </div>
-                        ) : detail && (
-                            <>
-                                {/* PANEL HEADER */}
-                                <div className="p-4 border-b border-slate-100 bg-slate-50/20 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-14 w-14 bg-white rounded-lg border-2 border-slate-100 shadow-xl flex items-center justify-center relative">
-                                            <User className="h-8 w-8 text-slate-300" />
-                                            <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-lg">
-                                                <CheckCircle className="h-3 w-3 text-white" />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">{detail.name}</h2>
-                                                <Badge className="bg-slate-900 text-[10px] font-black uppercase italic px-3 h-6">Cliente VIP</Badge>
-                                            </div>
-                                            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {detail.phone}</span>
-                                                <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {detail.email || 'SIN EMAIL'}</span>
-                                                <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {detail.city}, {detail.country}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" className="h-9 px-4 rounded-lg border-slate-200 font-black text-[10px] uppercase tracking-widest gap-2">
-                                            <Download className="h-4 w-4" /> Exportar
-                                        </Button>
-                                        <Button className="h-9 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-xl shadow-slate-200">
-                                            <Plus className="h-4 w-4" /> Nuevo Pedido
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {/* PANEL CONTENT */}
-                                <ScrollArea className="flex-1">
-                                    <div className="p-4 space-y-4">
-
-                                        {/* KPIS ROW */}
-                                        <div className="grid grid-cols-4 gap-4">
-                                            {[
-                                                { label: 'Ingreso Total', value: `€${detail.totalSpent.toFixed(2)}`, icon: TrendingUp, color: 'emerald' },
-                                                { label: 'Pedidos', value: detail.totalOrders, icon: ShoppingBag, color: 'indigo' },
-                                                { label: 'Ticket Medio', value: `€${detail.avgTicket.toFixed(2)}`, icon: CreditCard, color: 'amber' },
-                                                { label: 'Antigüedad', value: '142 Días', icon: Calendar, color: 'slate' },
-                                            ].map((kpi, i) => (
-                                                <Card key={i} className="p-3 border-slate-100 bg-slate-50/30 rounded-lg shadow-xs hover:shadow-md transition-all border group">
-                                                    <div className={cn("h-8 w-8 rounded-lg mb-2 flex items-center justify-center shadow-xs transition-transform group-hover:scale-105", `bg-${kpi.color}-100 text-${kpi.color}-600`)}>
-                                                        <kpi.icon className="h-3.5 w-3.5" />
-                                                    </div>
-                                                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">{kpi.label}</p>
-                                                    <p className="text-sm font-black text-slate-900 italic tracking-tight">{kpi.value}</p>
-                                                </Card>
-                                            ))}
-                                        </div>
-
-                                        {/* TABS: HISTORY VS CONVERSATIONS */}
-                                        <div className="flex gap-4">
-                                            {/* ORDERS COLUMN */}
-                                            <div className="flex-1 space-y-4">
-                                                <div className="flex items-center justify-between">
-                                                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.4em] flex items-center gap-3">
-                                                        <History className="h-5 w-5 text-emerald-600" /> Historial de Compras
-                                                    </h3>
-                                                </div>
-                                                <div className="space-y-4">
-                                                    {detail.orders.map((o: any) => (
-                                                        <div key={o.id} className="p-4 bg-white border border-slate-100 rounded-lg hover:border-emerald-100 hover:shadow-xl transition-all group flex items-center justify-between">
-                                                            <div className="flex items-center gap-5">
-                                                                <div className="h-10 w-10 bg-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-400 uppercase italic">
-                                                                    #{o.orderNumber}
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-[10px] font-black text-slate-900 uppercase italic leading-none mb-1">Pedido Confirmado</p>
-                                                                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{new Date(o.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-right flex items-center gap-6">
-                                                                <div>
-                                                                    <p className="text-xs font-black text-slate-900 italic">€{o.totalPrice}</p>
-                                                                    <Badge variant="outline" className="text-[7px] font-black border-slate-100 text-slate-400 mt-1 uppercase">COD</Badge>
-                                                                </div>
-                                                                <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-200 group-hover:text-emerald-600">
-                                                                    <ExternalLink className="h-4 w-4" />
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* CONVERSATION COLUMN (Preview) */}
-                                            <div className="w-[450px] space-y-4">
-                                                <div className="flex items-center justify-between">
-                                                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.4em] flex items-center gap-3">
-                                                        <MessageSquare className="h-5 w-5 text-indigo-600" /> Conversaciones Recientes
-                                                    </h3>
-                                                    <Button variant="link" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest gap-2">Ir al Inbox <ChevronRight className="h-3 w-3" /></Button>
-                                                </div>
-                                                <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 h-[500px] flex flex-col">
-                                                    <ScrollArea className="flex-1 pr-4">
-                                                        <div className="space-y-6">
-                                                            {detail.messages?.length > 0 ? detail.messages.map((m: any) => (
-                                                                <div key={m.id} className={cn(
-                                                                    "flex flex-col gap-2 max-w-[85%]",
-                                                                    m.sender === 'CUSTOMER' ? "self-start" : "self-end items-end ml-auto"
-                                                                )}>
-                                                                    <div className={cn(
-                                                                        "p-3 text-[10px] font-black leading-relaxed shadow-xs uppercase tracking-tight",
-                                                                        m.sender === 'CUSTOMER'
-                                                                            ? "bg-white text-slate-700 rounded-lg rounded-tl-none border border-slate-200"
-                                                                            : "bg-slate-900 text-emerald-400 rounded-lg rounded-tr-none italic"
-                                                                    )}>
-                                                                        {m.content}
-                                                                    </div>
-                                                                    <span className="text-[8px] font-black text-slate-300 uppercase italic px-2">{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                                </div>
-                                                            )) : (
-                                                                <div className="h-full flex flex-col items-center justify-center opacity-30 gap-4">
-                                                                    <MessageSquare className="h-12 w-12" />
-                                                                    <p className="text-[10px] font-black uppercase tracking-widest">Sin mensajes registrados</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </ScrollArea>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* NOTES SECTION */}
-                                        <section className="space-y-6">
-                                            <div className="flex items-center gap-3">
-                                                <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.4em]">Observaciones Técnicas / CRM</h3>
-                                            </div>
-                                            <div className="relative group">
-                                                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 blur opacity-0 group-focus-within:opacity-100 transition duration-1000" />
-                                                <textarea
-                                                    className="w-full h-[150px] bg-slate-50/50 border border-slate-100 rounded-lg p-4 text-sm font-medium text-slate-600 italic leading-relaxed focus:bg-white focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/30 transition-all outline-none shadow-inner"
-                                                    placeholder="Añade notas sobre el perfil psicológico del cliente, incidencias previas o acuerdos especiales..."
-                                                    defaultValue={detail.notes}
-                                                />
-                                            </div>
-                                            <div className="flex justify-end">
-                                                <Button className="h-9 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-200 transition-all">
-                                                    Actualizar Ficha
-                                                </Button>
-                                            </div>
-                                        </section>
-                                    </div>
-                                </ScrollArea>
-                            </>
-                        )
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-20 text-center animate-in fade-in duration-1000">
-                            <div className="relative mb-12 group">
-                                <div className="absolute inset-0 bg-emerald-500/5 blur-[100px] rounded-full animate-pulse" />
-                                <div className="h-24 w-24 bg-white rounded-lg flex items-center justify-center border border-slate-100 shadow-2xl relative z-10 group-hover:rotate-3 transition-transform duration-500">
-                                    <User className="h-10 w-10 text-slate-200" />
-                                    <div className="absolute -top-3 -right-3 h-8 w-8 bg-slate-900 rounded-lg shadow-xl flex items-center justify-center -rotate-12">
-                                        <ShoppingBag className="h-4 w-4 text-emerald-400" />
-                                    </div>
-                                </div>
-                            </div>
-                            <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight mb-4">Mestría en <span className="text-emerald-600">Relación</span></h2>
-                            <p className="max-w-md text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em] leading-loose">Selecciona un cliente de la lista para acceder a su perfil psicológico, historial de consumo y transmisiones interceptadas.</p>
-
-                            <div className="mt-12 grid grid-cols-3 gap-4 w-full max-w-2xl px-8">
-                                {[
-                                    { label: 'Visión 360º', icon: RefreshCw },
-                                    { label: 'LTV Tracking', icon: TrendingUp },
-                                    { label: 'WhatsApp Logs', icon: MessageSquare }
-                                ].map((feat, i) => (
-                                    <div key={i} className="p-4 bg-white rounded-lg border border-slate-100 flex flex-col items-center gap-2 shadow-xs group hover:border-emerald-200 transition-all">
-                                        <feat.icon className="h-4 w-4 text-slate-300 group-hover:text-emerald-500" />
-                                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{feat.label}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </PageShell>
+        <button
+            onClick={set}
+            className={`module-tab ${active ? 'active' : ''}`}
+            style={active ? { '--tab-color': 'var(--crm)' } as any : {}}
+        >
+            {label}
+        </button>
     );
 }
 
-// Subcomponent for status Icons (simplified placeholder)
-function CheckCircle({ className }: { className?: string }) {
+function MetricTable({ label, values, days }: { label: string, values: number[], days: number }) {
+    const isCurrency = label.includes('€');
+    const isPct = label.includes('%');
+    const isRoas = label.includes('x');
+
+    const format = (v: number) => {
+        if (v === 0) return '-';
+        if (isCurrency) return `€${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : Math.round(v)}`;
+        if (isRoas) return `${v}x`;
+        if (isPct) return `${v}%`;
+        return Math.round(v);
+    };
+
     return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-        </svg>
-    )
+        <tr className="border-b border-[var(--border)] hover:bg-[var(--surface2)] transition-colors">
+            <td className="sticky left-0 bg-[var(--surface)] z-10 p-2 text-[10px] font-bold text-[var(--text)] border-r border-[var(--border)] whitespace-nowrap shadow-[2px_0_4px_rgba(0,0,0,0.02)]">
+                {label}
+            </td>
+            {Array.from({ length: days }).map((_, i) => (
+                <td key={i} className={`p-2 text-center text-[10px] font-mono whitespace-nowrap ${values[i] > 0 ? 'text-[var(--text)]' : 'text-[var(--text-dim)]'}`}>
+                    {format(values[i] || 0)}
+                </td>
+            ))}
+            <td className="p-2 text-right text-[10px] font-bold font-mono text-[var(--crm)] border-l border-[var(--border)] bg-[var(--surface2)]/50">
+                {format(isRoas || isPct ? values.reduce((a, b) => a + b, 0) / values.filter(v => v > 0).length || 0 : values.reduce((a, b) => a + b, 0))}
+            </td>
+        </tr>
+    );
+}
+
+export default function CrmForensePage() {
+    const { activeStoreId } = useStore();
+    const [activeTab, setActiveTab] = useState(TABS[0].id);
+    const [date, setDate] = useState(new Date());
+
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+
+    useEffect(() => {
+        if (!activeStoreId) return;
+        setLoading(true);
+        fetch(`/api/crm-forense?storeId=${activeStoreId}&tab=${activeTab}&month=${month}&year=${year}`)
+            .then(r => r.json())
+            .then(d => {
+                if (d.ok) setData(d);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, [activeStoreId, activeTab, month, year]);
+
+    const changeMonth = (delta: number) => {
+        const d = new Date(date);
+        d.setMonth(d.getMonth() + delta);
+        setDate(d);
+    };
+
+    const contextForAgent = `CRM Forense. Viendo datos de ${activeTab} del mes ${month}/${year}.`;
+
+    return (
+        <div className="content-main flex flex-col gap-4 pt-0">
+
+            {/* Header compact */}
+            <div className="flex justify-between items-center py-2 mt-2">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded shrink-0 bg-[#D44F8E] flex items-center justify-center text-white shadow-sm">
+                        <Users size={18} />
+                    </div>
+                    <div>
+                        <h1 className="text-[14px] font-[800] leading-none text-[var(--text)] tracking-tight">CRM Forense</h1>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5 max-w-sm uppercase tracking-wide">
+                            Análisis granular de rendimiento 360º
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs Principales */}
+            <div className="module-tabs overflow-x-auto no-scrollbar max-w-full ds-card px-1 py-1 flex-nowrap shrink-0">
+                {TABS.map(t => (
+                    <PillTab key={t.id} active={activeTab === t.id} label={t.label} set={() => setActiveTab(t.id)} />
+                ))}
+            </div>
+
+            {!activeStoreId ? (
+                <div className="text-center p-8 text-[11px] font-semibold text-[var(--text-dim)] ds-card">
+                    Selecciona una tienda en el selector superior (TopBar) para ver el CRM.
+                </div>
+            ) : (
+                <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+
+                    {/* Header de Tabla Pizarras Mensuales */}
+                    <div className="ds-card-padded py-3 flex items-center justify-between">
+                        <div className="text-[11px] font-bold text-[var(--text)] uppercase tracking-wide">
+                            Vista Pizarra — {TABS.find(t => t.id === activeTab)?.label}
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-[var(--surface2)] rounded-[var(--r-sm)] p-0.5 border border-[var(--border)]">
+                            <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[var(--surface)] rounded text-[var(--text-muted)] transition-colors"><ChevronLeft size={14} /></button>
+                            <span className="text-[10px] font-bold px-2 uppercase text-[var(--text)] min-w-[100px] text-center">
+                                {date.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
+                            </span>
+                            <button onClick={() => changeMonth(1)} className="p-1 hover:bg-[var(--surface)] rounded text-[var(--text-muted)] transition-colors"><ChevronRight size={14} /></button>
+                        </div>
+                    </div>
+
+                    {/* Gran Tabla Horizontal (Mobile-First scrollable) */}
+                    <div className="ds-table-wrap overflow-x-auto no-scrollbar relative">
+                        {loading ? (
+                            <div className="min-h-[150px] flex items-center justify-center text-[10px] text-[var(--text-muted)] uppercase tracking-widest">
+                                <Loader2 className="w-4 h-4 animate-spin mr-2 text-[var(--crm)]" /> Procesando Pizarra...
+                            </div>
+                        ) : !data?.data?.metrics?.length ? (
+                            <div className="min-h-[150px] flex items-center justify-center text-[10px] text-[var(--text-muted)] uppercase tracking-widest">
+                                No hay datos en este ciclo
+                            </div>
+                        ) : (
+                            <table className="ds-table w-full">
+                                <thead className="sticky top-0 z-20">
+                                    <tr>
+                                        <th className="sticky left-0 bg-[var(--surface2)] z-30 min-w-[140px] border-r border-[var(--border)] shadow-[2px_0_4px_rgba(0,0,0,0.02)]">
+                                            Métrica
+                                        </th>
+                                        {Array.from({ length: data.daysInMonth }).map((_, i) => (
+                                            <th key={i} className="min-w-[40px] text-center px-1">
+                                                D{i + 1}
+                                            </th>
+                                        ))}
+                                        <th className="min-w-[80px] text-right border-l border-[var(--border)] bg-[var(--surface2)]">
+                                            Total Mes
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.data.metrics.map((m: any, idx: number) => (
+                                        <MetricTable key={idx} label={m.label} values={m.values} days={data.daysInMonth} />
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+
+                    {/* Resumen Semanal Cards (Placeholder para UI completa futura dictada en manual) */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-2">
+                        {[1, 2, 3, 4].map(w => (
+                            <div key={w} className="ds-card-padded border-l-[3px] border-l-[var(--crm)]">
+                                <div className="text-[9px] font-bold text-[var(--text-dim)] uppercase tracking-widest mb-1">Semana {w}</div>
+                                <div className="text-[20px] font-[800] leading-none text-[var(--text)] font-mono">
+                                    €—
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                </div>
+            )}
+
+            {/* Agente Compañante Inyectado, pide perfil crm-forense si existiese */}
+            <AgentCompanion pageContext={contextForAgent} agentRole="crm-forense" />
+        </div>
+    );
 }

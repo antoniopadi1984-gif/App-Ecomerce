@@ -261,19 +261,11 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ajustes & Sistema</span>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-slate-100/50" />
-
-                                <DropdownMenuItem onClick={() => router.push('/system/health')} className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
+                                <DropdownMenuItem onClick={() => router.push('/sistema/settings')} className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
                                     <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100">
                                         <Activity className="w-3.5 h-3.5 text-emerald-600" />
                                     </div>
                                     <span className="text-[11px] font-bold text-slate-700">Estado Salud</span>
-                                </DropdownMenuItem>
-
-                                <DropdownMenuItem onClick={() => router.push('/sistema/settings')} className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
-                                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
-                                        <LinkIcon className="w-3.5 h-3.5 text-blue-600" />
-                                    </div>
-                                    <span className="text-[11px] font-bold text-slate-700">Conexiones</span>
                                 </DropdownMenuItem>
 
                                 <DropdownMenuSeparator className="bg-slate-100/50" />

@@ -1,12 +1,11 @@
 "use client";
 
 import React from "react";
-import AvatarStudioPage from "@/app/marketing/avatars/page";
 
 export function AvatarsModule() {
     return (
-        <div className="bg-slate-50/30 -m-3 p-3 min-h-[800px] overflow-hidden">
-            <AvatarStudioPage isEmbedded={true} />
+        <div className="bg-white rounded-2xl flex items-center justify-center p-20 border border-slate-200">
+            <h2 className="text-xl font-bold text-slate-400 uppercase tracking-widest">Avatar Studio - Moved to Creative Lab</h2>
         </div>
     );
 }

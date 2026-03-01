@@ -43,8 +43,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
                     <Sidebar
                         isOpen={isSidebarOpen}
-                        isPinned={isPinned}
-                        togglePinned={() => setIsPinned(!isPinned)}
+                        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                         onHoverChange={setIsHovered}
                     />
 

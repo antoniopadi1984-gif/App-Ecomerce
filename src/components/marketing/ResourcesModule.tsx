@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import ContentsDashboard from "@/app/creativo/contents/page";
 import { CreativeAgentPanel } from "@/components/creative/CreativeAgentPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,7 +83,9 @@ export function ResourcesModule({ storeId = '', productId, productTitle }: Resou
 
             {/* TAB: Contenidos (eBooks, cursos, cupones) */}
             {activeTab === 'contenidos' && (
-                <ContentsDashboard />
+                <div className="bg-white rounded-xl border border-slate-200 flex items-center justify-center p-10">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Contenidos — Biblioteca Creativa</p>
+                </div>
             )}
 
             {/* TAB: Riesgo COD */}

@@ -21,7 +21,7 @@ import {
     syncKnowledgeGraphAction,
     calculateMaturityScoreAction
 } from "@/app/research/actions/research-actions";
-import { getLanguageDictionary } from "@/app/research/actions/language-actions";
+import { getLanguageDictionary } from "@/app/investigacion/actions/language-actions";
 
 export function useResearch(productId: string) {
     const [loading, setLoading] = useState(false);

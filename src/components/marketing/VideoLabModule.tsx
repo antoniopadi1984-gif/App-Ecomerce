@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import MaestroWorkspace from "@/app/creativo/video-lab/MaestroWorkspace";
 import { CreativeAgentPanel } from "@/components/creative/CreativeAgentPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -107,7 +106,9 @@ export function VideoLabModule({ productId, productTitle, allProducts = [], stor
 
             {/* TAB: Maestro */}
             {activeTab === 'maestro' && (
-                <MaestroWorkspace initialProducts={allProducts} />
+                <div className="bg-white rounded-xl border border-slate-200 flex items-center justify-center p-10">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Maestro Workspace — Video Lab</p>
+                </div>
             )}
 
             {/* TAB: Upload Masivo */}

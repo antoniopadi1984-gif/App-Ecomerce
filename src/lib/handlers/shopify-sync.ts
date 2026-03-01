@@ -27,7 +27,7 @@ const shopifySyncHandler: JobHandler = {
 
         await onProgress(100);
 
-        console.log(`✅ [Worker] Shopify Sync Completed: ${result.message}`);
+        console.log(`✅ [Worker] Shopify Sync Completed: ${result?.message ?? 'done'}`);
 
         return result;
     }

@@ -10,12 +10,12 @@ const logisticsSyncHandler: JobHandler = {
 
         // 'limit: 0' means full history or until API stops
         const storeId = payload.storeId as string || 'store-main';
-        const priority = !!payload.priority;
+        const priority = payload.priority ? 'high' : 'normal';
         const result = await syncBeepingStatuses(storeId, 0, priority);
 
         await onProgress(100);
 
-        console.log(`✅ [Worker] Logistics Sync Completed: ${result.message}`);
+        console.log(`✅ [Worker] Logistics Sync Completed: ${result?.message ?? 'done'}`);
 
         return result;
     }

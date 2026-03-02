@@ -4,7 +4,59 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { Users, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AgentCompanion } from '@/components/layout/agent-companion';
-import { ViewMode, getWeeklySummary, DayData, WeekSummary } from '@/lib/crmPeriods';
+import { ViewMode, getWeeklySummary, DayData, WeekSummary, generateRows } from '@/lib/crmPeriods';
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
+
+interface CRMChartProps {
+    data: any[];
+    viewMode: ViewMode;
+    tab: string;
+}
+
+function CRMChart({ data, viewMode, tab }: CRMChartProps) {
+    return (
+        <div style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "16px", marginBottom: "16px", height: "300px", width: "100%" }}>
+            <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={data}>
+                    <XAxis
+                        dataKey="label"
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
+                    <YAxis
+                        yAxisId="left"
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={v => `€${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
+                    />
+                    <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={v => `${v}%`}
+                    />
+                    <Tooltip
+                        contentStyle={{ fontSize: "11px", borderRadius: "8px", border: "1px solid #e2e8f0" }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: "10px" }} />
+
+                    {/* Barras principales */}
+                    <Bar yAxisId="left" dataKey="facturacion" name="Facturación €" fill="#7c3aed" radius={[3, 3, 0, 0]} opacity={0.85} />
+                    <Bar yAxisId="left" dataKey="beneficioNeto" name="Beneficio €" fill="#a78bfa" radius={[3, 3, 0, 0]} opacity={0.7} />
+
+                    {/* Líneas de ratios */}
+                    <Line yAxisId="right" type="monotone" dataKey="margen" name="Margen %" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="tasaEntrega" name="Tasa Entrega %" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="tasaIncidencias" name="Incidencias %" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="4 4" />
+                </ComposedChart>
+            </ResponsiveContainer>
+        </div>
+    )
+}
 
 const TABS = [
     { id: 'VENTAS', label: 'Ventas' },
@@ -111,6 +163,36 @@ export default function CrmForensePage() {
 
     const dailyData = data?.data?.metrics ? parseDailyData(data.data.metrics, data.daysInMonth) : [];
     const weeklySummary = dailyData.length > 0 ? getWeeklySummary(dailyData, month, year) : [];
+
+    const getChartData = () => {
+        if (viewMode === "daily") {
+            return dailyData.map((d: DayData) => ({
+                label: `Día ${d.day}`,
+                facturacion: d.facturacion,
+                beneficioNeto: d.facturacion * (d.margen / 100),
+                margen: d.margen,
+                tasaEntrega: d.pedidos > 0 ? Math.round((d.entregados / d.pedidos) * 100) : 0,
+                tasaIncidencias: d.pedidos > 0 ? Math.round((d.incidencias / d.pedidos) * 100) : 0
+            }));
+        }
+        if (viewMode === "weekly") {
+            return weeklySummary.map((w: WeekSummary) => ({
+                label: w.label,
+                facturacion: w.facturacion,
+                beneficioNeto: w.facturacion * (w.margen / 100),
+                margen: w.margen,
+                tasaEntrega: w.pedidos > 0 ? Math.round((w.entregados / w.pedidos) * 100) : 0,
+                tasaIncidencias: w.pedidos > 0 ? Math.round((w.incidencias / w.pedidos) * 100) : 0
+            }));
+        }
+        // Placeholder for monthly/annual logic
+        return generateRows(viewMode, month, year).map(row => ({
+            label: row.label,
+            facturacion: 0, beneficioNeto: 0, margen: 0, tasaEntrega: 0, tasaIncidencias: 0
+        }));
+    };
+
+    const chartData = getChartData();
 
     const formatValue = (value: number, unit: string) => {
         if (unit === "EUR") return `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : Math.round(value)}`;
@@ -285,6 +367,11 @@ export default function CrmForensePage() {
                                 </div>
                             ))}
                         </div>
+                    )}
+
+                    {/* Gráfica */}
+                    {chartData.length > 0 && (
+                        <CRMChart data={chartData} viewMode={viewMode} tab={activeTab} />
                     )}
 
                 </div>

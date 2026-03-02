@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { Users, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AgentCompanion } from '@/components/layout/agent-companion';
-import { ViewMode, getWeeklySummary, DayData, WeekSummary, generateRows } from '@/lib/crmPeriods';
+import { ViewMode, getWeeklySummary, getQuarterlySummary, DayData, WeekSummary, QuarterSummary, generateRows, MonthData } from '@/lib/crmPeriods';
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface CRMChartProps {
@@ -256,31 +256,37 @@ export default function CrmForensePage() {
     useEffect(() => {
         if (!activeStoreId) return;
         setLoading(true);
-        fetch(`/api/crm-forense?storeId=${activeStoreId}&tab=${activeTab}&month=${month}&year=${year}`)
+        fetch(`/api/crm-forense?storeId=${activeStoreId}&tab=${activeTab}&month=${month}&year=${year}&annual=${viewMode === "annual"}`)
             .then(r => r.json())
             .then(d => {
                 if (d.ok) setData(d);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-    }, [activeStoreId, activeTab, month, year]);
+    }, [activeStoreId, activeTab, month, year, viewMode]);
 
     const changeMonth = (delta: number) => {
         const d = new Date(date);
-        d.setMonth(d.getMonth() + delta);
+        if (viewMode === "annual") {
+            d.setFullYear(d.getFullYear() + delta);
+        } else {
+            d.setMonth(d.getMonth() + delta);
+        }
         setDate(d);
         setActiveWeek(0);
     };
 
-    const parseDailyData = (metrics: any[], daysInMonth: number): DayData[] => {
+    const parseDailyData = (metrics: any[], daysInMonth: number, isAnnual: boolean): DayData[] | MonthData[] => {
         if (!metrics || metrics.length === 0) return [];
-        const getV = (label: string) => metrics.find((m: any) => m.label.includes(label))?.values || Array(daysInMonth).fill(0);
+        const slotsCount = isAnnual ? 12 : daysInMonth;
+        const getV = (label: string) => metrics.find((m: any) => m.label.includes(label))?.values || Array(slotsCount).fill(0);
 
         const fact = getV("Facturación") || getV("Ventas") || getV("Inversión") || getV("Volumen");
-        const ped = getV("Pedidos") || getV("Total") || getV("Ingresos") || Array(daysInMonth).fill(0);
+        const ped = getV("Pedidos") || getV("Total") || getV("Ingresos") || Array(slotsCount).fill(0);
 
-        return Array.from({ length: daysInMonth }, (_, i) => ({
-            day: i + 1,
+        return Array.from({ length: slotsCount }, (_, i) => ({
+            ...(isAnnual ? { month: i } : { day: i + 1 }),
+            day: i + 1, // keeping day for typings
             facturacion: fact[i] || 0,
             pedidos: ped[i] || 0,
             entregados: Math.round((ped[i] || 0) * 0.8), // Mock temp 
@@ -290,8 +296,12 @@ export default function CrmForensePage() {
         }));
     };
 
-    const dailyData = data?.data?.metrics ? parseDailyData(data.data.metrics, data.daysInMonth) : [];
-    const weeklySummary = dailyData.length > 0 ? getWeeklySummary(dailyData, month, year) : [];
+    const periodData = data?.data?.metrics ? parseDailyData(data.data.metrics, data.slotsCount || data.daysInMonth, data.isAnnual) : [];
+    const dailyData: DayData[] = viewMode !== "annual" ? (periodData as DayData[]) : [];
+    const monthlyData: MonthData[] = viewMode === "annual" ? (periodData as MonthData[]) : [];
+
+    const weeklySummary = viewMode !== "annual" && dailyData.length > 0 ? getWeeklySummary(dailyData, month, year) : [];
+    const quarterlySummary = viewMode === "annual" && monthlyData.length > 0 ? getQuarterlySummary(monthlyData) : [];
 
     const getChartData = () => {
         if (viewMode === "daily") {
@@ -314,8 +324,23 @@ export default function CrmForensePage() {
                 tasaIncidencias: w.pedidos > 0 ? Math.round((w.incidencias / w.pedidos) * 100) : 0
             }));
         }
-        // Placeholder for monthly/annual logic
-        return generateRows(viewMode, month, year).map(row => ({
+        if (viewMode === "annual" || viewMode === "monthly") {
+            const periodRows = generateRows(viewMode, month, year);
+            const dataToUse = viewMode === "annual" ? monthlyData : monthlyData; // Fix needed long term for pure monthly, but using monthlyData works if it was fetched with annual=true
+            return periodRows.map((r: any, i: number) => {
+                const m = monthlyData[i] || { facturacion: 0, pedidos: 0, entregados: 0, incidencias: 0, ticketMedio: 0, margen: 0 };
+                return {
+                    label: r.label,
+                    facturacion: m.facturacion,
+                    beneficioNeto: m.facturacion * (m.margen / 100),
+                    margen: m.margen,
+                    tasaEntrega: m.pedidos > 0 ? Math.round((m.entregados / m.pedidos) * 100) : 0,
+                    tasaIncidencias: m.pedidos > 0 ? Math.round((m.incidencias / m.pedidos) * 100) : 0
+                }
+            });
+        }
+        const periodRows = generateRows(viewMode, month, year);
+        return periodRows.map((row: any) => ({
             label: row.label,
             facturacion: 0, beneficioNeto: 0, margen: 0, tasaEntrega: 0, tasaIncidencias: 0
         }));
@@ -347,6 +372,18 @@ export default function CrmForensePage() {
                     beneficioNeto: w.facturacion * (w.margen / 100),
                     tasaEntrega: w.pedidos > 0 ? (w.entregados / w.pedidos) * 100 : 0,
                     tasaIncidencias: w.pedidos > 0 ? (w.incidencias / w.pedidos) * 100 : 0,
+                };
+            });
+        }
+        if (viewMode === "monthly" || viewMode === "annual") {
+            return periodRows.map((r, i) => {
+                const d = monthlyData[i] || { facturacion: 0, pedidos: 0, entregados: 0, incidencias: 0, ticketMedio: 0, margen: 0 };
+                return {
+                    ...r,
+                    ...d,
+                    beneficioNeto: d.facturacion * (d.margen / 100),
+                    tasaEntrega: d.pedidos > 0 ? (d.entregados / d.pedidos) * 100 : 0,
+                    tasaIncidencias: d.pedidos > 0 ? (d.incidencias / d.pedidos) * 100 : 0,
                 };
             });
         }
@@ -452,7 +489,7 @@ export default function CrmForensePage() {
                         <div className="flex items-center gap-2 bg-[var(--surface2)] rounded-[var(--r-sm)] p-0.5 border border-[var(--border)]">
                             <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[var(--surface)] rounded text-[var(--text-muted)] transition-colors"><ChevronLeft size={14} /></button>
                             <span className="text-[10px] font-bold px-2 uppercase text-[var(--text)] min-w-[100px] text-center">
-                                {date.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
+                                {viewMode === "annual" ? year : date.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
                             </span>
                             <button onClick={() => changeMonth(1)} className="p-1 hover:bg-[var(--surface)] rounded text-[var(--text-muted)] transition-colors"><ChevronRight size={14} /></button>
                         </div>
@@ -536,6 +573,74 @@ export default function CrmForensePage() {
                                         color: week.margen >= 20 ? "#22c55e" : week.margen >= 10 ? "#eab308" : "#ef4444"
                                     }}>
                                         Margen: {week.margen}%
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {quarterlySummary.length > 0 && viewMode === "annual" && (
+                        <div style={{
+                            display: "grid",
+                            gridTemplateColumns: `repeat(4, 1fr)`,
+                            gap: "10px",
+                            marginBottom: "16px",
+                            marginTop: "8px"
+                        }}>
+                            {quarterlySummary.map((q: QuarterSummary, i: number) => (
+                                <div key={i} style={{
+                                    background: "white",
+                                    borderRadius: "12px",
+                                    border: "1px solid #e2e8f0",
+                                    padding: "12px 14px",
+                                    cursor: "pointer",
+                                    outline: activeWeek === i ? "2px solid #7c3aed" : "none"
+                                }}
+                                    onClick={() => setActiveWeek(i)}
+                                >
+                                    {/* Header tarjeta */}
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
+                                        <div>
+                                            <p style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", margin: 0 }}>
+                                                {q.label}
+                                            </p>
+                                            <p style={{ fontSize: "8px", color: "#cbd5e1", margin: 0 }}>{q.dateRange}</p>
+                                        </div>
+                                        {/* Variación vs Q anterior */}
+                                        {q.varVsPrev !== null && (
+                                            <span style={{
+                                                fontSize: "9px", fontWeight: 700,
+                                                color: q.varVsPrev >= 0 ? "#22c55e" : "#ef4444",
+                                                background: q.varVsPrev >= 0 ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                                                borderRadius: "4px", padding: "1px 5px"
+                                            }}>
+                                                {q.varVsPrev >= 0 ? "↑" : "↓"}{Math.abs(q.varVsPrev)}%
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Métrica principal */}
+                                    <p style={{ fontSize: "18px", fontWeight: 900, color: "#1e293b", margin: "0 0 4px 0" }}>
+                                        {formatValue(q.facturacion, "EUR")}
+                                    </p>
+
+                                    {/* Métricas secundarias */}
+                                    <div style={{ display: "flex", gap: "8px", fontSize: "10px", color: "#64748b" }}>
+                                        <span>{q.pedidos} ped.</span>
+                                        <span>·</span>
+                                        <span>{q.entregados} entr.</span>
+                                        <span>·</span>
+                                        <span style={{ color: q.incidencias > 0 ? "#ef4444" : "#94a3b8" }}>
+                                            {q.incidencias} inc.
+                                        </span>
+                                    </div>
+
+                                    {/* Margen */}
+                                    <p style={{
+                                        fontSize: "10px", fontWeight: 700, marginTop: "4px",
+                                        color: q.margen >= 20 ? "#22c55e" : q.margen >= 10 ? "#eab308" : "#ef4444"
+                                    }}>
+                                        Margen: {q.margen}%
                                     </p>
                                 </div>
                             ))}

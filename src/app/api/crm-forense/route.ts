@@ -10,19 +10,29 @@ export async function GET(req: NextRequest) {
         const tabString = searchParams.get('tab') || 'VENTAS';
         const monthStr = searchParams.get('month');
         const yearStr = searchParams.get('year');
+        const isAnnual = searchParams.get('annual') === 'true';
 
-        if (!storeId || !monthStr || !yearStr) {
+        if (!storeId || !yearStr) {
             return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
         }
 
-        const month = parseInt(monthStr);
+        const month = monthStr ? parseInt(monthStr) : 1;
         const year = parseInt(yearStr);
-        const start = new Date(year, month - 1, 1);
-        const end = new Date(year, month, 1);
-        const daysInMonth = new Date(year, month, 0).getDate();
 
-        // Estructura base de días 1-31
-        const buildDaysArray = () => Array.from({ length: daysInMonth }, () => 0);
+        let start, end, slotsCount;
+
+        if (isAnnual) {
+            start = new Date(year, 0, 1);
+            end = new Date(year + 1, 0, 1);
+            slotsCount = 12; // 12 meses
+        } else {
+            start = new Date(year, month - 1, 1);
+            end = new Date(year, month, 1);
+            slotsCount = new Date(year, month, 0).getDate();
+        }
+
+        // Estructura base
+        const buildSlotsArray = () => Array.from({ length: slotsCount }, () => 0);
 
         let data: any = {};
 
@@ -35,26 +45,26 @@ export async function GET(req: NextRequest) {
                     select: { createdAt: true, totalPrice: true, paymentMethod: true, customerId: true, status: true },
                 });
 
-                // Generar métricas 1-31
-                let dailyVentasV = buildDaysArray();
-                let dailyVentasP = buildDaysArray();
+                // Generar métricas 1-31 o 1-12
+                let dailyVentasV = buildSlotsArray();
+                let dailyVentasP = buildSlotsArray();
 
-                let dailyCOD_V = buildDaysArray();
-                let dailyCARD_V = buildDaysArray();
+                let dailyCOD_V = buildSlotsArray();
+                let dailyCARD_V = buildSlotsArray();
 
                 let customerMap = new Map();
 
                 orders.forEach((o: any) => {
-                    const dayIndex = o.createdAt.getDate() - 1;
+                    const slotIndex = isAnnual ? o.createdAt.getMonth() : o.createdAt.getDate() - 1;
                     const val = o.totalPrice || 0;
 
                     // Ventas / Pedidos
-                    dailyVentasV[dayIndex] += val;
-                    dailyVentasP[dayIndex] += 1;
+                    dailyVentasV[slotIndex] += val;
+                    dailyVentasP[slotIndex] += 1;
 
                     // COD vs CARD
-                    if (o.paymentMethod === 'COD') dailyCOD_V[dayIndex] += val;
-                    else dailyCARD_V[dayIndex] += val;
+                    if (o.paymentMethod === 'COD') dailyCOD_V[slotIndex] += val;
+                    else dailyCARD_V[slotIndex] += val;
 
                     // Clientes base
                     if (o.customerId) customerMap.set(o.customerId, (customerMap.get(o.customerId) || 0) + 1);
@@ -69,7 +79,7 @@ export async function GET(req: NextRequest) {
                     let totalRepeat = 0;
                     customerMap.forEach(v => { if (v > 1) totalRepeat++; });
 
-                    let repeatData = buildDaysArray();
+                    let repeatData = buildSlotsArray();
                     // Simplified simulation of daily repeat for UI mock
                     if (customerMap.size > 0) repeatData[0] = Math.round((totalRepeat / customerMap.size) * 100);
 
@@ -87,17 +97,17 @@ export async function GET(req: NextRequest) {
                     where: { storeId, createdAt: { gte: start, lt: end } },
                 });
 
-                let dailySpend = buildDaysArray();
-                let dailyRev = buildDaysArray();
-                let dailyRoas = buildDaysArray();
+                let dailySpend = buildSlotsArray();
+                let dailyRev = buildSlotsArray();
+                let dailyRoas = buildSlotsArray();
 
                 creatives.forEach((c: any) => {
-                    const dayIndex = c.createdAt.getDate() - 1;
-                    dailySpend[dayIndex] += c.spend || 0;
-                    dailyRev[dayIndex] += c.revenue || 0;
+                    const slotIndex = isAnnual ? c.createdAt.getMonth() : c.createdAt.getDate() - 1;
+                    dailySpend[slotIndex] += c.spend || 0;
+                    dailyRev[slotIndex] += c.revenue || 0;
                 });
 
-                for (let i = 0; i < daysInMonth; i++) {
+                for (let i = 0; i < slotsCount; i++) {
                     dailyRoas[i] = dailySpend[i] > 0 ? Number((dailyRev[i] / dailySpend[i]).toFixed(2)) : 0;
                 }
 
@@ -109,17 +119,16 @@ export async function GET(req: NextRequest) {
             case 'EMPLEADOS':
             case 'AGENTES':
             default:
-                // Mock data structure fallback until entities are fully populated 
                 data = {
                     metrics: [
-                        { label: 'Volumen', values: buildDaysArray().map(() => Math.floor(Math.random() * 50)) },
-                        { label: 'Eficiencia', values: buildDaysArray().map(() => Math.floor(Math.random() * 100)) }
+                        { label: 'Volumen', values: buildSlotsArray().map(() => Math.floor(Math.random() * 50)) },
+                        { label: 'Eficiencia', values: buildSlotsArray().map(() => Math.floor(Math.random() * 100)) }
                     ]
                 }
                 break;
         }
 
-        return NextResponse.json({ ok: true, data, daysInMonth });
+        return NextResponse.json({ ok: true, data, slotsCount, isAnnual });
 
     } catch (err: any) {
         console.error('[API /crm-forense]', err);

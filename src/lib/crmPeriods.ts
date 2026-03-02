@@ -60,6 +60,20 @@ function avg(arr: any[], key: string) {
     return sum(arr, key) / arr.length;
 }
 
+export type MonthData = DayData & { month: number };
+
+export type QuarterSummary = {
+    label: string;
+    dateRange: string;
+    facturacion: number;
+    pedidos: number;
+    entregados: number;
+    incidencias: number;
+    ticketMedio: number;
+    margen: number;
+    varVsPrev: number | null;
+};
+
 function calcVariation(prev: number, curr: number) {
     if (prev === 0) return 0;
     return Math.round(((curr - prev) / prev) * 100);
@@ -112,6 +126,46 @@ export function getWeeklySummary(dailyData: DayData[], month: number, year: numb
             margen: Math.round(avg(weekDays, "margen")),
             varVsPrev: i > 0 ? calcVariation(prevFacturacion, facturacion) : null
         };
+    });
+}
+
+function calcVariationVsPrevQuarter(q: { label: string, months: number[], name: string }, allMonths: MonthData[], qIndex: number) {
+    if (qIndex === 0) return null; // Q1 doesn't have prev Q in same year
+
+    const currentQData = allMonths.filter(m => q.months.includes(m.month));
+    const currentFact = sum(currentQData, "facturacion");
+
+    // prev Q logic manually mappings: Q2 -> Q1, Q3 -> Q2, Q4 -> Q3
+    let prevMonths: number[] = [];
+    if (q.label === "Q2") prevMonths = [0, 1, 2];
+    if (q.label === "Q3") prevMonths = [3, 4, 5];
+    if (q.label === "Q4") prevMonths = [6, 7, 8];
+
+    const prevQData = allMonths.filter(m => prevMonths.includes(m.month));
+    const prevFact = sum(prevQData, "facturacion");
+
+    return calcVariation(prevFact, currentFact);
+}
+
+export function getQuarterlySummary(monthlyData: MonthData[]): QuarterSummary[] {
+    return [
+        { label: "Q1", months: [0, 1, 2], name: "Ene-Mar" },
+        { label: "Q2", months: [3, 4, 5], name: "Abr-Jun" },
+        { label: "Q3", months: [6, 7, 8], name: "Jul-Sep" },
+        { label: "Q4", months: [9, 10, 11], name: "Oct-Dic" }
+    ].map((q, i) => {
+        const qMonths = monthlyData.filter(m => q.months.includes(m.month));
+        return {
+            label: q.label,
+            dateRange: q.name,
+            facturacion: sum(qMonths, "facturacion"),
+            pedidos: sum(qMonths, "pedidos"),
+            entregados: sum(qMonths, "entregados"),
+            incidencias: sum(qMonths, "incidencias"),
+            ticketMedio: Math.round(avg(qMonths, "ticketMedio")),
+            margen: Math.round(avg(qMonths, "margen")),
+            varVsPrev: calcVariationVsPrevQuarter(q, monthlyData, i)
+        }
     });
 }
 

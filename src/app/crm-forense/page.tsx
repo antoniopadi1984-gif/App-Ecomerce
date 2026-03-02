@@ -680,6 +680,61 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "COD_VS_CARD") {
+            return [
+                periodCol,
+                // COD
+                { key: "pedidosCOD", label: "Pedidos COD", type: "sum", unit: "" },
+                { key: "confirmadosCOD", label: "Confirm. COD", type: "sum", unit: "" },
+                { key: "tasaConfirmCOD", label: "Tasa Confirm. COD", type: "calc", unit: "%", thresholds: [80, 60], lowerIsBetter: false, calcFn: (t) => t.pedidosCOD > 0 ? (t.confirmadosCOD / t.pedidosCOD) * 100 : 0 },
+                { key: "enviadosCOD", label: "Enviados COD", type: "sum", unit: "" },
+                { key: "tasaEnvioCOD", label: "Tasa Envío COD", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.confirmadosCOD > 0 ? (t.enviadosCOD / t.confirmadosCOD) * 100 : 0 },
+                { key: "entregadosCOD", label: "Entregados COD", type: "sum", unit: "" },
+                { key: "tasaEntregaCOD", label: "Tasa Entrega COD", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.enviadosCOD > 0 ? (t.entregadosCOD / t.enviadosCOD) * 100 : 0 },
+                { key: "reintentosCOD", label: "Reintentos COD", type: "sum", unit: "" },
+                { key: "incidenciasCOD", label: "Incid. COD", type: "sum", unit: "" },
+                { key: "tasaIncidCOD", label: "Tasa Incid. COD", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.enviadosCOD > 0 ? (t.incidenciasCOD / t.enviadosCOD) * 100 : 0 },
+                { key: "recuperadasCOD", label: "Recuper. COD", type: "sum", unit: "" },
+                { key: "tasaRecupCOD", label: "Tasa Recup. COD", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.incidenciasCOD > 0 ? (t.recuperadasCOD / t.incidenciasCOD) * 100 : 0 },
+                { key: "devolucionesCOD", label: "Devol. COD", type: "sum", unit: "" },
+                { key: "tasaDevCOD", label: "Tasa Devol. COD", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.entregadosCOD > 0 ? (t.devolucionesCOD / t.entregadosCOD) * 100 : 0 },
+                { key: "facturacionCOD", label: "Fact. COD €", type: "sum", unit: "EUR" },
+                { key: "ticketCOD", label: "Ticket COD €", type: "calc", unit: "EUR", calcFn: (t) => t.pedidosCOD > 0 ? t.facturacionCOD / t.pedidosCOD : 0 },
+                { key: "logisticaCOD", label: "Logística COD €", type: "sum", unit: "EUR" },
+                { key: "margenCOD", label: "Margen COD %", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.facturacionCOD > 0 ? ((t.facturacionCOD - t.logisticaCOD) / t.facturacionCOD) * 100 : 0 },
+
+                // TARJETA
+                { key: "pedidosTarjeta", label: "Pedidos Tarjeta", type: "sum", unit: "" },
+                { key: "enviadosTarjeta", label: "Enviados Tarjeta", type: "sum", unit: "" },
+                { key: "tasaEnvioTarjeta", label: "Tasa Envío Tarj.", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.pedidosTarjeta > 0 ? (t.enviadosTarjeta / t.pedidosTarjeta) * 100 : 0 },
+                { key: "entregadosTarjeta", label: "Entregados Tarjeta", type: "sum", unit: "" },
+                { key: "tasaEntregaTarjeta", label: "Tasa Entrega Tarj.", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.enviadosTarjeta > 0 ? (t.entregadosTarjeta / t.enviadosTarjeta) * 100 : 0 },
+                { key: "reintentosTarjeta", label: "Reintentos Tarjeta", type: "sum", unit: "" },
+                { key: "incidenciasTarjeta", label: "Incid. Tarjeta", type: "sum", unit: "" },
+                { key: "tasaIncidTarjeta", label: "Tasa Incid. Tarj.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.enviadosTarjeta > 0 ? (t.incidenciasTarjeta / t.enviadosTarjeta) * 100 : 0 },
+                { key: "recuperadasTarjeta", label: "Recuper. Tarjeta", type: "sum", unit: "" },
+                { key: "tasaRecupTarjeta", label: "Tasa Recup. Tarj.", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.incidenciasTarjeta > 0 ? (t.recuperadasTarjeta / t.incidenciasTarjeta) * 100 : 0 },
+                { key: "devolucionesTarjeta", label: "Devol. Tarjeta", type: "sum", unit: "" },
+                { key: "tasaDevTarjeta", label: "Tasa Devol. Tarj.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.entregadosTarjeta > 0 ? (t.devolucionesTarjeta / t.entregadosTarjeta) * 100 : 0 },
+                { key: "facturacionTarjeta", label: "Fact. Tarjeta €", type: "sum", unit: "EUR" },
+                { key: "ticketTarjeta", label: "Ticket Tarjeta €", type: "calc", unit: "EUR", calcFn: (t) => t.pedidosTarjeta > 0 ? t.facturacionTarjeta / t.pedidosTarjeta : 0 },
+                { key: "logisticaTarjeta", label: "Logística Tarjeta €", type: "sum", unit: "EUR" },
+                { key: "margenTarjeta", label: "Margen Tarjeta %", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.facturacionTarjeta > 0 ? ((t.facturacionTarjeta - t.logisticaTarjeta) / t.facturacionTarjeta) * 100 : 0 },
+
+                // COMPARATIVA
+                { key: "pctCODTotal", label: "% COD Total", type: "calc", unit: "%", calcFn: (t) => (t.pedidosCOD + t.pedidosTarjeta) > 0 ? (t.pedidosCOD / (t.pedidosCOD + t.pedidosTarjeta)) * 100 : 0 },
+                { key: "pctTarjetaTotal", label: "% Tarj. Total", type: "calc", unit: "%", calcFn: (t) => (t.pedidosCOD + t.pedidosTarjeta) > 0 ? (t.pedidosTarjeta / (t.pedidosCOD + t.pedidosTarjeta)) * 100 : 0 },
+                {
+                    key: "difMargen", label: "Dif. Margen €", type: "calc", unit: "EUR", calcFn: (t) => {
+                        const mCOD = t.facturacionCOD > 0 ? (t.facturacionCOD - t.logisticaCOD) : 0;
+                        const mTarj = t.facturacionTarjeta > 0 ? (t.facturacionTarjeta - t.logisticaTarjeta) : 0;
+                        return mCOD - mTarj;
+                    }
+                },
+                { key: "mejorMetodo", label: "Mejor Método", type: "string", unit: "" },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

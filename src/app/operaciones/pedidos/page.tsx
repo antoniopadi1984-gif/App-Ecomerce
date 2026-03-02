@@ -2,8 +2,21 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store/store-context';
-import { RefreshCw, Search, Filter } from 'lucide-react';
+import { RefreshCw, Search, Filter, MoreHorizontal } from 'lucide-react';
 import { ORDER_STATES, OrderState } from '@/lib/orderStates';
+
+const ACTIONS_BY_STATE: Record<OrderState, string[]> = {
+    nuevo: ["asignar", "confirmar", "cancelar"],
+    en_gestion: ["confirmar", "cancelar", "notas"],
+    confirmado: ["marcar_enviado", "editar", "cancelar"],
+    en_preparacion: ["marcar_enviado", "cancelar"],
+    enviado: ["ver_tracking", "marcar_entregado", "reportar_incidencia"],
+    entregado: ["ver_detalle", "gestionar_devolucion"],
+    fallido: ["reintentar", "cancelar", "reportar_incidencia"],
+    reintento: ["marcar_enviado", "cancelar"],
+    devolucion: ["procesar_devolucion", "reenviar"],
+    cancelado: ["ver_detalle"],
+};
 
 const TABS = [
     { id: 'todos', label: 'Todos' },
@@ -90,31 +103,30 @@ export default function PedidosPage() {
                                 <th style={{ width: "40px", padding: "12px" }}>
                                     <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                 </th>
-                                <th style={{ color: "var(--color-text-secondary)" }}>Pedido #</th>
-                                <th style={{ color: "var(--color-text-secondary)" }}>Fecha</th>
-                                <th style={{ color: "var(--color-text-secondary)" }}>Cliente</th>
-                                <th style={{ color: "var(--color-text-secondary)" }}>Estado Universal</th>
-                                <th style={{ color: "var(--color-text-secondary)" }}>Importe</th>
-                                <th style={{ color: "var(--color-text-secondary)" }}>Método</th>
-                                <th style={{ color: "var(--color-text-secondary)" }}>Gestor</th>
-                                <th style={{ color: "var(--color-text-secondary)" }}>Transportista</th>
-                                <th style={{ color: "var(--color-text-secondary)", textAlign: "right", paddingRight: "24px" }}>Últ. Act.</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Pedido</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Estado Universal</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Fuente</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Cliente</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Teléfono</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>CP / Zona</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Producto</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right" }}>Importe</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Método Pago</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Gestor</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Transport.</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tracking</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Fecha</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Últ. Acción</th>
+                                <th style={{ color: "var(--color-text-secondary)", width: "40px", textAlign: "center" }}></th>
                             </tr>
                         </thead>
                         <tbody>
-                            {/* Example Row to show universal order state */}
+                            {/* Example Row 1 */}
                             <tr>
                                 <td style={{ padding: "12px" }}>
                                     <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                 </td>
                                 <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10045</a></td>
-                                <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>Hoy, 10:42</td>
-                                <td>
-                                    <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <span style={{ fontWeight: 600 }}>Juan Pérez</span>
-                                        <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Madrid, 28001</span>
-                                    </div>
-                                </td>
                                 <td>
                                     <span style={{
                                         display: "inline-flex", alignItems: "center", gap: "4px",
@@ -127,7 +139,23 @@ export default function PedidosPage() {
                                         {ORDER_STATES.en_preparacion.label}
                                     </span>
                                 </td>
-                                <td style={{ fontWeight: 700 }}>€49.99</td>
+                                <td>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" }}>S</div>
+                                        <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify</span>
+                                    </div>
+                                </td>
+                                <td>Juan Pérez</td>
+                                <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 000</td>
+                                <td style={{ fontSize: "11px" }}>28001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Madrid</span></td>
+                                <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                    <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Zapatillas Nike Air Force</span>
+                                        <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
+                                    </div>
+                                </td>
+                                <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€49.99</td>
                                 <td>
                                     <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                 </td>
@@ -147,21 +175,21 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Beeping</span>
                                     </div>
                                 </td>
-                                <td style={{ textAlign: "right", color: "var(--text-dim)", fontSize: "10px", paddingRight: "24px" }}>Hace 5 min</td>
+                                <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>BP-1234444</td>
+                                <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hoy<br />10:42</td>
+                                <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace<br />5 min</td>
+                                <td>
+                                    <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                        <MoreHorizontal size={14} />
+                                    </button>
+                                </td>
                             </tr>
-                            {/* Example Row 2 to show empleado and sin asignar logic, just hardcoded */}
+                            {/* Example Row 2 */}
                             <tr>
                                 <td style={{ padding: "12px" }}>
                                     <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                 </td>
                                 <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10046</a></td>
-                                <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>Hoy, 10:35</td>
-                                <td>
-                                    <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <span style={{ fontWeight: 600 }}>María Gómez</span>
-                                        <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Sevilla, 41002</span>
-                                    </div>
-                                </td>
                                 <td>
                                     <span style={{
                                         display: "inline-flex", alignItems: "center", gap: "4px",
@@ -174,7 +202,23 @@ export default function PedidosPage() {
                                         {ORDER_STATES.reintento.label}
                                     </span>
                                 </td>
-                                <td style={{ fontWeight: 700 }}>€29.99</td>
+                                <td>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe" }}>B</div>
+                                        <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Beeping</span>
+                                    </div>
+                                </td>
+                                <td>María Gómez</td>
+                                <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 001</td>
+                                <td style={{ fontSize: "11px" }}>41002<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Sevilla</span></td>
+                                <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                    <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Camiseta Básica Blanca</span>
+                                        <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 2</span>
+                                    </div>
+                                </td>
+                                <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€29.99</td>
                                 <td>
                                     <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>STRIPE</span>
                                 </td>
@@ -185,30 +229,30 @@ export default function PedidosPage() {
                                         fontSize: "11px", fontWeight: 600,
                                         background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0"
                                     }}>
-                                        👤 María García
+                                        👤 María G.
                                     </span>
                                 </td>
                                 <td>
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>-</div>
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>D</div>
                                         <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Dropea</span>
                                     </div>
                                 </td>
-                                <td style={{ textAlign: "right", color: "var(--text-dim)", fontSize: "10px", paddingRight: "24px" }}>Hace 12 min</td>
+                                <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
+                                <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hoy<br />10:35</td>
+                                <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace<br />12 min</td>
+                                <td>
+                                    <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                        <MoreHorizontal size={14} />
+                                    </button>
+                                </td>
                             </tr>
-                            {/* Example Row 3 to show sin asignar logic */}
+                            {/* Example Row 3 */}
                             <tr>
                                 <td style={{ padding: "12px" }}>
                                     <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                 </td>
                                 <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10047</a></td>
-                                <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>Ayer, 18:20</td>
-                                <td>
-                                    <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <span style={{ fontWeight: 600 }}>Carlos López</span>
-                                        <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Barcelona, 08001</span>
-                                    </div>
-                                </td>
                                 <td>
                                     <span style={{
                                         display: "inline-flex", alignItems: "center", gap: "4px",
@@ -221,7 +265,23 @@ export default function PedidosPage() {
                                         {ORDER_STATES.nuevo.label}
                                     </span>
                                 </td>
-                                <td style={{ fontWeight: 700 }}>€59.90</td>
+                                <td>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#f59e0b", border: "1px solid #fef3c7" }}>D</div>
+                                        <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Dropi</span>
+                                    </div>
+                                </td>
+                                <td>Carlos López</td>
+                                <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 002</td>
+                                <td style={{ fontSize: "11px" }}>08001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Barcelona</span></td>
+                                <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                    <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Sudadera Urban Black</span>
+                                        <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
+                                    </div>
+                                </td>
+                                <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€59.90</td>
                                 <td>
                                     <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                 </td>
@@ -232,7 +292,7 @@ export default function PedidosPage() {
                                         fontSize: "11px", fontWeight: 600,
                                         background: "#fef3c7", color: "#d97706", border: "1px solid #fde68a"
                                     }}>
-                                        ⚠️ Sin gestionar
+                                        ⚠️ Sin gest.
                                     </span>
                                 </td>
                                 <td>
@@ -241,7 +301,14 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Pendiente</span>
                                     </div>
                                 </td>
-                                <td style={{ textAlign: "right", color: "var(--text-dim)", fontSize: "10px", paddingRight: "24px" }}>Hace 2 min</td>
+                                <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
+                                <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Ayer<br />18:20</td>
+                                <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace<br />2 min</td>
+                                <td>
+                                    <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                        <MoreHorizontal size={14} />
+                                    </button>
+                                </td>
                             </tr>
                             {/* Empty State message for the rest */}
                             <tr>

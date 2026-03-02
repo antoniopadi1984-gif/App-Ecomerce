@@ -844,6 +844,38 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "INCIDENCIAS") {
+            return [
+                periodCol,
+                { key: "pedidoId", label: "Pedido #", type: "string", unit: "" },
+                { key: "cliente", label: "Cliente", type: "string", unit: "" },
+                { key: "zonaCP", label: "Zona / CP", type: "string", unit: "" },
+                { key: "transportista", label: "Transport.", type: "string", unit: "" },
+                { key: "producto", label: "Producto", type: "string", unit: "" },
+                { key: "tipo", label: "Tipo", type: "string", unit: "" },
+                { key: "motivoDetalle", label: "Motivo Detalle", type: "string", unit: "" },
+                { key: "responsable", label: "Responsable", type: "string", unit: "" },
+                { key: "empleadoGestor", label: "Empleado Gestor", type: "string", unit: "" },
+                { key: "agenteGestor", label: "Agente IA Gestor", type: "string", unit: "" },
+                { key: "fechaApertura", label: "Fecha Apertura", type: "string", unit: "" },
+                { key: "fechaCierre", label: "Fecha Cierre", type: "string", unit: "" },
+                { key: "tiempoResolucion", label: "T. Resol. (h)", type: "avg", unit: "" },
+                { key: "slaCumplido", label: "SLA Cumplido", type: "string", unit: "" },
+                { key: "reintentos", label: "Reintentos", type: "sum", unit: "" },
+                { key: "recuperada", label: "¿Recup. ?", type: "string", unit: "" },
+                { key: "accionTomada", label: "Acción Tomada", type: "string", unit: "" },
+                { key: "estado", label: "Estado", type: "string", unit: "" },
+                { key: "facturacionPerdida", label: "Fact. Perdida €", type: "sum", unit: "EUR" },
+                { key: "costeReenvio", label: "Coste Reenvío €", type: "sum", unit: "EUR" },
+                { key: "costeReembolso", label: "Coste Reemb. €", type: "sum", unit: "EUR" },
+                { key: "costeGestion", label: "Coste Gestión €", type: "sum", unit: "EUR" },
+                { key: "costeTotal", label: "Coste Total €", type: "calc", unit: "EUR", calcFn: (t) => t.costeReenvio + t.costeReembolso + t.costeGestion },
+                { key: "importeReclamado", label: "Importe Reclam. €", type: "sum", unit: "EUR" },
+                { key: "importeRecuperado", label: "Importe Recuper. €", type: "sum", unit: "EUR" },
+                { key: "perdidaNeta", label: "Pérdida Neta €", type: "calc", unit: "EUR", calcFn: (t) => (t.facturacionPerdida + t.costeReenvio + t.costeReembolso + t.costeGestion) - t.importeRecuperado },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

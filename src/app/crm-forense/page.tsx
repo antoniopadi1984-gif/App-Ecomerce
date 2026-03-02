@@ -154,15 +154,15 @@ function CRMTable({ rows, columns, totals }: CRMTableProps) {
                                 key={col.key}
                                 onClick={() => handleSort(col.key)}
                                 style={{
-                                    padding: col.key === "label" ? "8px 12px" : "6px 6px",
-                                    fontSize: col.key === "label" ? "9px" : "8px", fontWeight: 900,
+                                    padding: col.key === "label" ? "6px 8px" : "6px 6px",
+                                    fontSize: col.key === "label" ? "8px" : "8px", fontWeight: 900,
                                     textTransform: "uppercase", letterSpacing: "0.05em",
                                     color: "#94a3b8", whiteSpace: "normal",
                                     cursor: "pointer", userSelect: "none",
-                                    textAlign: col.key === "label" ? "left" : "center",
+                                    textAlign: "center",
                                     lineHeight: 1.2,
-                                    minWidth: col.key === "label" ? "auto" : "60px",
-                                    maxWidth: col.key === "label" ? "auto" : "80px",
+                                    minWidth: col.key === "label" ? "40px" : "60px",
+                                    maxWidth: col.key === "label" ? "50px" : "80px",
                                     ...(col.key === "label" ? { position: "sticky", left: 0, background: "white", zIndex: 11 } : {})
                                 }}
                             >
@@ -194,20 +194,20 @@ function CRMTable({ rows, columns, totals }: CRMTableProps) {
                                 <td
                                     key={col.key}
                                     style={{
-                                        padding: "5px 12px",
+                                        padding: "5px 8px",
                                         fontSize: "12px",
                                         whiteSpace: "nowrap",
-                                        textAlign: col.key === "label" ? "left" : "center",
+                                        textAlign: "center",
                                         ...(col.key === "label" ? {
                                             position: "sticky", left: 0,
                                             background: i % 2 === 0 ? "white" : "#fafbff",
-                                            fontWeight: 700, color: "#1e293b", zIndex: 5
+                                            fontWeight: 800, color: "#1e293b", zIndex: 5
                                         } : {}),
                                         ...(col.type === "rate" ? getSemaforoStyle(row[col.key], col.thresholds, col.lowerIsBetter) : {})
                                     }}
                                 >
                                     {col.key === "label"
-                                        ? <span>{row.label}{row.sublabel && <span style={{ fontSize: "9px", color: "#94a3b8", marginLeft: "4px" }}>{row.sublabel}</span>}</span>
+                                        ? <span>{row.label}{row.sublabel && <span style={{ display: "block", fontSize: "9px", color: "#94a3b8", marginTop: "2px" }}>{row.sublabel}</span>}</span>
                                         : formatValueInfo(row[col.key], col.unit)
                                     }
                                 </td>
@@ -397,7 +397,7 @@ export default function CrmForensePage() {
     }, [viewMode, dailyData, weeklySummary, month, year]);
 
     const tableColumns: CRMColumn[] = React.useMemo(() => [
-        { key: "label", label: "Período", type: "string" },
+        { key: "label", label: viewMode === "daily" ? "DÍA" : viewMode === "weekly" ? "SEMANA" : viewMode === "monthly" ? "MES" : "AÑO", type: "string" },
         { key: "facturacion", label: "Facturación", type: "sum", unit: "EUR" },
         { key: "pedidos", label: "Pedidos", type: "sum" },
         { key: "entregados", label: "Entregados", type: "sum" },

@@ -177,7 +177,7 @@ export function generateRows(viewMode: ViewMode, month: number, year: number): P
             // Día 1, Día 2... Día 28/29/30/31
             const daysInMonth = new Date(year, month, 0).getDate()
             return Array.from({ length: daysInMonth }, (_, i) => ({
-                label: `Día ${i + 1}`,
+                label: `${i + 1}`,
                 key: `${year}-${month}-${i + 1}`,
                 type: "day"
             }))
@@ -186,7 +186,7 @@ export function generateRows(viewMode: ViewMode, month: number, year: number): P
             // Una fila por semana del mes seleccionado
             // Sem 1 (D1-D7), Sem 2 (D8-D14), Sem 3 (D15-D21), Sem 4 (D22-D28), Sem 5 (D29-D31)
             return getWeeksInMonth(month, year).map((week, i) => ({
-                label: `Sem ${i + 1}`,
+                label: `${i + 1}`,
                 sublabel: `${week.start} - ${week.end}`,
                 key: `week-${i + 1}`,
                 type: "week"
@@ -196,7 +196,7 @@ export function generateRows(viewMode: ViewMode, month: number, year: number): P
             // Una fila por mes del año seleccionado
             // Enero, Febrero... Diciembre
             return Array.from({ length: 12 }, (_, i) => ({
-                label: new Date(year, i, 1).toLocaleString("es-ES", { month: "long" }),
+                label: new Date(year, i, 1).toLocaleString("es-ES", { month: "short" }).replace(/^\w/, c => c.toUpperCase()),
                 key: `${year}-${i + 1}`,
                 type: "month"
             }))

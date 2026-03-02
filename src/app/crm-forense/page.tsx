@@ -735,6 +735,38 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "FULFILLMENT") {
+            return [
+                periodCol,
+                { key: "pedidosRecibidos", label: "Pedidos Recibidos", type: "sum", unit: "" },
+                { key: "procesados", label: "Procesados", type: "sum", unit: "" },
+                { key: "tasaProceso", label: "Tasa Proceso %", type: "calc", unit: "%", thresholds: [95, 80], lowerIsBetter: false, calcFn: (t) => t.pedidosRecibidos > 0 ? (t.procesados / t.pedidosRecibidos) * 100 : 0 },
+                { key: "tiempoProceso", label: "T. Medio Proceso", type: "avg", unit: "" },
+                { key: "preparados", label: "Preparados", type: "sum", unit: "" },
+                { key: "tiempoPreparacion", label: "T. Medio Preparat.", type: "avg", unit: "" },
+                { key: "enviados", label: "Enviados", type: "sum", unit: "" },
+                { key: "tiempoEnvio", label: "T. Medio Envío", type: "avg", unit: "" },
+                { key: "tasaEnvio", label: "Tasa Envío %", type: "calc", unit: "%", thresholds: [95, 80], lowerIsBetter: false, calcFn: (t) => t.pedidosRecibidos > 0 ? (t.enviados / t.pedidosRecibidos) * 100 : 0 }, // o preparados
+                { key: "entregados", label: "Entregados", type: "sum", unit: "" },
+                { key: "tasaEntrega", label: "Tasa Entrega %", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.enviados > 0 ? (t.entregados / t.enviados) * 100 : 0 },
+                { key: "tiempoTotal", label: "T. Total Fulfillm.", type: "avg", unit: "" },
+                { key: "enEspera", label: "Pedidos En Espera", type: "avg", unit: "" },
+                { key: "bloqueados", label: "Pedidos Bloqueados", type: "sum", unit: "" },
+                { key: "incidPreparacion", label: "Incid. Preparat.", type: "sum", unit: "" },
+                { key: "roturaStock", label: "Roturas Stock", type: "sum", unit: "" },
+                { key: "devolucionesRecib", label: "Devol. Recibidas", type: "sum", unit: "" },
+                { key: "devolucionesProcesadas", label: "Devol. Procesadas", type: "sum", unit: "" },
+                { key: "tiempoDevolucion", label: "T. Devol. Proceso", type: "avg", unit: "" },
+                { key: "restock", label: "Restock Realizados", type: "sum", unit: "" },
+                { key: "costeFulfillment", label: "Coste Fulfillm.", type: "sum", unit: "EUR" },
+                { key: "costePorPedido", label: "Coste x Pedido", type: "calc", unit: "EUR", calcFn: (t) => t.pedidosRecibidos > 0 ? t.costeFulfillment / t.pedidosRecibidos : 0 },
+                { key: "erroresPicking", label: "Errores Picking", type: "sum", unit: "" },
+                { key: "tasaError", label: "Tasa Error %", type: "calc", unit: "%", thresholds: [2, 5], lowerIsBetter: true, calcFn: (t) => t.preparados > 0 ? (t.erroresPicking / t.preparados) * 100 : 0 },
+                { key: "capacidadUsada", label: "Capacidad Usada %", type: "avg", unit: "%" },
+                { key: "slaCumplido", label: "SLA Cumplido %", type: "avg", unit: "%" },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

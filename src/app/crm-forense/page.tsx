@@ -767,6 +767,50 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "LANDING_PAGES") {
+            return [
+                periodCol,
+                { key: "url", label: "Landing URL", type: "string", unit: "" },
+                { key: "utmSource", label: "UTM Source", type: "string", unit: "" },
+                { key: "utmCampaign", label: "UTM Campaign", type: "string", unit: "" },
+                { key: "utmMedium", label: "UTM Medium", type: "string", unit: "" },
+                { key: "utmContent", label: "UTM Content", type: "string", unit: "" },
+                { key: "sesiones", label: "Sesiones", type: "sum", unit: "" },
+                { key: "usuariosUnicos", label: "Usuarios Únicos", type: "sum", unit: "" },
+                { key: "usuariosNuevos", label: "Usuarios Nuevos", type: "sum", unit: "" },
+                { key: "usuariosRecurrentes", label: "Usuarios Recurr.", type: "sum", unit: "" },
+                { key: "pctNuevos", label: "% Nuevos", type: "calc", unit: "%", calcFn: (t) => t.usuariosUnicos > 0 ? (t.usuariosNuevos / t.usuariosUnicos) * 100 : 0 },
+                { key: "paginasSesion", label: "Páginas x Sesión", type: "avg", unit: "" },
+                { key: "tiempoMedioSesion", label: "T. Medio Sesión", type: "avg", unit: "" },
+                { key: "tasaRebote", label: "Tasa Rebote %", type: "avg", unit: "%" },
+                { key: "scrollMedio", label: "Scroll Medio %", type: "avg", unit: "%" },
+                { key: "clicsCTA", label: "Clics CTA", type: "sum", unit: "" },
+                { key: "tasaClicCTA", label: "Tasa Clic CTA", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.sesiones > 0 ? (t.clicsCTA / t.sesiones) * 100 : 0 },
+                { key: "pedidosIniciados", label: "Pedidos Iniciados", type: "sum", unit: "" },
+                { key: "pedidosCompletados", label: "Pedidos Complet.", type: "sum", unit: "" },
+                { key: "cvrSesion", label: "CVR Sesión %", type: "calc", unit: "%", thresholds: [3, 1.5], lowerIsBetter: false, calcFn: (t) => t.sesiones > 0 ? (t.pedidosCompletados / t.sesiones) * 100 : 0 },
+                { key: "cvrClic", label: "CVR Clic %", type: "calc", unit: "%", thresholds: [10, 5], lowerIsBetter: false, calcFn: (t) => t.clicsCTA > 0 ? (t.pedidosCompletados / t.clicsCTA) * 100 : 0 },
+                { key: "enviados", label: "Enviados", type: "sum", unit: "" },
+                { key: "tasaEnvio", label: "Tasa Envío %", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.pedidosCompletados > 0 ? (t.enviados / t.pedidosCompletados) * 100 : 0 },
+                { key: "entregados", label: "Entregados", type: "sum", unit: "" },
+                { key: "tasaEntrega", label: "Tasa Entrega %", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.enviados > 0 ? (t.entregados / t.enviados) * 100 : 0 },
+                { key: "incidencias", label: "Incid.", type: "sum", unit: "" },
+                { key: "tasaIncidencias", label: "Tasa Incid. %", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.enviados > 0 ? (t.incidencias / t.enviados) * 100 : 0 },
+                { key: "devoluciones", label: "Devol.", type: "sum", unit: "" },
+                { key: "tasaDevolucion", label: "Tasa Devol. %", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.entregados > 0 ? (t.devoluciones / t.entregados) * 100 : 0 },
+                { key: "facturacion", label: "Fact. €", type: "sum", unit: "EUR" },
+                { key: "ticketMedio", label: "Ticket Medio €", type: "calc", unit: "EUR", calcFn: (t) => t.pedidosCompletados > 0 ? t.facturacion / t.pedidosCompletados : 0 },
+                { key: "inversion", label: "Inversión €", type: "sum", unit: "EUR" },
+                { key: "roas", label: "ROAS", type: "calc", unit: "x", thresholds: [3, 1.5], lowerIsBetter: false, calcFn: (t) => t.inversion > 0 ? t.facturacion / t.inversion : 0 },
+                { key: "cpa", label: "CPA €", type: "calc", unit: "EUR", calcFn: (t) => t.pedidosCompletados > 0 ? t.inversion / t.pedidosCompletados : 0 },
+                { key: "cpv", label: "CPV €", type: "calc", unit: "EUR", calcFn: (t) => t.sesiones > 0 ? t.inversion / t.sesiones : 0 },
+                { key: "profit", label: "Profit €", type: "calc", unit: "EUR", calcFn: (t) => t.facturacion - t.inversion },
+                { key: "margen", label: "Margen %", type: "calc", unit: "%", calcFn: (t) => t.facturacion > 0 ? (t.profit / t.facturacion) * 100 : 0 },
+                { key: "pctCOD", label: "% COD", type: "avg", unit: "%" },
+                { key: "pctTarjeta", label: "% Tarjeta", type: "avg", unit: "%" },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

@@ -113,6 +113,25 @@ export default function PedidosPage() {
                 </div>
             )}
 
+            {/* Conditional KPIs for Incidencias */}
+            {activeTab === 'incidencias' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "Incidencias abiertas", value: "24", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Recuperadas hoy", value: "8", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Tasa recuperación", value: "65%", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
+                        { label: "Pérdida estimada", value: "€340", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* Content Body */}
             <div className="ds-card" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: "500px", overflow: "hidden" }}>
                 {/* Controls Bar */}
@@ -152,7 +171,17 @@ export default function PedidosPage() {
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Método Pago</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Gestor</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Transport.</th>
-                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tracking</th>
+                                {activeTab !== 'incidencias' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tracking</th>}
+
+                                {activeTab === 'incidencias' && (
+                                    <>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tipo Incid.</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "center" }}>Intentos</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días Abierta</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", color: "#ef4444", textAlign: "right" }}>Pérdida Est.</th>
+                                    </>
+                                )}
+
                                 {activeTab === 'en-transito' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días</th>}
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Fecha</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Últ. Acción</th>
@@ -161,7 +190,7 @@ export default function PedidosPage() {
                         </thead>
                         <tbody>
                             {/* Example Row 1 - Hidden in 'por-gestionar' as it's 'en_preparacion' */}
-                            {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && (
+                            {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && (
                                 <tr>
                                     <td style={{ padding: "12px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -225,8 +254,8 @@ export default function PedidosPage() {
                                     </td>
                                 </tr>
                             )}
-                            {/* Example Row 2 - Siempre se muestra porque es 'reintento' (excepto en en-transito) */}
-                            {activeTab !== 'en-transito' && (
+                            {/* Example Row 2 - Siempre se muestra porque es 'reintento' (entra también en incidencias) */}
+                            {activeTab !== 'en-transito' && activeTab !== 'incidencias' && (
                                 <tr>
                                     <td style={{ padding: "12px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -290,8 +319,8 @@ export default function PedidosPage() {
                                     </td>
                                 </tr>
                             )}
-                            {/* Example Row 3 - Oculto en en-transito */}
-                            {activeTab !== 'en-transito' && (
+                            {/* Example Row 3 - Novedades - solo en todos */}
+                            {activeTab === 'todos' && (
                                 <tr>
                                     <td style={{ padding: "12px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -438,9 +467,93 @@ export default function PedidosPage() {
                                     </td>
                                 </tr>
                             )}
+                            {/* Example Row 5 - INCIDENCIAS */}
+                            {(activeTab === 'todos' || activeTab === 'incidencias') && (
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    </td>
+                                    <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10049</a></td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.fallido.bg,
+                                            color: ORDER_STATES.fallido.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.fallido.icon}</span>
+                                            {ORDER_STATES.fallido.label}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" }}>S</div>
+                                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify</span>
+                                        </div>
+                                    </td>
+                                    <td>Luis García</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 004</td>
+                                    <td style={{ fontSize: "11px" }}>29001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Málaga</span></td>
+                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                        <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Chaqueta Invierno XL</span>
+                                            <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€120.00</td>
+                                    <td>
+                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
+                                    </td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "4px 8px", borderRadius: "6px",
+                                            fontSize: "11px", fontWeight: 600,
+                                            background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0"
+                                        }}>
+                                            👤 María G.
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>B</div>
+                                            <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Beeping</span>
+                                        </div>
+                                    </td>
+
+                                    {activeTab !== 'incidencias' && (
+                                        <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
+                                    )}
+
+                                    {activeTab === 'incidencias' && (
+                                        <>
+                                            <td>
+                                                <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#fee2e2", color: "#b91c1c", whiteSpace: "nowrap" }}>
+                                                    Dirección Incorrecta
+                                                </span>
+                                            </td>
+                                            <td style={{ textAlign: "center", fontWeight: 800, color: "var(--color-text-secondary)" }}>2</td>
+                                            <td>
+                                                <span style={{ fontSize: "10px", fontWeight: 700 }}>4 días</span>
+                                            </td>
+                                            <td style={{ fontWeight: 800, textAlign: "right", color: "#ef4444" }}>€15.50</td>
+                                        </>
+                                    )}
+
+                                    <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hace 6d<br />09:12</td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Ayer<br />11:00</td>
+                                    <td>
+                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                            <MoreHorizontal size={14} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
                             {/* Empty State message for the rest */}
                             <tr>
-                                <td colSpan={activeTab === 'en-transito' ? 17 : 16} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
+                                <td colSpan={activeTab === 'en-transito' ? 17 : (activeTab === 'incidencias' ? 19 : 16)} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
                                     <p style={{ fontWeight: 700, fontSize: "14px", color: "var(--text)" }}>Módulo de Pedidos en Desarrollo</p>
                                     <p style={{ fontSize: "12px", marginTop: "6px", maxWidth: "400px", margin: "6px auto 0" }}>El motor de sincronización logística unificará aquí todos los estados de Shopify y tus operadores de fulfillment seleccionados.</p>
                                 </td>

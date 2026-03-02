@@ -89,7 +89,7 @@ interface CRMColumn {
     key: string;
     label: string;
     type?: "sum" | "avg" | "rate" | "string" | "calc";
-    unit?: "EUR" | "%" | "text" | "x";
+    unit?: "EUR" | "%" | "text" | "x" | "";
     thresholds?: number[];
     lowerIsBetter?: boolean;
     calcFn?: (totals: any) => number;
@@ -396,18 +396,72 @@ export default function CrmForensePage() {
         }));
     }, [viewMode, dailyData, weeklySummary, month, year]);
 
-    const tableColumns: CRMColumn[] = React.useMemo(() => [
-        { key: "label", label: viewMode === "daily" ? "DÍA" : viewMode === "weekly" ? "SEMANA" : viewMode === "monthly" ? "MES" : "AÑO", type: "string" },
-        { key: "facturacion", label: "Facturación", type: "sum", unit: "EUR" },
-        { key: "pedidos", label: "Pedidos", type: "sum" },
-        { key: "entregados", label: "Entregados", type: "sum" },
-        { key: "tasaEntrega", label: "Tasa Entrega", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.pedidos > 0 ? (t.entregados / t.pedidos) * 100 : 0 },
-        { key: "incidencias", label: "Incidencias", type: "sum" },
-        { key: "tasaIncidencias", label: "Tasa Incid.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.pedidos > 0 ? (t.incidencias / t.pedidos) * 100 : 0 },
-        { key: "ticketMedio", label: "Ticket Medio", type: "calc", unit: "EUR", calcFn: (t) => t.pedidos > 0 ? t.facturacion / t.pedidos : 0 },
-        { key: "beneficioNeto", label: "Benef. Neto", type: "sum", unit: "EUR" },
-        { key: "margen", label: "Margen Neto", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.facturacion > 0 ? (t.beneficioNeto / t.facturacion) * 100 : 0 },
-    ], []);
+    const tableColumns: CRMColumn[] = React.useMemo(() => {
+        const periodCol: CRMColumn = { key: "label", label: viewMode === "daily" ? "DÍA" : viewMode === "weekly" ? "SEMANA" : viewMode === "monthly" ? "MES" : "AÑO", type: "string" };
+
+        if (activeTab === "VENTAS") {
+            return [
+                periodCol,
+                // PEDIDOS
+                { key: "pedidos", label: "Pedidos Total", type: "sum", unit: "" },
+                { key: "confirmados", label: "Confirmados", type: "sum", unit: "" },
+                { key: "cancelados", label: "Cancelados", type: "sum", unit: "" },
+                { key: "tasaCancelacion", label: "Tasa Cancel.", type: "calc", unit: "%", thresholds: [15, 25], lowerIsBetter: true, calcFn: (t) => t.pedidos > 0 ? (t.cancelados / t.pedidos) * 100 : 0 },
+                { key: "enviados", label: "Enviados", type: "sum", unit: "" },
+                { key: "tasaEnvio", label: "Tasa Envío", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.confirmados > 0 ? (t.enviados / t.confirmados) * 100 : 0 },
+                { key: "entregados", label: "Entregados", type: "sum", unit: "" },
+                { key: "tasaEntrega", label: "Tasa Entrega", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.enviados > 0 ? (t.entregados / t.enviados) * 100 : 0 },
+                { key: "reintentos", label: "Reintentos", type: "sum", unit: "" },
+                { key: "incidencias", label: "Incidencias", type: "sum", unit: "" },
+                { key: "tasaIncidencias", label: "Tasa Incid.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.enviados > 0 ? (t.incidencias / t.enviados) * 100 : 0 },
+                { key: "recuperadas", label: "Recuperadas", type: "sum", unit: "" },
+                { key: "tasaRecuperacion", label: "Tasa Recup.", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.incidencias > 0 ? (t.recuperadas / t.incidencias) * 100 : 0 },
+
+                // FACTURACIÓN
+                { key: "facturacionBruta", label: "Facturación Bruta", type: "sum", unit: "EUR" },
+                { key: "facturacionNeta", label: "Facturación Neta", type: "sum", unit: "EUR" },
+                { key: "ticketMedio", label: "Ticket Medio", type: "calc", unit: "EUR", calcFn: (t) => t.pedidos > 0 ? t.facturacionBruta / t.pedidos : 0 },
+                { key: "unidades", label: "Unidades Vendidas", type: "sum", unit: "" },
+                { key: "udsPorPedido", label: "Uds. Pedido", type: "calc", unit: "", calcFn: (t) => t.pedidos > 0 ? t.unidades / t.pedidos : 0 },
+
+                // DEVOLUCIONES
+                { key: "devoluciones", label: "Devol.", type: "sum", unit: "" },
+                { key: "tasaDevolucion", label: "Tasa Devol.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.entregados > 0 ? (t.devoluciones / t.entregados) * 100 : 0 },
+                { key: "importeDevolucion", label: "Importe Devol.", type: "sum", unit: "EUR" },
+
+                // PAGO
+                { key: "pedidosCOD", label: "Pedidos COD", type: "sum", unit: "" },
+                { key: "pedidosTarjeta", label: "Pedidos Tarjeta", type: "sum", unit: "" },
+                { key: "pctCOD", label: "% COD", type: "calc", unit: "%", calcFn: (t) => t.pedidos > 0 ? (t.pedidosCOD / t.pedidos) * 100 : 0 },
+                { key: "pctTarjeta", label: "% Tarjeta", type: "calc", unit: "%", calcFn: (t) => t.pedidos > 0 ? (t.pedidosTarjeta / t.pedidos) * 100 : 0 },
+                { key: "facturacionCOD", label: "Fact. COD", type: "sum", unit: "EUR" },
+                { key: "facturacionTarjeta", label: "Fact. Tarjeta", type: "sum", unit: "EUR" },
+
+                // ECONOMÍA
+                { key: "cogs", label: "COGS", type: "sum", unit: "EUR" },
+                { key: "shippingTotal", label: "Shipping Total", type: "sum", unit: "EUR" },
+                { key: "beneficioBruto", label: "Benef. Bruto", type: "calc", unit: "EUR", calcFn: (t) => t.facturacionNeta - t.cogs },
+                { key: "beneficioNeto", label: "Benef. Neto", type: "calc", unit: "EUR", calcFn: (t) => t.facturacionNeta - t.cogs - t.shippingTotal },
+                { key: "margenBruto", label: "Margen Bruto", type: "calc", unit: "%", thresholds: [50, 30], lowerIsBetter: false, calcFn: (t) => t.facturacionNeta > 0 ? (t.beneficioBruto / t.facturacionNeta) * 100 : 0 },
+                { key: "margenNeto", label: "Margen Neto", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.facturacionNeta > 0 ? (t.beneficioNeto / t.facturacionNeta) * 100 : 0 },
+                { key: "roi", label: "ROI", type: "calc", unit: "%", calcFn: (t) => t.cogs > 0 ? (t.beneficioNeto / t.cogs) * 100 : 0 },
+            ];
+        }
+
+        // Default estandar anterior fallback hasta que pongamos el resto de tabs
+        return [
+            periodCol,
+            { key: "facturacion", label: "Facturación", type: "sum", unit: "EUR" },
+            { key: "pedidos", label: "Pedidos", type: "sum" },
+            { key: "entregados", label: "Entregados", type: "sum" },
+            { key: "tasaEntrega", label: "Tasa Entrega", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.pedidos > 0 ? (t.entregados / t.pedidos) * 100 : 0 },
+            { key: "incidencias", label: "Incidencias", type: "sum" },
+            { key: "tasaIncidencias", label: "Tasa Incid.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.pedidos > 0 ? (t.incidencias / t.pedidos) * 100 : 0 },
+            { key: "ticketMedio", label: "Ticket Medio", type: "calc", unit: "EUR", calcFn: (t) => t.pedidos > 0 ? t.facturacion / t.pedidos : 0 },
+            { key: "beneficioNeto", label: "Benef. Neto", type: "sum", unit: "EUR" },
+            { key: "margen", label: "Margen Neto", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.facturacion > 0 ? (t.beneficioNeto / t.facturacion) * 100 : 0 },
+        ];
+    }, [viewMode, activeTab]);
 
     const tableTotals = React.useMemo(() => {
         const t: any = {};

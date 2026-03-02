@@ -222,6 +222,8 @@ export default function PedidosPage() {
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Pedido</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Estado</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "center" }}>Fte.</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "center" }}>Fullfillm.</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "center" }}>Transp.</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Cliente</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Teléfono</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>CP / Zona</th>
@@ -229,7 +231,6 @@ export default function PedidosPage() {
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right" }}>Importe €</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Pago</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Gestor</th>
-                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Fulfillm. / Transp.</th>
                                 {activeTab !== 'incidencias' && activeTab !== 'devoluciones' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tracking</th>}
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "center" }}>Riesgo</th>
 
@@ -252,7 +253,8 @@ export default function PedidosPage() {
                                 )}
 
                                 {activeTab === 'en-transito' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días</th>}
-                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Fecha</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>T. Gestión</th>
+                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Entrada</th>
 
                                 <th style={{ color: "var(--color-text-secondary)", width: "40px", textAlign: "center" }}></th>
                             </tr>
@@ -277,8 +279,12 @@ export default function PedidosPage() {
                                             {ORDER_STATES.en_preparacion.label}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: "center" }}>
-                                        <div style={{  width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" , margin: "0 auto" }}>S</div>
+                                    <td style={{ textAlign: "center" }} title="Proveedor: Shopify"><div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5", margin: "0 auto" }}>S</div></td>
+                                    <td style={{ textAlign: "center" }} title="Beeping">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe", margin: "0 auto" }}>B</div>
+                                    </td>
+                                    <td style={{ textAlign: "center" }} title="GLS">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#f59e0b", border: "1px solid #fef3c7", margin: "0 auto" }}>G</div>
                                     </td>
                                     <td>Juan Pérez</td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 000</td>
@@ -304,11 +310,9 @@ export default function PedidosPage() {
                                             🤖 Bot COD
                                         </span>
                                     </td>
-                                    <td>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify · Beeping</span>
-                                    </td>
-                                    <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>BP-1234444</td>
+                                                                                                            <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>BP-1234444</td>
                                     <td style={{ textAlign: "center" }} title="Riesgo Bajo"><span style={{ fontSize: "14px" }}>🟢</span></td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px", fontWeight: 600 }}>12m<br /><span style={{ color: "#10b981" }}>En tiempo</span></td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hoy<br />10:42</td>
                                     
                                     <td>
@@ -337,8 +341,12 @@ export default function PedidosPage() {
                                             {ORDER_STATES.reintento.label}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: "center" }}>
-                                        <div style={{  width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe" , margin: "0 auto" }}>B</div>
+                                    <td style={{ textAlign: "center" }} title="Proveedor: Beeping"><div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5", margin: "0 auto" }}>B</div></td>
+                                    <td style={{ textAlign: "center" }} title="Dropea">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe", margin: "0 auto" }}>D</div>
+                                    </td>
+                                    <td style={{ textAlign: "center" }} title="GLS">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#f59e0b", border: "1px solid #fef3c7", margin: "0 auto" }}>G</div>
                                     </td>
                                     <td>María Gómez</td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 001</td>
@@ -364,11 +372,9 @@ export default function PedidosPage() {
                                             👤 María G.
                                         </span>
                                     </td>
-                                    <td>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify · Dropea</span>
-                                    </td>
-                                    <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
+                                                                                                            <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
                                     <td style={{ textAlign: "center" }} title="Riesgo Bajo"><span style={{ fontSize: "14px" }}>🟢</span></td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px", fontWeight: 600 }}>12m<br /><span style={{ color: "#10b981" }}>En tiempo</span></td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hoy<br />10:35</td>
                                     
                                     <td>
@@ -397,8 +403,12 @@ export default function PedidosPage() {
                                             {ORDER_STATES.nuevo.label}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: "center" }}>
-                                        <div style={{  width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#f59e0b", border: "1px solid #fef3c7" , margin: "0 auto" }}>D</div>
+                                    <td style={{ textAlign: "center" }} title="Proveedor: Dropi"><div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5", margin: "0 auto" }}>D</div></td>
+                                    <td style={{ textAlign: "center" }} title="-">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe", margin: "0 auto" }}>-</div>
+                                    </td>
+                                    <td style={{ textAlign: "center" }} title="-">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#f59e0b", border: "1px solid #fef3c7", margin: "0 auto" }}>-</div>
                                     </td>
                                     <td>Carlos López</td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 002</td>
@@ -435,11 +445,9 @@ export default function PedidosPage() {
                                             </span>
                                         )}
                                     </td>
-                                    <td>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Ninguno</span>
-                                    </td>
-                                    <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
+                                                                                                            <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
                                     <td style={{ textAlign: "center" }} title="Riesgo Bajo"><span style={{ fontSize: "14px" }}>🟢</span></td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px", fontWeight: 600 }}>12m<br /><span style={{ color: "#10b981" }}>En tiempo</span></td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Ayer<br />18:20</td>
                                     
                                     <td>
@@ -468,8 +476,12 @@ export default function PedidosPage() {
                                             {ORDER_STATES.enviado.label}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: "center" }}>
-                                        <div style={{  width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" , margin: "0 auto" }}>S</div>
+                                    <td style={{ textAlign: "center" }} title="Proveedor: Shopify"><div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5", margin: "0 auto" }}>S</div></td>
+                                    <td style={{ textAlign: "center" }} title="Beeping">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe", margin: "0 auto" }}>B</div>
+                                    </td>
+                                    <td style={{ textAlign: "center" }} title="Correos Express">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#3b82f6", border: "1px solid #bfdbfe", margin: "0 auto" }}>C</div>
                                     </td>
                                     <td>Ana Martínez</td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 003</td>
@@ -495,10 +507,7 @@ export default function PedidosPage() {
                                             👤 Sistema
                                         </span>
                                     </td>
-                                    <td>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify · Correos Express</span>
-                                    </td>
-                                    <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>PQ41029312</td>
+                                                                                                            <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>PQ41029312</td>
                                     {activeTab === 'en-transito' && (
                                         <td>
                                             <span style={{ fontSize: "10px", fontWeight: 800, padding: "4px 8px", borderRadius: "6px", background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca" }}>
@@ -507,6 +516,7 @@ export default function PedidosPage() {
                                         </td>
                                     )}
                                     <td style={{ textAlign: "center" }} title="Riesgo Bajo"><span style={{ fontSize: "14px" }}>🟢</span></td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px", fontWeight: 600 }}>12m<br /><span style={{ color: "#10b981" }}>En tiempo</span></td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hace 8d<br />12:05</td>
                                     
                                     <td>
@@ -535,8 +545,12 @@ export default function PedidosPage() {
                                             {ORDER_STATES.fallido.label}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: "center" }}>
-                                        <div style={{  width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" , margin: "0 auto" }}>S</div>
+                                    <td style={{ textAlign: "center" }} title="Proveedor: Shopify"><div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5", margin: "0 auto" }}>S</div></td>
+                                    <td style={{ textAlign: "center" }} title="Beeping">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe", margin: "0 auto" }}>B</div>
+                                    </td>
+                                    <td style={{ textAlign: "center" }} title="GLS">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#f59e0b", border: "1px solid #fef3c7", margin: "0 auto" }}>G</div>
                                     </td>
                                     <td>Luis García</td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 004</td>
@@ -562,10 +576,7 @@ export default function PedidosPage() {
                                             👤 María G.
                                         </span>
                                     </td>
-                                    <td>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify · Beeping</span>
-                                    </td>
-
+                                                                        
                                     {activeTab !== 'incidencias' && (
                                         <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
                                     )}
@@ -587,6 +598,7 @@ export default function PedidosPage() {
                                     )}
 
                                     <td style={{ textAlign: "center" }} title="Riesgo Bajo"><span style={{ fontSize: "14px" }}>🟢</span></td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px", fontWeight: 600 }}>12m<br /><span style={{ color: "#10b981" }}>En tiempo</span></td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hace 6d<br />09:12</td>
                                     
                                     <td>
@@ -615,8 +627,12 @@ export default function PedidosPage() {
                                             {ORDER_STATES.devolucion.label}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: "center" }}>
-                                        <div style={{  width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" , margin: "0 auto" }}>S</div>
+                                    <td style={{ textAlign: "center" }} title="Proveedor: Shopify"><div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5", margin: "0 auto" }}>S</div></td>
+                                    <td style={{ textAlign: "center" }} title="Beeping">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe", margin: "0 auto" }}>B</div>
+                                    </td>
+                                    <td style={{ textAlign: "center" }} title="Correos Express">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#3b82f6", border: "1px solid #bfdbfe", margin: "0 auto" }}>C</div>
                                     </td>
                                     <td>Marta Díaz</td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 005</td>
@@ -642,10 +658,7 @@ export default function PedidosPage() {
                                             👤 María G.
                                         </span>
                                     </td>
-                                    <td>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify · Correos Express</span>
-                                    </td>
-
+                                                                        
                                     {activeTab !== 'devoluciones' && (
                                         <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>PQ41029888</td>
                                     )}
@@ -661,6 +674,7 @@ export default function PedidosPage() {
                                     )}
 
                                     <td style={{ textAlign: "center" }} title="Riesgo Bajo"><span style={{ fontSize: "14px" }}>🟢</span></td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px", fontWeight: 600 }}>12m<br /><span style={{ color: "#10b981" }}>En tiempo</span></td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hace 2d<br />14:15</td>
                                     
                                     <td>
@@ -689,8 +703,12 @@ export default function PedidosPage() {
                                             {ORDER_STATES.entregado.label}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: "center" }}>
-                                        <div style={{  width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" , margin: "0 auto" }}>S</div>
+                                    <td style={{ textAlign: "center" }} title="Proveedor: Shopify"><div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5", margin: "0 auto" }}>S</div></td>
+                                    <td style={{ textAlign: "center" }} title="Beeping">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe", margin: "0 auto" }}>B</div>
+                                    </td>
+                                    <td style={{ textAlign: "center" }} title="GLS">
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#f59e0b", border: "1px solid #fef3c7", margin: "0 auto" }}>G</div>
                                     </td>
                                     <td>Javier Nieto</td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 006</td>
@@ -716,16 +734,14 @@ export default function PedidosPage() {
                                             👤 Sistema
                                         </span>
                                     </td>
-                                    <td>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify · GLS</span>
-                                    </td>
-
+                                                                        
                                     {activeTab !== 'historial' && (
                                         <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>GLS0012929</td>
                                     )}
                                     <td style={{ textAlign: "center" }} title="Riesgo Bajo"><span style={{ fontSize: "14px" }}>🟢</span></td>
 
                                     <td style={{ textAlign: "center" }} title="Riesgo Bajo"><span style={{ fontSize: "14px" }}>🟢</span></td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px", fontWeight: 600 }}>12m<br /><span style={{ color: "#10b981" }}>En tiempo</span></td>
                                     <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hace 12d<br />10:00</td>
                                     
                                     <td>
@@ -737,7 +753,7 @@ export default function PedidosPage() {
                             )}
                             {/* Empty State message for the rest */}
                             <tr>
-                                <td colSpan={activeTab === 'en-transito' ? 17 : (activeTab === 'incidencias' ? 19 : (activeTab === 'devoluciones' ? 19 : 16))} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
+                                <td colSpan={activeTab === 'en-transito' ? 18 : (activeTab === 'incidencias' ? 20 : (activeTab === 'devoluciones' ? 20 : 17))} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
                                     <p style={{ fontWeight: 700, fontSize: "14px", color: "var(--text)" }}>Módulo de Pedidos en Desarrollo</p>
 
                                     <p style={{ fontSize: "12px", marginTop: "6px", maxWidth: "400px", margin: "6px auto 0" }}>El motor de sincronización logística unificará aquí todos los estados de Shopify y tus operadores de fulfillment seleccionados.</p>

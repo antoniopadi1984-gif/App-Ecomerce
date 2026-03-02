@@ -553,6 +553,44 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "AGENTES") {
+            return [
+                periodCol,
+                { key: "nombre", label: "Agente", type: "string", unit: "" },
+                { key: "tipo", label: "Tipo", type: "string", unit: "" },
+                { key: "interacciones", label: "Interacc. Total", type: "sum", unit: "" },
+                { key: "conversCompletas", label: "Convers. Complet.", type: "sum", unit: "" },
+                { key: "tasaCompletado", label: "Tasa Complet.", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.interacciones > 0 ? (t.conversCompletas / t.interacciones) * 100 : 0 },
+                { key: "resueltosAuton", label: "Resueltos Autón.", type: "sum", unit: "" },
+                { key: "escalados", label: "Escalados Humano", type: "sum", unit: "" },
+                { key: "tasaResolucion", label: "Tasa Resoluc.", type: "calc", unit: "%", thresholds: [70, 40], lowerIsBetter: false, calcFn: (t) => t.conversCompletas > 0 ? (t.resueltosAuton / t.conversCompletas) * 100 : 0 },
+                { key: "tasaEscalado", label: "Tasa Escalado", type: "calc", unit: "%", thresholds: [20, 40], lowerIsBetter: true, calcFn: (t) => t.conversCompletas > 0 ? (t.escalados / t.conversCompletas) * 100 : 0 },
+                { key: "consultasRecibidas", label: "Consultas Recibidas", type: "sum", unit: "" },
+                { key: "consultasResueltas", label: "Consultas Resueltas", type: "sum", unit: "" },
+                { key: "tiempoRespuesta", label: "T. Resp. (s)", type: "avg", unit: "" },
+                { key: "satisfaccion", label: "Satisf. /5", type: "avg", unit: "" },
+                { key: "csat", label: "CSAT %", type: "avg", unit: "%" },
+                { key: "quejasGest", label: "Quejas Gestión.", type: "sum", unit: "" },
+                { key: "quejasResueltas", label: "Quejas Resueltas", type: "sum", unit: "" },
+                { key: "tasaQuejas", label: "Tasa Quejas", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.quejasGest > 0 ? (t.quejasResueltas / t.quejasGest) * 100 : 0 },
+                { key: "pedidosInfluenc", label: "Pedidos Influenc.", type: "sum", unit: "" },
+                { key: "upsellsSugeridos", label: "Upsells Sugeridos", type: "sum", unit: "" },
+                { key: "upsellsAceptados", label: "Upsells Aceptados", type: "sum", unit: "" },
+                { key: "tasaUpsell", label: "Tasa Upsell", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.upsellsSugeridos > 0 ? (t.upsellsAceptados / t.upsellsSugeridos) * 100 : 0 },
+                { key: "facturacionInfluenc", label: "Fact. Influenc.", type: "sum", unit: "EUR" },
+                { key: "importeUpsell", label: "Importe Upsell", type: "sum", unit: "EUR" },
+                { key: "incidGestionadas", label: "Incid. Gestión.", type: "sum", unit: "" },
+                { key: "incidRecuperadas", label: "Incid. Recuper.", type: "sum", unit: "" },
+                { key: "tasaRecuperacion", label: "Tasa Recup.", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.incidGestionadas > 0 ? (t.incidRecuperadas / t.incidGestionadas) * 100 : 0 },
+                { key: "tokens", label: "Tokens", type: "sum", unit: "" },
+                { key: "coste", label: "Coste €", type: "sum", unit: "EUR" },
+                { key: "costeInteraccion", label: "Coste x Interac.", type: "calc", unit: "EUR", calcFn: (t) => t.interacciones > 0 ? t.coste / t.interacciones : 0 },
+                { key: "ahorro", label: "Ahorro €", type: "sum", unit: "EUR" },
+                { key: "roi", label: "ROI Agente", type: "calc", unit: "%", calcFn: (t) => t.coste > 0 ? (t.ahorro / t.coste) * 100 : 0 },
+                { key: "score", label: "Score Rend.", type: "avg", unit: "" },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { Users, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AgentCompanion } from '@/components/layout/agent-companion';
+import { ViewMode } from '@/lib/crmPeriods';
 
 const TABS = [
     { id: 'VENTAS', label: 'Ventas' },
@@ -15,8 +16,6 @@ const TABS = [
     { id: 'PRODUCTOS', label: 'Productos' },
     { id: 'COD_VS_CARD', label: 'COD vs Tarjeta' },
 ];
-
-type ViewMode = "daily" | "weekly" | "monthly" | "annual";
 
 function PillTab({ active, label, set }: { active: boolean; label: string; set: () => void }) {
     return (

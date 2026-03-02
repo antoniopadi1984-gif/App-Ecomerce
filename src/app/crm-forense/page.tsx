@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { Users, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AgentCompanion } from '@/components/layout/agent-companion';
-import { ViewMode } from '@/lib/crmPeriods';
+import { ViewMode, getWeeklySummary, DayData, WeekSummary } from '@/lib/crmPeriods';
 
 const TABS = [
     { id: 'VENTAS', label: 'Ventas' },
@@ -64,6 +64,7 @@ export default function CrmForensePage() {
     const [activeTab, setActiveTab] = useState(TABS[0].id);
     const [date, setDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<ViewMode>("daily");
+    const [activeWeek, setActiveWeek] = useState(0);
 
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -87,6 +88,34 @@ export default function CrmForensePage() {
         const d = new Date(date);
         d.setMonth(d.getMonth() + delta);
         setDate(d);
+        setActiveWeek(0);
+    };
+
+    const parseDailyData = (metrics: any[], daysInMonth: number): DayData[] => {
+        if (!metrics || metrics.length === 0) return [];
+        const getV = (label: string) => metrics.find((m: any) => m.label.includes(label))?.values || Array(daysInMonth).fill(0);
+
+        const fact = getV("Facturación") || getV("Ventas") || getV("Inversión") || getV("Volumen");
+        const ped = getV("Pedidos") || getV("Total") || getV("Ingresos") || Array(daysInMonth).fill(0);
+
+        return Array.from({ length: daysInMonth }, (_, i) => ({
+            day: i + 1,
+            facturacion: fact[i] || 0,
+            pedidos: ped[i] || 0,
+            entregados: Math.round((ped[i] || 0) * 0.8), // Mock temp 
+            incidencias: Math.round((ped[i] || 0) * 0.05), // Mock temp
+            ticketMedio: fact[i] && ped[i] ? Math.round(fact[i] / ped[i]) : 0,
+            margen: 25 // Mock temp
+        }));
+    };
+
+    const dailyData = data?.data?.metrics ? parseDailyData(data.data.metrics, data.daysInMonth) : [];
+    const weeklySummary = dailyData.length > 0 ? getWeeklySummary(dailyData, month, year) : [];
+
+    const formatValue = (value: number, unit: string) => {
+        if (unit === "EUR") return `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : Math.round(value)}`;
+        if (unit === "%") return `${value}%`;
+        return `${value}`;
     };
 
     const contextForAgent = `CRM Forense. Viendo datos de ${activeTab} del mes ${month}/${year}.`;
@@ -189,17 +218,74 @@ export default function CrmForensePage() {
                         )}
                     </div>
 
-                    {/* Resumen Semanal Cards (Placeholder para UI completa futura dictada en manual) */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-2">
-                        {[1, 2, 3, 4].map(w => (
-                            <div key={w} className="ds-card-padded border-l-[3px] border-l-[var(--crm)]">
-                                <div className="text-[9px] font-bold text-[var(--text-dim)] uppercase tracking-widest mb-1">Semana {w}</div>
-                                <div className="text-[20px] font-[800] leading-none text-[var(--text)] font-mono">
-                                    €—
+                    {/* Resumen Semanal Cards (Siempre visibles) */}
+                    {weeklySummary.length > 0 && (
+                        <div style={{
+                            display: "grid",
+                            gridTemplateColumns: `repeat(${weeklySummary.length}, 1fr)`,
+                            gap: "10px",
+                            marginBottom: "16px",
+                            marginTop: "8px"
+                        }}>
+                            {weeklySummary.map((week: WeekSummary, i: number) => (
+                                <div key={i} style={{
+                                    background: "white",
+                                    borderRadius: "12px",
+                                    border: "1px solid #e2e8f0",
+                                    padding: "12px 14px",
+                                    cursor: "pointer",
+                                    outline: activeWeek === i && viewMode === "daily" ? "2px solid #7c3aed" : "none"
+                                }}
+                                    onClick={() => setActiveWeek(i)}
+                                >
+                                    {/* Header tarjeta */}
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
+                                        <div>
+                                            <p style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", margin: 0 }}>
+                                                {week.label}
+                                            </p>
+                                            <p style={{ fontSize: "8px", color: "#cbd5e1", margin: 0 }}>{week.dateRange}</p>
+                                        </div>
+                                        {/* Variación vs semana anterior */}
+                                        {week.varVsPrev !== null && (
+                                            <span style={{
+                                                fontSize: "9px", fontWeight: 700,
+                                                color: week.varVsPrev >= 0 ? "#22c55e" : "#ef4444",
+                                                background: week.varVsPrev >= 0 ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                                                borderRadius: "4px", padding: "1px 5px"
+                                            }}>
+                                                {week.varVsPrev >= 0 ? "↑" : "↓"}{Math.abs(week.varVsPrev)}%
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Métrica principal */}
+                                    <p style={{ fontSize: "18px", fontWeight: 900, color: "#1e293b", margin: "0 0 4px 0" }}>
+                                        {formatValue(week.facturacion, "EUR")}
+                                    </p>
+
+                                    {/* Métricas secundarias */}
+                                    <div style={{ display: "flex", gap: "8px", fontSize: "10px", color: "#64748b" }}>
+                                        <span>{week.pedidos} ped.</span>
+                                        <span>·</span>
+                                        <span>{week.entregados} entr.</span>
+                                        <span>·</span>
+                                        <span style={{ color: week.incidencias > 0 ? "#ef4444" : "#94a3b8" }}>
+                                            {week.incidencias} inc.
+                                        </span>
+                                    </div>
+
+                                    {/* Margen */}
+                                    <p style={{
+                                        fontSize: "10px", fontWeight: 700, marginTop: "4px",
+                                        color: week.margen >= 20 ? "#22c55e" : week.margen >= 10 ? "#eab308" : "#ef4444"
+                                    }}>
+                                        Margen: {week.margen}%
+                                    </p>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
 
                 </div>
             )}

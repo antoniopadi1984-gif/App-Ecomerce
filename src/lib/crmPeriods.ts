@@ -29,6 +29,92 @@ export function getWeeksInMonth(month: number, year: number): { start: string, e
     return weeks;
 }
 
+export type DayData = {
+    day: number;
+    facturacion: number;
+    pedidos: number;
+    entregados: number;
+    incidencias: number;
+    ticketMedio: number;
+    margen: number;
+};
+
+export type WeekSummary = {
+    label: string;
+    dateRange: string;
+    facturacion: number;
+    pedidos: number;
+    entregados: number;
+    incidencias: number;
+    ticketMedio: number;
+    margen: number;
+    varVsPrev: number | null;
+};
+
+function sum(arr: any[], key: string) {
+    return arr.reduce((acc, obj) => acc + (obj[key] || 0), 0);
+}
+
+function avg(arr: any[], key: string) {
+    if (arr.length === 0) return 0;
+    return sum(arr, key) / arr.length;
+}
+
+function calcVariation(prev: number, curr: number) {
+    if (prev === 0) return 0;
+    return Math.round(((curr - prev) / prev) * 100);
+}
+
+export function getWeeksInMonthWithDays(month: number, year: number) {
+    const weeks = [];
+    const daysInMonth = new Date(year, month, 0).getDate();
+    let currentStart = 1;
+
+    const ms = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+    while (currentStart <= daysInMonth) {
+        let currentEnd = currentStart + 6;
+        if (currentEnd > daysInMonth) currentEnd = daysInMonth;
+
+        weeks.push({
+            startDay: currentStart,
+            endDay: currentEnd,
+            startFormatted: `${currentStart} ${ms[month - 1]}`,
+            endFormatted: `${currentEnd} ${ms[month - 1]}`
+        });
+
+        currentStart = currentEnd + 1;
+    }
+    return weeks;
+}
+
+export function getWeeklySummary(dailyData: DayData[], month: number, year: number): WeekSummary[] {
+    const weeks = getWeeksInMonthWithDays(month, year);
+    return weeks.map((week, i) => {
+        const weekDays = dailyData.filter(d => d.day >= week.startDay && d.day <= week.endDay);
+
+        let prevFacturacion = 0;
+        if (i > 0) {
+            const prevWeekDays = dailyData.filter(d => d.day >= weeks[i - 1].startDay && d.day <= weeks[i - 1].endDay);
+            prevFacturacion = sum(prevWeekDays, "facturacion");
+        }
+
+        const facturacion = sum(weekDays, "facturacion");
+
+        return {
+            label: `Semana ${i + 1}`,
+            dateRange: `${week.startFormatted} - ${week.endFormatted}`,
+            facturacion: facturacion,
+            pedidos: sum(weekDays, "pedidos"),
+            entregados: sum(weekDays, "entregados"),
+            incidencias: sum(weekDays, "incidencias"),
+            ticketMedio: Math.round(avg(weekDays, "ticketMedio")),
+            margen: Math.round(avg(weekDays, "margen")),
+            varVsPrev: i > 0 ? calcVariation(prevFacturacion, facturacion) : null
+        };
+    });
+}
+
 export function generateRows(viewMode: ViewMode, month: number, year: number): PeriodRow[] {
     switch (viewMode) {
 

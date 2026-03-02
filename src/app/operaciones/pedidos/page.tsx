@@ -151,6 +151,25 @@ export default function PedidosPage() {
                 </div>
             )}
 
+            {/* Conditional KPIs for Historial */}
+            {activeTab === 'historial' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "Entregados total", value: "3,450", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Cancelados total", value: "214", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Tasa éxito", value: "88.5%", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
+                        { label: "Facturación total", value: "€148.5K", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* Content Body */}
             <div className="ds-card" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: "500px", overflow: "hidden" }}>
                 {/* Controls Bar */}
@@ -160,10 +179,18 @@ export default function PedidosPage() {
                             {TABS.find(t => t.id === activeTab)?.label}
                         </span>
                         <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "2px 8px", background: "white", borderRadius: "10px", border: "1px solid var(--border)", fontWeight: 600 }}>
-                            254 pedidos
+                            {activeTab === 'historial' ? '3,664 pedidos' : '254 pedidos'}
                         </span>
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
+                        {activeTab === 'historial' && (
+                            <select className="ds-input" style={{ fontSize: "11px", height: "30px", padding: "0 12px", background: "white", width: "120px" }}>
+                                <option>Este mes</option>
+                                <option>Mes anterior</option>
+                                <option>Este año</option>
+                                <option>Histórico completo</option>
+                            </select>
+                        )}
                         <button className="ds-btn" style={{ background: "white", color: "var(--text-muted)", textTransform: "none", letterSpacing: "normal", fontSize: "11px", fontWeight: 600 }}>
                             <RefreshCw className="w-3.5 h-3.5" />
                             Sincronizar Estados
@@ -219,7 +246,7 @@ export default function PedidosPage() {
                         </thead>
                         <tbody>
                             {/* Example Row 1 - Hidden in 'por-gestionar' as it's 'en_preparacion' */}
-                            {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && (
+                            {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && (
                                 <tr>
                                     <td style={{ padding: "12px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -284,7 +311,7 @@ export default function PedidosPage() {
                                 </tr>
                             )}
                             {/* Example Row 2 - Siempre se muestra porque es 'reintento' (entra también en incidencias) */}
-                            {activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && (
+                            {activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && (
                                 <tr>
                                     <td style={{ padding: "12px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -658,10 +685,80 @@ export default function PedidosPage() {
                                     </td>
                                 </tr>
                             )}
+                            {/* Example Row 7 - HISTORIAL (Entregado) */}
+                            {(activeTab === 'todos' || activeTab === 'historial') && (
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    </td>
+                                    <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10041</a></td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.entregado.bg,
+                                            color: ORDER_STATES.entregado.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.entregado.icon}</span>
+                                            {ORDER_STATES.entregado.label}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" }}>S</div>
+                                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify</span>
+                                        </div>
+                                    </td>
+                                    <td>Javier Nieto</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 006</td>
+                                    <td style={{ fontSize: "11px" }}>15001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>A Coruña</span></td>
+                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                        <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Monitor Gaming 24"</span>
+                                            <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€199.00</td>
+                                    <td>
+                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
+                                    </td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "4px 8px", borderRadius: "6px",
+                                            fontSize: "11px", fontWeight: 600,
+                                            background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0"
+                                        }}>
+                                            👤 Sistema
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>G</div>
+                                            <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>GLS</span>
+                                        </div>
+                                    </td>
+
+                                    {activeTab !== 'historial' && (
+                                        <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>GLS0012929</td>
+                                    )}
+
+                                    <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hace 12d<br />10:00</td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace 8d<br />18:30</td>
+                                    <td>
+                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                            <MoreHorizontal size={14} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
                             {/* Empty State message for the rest */}
                             <tr>
                                 <td colSpan={activeTab === 'en-transito' ? 17 : (activeTab === 'incidencias' ? 19 : (activeTab === 'devoluciones' ? 19 : 16))} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
                                     <p style={{ fontWeight: 700, fontSize: "14px", color: "var(--text)" }}>Módulo de Pedidos en Desarrollo</p>
+
                                     <p style={{ fontSize: "12px", marginTop: "6px", maxWidth: "400px", margin: "6px auto 0" }}>El motor de sincronización logística unificará aquí todos los estados de Shopify y tus operadores de fulfillment seleccionados.</p>
                                 </td>
 

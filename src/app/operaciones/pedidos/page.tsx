@@ -132,6 +132,25 @@ export default function PedidosPage() {
                 </div>
             )}
 
+            {/* Conditional KPIs for Devoluciones */}
+            {activeTab === 'devoluciones' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "Devoluciones activas", value: "31", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" },
+                        { label: "Importe total", value: "€1,250", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Procesadas hoy", value: "12", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Tasa devolución", value: "3.2%", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* Content Body */}
             <div className="ds-card" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: "500px", overflow: "hidden" }}>
                 {/* Controls Bar */}
@@ -171,26 +190,36 @@ export default function PedidosPage() {
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Método Pago</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Gestor</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Transport.</th>
-                                {activeTab !== 'incidencias' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tracking</th>}
+                                {activeTab !== 'incidencias' && activeTab !== 'devoluciones' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tracking</th>}
 
                                 {activeTab === 'incidencias' && (
                                     <>
                                         <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tipo Incid.</th>
                                         <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "center" }}>Intentos</th>
                                         <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días Abierta</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", color: "#ef4444", textAlign: "right" }}>Pérdida Est.</th>
+                                        <th style={{ color: "#ef4444", fontSize: "10px", textTransform: "uppercase", textAlign: "right" }}>Pérdida Est.</th>
+                                    </>
+                                )}
+
+                                {activeTab === 'devoluciones' && (
+                                    <>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Motivo Devol.</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right" }}>Importe Devol.</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "center" }}>Estado Devol.</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right" }}>Reembolso</th>
                                     </>
                                 )}
 
                                 {activeTab === 'en-transito' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días</th>}
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Fecha</th>
+
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Últ. Acción</th>
                                 <th style={{ color: "var(--color-text-secondary)", width: "40px", textAlign: "center" }}></th>
                             </tr>
                         </thead>
                         <tbody>
                             {/* Example Row 1 - Hidden in 'por-gestionar' as it's 'en_preparacion' */}
-                            {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && (
+                            {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && (
                                 <tr>
                                     <td style={{ padding: "12px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -255,7 +284,7 @@ export default function PedidosPage() {
                                 </tr>
                             )}
                             {/* Example Row 2 - Siempre se muestra porque es 'reintento' (entra también en incidencias) */}
-                            {activeTab !== 'en-transito' && activeTab !== 'incidencias' && (
+                            {activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && (
                                 <tr>
                                     <td style={{ padding: "12px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -319,8 +348,8 @@ export default function PedidosPage() {
                                     </td>
                                 </tr>
                             )}
-                            {/* Example Row 3 - Novedades - solo en todos */}
-                            {activeTab === 'todos' && (
+                            {/* Example Row 3 - Novedades - en todos y por-gestionar */}
+                            {(activeTab === 'todos' || activeTab === 'por-gestionar') && (
                                 <tr>
                                     <td style={{ padding: "12px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -551,12 +580,91 @@ export default function PedidosPage() {
                                     </td>
                                 </tr>
                             )}
+                            {/* Example Row 6 - DEVOLUCIONES */}
+                            {(activeTab === 'todos' || activeTab === 'devoluciones') && (
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    </td>
+                                    <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10050</a></td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.devolucion.bg,
+                                            color: ORDER_STATES.devolucion.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.devolucion.icon}</span>
+                                            {ORDER_STATES.devolucion.label}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" }}>S</div>
+                                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify</span>
+                                        </div>
+                                    </td>
+                                    <td>Marta Díaz</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 005</td>
+                                    <td style={{ fontSize: "11px" }}>03001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Alicante</span></td>
+                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                        <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Bolso Piel Sintética</span>
+                                            <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€49.90</td>
+                                    <td>
+                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
+                                    </td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "4px 8px", borderRadius: "6px",
+                                            fontSize: "11px", fontWeight: 600,
+                                            background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0"
+                                        }}>
+                                            👤 María G.
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>C</div>
+                                            <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Correos Express</span>
+                                        </div>
+                                    </td>
+
+                                    {activeTab !== 'devoluciones' && (
+                                        <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>PQ41029888</td>
+                                    )}
+
+                                    {activeTab === 'devoluciones' && (
+                                        <>
+                                            <td><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>Cliente Rechaza</span></td>
+                                            <td style={{ fontWeight: 800, textAlign: "right", color: "var(--color-text-primary)" }}>€49.90</td>
+                                            <td style={{ textAlign: "center" }}><span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "12px", background: "#fef3c7", color: "#d97706" }}>En proceso</span></td>
+                                            <td style={{ fontWeight: 800, textAlign: "right", color: "#64748b" }}>-</td>
+                                        </>
+                                    )}
+
+                                    <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hace 2d<br />14:15</td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hoy<br />09:00</td>
+                                    <td>
+                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                            <MoreHorizontal size={14} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
                             {/* Empty State message for the rest */}
                             <tr>
-                                <td colSpan={activeTab === 'en-transito' ? 17 : (activeTab === 'incidencias' ? 19 : 16)} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
+                                <td colSpan={activeTab === 'en-transito' ? 17 : (activeTab === 'incidencias' ? 19 : (activeTab === 'devoluciones' ? 19 : 16))} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
                                     <p style={{ fontWeight: 700, fontSize: "14px", color: "var(--text)" }}>Módulo de Pedidos en Desarrollo</p>
                                     <p style={{ fontSize: "12px", marginTop: "6px", maxWidth: "400px", margin: "6px auto 0" }}>El motor de sincronización logística unificará aquí todos los estados de Shopify y tus operadores de fulfillment seleccionados.</p>
                                 </td>
+
                             </tr>
                         </tbody>
                     </table>

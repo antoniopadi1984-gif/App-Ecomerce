@@ -84,10 +84,11 @@ function PillTab({ active, label, set }: { active: boolean; label: string; set: 
 interface CRMColumn {
     key: string;
     label: string;
-    type?: "sum" | "avg" | "rate" | "string";
-    unit?: "EUR" | "%" | "text";
+    type?: "sum" | "avg" | "rate" | "string" | "calc";
+    unit?: "EUR" | "%" | "text" | "x";
     thresholds?: number[];
     lowerIsBetter?: boolean;
+    calcFn?: (totals: any) => number;
 }
 
 interface CRMTableProps {
@@ -225,7 +226,7 @@ function CRMTable({ rows, columns, totals }: CRMTableProps) {
                             >
                                 {col.key === "label"
                                     ? "TOTAL"
-                                    : col.type === "avg" || col.type === "rate"
+                                    : col.type === "avg" || col.type === "rate" || col.type === "calc"
                                         ? formatValueInfo(totals[col.key], col.unit)
                                         : formatValueInfo(totals[col.key], col.unit)
                                 }
@@ -359,22 +360,31 @@ export default function CrmForensePage() {
         { key: "facturacion", label: "Facturación", type: "sum", unit: "EUR" },
         { key: "pedidos", label: "Pedidos", type: "sum" },
         { key: "entregados", label: "Entregados", type: "sum" },
-        { key: "tasaEntrega", label: "Tasa Entrega", type: "rate", unit: "%", thresholds: [85, 70], lowerIsBetter: false },
+        { key: "tasaEntrega", label: "Tasa Entrega", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.pedidos > 0 ? (t.entregados / t.pedidos) * 100 : 0 },
         { key: "incidencias", label: "Incidencias", type: "sum" },
-        { key: "tasaIncidencias", label: "Tasa Incid.", type: "rate", unit: "%", thresholds: [5, 10], lowerIsBetter: true },
-        { key: "ticketMedio", label: "Ticket Medio", type: "avg", unit: "EUR" },
-        { key: "margen", label: "Margen", type: "rate", unit: "%", thresholds: [25, 15], lowerIsBetter: false },
+        { key: "tasaIncidencias", label: "Tasa Incid.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.pedidos > 0 ? (t.incidencias / t.pedidos) * 100 : 0 },
+        { key: "ticketMedio", label: "Ticket Medio", type: "calc", unit: "EUR", calcFn: (t) => t.pedidos > 0 ? t.facturacion / t.pedidos : 0 },
         { key: "beneficioNeto", label: "Beneficio", type: "sum", unit: "EUR" },
+        { key: "margen", label: "Margen", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.facturacion > 0 ? (t.beneficioNeto / t.facturacion) * 100 : 0 },
     ], []);
 
     const tableTotals = React.useMemo(() => {
         const t: any = {};
+        // Primero computa las sumas y promedios base
         tableColumns.forEach(col => {
-            if (col.key === "label") return;
+            if (col.key === "label" || col.type === "calc") return;
             const valid = tableData.filter(r => typeof (r as any)[col.key] === "number");
             const sum = valid.reduce((acc, r) => acc + ((r as any)[col.key] || 0), 0);
             t[col.key] = (col.type === "avg" || col.type === "rate") ? (valid.length ? sum / valid.length : 0) : sum;
         });
+
+        // Luego ejecuta los campos calculados basados en los totales purificados
+        tableColumns.forEach(col => {
+            if (col.type === "calc" && col.calcFn) {
+                t[col.key] = col.calcFn(t);
+            }
+        });
+
         return t;
     }, [tableData, tableColumns]);
 

@@ -154,16 +154,26 @@ function CRMTable({ rows, columns, totals }: CRMTableProps) {
                                 key={col.key}
                                 onClick={() => handleSort(col.key)}
                                 style={{
-                                    padding: "8px 12px",
-                                    fontSize: "9px", fontWeight: 900,
-                                    textTransform: "uppercase", letterSpacing: "0.06em",
-                                    color: "#94a3b8", whiteSpace: "nowrap",
+                                    padding: col.key === "label" ? "8px 12px" : "6px 6px",
+                                    fontSize: col.key === "label" ? "9px" : "8px", fontWeight: 900,
+                                    textTransform: "uppercase", letterSpacing: "0.05em",
+                                    color: "#94a3b8", whiteSpace: "normal",
                                     cursor: "pointer", userSelect: "none",
                                     textAlign: col.key === "label" ? "left" : "center",
+                                    lineHeight: 1.2,
+                                    minWidth: col.key === "label" ? "auto" : "60px",
+                                    maxWidth: col.key === "label" ? "auto" : "80px",
                                     ...(col.key === "label" ? { position: "sticky", left: 0, background: "white", zIndex: 11 } : {})
                                 }}
                             >
-                                {col.label} {sortKey === col.key ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                                {col.key === "label" ? col.label : col.label.split(" ").map((word, wIdx) => (
+                                    <span key={wIdx} style={{ display: "block" }}>{word}</span>
+                                ))}
+                                {sortKey === col.key && (
+                                    <span style={{ display: "block", color: "#64748b", marginTop: "2px" }}>
+                                        {sortDir === "asc" ? "↑" : "↓"}
+                                    </span>
+                                )}
                             </th>
                         ))}
                     </tr>
@@ -395,8 +405,8 @@ export default function CrmForensePage() {
         { key: "incidencias", label: "Incidencias", type: "sum" },
         { key: "tasaIncidencias", label: "Tasa Incid.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.pedidos > 0 ? (t.incidencias / t.pedidos) * 100 : 0 },
         { key: "ticketMedio", label: "Ticket Medio", type: "calc", unit: "EUR", calcFn: (t) => t.pedidos > 0 ? t.facturacion / t.pedidos : 0 },
-        { key: "beneficioNeto", label: "Beneficio", type: "sum", unit: "EUR" },
-        { key: "margen", label: "Margen", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.facturacion > 0 ? (t.beneficioNeto / t.facturacion) * 100 : 0 },
+        { key: "beneficioNeto", label: "Benef. Neto", type: "sum", unit: "EUR" },
+        { key: "margen", label: "Margen Neto", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.facturacion > 0 ? (t.beneficioNeto / t.facturacion) * 100 : 0 },
     ], []);
 
     const tableTotals = React.useMemo(() => {

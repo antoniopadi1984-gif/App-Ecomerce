@@ -448,6 +448,42 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "CLIENTES") {
+            return [
+                periodCol,
+                { key: "clientesTotal", label: "Clientes Total", type: "sum", unit: "" },
+                { key: "clientesNuevos", label: "Nuevos", type: "sum", unit: "" },
+                { key: "recurrentes", label: "Recurrentes", type: "sum", unit: "" },
+                { key: "pctRecurrentes", label: "% Recurrentes", type: "calc", unit: "%", calcFn: (t) => t.clientesTotal > 0 ? (t.recurrentes / t.clientesTotal) * 100 : 0 },
+                { key: "ltvMedio", label: "LTV Medio", type: "calc", unit: "EUR", calcFn: (t) => t.clientesTotal > 0 ? t.facturacion / t.clientesTotal : 0 },
+                { key: "ltvMaximo", label: "LTV Máximo", type: "avg", unit: "EUR" },
+                { key: "ticketMedio", label: "Ticket Medio", type: "calc", unit: "EUR", calcFn: (t) => t.pedidos > 0 ? t.facturacion / t.pedidos : 0 },
+                { key: "comprasCliente", label: "Compras x Cliente", type: "calc", unit: "", calcFn: (t) => t.clientesTotal > 0 ? t.pedidos / t.clientesTotal : 0 },
+                { key: "diasEntreCompras", label: "Días entre Compras", type: "avg", unit: "" },
+                { key: "pedidos", label: "Pedidos Total", type: "sum", unit: "" },
+                { key: "enviados", label: "Enviados", type: "sum", unit: "" },
+                { key: "tasaEnvio", label: "Tasa Envío", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.pedidos > 0 ? (t.enviados / t.pedidos) * 100 : 0 },
+                { key: "entregados", label: "Entregados", type: "sum", unit: "" },
+                { key: "tasaEntrega", label: "Tasa Entrega", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.enviados > 0 ? (t.entregados / t.enviados) * 100 : 0 },
+                { key: "reintentos", label: "Reintentos", type: "sum", unit: "" },
+                { key: "incidencias", label: "Incidencias", type: "sum", unit: "" },
+                { key: "tasaIncidencias", label: "Tasa Incid.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.enviados > 0 ? (t.incidencias / t.enviados) * 100 : 0 },
+                { key: "recuperadas", label: "Recuperadas", type: "sum", unit: "" },
+                { key: "tasaRecuperacion", label: "Tasa Recup.", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.incidencias > 0 ? (t.recuperadas / t.incidencias) * 100 : 0 },
+                { key: "devoluciones", label: "Devol.", type: "sum", unit: "" },
+                { key: "tasaDevolucion", label: "Tasa Devol.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.entregados > 0 ? (t.devoluciones / t.entregados) * 100 : 0 },
+                { key: "cancelaciones", label: "Cancelac.", type: "sum", unit: "" },
+                { key: "tasaCancelacion", label: "Tasa Cancel.", type: "calc", unit: "%", thresholds: [15, 25], lowerIsBetter: true, calcFn: (t) => t.pedidos > 0 ? (t.cancelaciones / t.pedidos) * 100 : 0 },
+                { key: "upsellsAceptados", label: "Upsells Acept.", type: "sum", unit: "" },
+                { key: "importeUpsell", label: "Importe Upsell", type: "sum", unit: "EUR" },
+                { key: "tasaUpsell", label: "Tasa Upsell", type: "calc", unit: "%", calcFn: (t) => t.pedidos > 0 ? (t.upsellsAceptados / t.pedidos) * 100 : 0 },
+                { key: "pctCOD", label: "% COD", type: "avg", unit: "%" },
+                { key: "pctTarjeta", label: "% Tarjeta", type: "avg", unit: "%" },
+                { key: "scoreRiesgo", label: "Score Riesgo", type: "avg", unit: "" },
+                { key: "facturacion", label: "Fact. Total", type: "sum", unit: "EUR" },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

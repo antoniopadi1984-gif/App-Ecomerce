@@ -67,6 +67,10 @@ const TABS = [
     { id: 'CREATIVOS', label: 'Creativos' },
     { id: 'PRODUCTOS', label: 'Productos' },
     { id: 'COD_VS_CARD', label: 'COD vs Tarjeta' },
+    { id: 'FULFILLMENT', label: 'Fulfillment' },
+    { id: 'LANDING_PAGES', label: 'Landing Pages' },
+    { id: 'COHORTES', label: 'Cohortes' },
+    { id: 'INCIDENCIAS', label: 'Incidencias' },
 ];
 
 function PillTab({ active, label, set }: { active: boolean; label: string; set: () => void }) {

@@ -811,6 +811,39 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "COHORTES") {
+            return [
+                periodCol,
+                { key: "cohorte", label: "Cohorte (Mes)", type: "string", unit: "" },
+                { key: "clientesNuevos", label: "Clientes Nuevos", type: "sum", unit: "" },
+                { key: "facturacionInicial", label: "Fact. Inicial €", type: "sum", unit: "EUR" },
+                { key: "ticketInicial", label: "Ticket Inicial €", type: "calc", unit: "EUR", calcFn: (t) => t.clientesNuevos > 0 ? t.facturacionInicial / t.clientesNuevos : 0 },
+                { key: "retencionMes1", label: "Retención Mes 1 %", type: "avg", unit: "%" },
+                { key: "retencionMes2", label: "Retención Mes 2 %", type: "avg", unit: "%" },
+                { key: "retencionMes3", label: "Retención Mes 3 %", type: "avg", unit: "%" },
+                { key: "retencionMes6", label: "Retención Mes 6 %", type: "avg", unit: "%" },
+                { key: "retencionMes12", label: "Retención Mes 12 %", type: "avg", unit: "%" },
+                { key: "churnAcumulado", label: "Churn Acum. %", type: "avg", unit: "%" },
+                { key: "ltvMes1", label: "LTV Mes 1 €", type: "avg", unit: "EUR" },
+                { key: "ltvMes3", label: "LTV Mes 3 €", type: "avg", unit: "EUR" },
+                { key: "ltvMes6", label: "LTV Mes 6 €", type: "avg", unit: "EUR" },
+                { key: "ltvMes12", label: "LTV Mes 12 €", type: "avg", unit: "EUR" },
+                { key: "ltvAcumulado", label: "LTV Acum. €", type: "avg", unit: "EUR" },
+                { key: "comprasCliente", label: "Compras x Cliente", type: "avg", unit: "" },
+                { key: "diasEntreCompras", label: "Días entre Compras", type: "avg", unit: "" },
+                { key: "tasaEntrega", label: "Tasa Entrega %", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.comprasCliente > 0 ? (t.comprasCliente / t.clientesNuevos) * 100 : 0 }, // Placeholder for real calc if we had enviados
+                { key: "tasaDevolucion", label: "Tasa Devol. %", type: "avg", unit: "%", thresholds: [5, 10], lowerIsBetter: true },
+                { key: "tasaIncidencias", label: "Tasa Incid. %", type: "avg", unit: "%", thresholds: [5, 10], lowerIsBetter: true },
+                { key: "tasaRecuperacion", label: "Tasa Recup. %", type: "avg", unit: "%", thresholds: [80, 50], lowerIsBetter: false },
+                { key: "upsells", label: "Upsells", type: "sum", unit: "" },
+                { key: "tasaUpsell", label: "Tasa Upsell %", type: "avg", unit: "%", thresholds: [25, 15], lowerIsBetter: false },
+                { key: "importeUpsell", label: "Importe Upsell €", type: "sum", unit: "EUR" },
+                { key: "pctCOD", label: "% COD", type: "avg", unit: "%" },
+                { key: "pctTarjeta", label: "% Tarjeta", type: "avg", unit: "%" },
+                { key: "scoreRiesgo", label: "Score Riesgo", type: "avg", unit: "" },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

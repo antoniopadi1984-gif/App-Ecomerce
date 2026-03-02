@@ -16,6 +16,8 @@ const TABS = [
     { id: 'COD_VS_CARD', label: 'COD vs Tarjeta' },
 ];
 
+type ViewMode = "daily" | "weekly" | "monthly" | "annual";
+
 function PillTab({ active, label, set }: { active: boolean; label: string; set: () => void }) {
     return (
         <button
@@ -62,6 +64,7 @@ export default function CrmForensePage() {
     const { activeStoreId } = useStore();
     const [activeTab, setActiveTab] = useState(TABS[0].id);
     const [date, setDate] = useState(new Date());
+    const [viewMode, setViewMode] = useState<ViewMode>("daily");
 
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -104,6 +107,21 @@ export default function CrmForensePage() {
                             Análisis granular de rendimiento 360º
                         </p>
                     </div>
+                </div>
+
+                <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "8px", padding: "2px", gap: "2px", height: "fit-content" }}>
+                    {(["daily", "weekly", "monthly", "annual"] as ViewMode[]).map(mode => (
+                        <button key={mode} onClick={() => setViewMode(mode)} style={{
+                            padding: "4px 14px", fontSize: "11px", fontWeight: 700,
+                            borderRadius: "6px", border: "none", cursor: "pointer",
+                            background: viewMode === mode ? "white" : "transparent",
+                            color: viewMode === mode ? "#1e293b" : "#94a3b8",
+                            boxShadow: viewMode === mode ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                            transition: "all 0.15s"
+                        }}>
+                            {mode === "daily" ? "Diario" : mode === "weekly" ? "Semanal" : mode === "monthly" ? "Mensual" : "Anual"}
+                        </button>
+                    ))}
                 </div>
             </div>
 

@@ -636,6 +636,50 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "PRODUCTOS") {
+            return [
+                periodCol,
+                { key: "nombre", label: "Producto", type: "string", unit: "" },
+                { key: "sku", label: "SKU", type: "string", unit: "" },
+                { key: "categoria", label: "Categoría", type: "string", unit: "" },
+                { key: "pedidos", label: "Pedidos", type: "sum", unit: "" },
+                { key: "unidades", label: "Unidades", type: "sum", unit: "" },
+                { key: "enviados", label: "Enviados", type: "sum", unit: "" },
+                { key: "tasaEnvio", label: "Tasa Envío", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.pedidos > 0 ? (t.enviados / t.pedidos) * 100 : 0 },
+                { key: "entregados", label: "Entregados", type: "sum", unit: "" },
+                { key: "tasaEntrega", label: "Tasa Entrega", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.enviados > 0 ? (t.entregados / t.enviados) * 100 : 0 },
+                { key: "reintentos", label: "Reintentos", type: "sum", unit: "" },
+                { key: "incidencias", label: "Incid.", type: "sum", unit: "" },
+                { key: "tasaIncidencias", label: "Tasa Incid.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.enviados > 0 ? (t.incidencias / t.enviados) * 100 : 0 },
+                { key: "recuperadas", label: "Recuperadas", type: "sum", unit: "" },
+                { key: "tasaRecuperacion", label: "Tasa Recup.", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.incidencias > 0 ? (t.recuperadas / t.incidencias) * 100 : 0 },
+                { key: "devoluciones", label: "Devol.", type: "sum", unit: "" },
+                { key: "tasaDevolucion", label: "Tasa Devol.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.entregados > 0 ? (t.devoluciones / t.entregados) * 100 : 0 },
+                { key: "importeDevolucion", label: "Importe Devol.", type: "sum", unit: "EUR" },
+                { key: "cancelaciones", label: "Cancelac.", type: "sum", unit: "" },
+                { key: "tasaCancelacion", label: "Tasa Cancel.", type: "calc", unit: "%", thresholds: [15, 25], lowerIsBetter: true, calcFn: (t) => t.pedidos > 0 ? (t.cancelaciones / t.pedidos) * 100 : 0 },
+                { key: "facturacion", label: "Fact. €", type: "sum", unit: "EUR" },
+                { key: "ticketMedio", label: "Ticket Medio", type: "calc", unit: "EUR", calcFn: (t) => t.pedidos > 0 ? t.facturacion / t.pedidos : 0 },
+                { key: "precioMedio", label: "Precio Medio", type: "calc", unit: "EUR", calcFn: (t) => t.unidades > 0 ? t.facturacion / t.unidades : 0 },
+                { key: "descuentoMedio", label: "Dto. Medio %", type: "avg", unit: "%" },
+                { key: "cogsUnitario", label: "COGS Unit.", type: "avg", unit: "EUR" },
+                { key: "cogsTotal", label: "COGS Total", type: "sum", unit: "EUR" },
+                { key: "shippingAtrib", label: "Shipping Atrib.", type: "sum", unit: "EUR" },
+                { key: "margenBruto", label: "Margen Bruto %", type: "calc", unit: "%", thresholds: [50, 30], lowerIsBetter: false, calcFn: (t) => t.facturacion > 0 ? ((t.facturacion - t.cogsTotal) / t.facturacion) * 100 : 0 },
+                { key: "margenNeto", label: "Margen Neto %", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.facturacion > 0 ? ((t.facturacion - t.cogsTotal - t.shippingAtrib) / t.facturacion) * 100 : 0 },
+                { key: "beneficioNeto", label: "Benef. Neto €", type: "calc", unit: "EUR", calcFn: (t) => t.facturacion - t.cogsTotal - t.shippingAtrib },
+                { key: "inversionAtrib", label: "Inversión Atrib.", type: "sum", unit: "EUR" },
+                { key: "roas", label: "ROAS", type: "calc", unit: "x", thresholds: [3, 1.5], lowerIsBetter: false, calcFn: (t) => t.inversionAtrib > 0 ? t.facturacion / t.inversionAtrib : 0 },
+                { key: "cpa", label: "CPA €", type: "calc", unit: "EUR", calcFn: (t) => t.pedidos > 0 ? t.inversionAtrib / t.pedidos : 0 },
+                { key: "profit", label: "Profit €", type: "calc", unit: "EUR", calcFn: (t) => t.beneficioNeto - t.inversionAtrib },
+                { key: "upsells", label: "Upsells", type: "sum", unit: "" },
+                { key: "importeUpsell", label: "Importe Upsell", type: "sum", unit: "EUR" },
+                { key: "pctCOD", label: "% COD", type: "avg", unit: "%" },
+                { key: "pctTarjeta", label: "% Tarjeta", type: "avg", unit: "%" },
+                { key: "stock", label: "Stock Disponible", type: "avg", unit: "" },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

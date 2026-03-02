@@ -591,6 +591,51 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "CREATIVOS") {
+            return [
+                periodCol,
+                { key: "nombre", label: "Creativo", type: "string", unit: "" },
+                { key: "concepto", label: "Concepto", type: "string", unit: "" },
+                { key: "angulo", label: "Ángulo", type: "string", unit: "" },
+                { key: "tipoHook", label: "Tipo Hook", type: "string", unit: "" },
+                { key: "embudo", label: "Embudo", type: "string", unit: "" },
+                { key: "framework", label: "Framework", type: "string", unit: "" },
+                { key: "estado", label: "Estado", type: "string", unit: "" },
+                { key: "impresiones", label: "Impresiones", type: "sum", unit: "" },
+                { key: "alcance", label: "Alcance", type: "sum", unit: "" },
+                { key: "frecuencia", label: "Frecuencia", type: "calc", unit: "", calcFn: (t) => t.alcance > 0 ? t.impresiones / t.alcance : 0 },
+                { key: "cpm", label: "CPM €", type: "calc", unit: "EUR", calcFn: (t) => t.impresiones > 0 ? (t.inversion / t.impresiones) * 1000 : 0 },
+                { key: "clics", label: "Clics", type: "sum", unit: "" },
+                { key: "ctr", label: "CTR %", type: "calc", unit: "%", calcFn: (t) => t.impresiones > 0 ? (t.clics / t.impresiones) * 100 : 0 },
+                { key: "cpc", label: "CPC €", type: "calc", unit: "EUR", calcFn: (t) => t.clics > 0 ? t.inversion / t.clics : 0 },
+                { key: "hookRate", label: "Hook Rate %", type: "avg", unit: "%" },
+                { key: "view25", label: "View 25%", type: "avg", unit: "%" },
+                { key: "view50", label: "View 50%", type: "avg", unit: "%" },
+                { key: "view75", label: "View 75%", type: "avg", unit: "%" },
+                { key: "view100", label: "View 100%", type: "avg", unit: "%" },
+                { key: "shares", label: "Shares", type: "sum", unit: "" },
+                { key: "visitasLanding", label: "Visitas Landing", type: "sum", unit: "" },
+                { key: "cvrLanding", label: "CVR Landing", type: "calc", unit: "%", calcFn: (t) => t.visitasLanding > 0 ? (t.pedidos / t.visitasLanding) * 100 : 0 },
+                { key: "pedidos", label: "Pedidos", type: "sum", unit: "" },
+                { key: "enviados", label: "Enviados", type: "sum", unit: "" },
+                { key: "tasaEnvio", label: "Tasa Envío", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.pedidos > 0 ? (t.enviados / t.pedidos) * 100 : 0 },
+                { key: "entregados", label: "Entregados", type: "sum", unit: "" },
+                { key: "tasaEntrega", label: "Tasa Entrega", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.enviados > 0 ? (t.entregados / t.enviados) * 100 : 0 },
+                { key: "incidencias", label: "Incid.", type: "sum", unit: "" },
+                { key: "tasaIncidencias", label: "Tasa Incid.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.enviados > 0 ? (t.incidencias / t.enviados) * 100 : 0 },
+                { key: "inversion", label: "Inversión €", type: "sum", unit: "EUR" },
+                { key: "facturacion", label: "Fact. €", type: "sum", unit: "EUR" },
+                { key: "roas", label: "ROAS", type: "calc", unit: "x", thresholds: [3, 1.5], lowerIsBetter: false, calcFn: (t) => t.inversion > 0 ? t.facturacion / t.inversion : 0 },
+                { key: "cpa", label: "CPA €", type: "calc", unit: "EUR", calcFn: (t) => t.pedidos > 0 ? t.inversion / t.pedidos : 0 },
+                { key: "cpv", label: "CPV €", type: "calc", unit: "EUR", calcFn: (t) => t.visitasLanding > 0 ? t.inversion / t.visitasLanding : 0 },
+                { key: "codRate", label: "COD Rate %", type: "avg", unit: "%" },
+                { key: "deliveryRate", label: "Delivery Rate %", type: "avg", unit: "%" },
+                { key: "refundRate", label: "Refund Rate %", type: "avg", unit: "%" },
+                { key: "profit", label: "Profit €", type: "calc", unit: "EUR", calcFn: (t) => t.facturacion - t.inversion },
+                { key: "margen", label: "Margen %", type: "calc", unit: "%", calcFn: (t) => t.facturacion > 0 ? (t.profit / t.facturacion) * 100 : 0 },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

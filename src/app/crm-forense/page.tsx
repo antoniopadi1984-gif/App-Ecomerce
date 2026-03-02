@@ -122,6 +122,35 @@ const formatValueInfo = (value: number, unit?: string) => {
     return `${Math.round(value)}`;
 };
 
+function ColHeader({ line1, line2, colKey, sortKey, sortDir, onSort }: any) {
+    const isActive = sortKey === colKey;
+    return (
+        <th
+            onClick={() => onSort(colKey)}
+            style={{
+                padding: "5px 6px",
+                fontSize: "8px", fontWeight: 900,
+                textTransform: "uppercase", letterSpacing: "0.04em",
+                color: isActive ? "#7c3aed" : "#94a3b8",
+                textAlign: "center", lineHeight: 1.2,
+                cursor: "pointer", userSelect: "none",
+                whiteSpace: "normal", wordBreak: "break-word",
+                minWidth: colKey === "label" ? "40px" : "55px",
+                maxWidth: colKey === "label" ? "50px" : "75px",
+                verticalAlign: "bottom",
+                borderBottom: isActive ? "2px solid #7c3aed" : "2px solid #e2e8f0",
+                ...(colKey === "label" ? { position: "sticky", left: 0, background: "white", zIndex: 11 } : {})
+            }}
+        >
+            <span style={{ display: "block" }}>{line1}</span>
+            {line2 && <span style={{ display: "block", color: isActive ? "#a78bfa" : "#cbd5e1" }}>{line2}</span>}
+            <span style={{ display: "block", fontSize: "7px", marginTop: "1px", minHeight: "8px" }}>
+                {isActive ? (sortDir === "asc" ? "↑" : "↓") : ""}
+            </span>
+        </th>
+    );
+}
+
 function CRMTable({ rows, columns, totals }: CRMTableProps) {
     const [sortKey, setSortKey] = useState<string>("label");
     const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -148,34 +177,29 @@ function CRMTable({ rows, columns, totals }: CRMTableProps) {
 
                 {/* CABECERA sticky */}
                 <thead>
-                    <tr style={{ position: "sticky", top: 0, background: "white", zIndex: 10, borderBottom: "2px solid #e2e8f0" }}>
-                        {columns.map(col => (
-                            <th
-                                key={col.key}
-                                onClick={() => handleSort(col.key)}
-                                style={{
-                                    padding: col.key === "label" ? "6px 8px" : "6px 6px",
-                                    fontSize: col.key === "label" ? "8px" : "8px", fontWeight: 900,
-                                    textTransform: "uppercase", letterSpacing: "0.05em",
-                                    color: "#94a3b8", whiteSpace: "normal",
-                                    cursor: "pointer", userSelect: "none",
-                                    textAlign: "center",
-                                    lineHeight: 1.2,
-                                    minWidth: col.key === "label" ? "40px" : "60px",
-                                    maxWidth: col.key === "label" ? "50px" : "80px",
-                                    ...(col.key === "label" ? { position: "sticky", left: 0, background: "white", zIndex: 11 } : {})
-                                }}
-                            >
-                                {col.key === "label" ? col.label : col.label.split(" ").map((word, wIdx) => (
-                                    <span key={wIdx} style={{ display: "block" }}>{word}</span>
-                                ))}
-                                {sortKey === col.key && (
-                                    <span style={{ display: "block", color: "#64748b", marginTop: "2px" }}>
-                                        {sortDir === "asc" ? "↑" : "↓"}
-                                    </span>
-                                )}
-                            </th>
-                        ))}
+                    <tr style={{ position: "sticky", top: 0, background: "white", zIndex: 10 }}>
+                        {columns.map(col => {
+                            let line1 = col.label;
+                            let line2 = "";
+                            if (col.key !== "label") {
+                                const parts = col.label.split(" ");
+                                line1 = parts[0];
+                                if (parts.length > 1) {
+                                    line2 = parts.slice(1).join(" ");
+                                }
+                            }
+                            return (
+                                <ColHeader
+                                    key={col.key}
+                                    line1={line1}
+                                    line2={line2}
+                                    colKey={col.key}
+                                    sortKey={sortKey}
+                                    sortDir={sortDir}
+                                    onSort={handleSort}
+                                />
+                            );
+                        })}
                     </tr>
                 </thead>
 
@@ -207,7 +231,7 @@ function CRMTable({ rows, columns, totals }: CRMTableProps) {
                                     }}
                                 >
                                     {col.key === "label"
-                                        ? <span>{row.label}{row.sublabel && <span style={{ display: "block", fontSize: "9px", color: "#94a3b8", marginTop: "2px" }}>{row.sublabel}</span>}</span>
+                                        ? row.label
                                         : formatValueInfo(row[col.key], col.unit)
                                     }
                                 </td>

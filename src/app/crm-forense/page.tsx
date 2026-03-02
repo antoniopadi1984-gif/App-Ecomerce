@@ -81,34 +81,162 @@ function PillTab({ active, label, set }: { active: boolean; label: string; set: 
     );
 }
 
-function MetricTable({ label, values, days }: { label: string, values: number[], days: number }) {
-    const isCurrency = label.includes('€');
-    const isPct = label.includes('%');
-    const isRoas = label.includes('x');
+interface CRMColumn {
+    key: string;
+    label: string;
+    type?: "sum" | "avg" | "rate" | "string";
+    unit?: "EUR" | "%" | "text";
+    thresholds?: number[];
+    lowerIsBetter?: boolean;
+}
 
-    const format = (v: number) => {
-        if (v === 0) return '-';
-        if (isCurrency) return `€${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : Math.round(v)}`;
-        if (isRoas) return `${v}x`;
-        if (isPct) return `${v}%`;
-        return Math.round(v);
+interface CRMTableProps {
+    rows: any[];
+    columns: CRMColumn[];
+    totals: any;
+}
+
+function getSemaforoStyle(value: number, thresholds?: number[], lowerIsBetter?: boolean) {
+    if (value === undefined || value === null || !thresholds) return {};
+    let color = "#ef4444";
+    let bg = "rgba(239, 68, 68, 0.05)";
+    if (lowerIsBetter) {
+        if (value <= thresholds[0]) { color = "#22c55e"; bg = "rgba(34, 197, 94, 0.05)"; }
+        else if (value <= thresholds[1]) { color = "#eab308"; bg = "rgba(234, 179, 8, 0.05)"; }
+    } else {
+        if (value >= thresholds[0]) { color = "#22c55e"; bg = "rgba(34, 197, 94, 0.05)"; }
+        else if (value >= thresholds[1]) { color = "#eab308"; bg = "rgba(234, 179, 8, 0.05)"; }
+    }
+    return { color, background: bg, fontWeight: 700 };
+}
+
+const formatValueInfo = (value: number, unit?: string) => {
+    if (value === undefined || value === null || isNaN(value)) return "-";
+    if (unit === "EUR") return `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : Math.round(value)}`;
+    if (unit === "%") return `${value.toFixed(1)}%`;
+    return `${Math.round(value)}`;
+};
+
+function CRMTable({ rows, columns, totals }: CRMTableProps) {
+    const [sortKey, setSortKey] = useState<string>("label");
+    const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+    const handleSort = (key: string) => {
+        if (sortKey === key) {
+            setSortDir(sortDir === "asc" ? "desc" : "asc");
+        } else {
+            setSortKey(key);
+            setSortDir("desc");
+        }
     };
 
+    const sortedRows = [...rows].sort((a, b) => {
+        if (sortKey === "label") return 0; // maintain period order normally
+        const aVal = a[sortKey] || 0;
+        const bVal = b[sortKey] || 0;
+        return sortDir === "asc" ? aVal - bVal : bVal - aVal;
+    });
+
     return (
-        <tr className="border-b border-[var(--border)] hover:bg-[var(--surface2)] transition-colors">
-            <td className="sticky left-0 bg-[var(--surface)] z-10 p-2 text-[10px] font-bold text-[var(--text)] border-r border-[var(--border)] whitespace-nowrap shadow-[2px_0_4px_rgba(0,0,0,0.02)]">
-                {label}
-            </td>
-            {Array.from({ length: days }).map((_, i) => (
-                <td key={i} className={`p-2 text-center text-[10px] font-mono whitespace-nowrap ${values[i] > 0 ? 'text-[var(--text)]' : 'text-[var(--text-dim)]'}`}>
-                    {format(values[i] || 0)}
-                </td>
-            ))}
-            <td className="p-2 text-right text-[10px] font-bold font-mono text-[var(--crm)] border-l border-[var(--border)] bg-[var(--surface2)]/50">
-                {format(isRoas || isPct ? values.reduce((a, b) => a + b, 0) / values.filter(v => v > 0).length || 0 : values.reduce((a, b) => a + b, 0))}
-            </td>
-        </tr>
-    );
+        <div style={{ overflowX: "auto", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+            <table style={{ width: "100%", tableLayout: "auto", borderCollapse: "collapse", minWidth: "1200px" }}>
+
+                {/* CABECERA sticky */}
+                <thead>
+                    <tr style={{ position: "sticky", top: 0, background: "white", zIndex: 10, borderBottom: "2px solid #e2e8f0" }}>
+                        {columns.map(col => (
+                            <th
+                                key={col.key}
+                                onClick={() => handleSort(col.key)}
+                                style={{
+                                    padding: "8px 12px",
+                                    fontSize: "9px", fontWeight: 900,
+                                    textTransform: "uppercase", letterSpacing: "0.06em",
+                                    color: "#94a3b8", whiteSpace: "nowrap",
+                                    cursor: "pointer", userSelect: "none",
+                                    textAlign: col.key === "label" ? "left" : "center",
+                                    ...(col.key === "label" ? { position: "sticky", left: 0, background: "white", zIndex: 11 } : {})
+                                }}
+                            >
+                                {col.label} {sortKey === col.key ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {/* FILAS DE DATOS */}
+                    {sortedRows.map((row, i) => (
+                        <tr
+                            key={row.key}
+                            style={{
+                                borderBottom: "1px solid #f1f5f9",
+                                background: i % 2 === 0 ? "white" : "#fafbff",
+                                ...(row.isToday ? { background: "rgba(124,58,237,0.04)" } : {})
+                            }}
+                        >
+                            {columns.map(col => (
+                                <td
+                                    key={col.key}
+                                    style={{
+                                        padding: "5px 12px",
+                                        fontSize: "12px",
+                                        whiteSpace: "nowrap",
+                                        textAlign: col.key === "label" ? "left" : "center",
+                                        ...(col.key === "label" ? {
+                                            position: "sticky", left: 0,
+                                            background: i % 2 === 0 ? "white" : "#fafbff",
+                                            fontWeight: 700, color: "#1e293b", zIndex: 5
+                                        } : {}),
+                                        ...(col.type === "rate" ? getSemaforoStyle(row[col.key], col.thresholds, col.lowerIsBetter) : {})
+                                    }}
+                                >
+                                    {col.key === "label"
+                                        ? <span>{row.label}{row.sublabel && <span style={{ fontSize: "9px", color: "#94a3b8", marginLeft: "4px" }}>{row.sublabel}</span>}</span>
+                                        : formatValueInfo(row[col.key], col.unit)
+                                    }
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+
+                {/* FILA TOTAL sticky abajo */}
+                <tfoot>
+                    <tr style={{
+                        position: "sticky", bottom: 0,
+                        background: "#f8fafc",
+                        borderTop: "2px solid #e2e8f0",
+                        zIndex: 10
+                    }}>
+                        {columns.map(col => (
+                            <td
+                                key={col.key}
+                                style={{
+                                    padding: "7px 12px",
+                                    fontSize: "12px", fontWeight: 900,
+                                    color: "#1e293b", whiteSpace: "nowrap",
+                                    textAlign: col.key === "label" ? "left" : "center",
+                                    ...(col.key === "label" ? {
+                                        position: "sticky", left: 0,
+                                        background: "#f8fafc", zIndex: 11
+                                    } : {})
+                                }}
+                            >
+                                {col.key === "label"
+                                    ? "TOTAL"
+                                    : col.type === "avg" || col.type === "rate"
+                                        ? formatValueInfo(totals[col.key], col.unit)
+                                        : formatValueInfo(totals[col.key], col.unit)
+                                }
+                            </td>
+                        ))}
+                    </tr>
+                </tfoot>
+
+            </table>
+        </div>
+    )
 }
 
 export default function CrmForensePage() {
@@ -194,6 +322,62 @@ export default function CrmForensePage() {
 
     const chartData = getChartData();
 
+    const tableData = React.useMemo(() => {
+        let periodRows = generateRows(viewMode, month, year);
+        if (viewMode === "daily") {
+            return periodRows.map((r, i) => {
+                const d = dailyData[i] || { facturacion: 0, pedidos: 0, entregados: 0, incidencias: 0, ticketMedio: 0, margen: 0 };
+                return {
+                    ...r,
+                    ...d,
+                    beneficioNeto: d.facturacion * (d.margen / 100),
+                    tasaEntrega: d.pedidos > 0 ? (d.entregados / d.pedidos) * 100 : 0,
+                    tasaIncidencias: d.pedidos > 0 ? (d.incidencias / d.pedidos) * 100 : 0,
+                    isToday: new Date().getDate() === (i + 1) && new Date().getMonth() + 1 === month && new Date().getFullYear() === year
+                };
+            });
+        }
+        if (viewMode === "weekly") {
+            return periodRows.map((r, i) => {
+                const w = weeklySummary[i] || { facturacion: 0, pedidos: 0, entregados: 0, incidencias: 0, ticketMedio: 0, margen: 0 };
+                return {
+                    ...r,
+                    ...w,
+                    beneficioNeto: w.facturacion * (w.margen / 100),
+                    tasaEntrega: w.pedidos > 0 ? (w.entregados / w.pedidos) * 100 : 0,
+                    tasaIncidencias: w.pedidos > 0 ? (w.incidencias / w.pedidos) * 100 : 0,
+                };
+            });
+        }
+        return periodRows.map(r => ({
+            ...r, facturacion: 0, pedidos: 0, entregados: 0, incidencias: 0, ticketMedio: 0, margen: 0, beneficioNeto: 0, tasaEntrega: 0, tasaIncidencias: 0
+        }));
+    }, [viewMode, dailyData, weeklySummary, month, year]);
+
+    const tableColumns: CRMColumn[] = React.useMemo(() => [
+        { key: "label", label: "Período", type: "string" },
+        { key: "facturacion", label: "Facturación", type: "sum", unit: "EUR" },
+        { key: "pedidos", label: "Pedidos", type: "sum" },
+        { key: "entregados", label: "Entregados", type: "sum" },
+        { key: "tasaEntrega", label: "Tasa Entrega", type: "rate", unit: "%", thresholds: [85, 70], lowerIsBetter: false },
+        { key: "incidencias", label: "Incidencias", type: "sum" },
+        { key: "tasaIncidencias", label: "Tasa Incid.", type: "rate", unit: "%", thresholds: [5, 10], lowerIsBetter: true },
+        { key: "ticketMedio", label: "Ticket Medio", type: "avg", unit: "EUR" },
+        { key: "margen", label: "Margen", type: "rate", unit: "%", thresholds: [25, 15], lowerIsBetter: false },
+        { key: "beneficioNeto", label: "Beneficio", type: "sum", unit: "EUR" },
+    ], []);
+
+    const tableTotals = React.useMemo(() => {
+        const t: any = {};
+        tableColumns.forEach(col => {
+            if (col.key === "label") return;
+            const valid = tableData.filter(r => typeof (r as any)[col.key] === "number");
+            const sum = valid.reduce((acc, r) => acc + ((r as any)[col.key] || 0), 0);
+            t[col.key] = (col.type === "avg" || col.type === "rate") ? (valid.length ? sum / valid.length : 0) : sum;
+        });
+        return t;
+    }, [tableData, tableColumns]);
+
     const formatValue = (value: number, unit: string) => {
         if (unit === "EUR") return `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : Math.round(value)}`;
         if (unit === "%") return `${value}%`;
@@ -275,28 +459,7 @@ export default function CrmForensePage() {
                                 No hay datos en este ciclo
                             </div>
                         ) : (
-                            <table className="ds-table w-full">
-                                <thead className="sticky top-0 z-20">
-                                    <tr>
-                                        <th className="sticky left-0 bg-[var(--surface2)] z-30 min-w-[140px] border-r border-[var(--border)] shadow-[2px_0_4px_rgba(0,0,0,0.02)]">
-                                            Métrica
-                                        </th>
-                                        {Array.from({ length: data.daysInMonth }).map((_, i) => (
-                                            <th key={i} className="min-w-[40px] text-center px-1">
-                                                D{i + 1}
-                                            </th>
-                                        ))}
-                                        <th className="min-w-[80px] text-right border-l border-[var(--border)] bg-[var(--surface2)]">
-                                            Total Mes
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {data.data.metrics.map((m: any, idx: number) => (
-                                        <MetricTable key={idx} label={m.label} values={m.values} days={data.daysInMonth} />
-                                    ))}
-                                </tbody>
-                            </table>
+                            <CRMTable rows={tableData} columns={tableColumns} totals={tableTotals} />
                         )}
                     </div>
 

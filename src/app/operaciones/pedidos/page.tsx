@@ -75,6 +75,25 @@ export default function PedidosPage() {
                 ))}
             </div>
 
+            {/* Conditional KPIs for Por Gestionar */}
+            {activeTab === 'por-gestionar' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "Sin gestionar", value: "42", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
+                        { label: "En gestión", value: "18", color: "#eab308", bg: "#fefce8", border: "#fde047" },
+                        { label: "Fallidos", value: "5", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Reintentos", value: "12", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* Content Body */}
             <div className="ds-card" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: "500px", overflow: "hidden" }}>
                 {/* Controls Bar */}
@@ -121,70 +140,72 @@ export default function PedidosPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {/* Example Row 1 */}
-                            <tr>
-                                <td style={{ padding: "12px" }}>
-                                    <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
-                                </td>
-                                <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10045</a></td>
-                                <td>
-                                    <span style={{
-                                        display: "inline-flex", alignItems: "center", gap: "4px",
-                                        padding: "2px 8px", borderRadius: "20px",
-                                        fontSize: "10px", fontWeight: 700,
-                                        background: ORDER_STATES.en_preparacion.bg,
-                                        color: ORDER_STATES.en_preparacion.color
-                                    }}>
-                                        <span style={{ fontSize: "6px" }}>{ORDER_STATES.en_preparacion.icon}</span>
-                                        {ORDER_STATES.en_preparacion.label}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" }}>S</div>
-                                        <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify</span>
-                                    </div>
-                                </td>
-                                <td>Juan Pérez</td>
-                                <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 000</td>
-                                <td style={{ fontSize: "11px" }}>28001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Madrid</span></td>
-                                <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
-                                    <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
-                                    <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Zapatillas Nike Air Force</span>
-                                        <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
-                                    </div>
-                                </td>
-                                <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€49.99</td>
-                                <td>
-                                    <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
-                                </td>
-                                <td>
-                                    <span style={{
-                                        display: "inline-flex", alignItems: "center", gap: "4px",
-                                        padding: "4px 8px", borderRadius: "6px",
-                                        fontSize: "11px", fontWeight: 700,
-                                        background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe"
-                                    }}>
-                                        🤖 Bot COD
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>B</div>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Beeping</span>
-                                    </div>
-                                </td>
-                                <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>BP-1234444</td>
-                                <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hoy<br />10:42</td>
-                                <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace<br />5 min</td>
-                                <td>
-                                    <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                        <MoreHorizontal size={14} />
-                                    </button>
-                                </td>
-                            </tr>
-                            {/* Example Row 2 */}
+                            {/* Example Row 1 - Hidden in 'por-gestionar' as it's 'en_preparacion' */}
+                            {activeTab !== 'por-gestionar' && (
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    </td>
+                                    <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10045</a></td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.en_preparacion.bg,
+                                            color: ORDER_STATES.en_preparacion.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.en_preparacion.icon}</span>
+                                            {ORDER_STATES.en_preparacion.label}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" }}>S</div>
+                                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify</span>
+                                        </div>
+                                    </td>
+                                    <td>Juan Pérez</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 000</td>
+                                    <td style={{ fontSize: "11px" }}>28001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Madrid</span></td>
+                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                        <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Zapatillas Nike Air Force</span>
+                                            <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€49.99</td>
+                                    <td>
+                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
+                                    </td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "4px 8px", borderRadius: "6px",
+                                            fontSize: "11px", fontWeight: 700,
+                                            background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe"
+                                        }}>
+                                            🤖 Bot COD
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>B</div>
+                                            <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Beeping</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>BP-1234444</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hoy<br />10:42</td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace<br />5 min</td>
+                                    <td>
+                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                            <MoreHorizontal size={14} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
+                            {/* Example Row 2 - Siempre se muestra porque es 'reintento' */}
                             <tr>
                                 <td style={{ padding: "12px" }}>
                                     <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -286,14 +307,25 @@ export default function PedidosPage() {
                                     <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                 </td>
                                 <td>
-                                    <span style={{
-                                        display: "inline-flex", alignItems: "center", gap: "4px",
-                                        padding: "4px 8px", borderRadius: "6px",
-                                        fontSize: "11px", fontWeight: 600,
-                                        background: "#fef3c7", color: "#d97706", border: "1px solid #fde68a"
-                                    }}>
-                                        ⚠️ Sin gest.
-                                    </span>
+                                    {activeTab === 'por-gestionar' ? (
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                            <button style={{ fontSize: "10px", fontWeight: 700, padding: "4px 8px", borderRadius: "4px", background: "#f8fafc", color: "#475569", border: "1px solid #cbd5e1", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", width: "100%", textAlign: "left" }}>
+                                                👤 Asignarme
+                                            </button>
+                                            <button style={{ fontSize: "10px", fontWeight: 700, padding: "4px 8px", borderRadius: "4px", background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", width: "100%", textAlign: "left" }}>
+                                                🤖 Al Bot
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "4px 8px", borderRadius: "6px",
+                                            fontSize: "11px", fontWeight: 600,
+                                            background: "#fef3c7", color: "#d97706", border: "1px solid #fde68a"
+                                        }}>
+                                            ⚠️ Sin gest.
+                                        </span>
+                                    )}
                                 </td>
                                 <td>
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>

@@ -94,6 +94,25 @@ export default function PedidosPage() {
                 </div>
             )}
 
+            {/* Conditional KPIs for En Tránsito */}
+            {activeTab === 'en-transito' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "En tránsito", value: "85", color: "#0ea5e9", bg: "#f0f9ff", border: "#bae6fd" },
+                        { label: "Con retraso", value: "14", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Entregados hoy", value: "32", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Tasa entrega 7d", value: "94%", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* Content Body */}
             <div className="ds-card" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: "500px", overflow: "hidden" }}>
                 {/* Controls Bar */}
@@ -134,6 +153,7 @@ export default function PedidosPage() {
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Gestor</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Transport.</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tracking</th>
+                                {activeTab === 'en-transito' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días</th>}
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Fecha</th>
                                 <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Últ. Acción</th>
                                 <th style={{ color: "var(--color-text-secondary)", width: "40px", textAlign: "center" }}></th>
@@ -141,7 +161,7 @@ export default function PedidosPage() {
                         </thead>
                         <tbody>
                             {/* Example Row 1 - Hidden in 'por-gestionar' as it's 'en_preparacion' */}
-                            {activeTab !== 'por-gestionar' && (
+                            {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && (
                                 <tr>
                                     <td style={{ padding: "12px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
@@ -205,146 +225,222 @@ export default function PedidosPage() {
                                     </td>
                                 </tr>
                             )}
-                            {/* Example Row 2 - Siempre se muestra porque es 'reintento' */}
-                            <tr>
-                                <td style={{ padding: "12px" }}>
-                                    <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
-                                </td>
-                                <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10046</a></td>
-                                <td>
-                                    <span style={{
-                                        display: "inline-flex", alignItems: "center", gap: "4px",
-                                        padding: "2px 8px", borderRadius: "20px",
-                                        fontSize: "10px", fontWeight: 700,
-                                        background: ORDER_STATES.reintento.bg,
-                                        color: ORDER_STATES.reintento.color
-                                    }}>
-                                        <span style={{ fontSize: "6px" }}>{ORDER_STATES.reintento.icon}</span>
-                                        {ORDER_STATES.reintento.label}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe" }}>B</div>
-                                        <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Beeping</span>
-                                    </div>
-                                </td>
-                                <td>María Gómez</td>
-                                <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 001</td>
-                                <td style={{ fontSize: "11px" }}>41002<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Sevilla</span></td>
-                                <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
-                                    <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
-                                    <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Camiseta Básica Blanca</span>
-                                        <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 2</span>
-                                    </div>
-                                </td>
-                                <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€29.99</td>
-                                <td>
-                                    <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>STRIPE</span>
-                                </td>
-                                <td>
-                                    <span style={{
-                                        display: "inline-flex", alignItems: "center", gap: "4px",
-                                        padding: "4px 8px", borderRadius: "6px",
-                                        fontSize: "11px", fontWeight: 600,
-                                        background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0"
-                                    }}>
-                                        👤 María G.
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>D</div>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Dropea</span>
-                                    </div>
-                                </td>
-                                <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
-                                <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hoy<br />10:35</td>
-                                <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace<br />12 min</td>
-                                <td>
-                                    <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                        <MoreHorizontal size={14} />
-                                    </button>
-                                </td>
-                            </tr>
-                            {/* Example Row 3 */}
-                            <tr>
-                                <td style={{ padding: "12px" }}>
-                                    <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
-                                </td>
-                                <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10047</a></td>
-                                <td>
-                                    <span style={{
-                                        display: "inline-flex", alignItems: "center", gap: "4px",
-                                        padding: "2px 8px", borderRadius: "20px",
-                                        fontSize: "10px", fontWeight: 700,
-                                        background: ORDER_STATES.nuevo.bg,
-                                        color: ORDER_STATES.nuevo.color
-                                    }}>
-                                        <span style={{ fontSize: "6px" }}>{ORDER_STATES.nuevo.icon}</span>
-                                        {ORDER_STATES.nuevo.label}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#f59e0b", border: "1px solid #fef3c7" }}>D</div>
-                                        <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Dropi</span>
-                                    </div>
-                                </td>
-                                <td>Carlos López</td>
-                                <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 002</td>
-                                <td style={{ fontSize: "11px" }}>08001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Barcelona</span></td>
-                                <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
-                                    <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
-                                    <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Sudadera Urban Black</span>
-                                        <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
-                                    </div>
-                                </td>
-                                <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€59.90</td>
-                                <td>
-                                    <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
-                                </td>
-                                <td>
-                                    {activeTab === 'por-gestionar' ? (
-                                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                            <button style={{ fontSize: "10px", fontWeight: 700, padding: "4px 8px", borderRadius: "4px", background: "#f8fafc", color: "#475569", border: "1px solid #cbd5e1", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", width: "100%", textAlign: "left" }}>
-                                                👤 Asignarme
-                                            </button>
-                                            <button style={{ fontSize: "10px", fontWeight: 700, padding: "4px 8px", borderRadius: "4px", background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", width: "100%", textAlign: "left" }}>
-                                                🤖 Al Bot
-                                            </button>
+                            {/* Example Row 2 - Siempre se muestra porque es 'reintento' (excepto en en-transito) */}
+                            {activeTab !== 'en-transito' && (
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    </td>
+                                    <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10046</a></td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.reintento.bg,
+                                            color: ORDER_STATES.reintento.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.reintento.icon}</span>
+                                            {ORDER_STATES.reintento.label}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#8b5cf6", border: "1px solid #ede9fe" }}>B</div>
+                                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Beeping</span>
                                         </div>
-                                    ) : (
+                                    </td>
+                                    <td>María Gómez</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 001</td>
+                                    <td style={{ fontSize: "11px" }}>41002<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Sevilla</span></td>
+                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                        <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Camiseta Básica Blanca</span>
+                                            <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 2</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€29.99</td>
+                                    <td>
+                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>STRIPE</span>
+                                    </td>
+                                    <td>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
                                             padding: "4px 8px", borderRadius: "6px",
                                             fontSize: "11px", fontWeight: 600,
-                                            background: "#fef3c7", color: "#d97706", border: "1px solid #fde68a"
+                                            background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0"
                                         }}>
-                                            ⚠️ Sin gest.
+                                            👤 María G.
                                         </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>D</div>
+                                            <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Dropea</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hoy<br />10:35</td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace<br />12 min</td>
+                                    <td>
+                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                            <MoreHorizontal size={14} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
+                            {/* Example Row 3 - Oculto en en-transito */}
+                            {activeTab !== 'en-transito' && (
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    </td>
+                                    <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10047</a></td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.nuevo.bg,
+                                            color: ORDER_STATES.nuevo.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.nuevo.icon}</span>
+                                            {ORDER_STATES.nuevo.label}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#f59e0b", border: "1px solid #fef3c7" }}>D</div>
+                                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Dropi</span>
+                                        </div>
+                                    </td>
+                                    <td>Carlos López</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 002</td>
+                                    <td style={{ fontSize: "11px" }}>08001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Barcelona</span></td>
+                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                        <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Sudadera Urban Black</span>
+                                            <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€59.90</td>
+                                    <td>
+                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
+                                    </td>
+                                    <td>
+                                        {activeTab === 'por-gestionar' ? (
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                <button style={{ fontSize: "10px", fontWeight: 700, padding: "4px 8px", borderRadius: "4px", background: "#f8fafc", color: "#475569", border: "1px solid #cbd5e1", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", width: "100%", textAlign: "left" }}>
+                                                    👤 Asignarme
+                                                </button>
+                                                <button style={{ fontSize: "10px", fontWeight: 700, padding: "4px 8px", borderRadius: "4px", background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", width: "100%", textAlign: "left" }}>
+                                                    🤖 Al Bot
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span style={{
+                                                display: "inline-flex", alignItems: "center", gap: "4px",
+                                                padding: "4px 8px", borderRadius: "6px",
+                                                fontSize: "11px", fontWeight: 600,
+                                                background: "#fef3c7", color: "#d97706", border: "1px solid #fde68a"
+                                            }}>
+                                                ⚠️ Sin gest.
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>-</div>
+                                            <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Pendiente</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Ayer<br />18:20</td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace<br />2 min</td>
+                                    <td>
+                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                            <MoreHorizontal size={14} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
+                            {/* Example Row 4 - EN TRÁNSITO */}
+                            {(activeTab === 'todos' || activeTab === 'en-transito') && (
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    </td>
+                                    <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#10048</a></td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.enviado.bg,
+                                            color: ORDER_STATES.enviado.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.enviado.icon}</span>
+                                            {ORDER_STATES.enviado.label}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#10b981", border: "1px solid #d1fae5" }}>S</div>
+                                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Shopify</span>
+                                        </div>
+                                    </td>
+                                    <td>Ana Martínez</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 003</td>
+                                    <td style={{ fontSize: "11px" }}>46001<br /><span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Valencia</span></td>
+                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                        <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Auriculares Inalámbricos</span>
+                                            <span style={{ color: "var(--text-dim)", fontSize: "10px" }}>Qty: 1</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 700, textAlign: "right", color: "var(--color-text-primary)" }}>€89.00</td>
+                                    <td>
+                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
+                                    </td>
+                                    <td>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "4px 8px", borderRadius: "6px",
+                                            fontSize: "11px", fontWeight: 600,
+                                            background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0"
+                                        }}>
+                                            👤 Sistema
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>C</div>
+                                            <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Correos Express</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}>PQ41029312</td>
+                                    {activeTab === 'en-transito' && (
+                                        <td>
+                                            <span style={{ fontSize: "10px", fontWeight: 800, padding: "4px 8px", borderRadius: "6px", background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca" }}>
+                                                8 Días
+                                            </span>
+                                        </td>
                                     )}
-                                </td>
-                                <td>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "#94a3b8" }}>-</div>
-                                        <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>Pendiente</span>
-                                    </div>
-                                </td>
-                                <td style={{ color: "var(--ops)", fontSize: "11px", fontWeight: 600, textDecoration: "underline" }}></td>
-                                <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Ayer<br />18:20</td>
-                                <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Hace<br />2 min</td>
-                                <td>
-                                    <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                        <MoreHorizontal size={14} />
-                                    </button>
-                                </td>
-                            </tr>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "10px" }}>Hace 8d<br />12:05</td>
+                                    <td style={{ color: "var(--text-dim)", fontSize: "10px" }}>Ayer<br />16:30</td>
+                                    <td>
+                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                                            <MoreHorizontal size={14} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
                             {/* Empty State message for the rest */}
                             <tr>
-                                <td colSpan={10} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
+                                <td colSpan={activeTab === 'en-transito' ? 17 : 16} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
                                     <p style={{ fontWeight: 700, fontSize: "14px", color: "var(--text)" }}>Módulo de Pedidos en Desarrollo</p>
                                     <p style={{ fontSize: "12px", marginTop: "6px", maxWidth: "400px", margin: "6px auto 0" }}>El motor de sincronización logística unificará aquí todos los estados de Shopify y tus operadores de fulfillment seleccionados.</p>
                                 </td>

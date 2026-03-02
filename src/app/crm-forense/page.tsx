@@ -484,6 +484,39 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "TRANSPORTISTAS") {
+            return [
+                periodCol,
+                { key: "nombre", label: "Transportista", type: "string", unit: "" },
+                { key: "asignados", label: "Pedidos Asignados", type: "sum", unit: "" },
+                { key: "recogidos", label: "Recogidos", type: "sum", unit: "" },
+                { key: "tasaRecogida", label: "Tasa Recogida", type: "calc", unit: "%", thresholds: [95, 80], lowerIsBetter: false, calcFn: (t) => t.asignados > 0 ? (t.recogidos / t.asignados) * 100 : 0 },
+                { key: "enTransito", label: "En Tránsito", type: "sum", unit: "" },
+                { key: "entregados", label: "Entregados", type: "sum", unit: "" },
+                { key: "tasaEntrega", label: "Tasa Entrega", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.asignados > 0 ? (t.entregados / t.asignados) * 100 : 0 }, // o vs recogidos
+                { key: "reintentos", label: "Reintentos", type: "sum", unit: "" },
+                { key: "tasaReintento", label: "Tasa Reintento", type: "calc", unit: "%", thresholds: [10, 20], lowerIsBetter: true, calcFn: (t) => t.asignados > 0 ? (t.reintentos / t.asignados) * 100 : 0 },
+                { key: "incidencias", label: "Incidencias Total", type: "sum", unit: "" },
+                { key: "tasaIncidencias", label: "Tasa Incid.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.asignados > 0 ? (t.incidencias / t.asignados) * 100 : 0 },
+                { key: "extraviados", label: "Extraviados", type: "sum", unit: "" },
+                { key: "daniados", label: "Dañados", type: "sum", unit: "" },
+                { key: "noLocalizado", label: "No Localiz.", type: "sum", unit: "" },
+                { key: "recuperadas", label: "Recuperadas", type: "sum", unit: "" },
+                { key: "tasaRecuperacion", label: "Tasa Recup.", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.incidencias > 0 ? (t.recuperadas / t.incidencias) * 100 : 0 },
+                { key: "tiempoResolucion", label: "T. Resol. (h)", type: "avg", unit: "" },
+                { key: "devoluciones", label: "Devol.", type: "sum", unit: "" },
+                { key: "tasaDevolucion", label: "Tasa Devol.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.entregados > 0 ? (t.devoluciones / t.entregados) * 100 : 0 },
+                { key: "tiempoMedio", label: "T. Medio Entrega", type: "avg", unit: "" },
+                { key: "enPlazo", label: "En Plazo %", type: "avg", unit: "%" },
+                { key: "tarde", label: "Tarde %", type: "calc", unit: "%", calcFn: (t) => t.enPlazo > 0 ? 100 - t.enPlazo : 0 }, // Simplificación
+                { key: "costeMedio", label: "Coste Medio", type: "calc", unit: "EUR", calcFn: (t) => t.asignados > 0 ? t.costeTotal / t.asignados : 0 },
+                { key: "costeTotal", label: "Coste Total", type: "sum", unit: "EUR" },
+                { key: "costeIncidencia", label: "Coste x Incid.", type: "calc", unit: "EUR", calcFn: (t) => t.incidencias > 0 ? t.costeTotal / t.incidencias : 0 }, // Pseudo-métrica real
+                { key: "cpConflictivos", label: "CP Conflict.", type: "sum", unit: "" },
+                { key: "score", label: "Score", type: "avg", unit: "" },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

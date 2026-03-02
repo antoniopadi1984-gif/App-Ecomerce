@@ -517,6 +517,42 @@ export default function CrmForensePage() {
             ];
         }
 
+        if (activeTab === "EMPLEADOS") {
+            return [
+                periodCol,
+                { key: "nombre", label: "Empleado", type: "string", unit: "" },
+                { key: "llamadasRealizadas", label: "Llamadas Realizadas", type: "sum", unit: "" },
+                { key: "llamadasAtendidas", label: "Llamadas Atendidas", type: "sum", unit: "" },
+                { key: "noContesta", label: "No Contesta", type: "sum", unit: "" },
+                { key: "tasaContacto", label: "Tasa Contacto", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.llamadasRealizadas > 0 ? (t.llamadasAtendidas / t.llamadasRealizadas) * 100 : 0 },
+                { key: "tiempoMedioLlamada", label: "T. Medio Llamada", type: "avg", unit: "" },
+                { key: "tiempoTotal", label: "T. Total (h)", type: "sum", unit: "" },
+                { key: "pedidosAsignados", label: "Pedidos Asignados", type: "sum", unit: "" },
+                { key: "confirmados", label: "Confirmados", type: "sum", unit: "" },
+                { key: "cancelados", label: "Cancelados", type: "sum", unit: "" },
+                { key: "tasaConfirmacion", label: "Tasa Confirm.", type: "calc", unit: "%", thresholds: [80, 60], lowerIsBetter: false, calcFn: (t) => t.pedidosAsignados > 0 ? (t.confirmados / t.pedidosAsignados) * 100 : 0 },
+                { key: "enviados", label: "Enviados", type: "sum", unit: "" },
+                { key: "tasaEnvio", label: "Tasa Envío", type: "calc", unit: "%", thresholds: [95, 80], lowerIsBetter: false, calcFn: (t) => t.confirmados > 0 ? (t.enviados / t.confirmados) * 100 : 0 },
+                { key: "entregados", label: "Entregados", type: "sum", unit: "" },
+                { key: "tasaEntrega", label: "Tasa Entrega", type: "calc", unit: "%", thresholds: [85, 70], lowerIsBetter: false, calcFn: (t) => t.enviados > 0 ? (t.entregados / t.enviados) * 100 : 0 },
+                { key: "incidGestionadas", label: "Incid. Gestionadas", type: "sum", unit: "" },
+                { key: "incidRecuperadas", label: "Incid. Recuperadas", type: "sum", unit: "" },
+                { key: "tasaRecuperacion", label: "Tasa Recup.", type: "calc", unit: "%", thresholds: [80, 50], lowerIsBetter: false, calcFn: (t) => t.incidGestionadas > 0 ? (t.incidRecuperadas / t.incidGestionadas) * 100 : 0 },
+                { key: "tiempoResolucion", label: "T. Resol. (h)", type: "avg", unit: "" },
+                { key: "devolucionesGest", label: "Devol. Gestionadas", type: "sum", unit: "" },
+                { key: "tasaDevolucion", label: "Tasa Devol.", type: "calc", unit: "%", thresholds: [5, 10], lowerIsBetter: true, calcFn: (t) => t.entregados > 0 ? (t.devolucionesGest / t.entregados) * 100 : 0 },
+                { key: "upsellsOfrecidos", label: "Upsells Ofrecidos", type: "sum", unit: "" },
+                { key: "upsellsAceptados", label: "Upsells Aceptados", type: "sum", unit: "" },
+                { key: "tasaUpsell", label: "Tasa Upsell", type: "calc", unit: "%", thresholds: [25, 15], lowerIsBetter: false, calcFn: (t) => t.upsellsOfrecidos > 0 ? (t.upsellsAceptados / t.upsellsOfrecidos) * 100 : 0 },
+                { key: "importeUpsell", label: "Importe Upsell", type: "sum", unit: "EUR" },
+                { key: "pedidosRecuperados", label: "Pedidos Recuper.", type: "sum", unit: "" },
+                { key: "importeRecuperado", label: "Importe Recuper.", type: "sum", unit: "EUR" },
+                { key: "facturacionGenerada", label: "Fact. Generada", type: "sum", unit: "EUR" },
+                { key: "facturacionHora", label: "Fact. x Hora", type: "calc", unit: "EUR", calcFn: (t) => t.tiempoTotal > 0 ? t.facturacionGenerada / t.tiempoTotal : 0 },
+                { key: "scoreRendimiento", label: "Score Rend.", type: "avg", unit: "" },
+            ];
+        }
+
         // Default estandar anterior fallback hasta que pongamos el resto de tabs
         return [
             periodCol,

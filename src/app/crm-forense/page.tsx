@@ -243,15 +243,16 @@ function CRMTable({ rows, columns, totals }: CRMTableProps) {
 export default function CrmForensePage() {
     const { activeStoreId } = useStore();
     const [activeTab, setActiveTab] = useState(TABS[0].id);
-    const [date, setDate] = useState(new Date());
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [viewMode, setViewMode] = useState<ViewMode>("daily");
     const [activeWeek, setActiveWeek] = useState(0);
 
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
+    const month = selectedMonth;
+    const year = selectedYear;
 
     useEffect(() => {
         if (!activeStoreId) return;
@@ -264,17 +265,6 @@ export default function CrmForensePage() {
             })
             .catch(() => setLoading(false));
     }, [activeStoreId, activeTab, month, year, viewMode]);
-
-    const changeMonth = (delta: number) => {
-        const d = new Date(date);
-        if (viewMode === "annual") {
-            d.setFullYear(d.getFullYear() + delta);
-        } else {
-            d.setMonth(d.getMonth() + delta);
-        }
-        setDate(d);
-        setActiveWeek(0);
-    };
 
     const parseDailyData = (metrics: any[], daysInMonth: number, isAnnual: boolean): DayData[] | MonthData[] => {
         if (!metrics || metrics.length === 0) return [];
@@ -486,12 +476,23 @@ export default function CrmForensePage() {
                             Vista Pizarra — {TABS.find(t => t.id === activeTab)?.label}
                         </div>
 
-                        <div className="flex items-center gap-2 bg-[var(--surface2)] rounded-[var(--r-sm)] p-0.5 border border-[var(--border)]">
-                            <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[var(--surface)] rounded text-[var(--text-muted)] transition-colors"><ChevronLeft size={14} /></button>
-                            <span className="text-[10px] font-bold px-2 uppercase text-[var(--text)] min-w-[100px] text-center">
-                                {viewMode === "annual" ? year : date.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
-                            </span>
-                            <button onClick={() => changeMonth(1)} className="p-1 hover:bg-[var(--surface)] rounded text-[var(--text-muted)] transition-colors"><ChevronRight size={14} /></button>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                            {viewMode !== "annual" && (
+                                <select value={selectedMonth} onChange={e => { setSelectedMonth(Number(e.target.value)); setActiveWeek(0); }}
+                                    style={{ padding: "4px 8px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px", fontWeight: 700 }}>
+                                    {Array.from({ length: 12 }, (_, i) => (
+                                        <option key={i + 1} value={i + 1}>
+                                            {new Date(2024, i, 1).toLocaleString("es-ES", { month: "long" })}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                            <select value={selectedYear} onChange={e => { setSelectedYear(Number(e.target.value)); setActiveWeek(0); }}
+                                style={{ padding: "4px 8px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px", fontWeight: 700 }}>
+                                {[2023, 2024, 2025, 2026].map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 

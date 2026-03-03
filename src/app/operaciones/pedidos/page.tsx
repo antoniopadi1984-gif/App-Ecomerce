@@ -1,4 +1,392 @@
-'use client';\n\nimport React, { useState, useEffect } from 'react';\nimport { RefreshCw, Search, Filter, MapPin, User, AlertTriangle } from 'lucide-react';\nimport { ORDER_STATES } from '@/lib/orderStates';\nimport { useGestores } from '@/hooks/useGestores';\n\nconst TABS = [\n    { id: 'todos', label: 'Todos' },\n    { id: 'por-gestionar', label: 'Por Gestionar' },\n    { id: 'en-transito', label: 'En Tránsito' },\n    { id: 'incidencias', label: 'Incidencias' },\n    { id: 'devoluciones', label: 'Devoluciones' },\n    { id: 'carritos-abandonados', label: 'Carritos Abandonados' },\n    { id: 'borradores', label: 'Borradores' },\n    { id: 'historial', label: 'Historial' }\n];\n\n\n\nconst FULFILLMENT_BADGES: Record<string, { label: string; color: string; bg: string; border: string }> = {\n    "beeping": { label: "Beeping", color: "#ca8a04", bg: "rgba(234,179,8,0.15)", border: "rgba(234,179,8,0.4)" },\n    "dropea": { label: "Dropea", color: "#1e40af", bg: "rgba(30,64,175,0.1)", border: "rgba(30,64,175,0.3)" },\n    "shopify": { label: "Shopify", color: "#16a34a", bg: "rgba(22,163,74,0.1)", border: "rgba(22,163,74,0.3)" },\n    "dropi": { label: "Dropi", color: "#ea580c", bg: "rgba(234,88,12,0.1)", border: "rgba(234,88,12,0.3)" },\n    "manual": { label: "Manual", color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.3)" },\n    "none": { label: "—", color: "#94a3b8", bg: "transparent", border: "transparent" }\n};\n\nfunction FulfillmentBadge({ type }: { type: string }) {\n    const b = FULFILLMENT_BADGES[type] ?? FULFILLMENT_BADGES["none"];\n    return (\n        <span style={{\n            background: b.bg,\n            color: b.color,\n            border: `1px solid ${b.border}`,\n            fontSize: "11px",\n            fontWeight: 700,\n            borderRadius: "6px",\n            padding: "3px 8px",\n            whiteSpace: "nowrap",\n            display: "inline-block",\n        }}>\n            {b.label}\n        </span>\n    );\n}\n\n\nfunction StateBadge({ state }: { state: string }) {\n    // @ts-expect-error - Dictionary indexing safe\n    const s = ORDER_STATES[state] || ORDER_STATES.nuevo;\n    return (\n        <div style={{\n            display: "inline-flex", alignItems: "center", gap: "4px",\n            padding: "4px 8px", borderRadius: "6px",\n            background: s.bg, color: s.color,\n            fontSize: "10px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase"\n        }}>\n            <span style={{ fontSize: "6px" }}>{s.icon}</span>\n            {s.label}\n        </div>\n    );\n}\n\nfunction formatDate(_date?: string) {\n    return "12 Oct 2023";\n}\n\nfunction formatTime(_date?: string) {\n    return "14:32";\n}\n\nfunction calcTiempo(from?: string, to?: string | Date): string {\n    if (!from || !to) return "—";\n    const toDate = to instanceof Date ? to : new Date(to);\n    const diff = toDate.getTime() - new Date(from).getTime();\n    if (isNaN(diff) || diff < 0) return "—";\n    const h = Math.floor(diff / 3600000);\n    const m = Math.floor((diff % 3600000) / 60000);\n    if (h === 0) return `${m}min`;\n    const d = Math.floor(h / 24);\n    if (d > 0) return `${d}d ${h % 24}h`;\n    return `${h}h ${m}min`;\n}\n\ntype TimelineEventType = "info" | "success" | "warning" | "error";\ntype TimelineSource = "shopify" | "beeping" | "dropea" | "dropi" | "17track" | "sistema" | "usuario";\n\ninterface TimelineEvent {\n    label: string;\n    description: string;\n    type: TimelineEventType;\n    source: TimelineSource;\n    timestamp: string;\n}\n\nconst SOURCE_COLORS: Record<TimelineSource, string> = {\n    shopify: "#16a34a",\n    beeping: "#ca8a04",\n    dropea: "#1e40af",\n    dropi: "#ea580c",\n    "17track": "#7c3aed",\n    sistema: "#0891b2",\n    usuario: "#64748b",\n};\n\nconst MOCK_TIMELINE: TimelineEvent[] = [\n    { label: "Pedido creado en Shopify", description: "Referencia #10045", type: "info", source: "shopify", timestamp: "2023-10-12T10:42:00Z" },\n    { label: "Pago procesado", description: "Stripe · CH_12932", type: "success", source: "shopify", timestamp: "2023-10-12T10:42:30Z" },\n    { label: "Pedido enviado a Beeping", description: "Sync automática", type: "info", source: "sistema", timestamp: "2023-10-12T10:43:00Z" },\n    { label: "Beeping: Pedido recibido", description: "Status 1", type: "info", source: "beeping", timestamp: "2023-10-12T10:45:00Z" },\n    { label: "Beeping: En preparación", description: "Status 3", type: "info", source: "beeping", timestamp: "2023-10-12T11:00:00Z" },\n    { label: "Beeping: Etiqueta generada", description: "GLS · GLS0012929", type: "info", source: "beeping", timestamp: "2023-10-12T11:30:00Z" },\n    { label: "Tracking registrado en 17track", description: "GLS0012929", type: "info", source: "17track", timestamp: "2023-10-12T12:00:00Z" },\n    { label: "Recogido por carrier", description: "GLS en Madrid", type: "info", source: "17track", timestamp: "2023-10-13T08:00:00Z" },\n    { label: "En réparto hoy", description: "Repartidor asignado", type: "info", source: "17track", timestamp: "2023-10-14T09:00:00Z" },\n    { label: "Entregado", description: "Firmado por cliente", type: "success", source: "17track", timestamp: "2023-10-14T11:20:00Z" },\n];\n\nasync function fetchMetaAd(adId: string, accessToken: string) {\n    const fields = "name,effective_status,creative{thumbnail_url,object_type},adset{name},campaign{name}";\n    const insightFields = "ctr,cpc,cpm,impressions,clicks,spend";\n    const [adRes, insightsRes] = await Promise.all([\n        fetch(`https://graph.facebook.com/v19.0/${adId}?fields=${fields}&access_token=${accessToken}`),\n        fetch(`https://graph.facebook.com/v19.0/${adId}/insights?fields=${insightFields}&access_token=${accessToken}`)\n    ]);\n    const ad = await adRes.json();\n    const insights = await insightsRes.json();\n    return { ...ad, insights: insights.data?.[0] ?? null };\n}\n\nfunction getTrackingUrl(carrier: string, trackingNumber: string): string {\n    const urls: Record<string, string> = {\n        "correos_express": `https://www.correos.es/ss/Satellite/site/aplicacion-oficina_virtual-1349167560549/detalle_app-sidioma=es_ES&numero=${trackingNumber}`,\n        "gls": `https://gls-group.com/ES/es/seguimiento-envios?match=${trackingNumber}`,\n        "seur": `https://www.seur.com/livetracking/?segmentationLevel=3&hash=${trackingNumber}`,\n        "mrw": `https://www.mrw.es/seguimiento_envios/MRW_resultados_consultas.asp?Num=${trackingNumber}`,\n        "dhl": `https://www.dhl.com/es-es/home/tracking.html?tracking-id=${trackingNumber}`,\n        "nacex": `https://www.nacex.es/seguimiento.do?numero_albaran=${trackingNumber}`,\n    };\n    const c = carrier.toLowerCase().replace(/\s/g, "_").replace(/\./g, "");\n    for (const key of Object.keys(urls)) {\n        if (c.includes(key)) return urls[key];\n    }\n    return `https://www.17track.net/es/track#nums=${trackingNumber}`;\n}\n\nfunction ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green", score: number } }) {\n    return (\n        <div style={{\n            display: "flex",\n            flexDirection: "column",\n            alignItems: "center",\n            justifyContent: "center",\n            gap: "3px",\n            height: "100%",\n        }}>\n            {/* Línea 1: punto + número — siempre juntos */}\n            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>\n                <span style={{\n                    width: "9px", height: "9px", borderRadius: "50%",\n                    flexShrink: 0, display: "inline-block",\n                    background: riesgo.status === "red" ? "#ef4444"\n                        : riesgo.status === "yellow" ? "#eab308" : "#22c55e"\n                }} />\n                <span style={{ fontSize: "14px", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>\n                    {riesgo.score}\n                </span>\n            </div>\n\n            {/* Línea 2: etiqueta — alineada con el número, no con el punto */}\n            <span style={{\n                fontSize: "11px", fontWeight: 600,\n                textAlign: "center",\n                lineHeight: 1,\n                color: riesgo.status === "red" ? "#ef4444"\n                    : riesgo.status === "yellow" ? "#d97706" : "#16a34a"\n            }}>\n                {riesgo.status === "red" ? "Alto riesgo"\n                    : riesgo.status === "yellow" ? "Revisar" : "Sin riesgo"}\n            </span>\n        </div>\n    );\n}\n\nfunction ColumnaAcciones({ pedido }: { pedido: { state: string } }) {\n\n    const handleEnviar = (p: { state: string }) => console.log("Enviando", p);\n    const handleCancelar = (p: { state: string }) => console.log("Cancelando", p);\n\n    return (\n        <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end", justifyContent: "center" }}>\n\n            {/* ENVIAR — verde, solo activo si el estado lo permite */}\n            <button\n                onClick={e => { e.stopPropagation(); handleEnviar(pedido) }}\n                disabled={["enviado", "entregado", "cancelado"].includes(pedido.state)}\n                style={{\n                    fontSize: "11px", fontWeight: 700,\n                    padding: "4px 10px", borderRadius: "6px",\n                    cursor: ["enviado", "entregado", "cancelado"].includes(pedido.state) ? "not-allowed" : "pointer",\n                    whiteSpace: "nowrap",\n                    width: "100%",          // ← ocupa todo el ancho de la celda\n                    textAlign: "center",\n                    border: "none",\n                    background: ["enviado", "entregado", "cancelado"].includes(pedido.state)\n                        ? "#f1f5f9" : "rgba(22,163,74,0.1)",\n                    color: ["enviado", "entregado", "cancelado"].includes(pedido.state)\n                        ? "#94a3b8" : "#16a34a",\n                }}\n            >\n                Enviar\n            </button>\n\n            {/* CANCELAR — rojo, siempre visible salvo entregado */}\n            <button\n                onClick={e => { e.stopPropagation(); handleCancelar(pedido) }}\n                disabled={["entregado", "cancelado"].includes(pedido.state)}\n                style={{\n                    fontSize: "11px", fontWeight: 700,\n                    padding: "4px 10px", borderRadius: "6px",\n                    cursor: ["entregado", "cancelado"].includes(pedido.state) ? "not-allowed" : "pointer",\n                    whiteSpace: "nowrap",\n                    width: "100%",          // ← ocupa todo el ancho de la celda\n                    textAlign: "center",\n                    border: "none",\n                    background: ["entregado", "cancelado"].includes(pedido.state)\n                        ? "#f1f5f9" : "rgba(239,68,68,0.08)",\n                    color: ["entregado", "cancelado"].includes(pedido.state)\n                        ? "#94a3b8" : "#ef4444",\n                }}\n            >\n                Cancelar\n            </button>\n\n\n        </div>\n    );\n}\n\nfunction ColumnaCheckbox() {\n    const [menuOpen, setMenuOpen] = React.useState(false);\n    return (\n        <td data-no-drawer style={{\n            padding: "0 6px 0 14px", verticalAlign: "middle",\n            height: "52px", width: "36px", borderBottom: "1px solid #f1f5f9"\n        }}>\n            <div style={{\n                display: "flex", flexDirection: "column", alignItems: "center",\n                justifyContent: "center", gap: "4px", height: "100%", position: "relative"\n            }}>\n                <input\n                    type="checkbox"\n                    onClick={e => e.stopPropagation()}\n                    style={{ width: "14px", height: "14px", cursor: "pointer", flexShrink: 0 }}\n                />\n                <button\n                    onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen) }}\n                    style={{\n                        background: "none", border: "none", cursor: "pointer",\n                        color: "#94a3b8", fontSize: "13px", padding: "0",\n                        lineHeight: 1, letterSpacing: "0.5px",\n                    }}\n                >\n                    ···\n                </button>\n                {menuOpen && (\n                    <div style={{\n                        position: "absolute", left: "100%", top: "50%", zIndex: 100,\n                        background: "white", border: "1px solid #e2e8f0",\n                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",\n                        borderRadius: "8px", padding: "4px", minWidth: "160px",\n                        display: "flex", flexDirection: "column", gap: "2px",\n                        textAlign: "left", transform: "translateY(-50%)", marginLeft: "8px"\n                    }}>\n                        <button onClick={(e) => { e.stopPropagation(); console.log("Ver detalle") }} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", borderRadius: "4px" }}>\n                            Ver detalles\n                        </button>\n                        <button onClick={(e) => { e.stopPropagation(); console.log("Cancelar") }} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", color: "#ef4444", borderRadius: "4px" }}>\n                            ✕ Cancelar pedido\n                        </button>\n                    </div>\n                )}\n            </div>\n        </td>\n    );\n}\n\n\nconst DRAWER_TABS = [\n    { key: "cliente", label: "Cliente", icon: "👤" },\n    { key: "timeline", label: "Timeline", icon: "📋" },\n    { key: "riesgo", label: "Riesgo", icon: "🛡️" },\n    { key: "origen", label: "Origen", icon: "📡" },\n    { key: "historial", label: "Historial", icon: "🕐" },\n    { key: "comunicaciones", label: "Mensajes", icon: "💬" },\n    { key: "notas", label: "Notas", icon: "📝" }\n];\n\n\nfunction DrawerSection({ title, children }: { title: string, children: React.ReactNode }) {\n    const items = React.Children.toArray(children);\n    const enhanced = items.map((child, i) =>\n        React.isValidElement(child) && i === items.length - 1\n            ? React.cloneElement(child as React.ReactElement<{ isLast?: boolean }>, { isLast: true })\n            : child\n    );\n    return (\n        <div style={{ marginBottom: "6px" }}>\n            <p style={{\n                fontSize: "10px", fontWeight: 900, textTransform: "uppercase",\n                color: "#94a3b8", letterSpacing: "0.08em",\n                margin: "0 0 2px 0",\n                paddingLeft: "2px",\n            }}>\n                {title}\n            </p>\n            <div style={{\n                background: "#f8fafc", borderRadius: "8px",\n                padding: "2px 10px",\n            }}>\n                {enhanced}\n            </div>\n        </div>\n    );\n}\n\nfunction DrawerRow({ label, value, isLast }: { label: string, value: React.ReactNode, isLast?: boolean }) {\n    return (\n        <div style={{\n            display: "flex", justifyContent: "space-between",\n            alignItems: "center",\n            padding: "3px 0",\n            borderBottom: isLast ? "none" : "1px solid #f1f5f9",\n            minHeight: "24px",\n        }}>\n            <span style={{ fontSize: "12px", color: "#64748b", minWidth: "110px" }}>\n                {label}\n            </span>\n            <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", textAlign: "right" }}>\n                {value}\n            </span>\n        </div>\n    );\n}\n\nfunction CarrierBadge({ type }: { type: string }) {\n    const bg = type === "Correos Exp." ? "#dbeafe" : "#fef3c7";\n    const color = type === "Correos Exp." ? "#2563eb" : "#d97706";\n    const border = type === "Correos Exp." ? "#bfdbfe" : "#fde68a";\n    return (\n        <span style={{\n            background: bg, color: color, border: `1px solid ${border}`,\n            fontSize: "10px", fontWeight: 700, borderRadius: "4px",\n            padding: "2px 8px", whiteSpace: "nowrap", display: "inline-block"\n        }}>\n            {type || "GLS"}\n        </span>\n    );\n}\n\ninterface Gestor {\n    id: string;\n    nombre: string;       // "María G.", "Bot COD", "Carlos M."\n    tipo: "bot" | "humano";\n    activo: boolean;\n    avatar?: string;      // URL foto si es humano\n    color?: string;       // color identificativo opcional\n    emoji?: string;       // fallback visual si no hay avatar\n}\n\n// Gestores disponibles — bots + equipo humano\nconst GESTORES_LIST: Gestor[] = [\n    { id: "bot_cod", nombre: "Bot COD", tipo: "bot", activo: true, emoji: "🤖" },\n    { id: "bot_general", nombre: "Bot General", tipo: "bot", activo: true, emoji: "🤖" },\n    { id: "maria", nombre: "María G.", tipo: "humano", activo: true, emoji: "👩", color: "#7c3aed" },\n    { id: "carlos", nombre: "Carlos M.", tipo: "humano", activo: true, emoji: "👨", color: "#0891b2" },\n    { id: "ana", nombre: "Ana P.", tipo: "humano", activo: true, emoji: "👩", color: "#16a34a" },\n    { id: "soporte", nombre: "Soporte", tipo: "humano", activo: true, emoji: "🏋️", color: "#64748b" },\n];\n\n\n
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, Search, Filter, MapPin, User, AlertTriangle } from 'lucide-react';
+import { ORDER_STATES } from '@/lib/orderStates';
+import { useGestores } from '@/hooks/useGestores';
+
+const TABS = [
+    { id: 'todos', label: 'Todos' },
+    { id: 'por-gestionar', label: 'Por Gestionar' },
+    { id: 'en-transito', label: 'En Tránsito' },
+    { id: 'incidencias', label: 'Incidencias' },
+    { id: 'devoluciones', label: 'Devoluciones' },
+    { id: 'carritos-abandonados', label: 'Carritos Abandonados' },
+    { id: 'borradores', label: 'Borradores' },
+    { id: 'historial', label: 'Historial' }
+];
+
+
+
+const FULFILLMENT_BADGES: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    "beeping": { label: "Beeping", color: "#ca8a04", bg: "rgba(234,179,8,0.15)", border: "rgba(234,179,8,0.4)" },
+    "dropea": { label: "Dropea", color: "#1e40af", bg: "rgba(30,64,175,0.1)", border: "rgba(30,64,175,0.3)" },
+    "shopify": { label: "Shopify", color: "#16a34a", bg: "rgba(22,163,74,0.1)", border: "rgba(22,163,74,0.3)" },
+    "dropi": { label: "Dropi", color: "#ea580c", bg: "rgba(234,88,12,0.1)", border: "rgba(234,88,12,0.3)" },
+    "manual": { label: "Manual", color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.3)" },
+    "none": { label: "—", color: "#94a3b8", bg: "transparent", border: "transparent" }
+};
+
+function FulfillmentBadge({ type }: { type: string }) {
+    const b = FULFILLMENT_BADGES[type] ?? FULFILLMENT_BADGES["none"];
+    return (
+        <span style={{
+            background: b.bg,
+            color: b.color,
+            border: `1px solid ${b.border}`,
+            fontSize: "11px",
+            fontWeight: 700,
+            borderRadius: "6px",
+            padding: "3px 8px",
+            whiteSpace: "nowrap",
+            display: "inline-block",
+        }}>
+            {b.label}
+        </span>
+    );
+}
+
+
+function StateBadge({ state }: { state: string }) {
+    // @ts-expect-error - Dictionary indexing safe
+    const s = ORDER_STATES[state] || ORDER_STATES.nuevo;
+    return (
+        <div style={{
+            display: "inline-flex", alignItems: "center", gap: "4px",
+            padding: "4px 8px", borderRadius: "6px",
+            background: s.bg, color: s.color,
+            fontSize: "10px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase"
+        }}>
+            <span style={{ fontSize: "6px" }}>{s.icon}</span>
+            {s.label}
+        </div>
+    );
+}
+
+function formatDate(_date?: string) {
+    return "12 Oct 2023";
+}
+
+function formatTime(_date?: string) {
+    return "14:32";
+}
+
+function calcTiempo(from?: string, to?: string | Date): string {
+    if (!from || !to) return "—";
+    const toDate = to instanceof Date ? to : new Date(to);
+    const diff = toDate.getTime() - new Date(from).getTime();
+    if (isNaN(diff) || diff < 0) return "—";
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    if (h === 0) return `${m}min`;
+    const d = Math.floor(h / 24);
+    if (d > 0) return `${d}d ${h % 24}h`;
+    return `${h}h ${m}min`;
+}
+
+type TimelineEventType = "info" | "success" | "warning" | "error";
+type TimelineSource = "shopify" | "beeping" | "dropea" | "dropi" | "17track" | "sistema" | "usuario";
+
+interface TimelineEvent {
+    label: string;
+    description: string;
+    type: TimelineEventType;
+    source: TimelineSource;
+    timestamp: string;
+}
+
+const SOURCE_COLORS: Record<TimelineSource, string> = {
+    shopify: "#16a34a",
+    beeping: "#ca8a04",
+    dropea: "#1e40af",
+    dropi: "#ea580c",
+    "17track": "#7c3aed",
+    sistema: "#0891b2",
+    usuario: "#64748b",
+};
+
+const MOCK_TIMELINE: TimelineEvent[] = [
+    { label: "Pedido creado en Shopify", description: "Referencia #10045", type: "info", source: "shopify", timestamp: "2023-10-12T10:42:00Z" },
+    { label: "Pago procesado", description: "Stripe · CH_12932", type: "success", source: "shopify", timestamp: "2023-10-12T10:42:30Z" },
+    { label: "Pedido enviado a Beeping", description: "Sync automática", type: "info", source: "sistema", timestamp: "2023-10-12T10:43:00Z" },
+    { label: "Beeping: Pedido recibido", description: "Status 1", type: "info", source: "beeping", timestamp: "2023-10-12T10:45:00Z" },
+    { label: "Beeping: En preparación", description: "Status 3", type: "info", source: "beeping", timestamp: "2023-10-12T11:00:00Z" },
+    { label: "Beeping: Etiqueta generada", description: "GLS · GLS0012929", type: "info", source: "beeping", timestamp: "2023-10-12T11:30:00Z" },
+    { label: "Tracking registrado en 17track", description: "GLS0012929", type: "info", source: "17track", timestamp: "2023-10-12T12:00:00Z" },
+    { label: "Recogido por carrier", description: "GLS en Madrid", type: "info", source: "17track", timestamp: "2023-10-13T08:00:00Z" },
+    { label: "En réparto hoy", description: "Repartidor asignado", type: "info", source: "17track", timestamp: "2023-10-14T09:00:00Z" },
+    { label: "Entregado", description: "Firmado por cliente", type: "success", source: "17track", timestamp: "2023-10-14T11:20:00Z" },
+];
+
+async function fetchMetaAd(adId: string, accessToken: string) {
+    const fields = "name,effective_status,creative{thumbnail_url,object_type},adset{name},campaign{name}";
+    const insightFields = "ctr,cpc,cpm,impressions,clicks,spend";
+    const [adRes, insightsRes] = await Promise.all([
+        fetch(`https://graph.facebook.com/v19.0/${adId}?fields=${fields}&access_token=${accessToken}`),
+        fetch(`https://graph.facebook.com/v19.0/${adId}/insights?fields=${insightFields}&access_token=${accessToken}`)
+    ]);
+    const ad = await adRes.json();
+    const insights = await insightsRes.json();
+    return { ...ad, insights: insights.data?.[0] ?? null };
+}
+
+function getTrackingUrl(carrier: string, trackingNumber: string): string {
+    const urls: Record<string, string> = {
+        "correos_express": `https://www.correos.es/ss/Satellite/site/aplicacion-oficina_virtual-1349167560549/detalle_app-sidioma=es_ES&numero=${trackingNumber}`,
+        "gls": `https://gls-group.com/ES/es/seguimiento-envios?match=${trackingNumber}`,
+        "seur": `https://www.seur.com/livetracking/?segmentationLevel=3&hash=${trackingNumber}`,
+        "mrw": `https://www.mrw.es/seguimiento_envios/MRW_resultados_consultas.asp?Num=${trackingNumber}`,
+        "dhl": `https://www.dhl.com/es-es/home/tracking.html?tracking-id=${trackingNumber}`,
+        "nacex": `https://www.nacex.es/seguimiento.do?numero_albaran=${trackingNumber}`,
+    };
+    const c = carrier.toLowerCase().replace(/\s/g, "_").replace(/\./g, "");
+    for (const key of Object.keys(urls)) {
+        if (c.includes(key)) return urls[key];
+    }
+    return `https://www.17track.net/es/track#nums=${trackingNumber}`;
+}
+
+function ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green", score: number } }) {
+    return (
+        <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "3px",
+            height: "100%",
+        }}>
+            {/* Línea 1: punto + número — siempre juntos */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{
+                    width: "9px", height: "9px", borderRadius: "50%",
+                    flexShrink: 0, display: "inline-block",
+                    background: riesgo.status === "red" ? "#ef4444"
+                        : riesgo.status === "yellow" ? "#eab308" : "#22c55e"
+                }} />
+                <span style={{ fontSize: "14px", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>
+                    {riesgo.score}
+                </span>
+            </div>
+
+            {/* Línea 2: etiqueta — alineada con el número, no con el punto */}
+            <span style={{
+                fontSize: "11px", fontWeight: 600,
+                textAlign: "center",
+                lineHeight: 1,
+                color: riesgo.status === "red" ? "#ef4444"
+                    : riesgo.status === "yellow" ? "#d97706" : "#16a34a"
+            }}>
+                {riesgo.status === "red" ? "Alto riesgo"
+                    : riesgo.status === "yellow" ? "Revisar" : "Sin riesgo"}
+            </span>
+        </div>
+    );
+}
+
+function ColumnaAcciones({ pedido }: { pedido: { state: string } }) {
+
+    const handleEnviar = (p: { state: string }) => console.log("Enviando", p);
+    const handleCancelar = (p: { state: string }) => console.log("Cancelando", p);
+
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end", justifyContent: "center" }}>
+
+            {/* ENVIAR — verde, solo activo si el estado lo permite */}
+            <button
+                onClick={e => { e.stopPropagation(); handleEnviar(pedido) }}
+                disabled={["enviado", "entregado", "cancelado"].includes(pedido.state)}
+                style={{
+                    fontSize: "11px", fontWeight: 700,
+                    padding: "4px 10px", borderRadius: "6px",
+                    cursor: ["enviado", "entregado", "cancelado"].includes(pedido.state) ? "not-allowed" : "pointer",
+                    whiteSpace: "nowrap",
+                    width: "100%",          // ← ocupa todo el ancho de la celda
+                    textAlign: "center",
+                    border: "none",
+                    background: ["enviado", "entregado", "cancelado"].includes(pedido.state)
+                        ? "#f1f5f9" : "rgba(22,163,74,0.1)",
+                    color: ["enviado", "entregado", "cancelado"].includes(pedido.state)
+                        ? "#94a3b8" : "#16a34a",
+                }}
+            >
+                Enviar
+            </button>
+
+            {/* CANCELAR — rojo, siempre visible salvo entregado */}
+            <button
+                onClick={e => { e.stopPropagation(); handleCancelar(pedido) }}
+                disabled={["entregado", "cancelado"].includes(pedido.state)}
+                style={{
+                    fontSize: "11px", fontWeight: 700,
+                    padding: "4px 10px", borderRadius: "6px",
+                    cursor: ["entregado", "cancelado"].includes(pedido.state) ? "not-allowed" : "pointer",
+                    whiteSpace: "nowrap",
+                    width: "100%",          // ← ocupa todo el ancho de la celda
+                    textAlign: "center",
+                    border: "none",
+                    background: ["entregado", "cancelado"].includes(pedido.state)
+                        ? "#f1f5f9" : "rgba(239,68,68,0.08)",
+                    color: ["entregado", "cancelado"].includes(pedido.state)
+                        ? "#94a3b8" : "#ef4444",
+                }}
+            >
+                Cancelar
+            </button>
+
+
+        </div>
+    );
+}
+
+function ColumnaCheckbox() {
+    const [menuOpen, setMenuOpen] = React.useState(false);
+    return (
+        <td data-no-drawer style={{
+            padding: "0 6px 0 14px", verticalAlign: "middle",
+            height: "52px", width: "36px", borderBottom: "1px solid #f1f5f9"
+        }}>
+            <div style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                justifyContent: "center", gap: "4px", height: "100%", position: "relative"
+            }}>
+                <input
+                    type="checkbox"
+                    onClick={e => e.stopPropagation()}
+                    style={{ width: "14px", height: "14px", cursor: "pointer", flexShrink: 0 }}
+                />
+                <button
+                    onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
+                    style={{
+                        background: "none", border: "none", cursor: "pointer",
+                        color: "#94a3b8", fontSize: "13px", padding: "0",
+                        lineHeight: 1, letterSpacing: "0.5px",
+                    }}
+                >
+                    ···
+                </button>
+                {menuOpen && (
+                    <div style={{
+                        position: "absolute", left: "100%", top: "50%", zIndex: 100,
+                        background: "white", border: "1px solid #e2e8f0",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                        borderRadius: "8px", padding: "4px", minWidth: "160px",
+                        display: "flex", flexDirection: "column", gap: "2px",
+                        textAlign: "left", transform: "translateY(-50%)", marginLeft: "8px"
+                    }}>
+                        <button onClick={(e) => { e.stopPropagation(); console.log("Ver detalle") }} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", borderRadius: "4px" }}>
+                            Ver detalles
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); console.log("Cancelar") }} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", color: "#ef4444", borderRadius: "4px" }}>
+                            ✕ Cancelar pedido
+                        </button>
+                    </div>
+                )}
+            </div>
+        </td>
+    );
+}
+
+
+const DRAWER_TABS = [
+    { key: "cliente", label: "Cliente", icon: "👤" },
+    { key: "timeline", label: "Timeline", icon: "📋" },
+    { key: "riesgo", label: "Riesgo", icon: "🛡️" },
+    { key: "origen", label: "Origen", icon: "📡" },
+    { key: "historial", label: "Historial", icon: "🕐" },
+    { key: "comunicaciones", label: "Mensajes", icon: "💬" },
+    { key: "notas", label: "Notas", icon: "📝" }
+];
+
+
+function DrawerSection({ title, children }: { title: string, children: React.ReactNode }) {
+    const items = React.Children.toArray(children);
+    const enhanced = items.map((child, i) =>
+        React.isValidElement(child) && i === items.length - 1
+            ? React.cloneElement(child as React.ReactElement<{ isLast?: boolean }>, { isLast: true })
+            : child
+    );
+    return (
+        <div style={{ marginBottom: "6px" }}>
+            <p style={{
+                fontSize: "10px", fontWeight: 900, textTransform: "uppercase",
+                color: "#94a3b8", letterSpacing: "0.08em",
+                margin: "0 0 2px 0",
+                paddingLeft: "2px",
+            }}>
+                {title}
+            </p>
+            <div style={{
+                background: "#f8fafc", borderRadius: "8px",
+                padding: "2px 10px",
+            }}>
+                {enhanced}
+            </div>
+        </div>
+    );
+}
+
+function DrawerRow({ label, value, isLast }: { label: string, value: React.ReactNode, isLast?: boolean }) {
+    return (
+        <div style={{
+            display: "flex", justifyContent: "space-between",
+            alignItems: "center",
+            padding: "3px 0",
+            borderBottom: isLast ? "none" : "1px solid #f1f5f9",
+            minHeight: "24px",
+        }}>
+            <span style={{ fontSize: "12px", color: "#64748b", minWidth: "110px" }}>
+                {label}
+            </span>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", textAlign: "right" }}>
+                {value}
+            </span>
+        </div>
+    );
+}
+
+function CarrierBadge({ type }: { type: string }) {
+    const bg = type === "Correos Exp." ? "#dbeafe" : "#fef3c7";
+    const color = type === "Correos Exp." ? "#2563eb" : "#d97706";
+    const border = type === "Correos Exp." ? "#bfdbfe" : "#fde68a";
+    return (
+        <span style={{
+            background: bg, color: color, border: `1px solid ${border}`,
+            fontSize: "10px", fontWeight: 700, borderRadius: "4px",
+            padding: "2px 8px", whiteSpace: "nowrap", display: "inline-block"
+        }}>
+            {type || "GLS"}
+        </span>
+    );
+}
+
+interface Gestor {
+    id: string;
+    nombre: string;       // "María G.", "Bot COD", "Carlos M."
+    tipo: "bot" | "humano";
+    activo: boolean;
+    avatar?: string;      // URL foto si es humano
+    color?: string;       // color identificativo opcional
+    emoji?: string;       // fallback visual si no hay avatar
+}
+
+// Gestores disponibles — bots + equipo humano
+const GESTORES_LIST: Gestor[] = [
+    { id: "bot_cod", nombre: "Bot COD", tipo: "bot", activo: true, emoji: "🤖" },
+    { id: "bot_general", nombre: "Bot General", tipo: "bot", activo: true, emoji: "🤖" },
+    { id: "maria", nombre: "María G.", tipo: "humano", activo: true, emoji: "👩", color: "#7c3aed" },
+    { id: "carlos", nombre: "Carlos M.", tipo: "humano", activo: true, emoji: "👨", color: "#0891b2" },
+    { id: "ana", nombre: "Ana P.", tipo: "humano", activo: true, emoji: "👩", color: "#16a34a" },
+    { id: "soporte", nombre: "Soporte", tipo: "humano", activo: true, emoji: "🏋️", color: "#64748b" },
+];
+
+
+
+const MOCK_AVATARS: Record<string, string> = {
+    carlos: "https://i.pravatar.cc/150?u=carlos",
+    ana: "https://i.pravatar.cc/150?u=ana",
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function DropdownOption({ usuario, active, onClick }: { usuario: any; active: boolean; onClick: () => void }) {
     if (!usuario) {
@@ -22,6 +410,8 @@ function DropdownOption({ usuario, active, onClick }: { usuario: any; active: bo
         );
     }
 
+    const avatarUrl = usuario.avatar || MOCK_AVATARS[usuario.id] || null;
+
     return (
         <div onClick={onClick} style={{
             display: "flex", alignItems: "center", gap: "8px",
@@ -34,9 +424,9 @@ function DropdownOption({ usuario, active, onClick }: { usuario: any; active: bo
             {/* Avatar o emoji */}
             {usuario.tipo === "bot" ? (
                 <span style={{ fontSize: "16px", minWidth: "22px", textAlign: "center" }}>🤖</span>
-            ) : usuario.avatar ? (
+            ) : avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={usuario.avatar} style={{ width: "22px", height: "22px", borderRadius: "50%", objectFit: "cover" }} alt="avatar" />
+                <img src={avatarUrl} style={{ width: "22px", height: "22px", borderRadius: "50%", objectFit: "cover" }} alt="avatar" />
             ) : (
                 <div style={{
                     width: "22px", height: "22px", borderRadius: "50%",
@@ -44,7 +434,7 @@ function DropdownOption({ usuario, active, onClick }: { usuario: any; active: bo
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: "10px", fontWeight: 900, color: "white", flexShrink: 0
                 }}>
-                    {usuario.nombre?.[0]}{usuario.apellido?.[0] ?? ""}
+                    {usuario.nombre?.[0]}{(usuario.apellido || "")?.[0] ?? ""}
                 </div>
             )}
 
@@ -78,6 +468,7 @@ function GestorCell({ pedido, gestores, onAssign }: { pedido: Record<string, any
     }, []);
 
     const gestor = pedido?.gestor;
+    const avatarUrl = gestor ? (gestor.avatar || MOCK_AVATARS[gestor.id]) : null;
 
     return (
         <td style={{ padding: "0 10px", verticalAlign: "middle", height: "52px", position: "relative", overflow: "visible" }}
@@ -91,9 +482,9 @@ function GestorCell({ pedido, gestores, onAssign }: { pedido: Record<string, any
                 }}>
                     {gestor?.tipo === "bot" ? (
                         <span style={{ fontSize: "14px" }}>🤖</span>
-                    ) : gestor?.avatar ? (
+                    ) : avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={gestor.avatar} style={{ width: "16px", height: "16px", borderRadius: "50%", objectFit: "cover" }} alt="avatar" />
+                        <img src={avatarUrl} style={{ width: "16px", height: "16px", borderRadius: "50%", objectFit: "cover" }} alt="avatar" />
                     ) : gestor ? (
                         <div style={{
                             width: "16px", height: "16px", borderRadius: "50%",
@@ -155,4 +546,1665 @@ function GestorCell({ pedido, gestores, onAssign }: { pedido: Record<string, any
     );
 }
 
-\ntype RiskLevel = "low" | "medium" | "high";\n\ninterface RiskFactor {\n    key: string;\n    label: string;\n    value: string;\n    risk: RiskLevel;\n    points: number;\n    source: string;\n}\n\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nfunction calcClienteMetrics(pedidos: Record<string, any>[]) {\n    const total = pedidos.length;\n    const entregados = pedidos.filter(p => p.state === "entregado").length;\n    const devueltos = pedidos.filter(p => ["devolucion", "devuelto"].includes(p.state)).length;\n    const incidencias = pedidos.filter(p => p.state === "incidencia").length;\n    const totalGastado = pedidos\n        .filter(p => p.state === "entregado")\n        .reduce((acc, p) => acc + parseFloat(p.importe || "0"), 0);\n    const sorted = [...pedidos].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());\n    return {\n        totalPedidos: total,\n        totalGastado: totalGastado.toFixed(2),\n        ticketMedio: entregados > 0 ? (totalGastado / entregados).toFixed(2) : "0.00",\n        tasaEntrega: total > 0 ? ((entregados / total) * 100).toFixed(1) : "0",\n        tasaDevolucion: total > 0 ? ((devueltos / total) * 100).toFixed(1) : "0",\n        tasaIncidencia: total > 0 ? ((incidencias / total) * 100).toFixed(1) : "0",\n        pedidosEntregados: entregados,\n        pedidosDevoluciones: devueltos,\n        ultimoPedido: sorted[0]?.createdAt ?? null,\n        primerPedido: sorted[sorted.length - 1]?.createdAt ?? null,\n    };\n}\n\nfunction getCPRiskLevel(cp: string): { label: string; level: RiskLevel } {\n    // Hardcoded high-risk CPs known from returns history; replace with DB query\n    const high = ["18008", "18009", "18010", "29001", "28005", "28012", "08001", "08002", "08003"];\n    const medium = ["41001", "41002", "46001", "46002", "50001", "03001", "03002"];\n    if (high.some(x => cp.startsWith(x.slice(0, 3)))) return { label: "Alto riesgo", level: "high" };\n    if (medium.some(x => cp.startsWith(x.slice(0, 3)))) return { label: "Riesgo medio", level: "medium" };\n    return { label: "Riesgo bajo", level: "low" };\n}\n\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nfunction calcRiskScore(pedido: Record<string, any>): { score: number; factors: RiskFactor[] } {\n    const factors: RiskFactor[] = [];\n\n    // CP zona\n    const cpRisk = getCPRiskLevel(pedido?.shipping_zip || "00000");\n    factors.push({\n        key: "cp", label: `Zona CP ${pedido?.shipping_zip || "—"}`,\n        value: cpRisk.label, risk: cpRisk.level,\n        points: cpRisk.level === "high" ? 40 : cpRisk.level === "medium" ? 20 : 0,\n        source: "datos propios"\n    });\n\n    // Devoluciones previas\n    const devs = pedido?.clienteStats?.totalDevoluciones ?? 0;\n    if (devs > 2) factors.push({\n        key: "devoluciones", label: "Devoluciones previas",\n        value: `${devs} devoluciones`, risk: "high", points: 30, source: "historial"\n    });\n    else if (devs > 0) factors.push({\n        key: "devoluciones", label: "Devoluciones previas",\n        value: `${devs} devolución`, risk: "medium", points: 10, source: "historial"\n    });\n    else factors.push({\n        key: "devoluciones", label: "Sin devoluciones previas",\n        value: "OK", risk: "low", points: -10, source: "historial"\n    });\n\n    // Teléfono válido\n    const tel = (pedido?.telefono || "").replace(/\s/g, "");\n    const telValid = /^(\+34|0034|34)?[6789]\d{8}$/.test(tel);\n    factors.push({\n        key: "telefono", label: "Teléfono válido",\n        value: telValid ? "OK" : "Inválido", risk: telValid ? "low" : "high",\n        points: telValid ? -5 : 25, source: "validación local"\n    });\n\n    // IP vs dirección\n    if (pedido?.geoCity && pedido?.shipping_city) {\n        const match = pedido.geoCity.toLowerCase() === pedido.shipping_city.toLowerCase();\n        factors.push({\n            key: "ip_geo", label: "IP coincide con dirección",\n            value: match ? "Coincide" : `IP: ${pedido.geoCity}`, risk: match ? "low" : "medium",\n            points: match ? -5 : 15, source: "geolocalización"\n        });\n    }\n\n    // VPN/Proxy\n    if (pedido?.isProxy) factors.push({\n        key: "vpn", label: "VPN/Proxy detectado",\n        value: "⚠️ Detectado", risk: "high", points: 35, source: "ipinfo.io"\n    });\n\n    // Nombre completo\n    const hasRealName = (pedido?.cliente || "").trim().split(" ").length >= 2;\n    factors.push({\n        key: "nombre", label: "Nombre completo",\n        value: hasRealName ? "OK" : "Solo un nombre", risk: hasRealName ? "low" : "medium",\n        points: hasRealName ? 0 : 10, source: "validación local"\n    });\n\n    // Cliente nuevo vs recurrente\n    const totalPedidos = pedido?.clienteStats?.totalPedidos ?? 1;\n    if (totalPedidos === 1) factors.push({\n        key: "nuevo", label: "Primera compra",\n        value: "Cliente nuevo", risk: "medium", points: 10, source: "historial"\n    });\n    else factors.push({\n        key: "recurrente", label: "Cliente recurrente",\n        value: `${totalPedidos} pedidos`, risk: "low", points: -15, source: "historial"\n    });\n\n    // Método de pago\n    const isCOD = ["COD", "Contra reembolso"].includes(pedido?.pago || "");\n    factors.push({\n        key: "pago", label: "Método de pago",\n        value: isCOD ? "COD (mayor riesgo)" : (pedido?.pago || "—"), risk: isCOD ? "medium" : "low",\n        points: isCOD ? 20 : 0, source: "shopify"\n    });\n\n    // Hora del pedido\n    const hour = new Date(pedido?.createdAt || Date.now()).getHours();\n    if (hour >= 2 && hour <= 6) factors.push({\n        key: "hora", label: "Pedido en madrugada",\n        value: `${hour}:00h`, risk: "medium", points: 10, source: "shopify"\n    });\n\n    const totalPoints = factors.reduce((acc, f) => acc + f.points, 0);\n    const score = Math.max(0, Math.min(100, 100 - totalPoints));\n    return { score, factors };\n}\n\n\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nfunction OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string, any> | null, onClose: () => void, onSelectOrder?: (p: any) => void }) {\n    const [activeTab, setActiveTab] = React.useState("cliente");\n    const [msgSource, setMsgSource] = React.useState("WhatsApp Business");\n    const [newMessage, setNewMessage] = React.useState("");\n\n    const mensajes = pedido?.mensajes || [\n        { "direction": "inbound", "body": "¿Cuándo llega mi pedido?", "timestamp": "2023-10-12T14:30:00Z", "status": "read" },\n        { "direction": "outbound", "body": "Buenas tardes Juan. Hemos enviado tu pedido hoy, debería llegar en 24-48 horas.", "timestamp": "2023-10-12T14:35:00Z", "status": "read" }\n    ];\n\n    const sendMessage = () => {\n        if (!newMessage.trim()) return;\n        setNewMessage("");\n    };\n\n    const [newNota, setNewNota] = React.useState("");\n    const [notaGestor, setNotaGestor] = React.useState("");\n    const gestores = [\n        { id: "maria", nombre: "María", emoji: "👩" },\n        { id: "carlos", nombre: "Carlos", emoji: "👨" },\n        { id: "ana", nombre: "Ana", emoji: "👩" },\n        { id: "soporte", nombre: "Soporte", emoji: "🏋️" },\n    ];\n    const notas = pedido?.notas || [\n        { texto: "El cliente ha llamado para confirmar la dirección de entrega, le faltaba poner que es el Bajo A.", autor: "María (A. Cliente)", gestorAsignado: "Carlos", createdAt: "2023-10-12T15:00:00Z" }\n    ];\n    const saveNota = () => {\n        if (!newNota.trim()) return;\n        setNewNota("");\n        setNotaGestor("");\n    };\n\n    // Meta Ad creativo — cargado desde Graph API cuando pedido.metaAdId exista\n    // eslint-disable-next-line @typescript-eslint/no-explicit-any\n    const [metaAd, setMetaAd] = React.useState<Record<string, any> | null>(null);\n    React.useEffect(() => {\n        if (!pedido?.metaAdId) { setMetaAd(null); return; }\n        const token = process.env.NEXT_PUBLIC_META_ACCESS_TOKEN;\n        if (token) {\n            fetchMetaAd(pedido.metaAdId, token).then(setMetaAd).catch(() => setMetaAd(null));\n        } else {\n            // Mock mientras no hay token configurado\n            setMetaAd({\n                name: "VSL Zapatos | Retargeting Compra | ES",\n                effective_status: "ACTIVE",\n                thumbnail_url: null,\n                creative: { object_type: "VIDEO" },\n                adset: { name: "Retargeting 30 d\u00edas" },\n                campaign: { name: "CON | Zapatillas | ES | Octubre" },\n                insights: { ctr: "2.41", cpc: "0.38", cpm: "9.15" },\n            });\n        }\n    }, [pedido?.metaAdId]);\n\n    if (!pedido) return null;\n    return (\n        <>\n            <div\n                onClick={onClose}\n                style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(2px)", zIndex: 100, animation: "fade-in 0.2s ease-out" }}\n            />\n            <div\n                style={{\n                    position: "fixed", right: 0, top: 0, bottom: 0, width: "620px", maxWidth: "100%",\n                    background: "white", zIndex: 101, boxShadow: "-8px 0 24px rgba(0,0,0,0.1)",\n                    display: "flex", flexDirection: "column",\n                    animation: "slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)"\n                }}\n            >\n\n                <div style={{\n                    position: "sticky", top: 0, zIndex: 10,\n                    background: "white", borderBottom: "1px solid #e2e8f0",\n                    padding: "16px 20px 0",\n                }}>\n                    {/* Fila 1: ref + estado + cerrar */}\n                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>\n                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>\n                            <span style={{ fontSize: "18px", fontWeight: 900, color: "#3b82f6" }}>#{pedido.ref || "10045"}</span>\n                            <StateBadge state={pedido.state || 'nuevo'} />\n                        </div>\n                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>\n                            {/* Botón Enviar */}\n                            <button style={{\n                                background: "rgba(22,163,74,0.1)", color: "#16a34a",\n                                border: "1px solid rgba(22,163,74,0.3)", borderRadius: "7px",\n                                padding: "5px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer"\n                            }}>Enviar</button>\n                            {/* Botón Cancelar */}\n                            <button style={{\n                                background: "rgba(239,68,68,0.08)", color: "#ef4444",\n                                border: "1px solid rgba(239,68,68,0.2)", borderRadius: "7px",\n                                padding: "5px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer"\n                            }}>Cancelar</button>\n                            {/* Cerrar */}\n                            <button onClick={onClose} style={{\n                                background: "#f1f5f9", border: "none", borderRadius: "7px",\n                                width: "30px", height: "30px", cursor: "pointer", fontSize: "14px",\n                                display: "flex", alignItems: "center", justifyContent: "center"\n                            }}>✕</button>\n                        </div>\n                    </div>\n\n                    {/* Fila 2: cliente + fecha rápida */}\n                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "12px" }}>\n                        {pedido.cliente || "Juan Pérez"} · {pedido.telefono || "+34 600 000 000"} · Entrada: {formatDate(pedido.createdAt)} {formatTime(pedido.createdAt)}\n                    </div>\n\n                    {/* Tabs */}\n                    <div style={{ display: "flex", gap: "2px", overflowX: "auto" }} className="ds-scrollbar-hide">\n                        {DRAWER_TABS.map(tab => (\n                            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{\n                                padding: "7px 12px", fontSize: "11px", fontWeight: 600,\n                                border: "none", background: "none", cursor: "pointer",\n                                borderBottom: activeTab === tab.key ? "2px solid #3b82f6" : "2px solid transparent",\n                                color: activeTab === tab.key ? "#3b82f6" : "#64748b",\n                                whiteSpace: "nowrap",\n                            }}>\n                                {tab.icon} {tab.label}\n                            </button>\n                        ))}\n                    </div>\n                </div>\n\n                {/* Body scrollable content per tab */}\n                <div className="ds-scrollbar" style={{ height: "calc(100vh - 130px)", padding: "8px 14px", overflowY: "auto", background: "white" }}>\n\n                    {activeTab === "cliente" && (\n                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>\n                            <DrawerSection title="Datos del cliente">\n                                <DrawerRow label="Nombre" value={pedido?.cliente || "Juan Pérez"} />\n                                <DrawerRow label="Teléfono" value={\n                                    <a href={`https://wa.me/${(pedido?.telefono || "+34 600 000 000").replace(/\D/g, "")}`}\n                                        target="_blank" rel="noreferrer" style={{ color: "#25d366", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>\n                                        💬 {pedido?.telefono || "+34 600 000 000"}\n                                    </a>\n                                } />\n                                <DrawerRow label="Email" value={pedido?.email ?? "juan.perez@email.com"} />\n                                <DrawerRow label="Documento" value={pedido?.dni ?? "—"} />\n                            </DrawerSection>\n\n                            {(() => {\n                                const cliente = pedido?.clienteStats || {\n                                    totalGastado: "269.97",\n                                    totalPedidos: 3,\n                                    tasaEntrega: 67,\n                                    totalDevoluciones: 1,\n                                    primerPedido: "2023-09-12T14:20:00Z",\n                                };\n                                return (\n                                    <DrawerSection title="Resumen del cliente">\n                                        <DrawerRow label="Total gastado" value={`€${cliente.totalGastado}`} />\n                                        <DrawerRow label="Pedidos totales" value={cliente.totalPedidos} />\n                                        <DrawerRow label="Tasa entrega" value={`${cliente.tasaEntrega}%`} />\n                                        <DrawerRow label="Devoluciones" value={cliente.totalDevoluciones} />\n                                        <DrawerRow label="Primera compra" value={formatDate(cliente.primerPedido)} />\n                                        <DrawerRow label="Cliente desde" value={calcTiempo(cliente.primerPedido, new Date()) + " atrás"} />\n                                    </DrawerSection>\n                                );\n                            })()}\n\n                            <DrawerSection title="Dirección de envío">\n                                <DrawerRow label="Dirección" value={pedido?.shipping_address_1 || "Calle Principal 123, Piso 4B"} />\n                                <DrawerRow label="CP" value={pedido?.shipping_zip || "28001"} />\n                                <DrawerRow label="Ciudad" value={pedido?.shipping_city || "Madrid"} />\n                                <DrawerRow label="Provincia" value={pedido?.shipping_province || "Comunidad de Madrid"} />\n                                <DrawerRow label="País" value={pedido?.shipping_country || "España"} />\n                                {/* Enlace Google Maps */}\n                                <a href={`https://www.google.com/maps/search/${encodeURIComponent(\n                                    `${pedido?.shipping_address_1 || "Calle Principal 123"} ${pedido?.shipping_zip || "28001"} ${pedido?.shipping_city || "Madrid"}`\n                                )}`} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: "#3b82f6", display: "block", marginTop: "6px", fontWeight: 600 }}>\n                                    📍 Ver en Google Maps\n                                </a>\n                            </DrawerSection>\n\n                            <DrawerSection title="Pedido">\n                                <DrawerRow label="Producto" value={`${pedido?.producto || "Zapatillas Deportivas X"} · Qty: ${pedido?.cantidad || 1}`} />\n                                <DrawerRow label="Importe" value={`€${pedido?.importe || "89.99"}`} />\n                                <DrawerRow label="Pago" value={pedido?.pago || "Stripe"} />\n                                <DrawerRow label="Descuento" value={pedido?.descuento ? `€${pedido?.descuento}` : "—"} />\n                                <DrawerRow label="Fulfillment" value={<FulfillmentBadge type={pedido?.fulfillment || "beeping"} />} />\n                                <DrawerRow label="Transportista" value={<CarrierBadge type={pedido?.carrier || "GLS"} />} />\n                                <DrawerRow label="Tracking" value={\n                                    pedido?.trackingNumber\n                                        ? <a href={getTrackingUrl(pedido?.carrier || "GLS", pedido?.trackingNumber)}\n                                            target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontWeight: 700 }}>\n                                            {pedido?.trackingNumber}\n                                        </a>\n                                        : "Sin tracking"\n                                } />\n                            </DrawerSection>\n\n                            <DrawerSection title="Métricas del pedido">\n                                <DrawerRow label="Hora entrada" value={formatTime(pedido?.createdAt)} />\n                                <DrawerRow label="Dispositivo" value={pedido?.deviceType ?? "—"} />\n                                <DrawerRow label="T. gestión" value={calcTiempo(pedido?.createdAt, pedido?.timestamps?.primerCambio)} />\n                                <DrawerRow label="T. preparación" value={calcTiempo(pedido?.timestamps?.pendiente, pedido?.timestamps?.enviado)} />\n                                <DrawerRow label="T. tránsito" value={calcTiempo(pedido?.timestamps?.enviado, pedido?.timestamps?.entregado)} />\n                                <DrawerRow label="Intentos entrega" value={pedido?.intentosEntrega ?? "—"} />\n                            </DrawerSection>\n                        </div>\n                    )}\n\n                    {activeTab === "timeline" && (\n                        <div style={{ display: "flex", flexDirection: "column", animation: "fade-in 0.2s", paddingTop: "4px" }}>\n                            {(pedido?.timeline as TimelineEvent[] || MOCK_TIMELINE).map((event, i, arr) => {\n                                const typeColor = event.type === "error" ? "#ef4444" : event.type === "warning" ? "#f59e0b" : event.type === "success" ? "#16a34a" : "#3b82f6";\n                                const srcColor = SOURCE_COLORS[event.source as TimelineSource] ?? "#94a3b8";\n                                return (\n                                    <div key={i} style={{ display: "flex", gap: "10px", paddingBottom: "10px" }}>\n                                        {/* Punto + línea vertical */}\n                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>\n                                            <div style={{\n                                                width: "9px", height: "9px", borderRadius: "50%", marginTop: "3px",\n                                                background: typeColor, border: "2px solid white",\n                                                boxShadow: "0 0 0 1.5px " + typeColor,\n                                            }} />\n                                            {i < arr.length - 1 && (\n                                                <div style={{ width: "1px", flex: 1, background: "#e2e8f0", marginTop: "3px" }} />\n                                            )}\n                                        </div>\n                                        {/* Texto del evento */}\n                                        <div style={{ flex: 1, paddingBottom: "2px" }}>\n                                            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>\n                                                <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a", lineHeight: 1.3 }}>{event.label}</span>\n                                            </div>\n                                            {event.description && (\n                                                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "1px", lineHeight: 1.3 }}>{event.description}</div>\n                                            )}\n                                            <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "1px", display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>\n                                                <span style={{\n                                                    fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px",\n                                                    background: srcColor + "22",\n                                                    color: srcColor,\n                                                    textTransform: "uppercase",\n                                                }}>\n                                                    {event.source}\n                                                </span>\n                                                {formatDate(event.timestamp)} · {formatTime(event.timestamp)}\n                                                {i > 0 && (\n                                                    <span style={{ color: "#cbd5e1" }}>\n                                                        +{calcTiempo(arr[i - 1].timestamp, event.timestamp)}\n                                                    </span>\n                                                )}\n                                            </div>\n                                        </div>\n                                    </div>\n                                );\n                            })}\n                        </div>\n                    )}\n\n                    {activeTab === "riesgo" && (() => {\n                        const { score, factors } = calcRiskScore(pedido);\n                        const scoreColor = score >= 80 ? "#16a34a" : score >= 50 ? "#d97706" : "#ef4444";\n                        return (\n                            <div style={{ animation: "fade-in 0.2s" }}>\n                                <DrawerSection title="Score de riesgo">\n                                    <div style={{ padding: "4px 0 8px" }}>\n                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>\n                                            <span style={{ fontSize: "12px", color: "#64748b" }}>Score calculado</span>\n                                            <span style={{ fontSize: "20px", fontWeight: 900, color: scoreColor }}>{score}/100</span>\n                                        </div>\n                                        <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "999px" }}>\n                                            <div style={{\n                                                height: "6px", borderRadius: "999px", width: `${score}%`,\n                                                background: scoreColor,\n                                                transition: "width 0.5s ease",\n                                            }} />\n                                        </div>\n                                        <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "4px" }}>\n                                            {score >= 80 ? "✅ Bajo riesgo" : score >= 50 ? "⚠️ Riesgo moderado" : "🔴 Alto riesgo — revisar antes de enviar"}\n                                        </div>\n                                    </div>\n                                    <DrawerRow label="Confianza del score" value={\n                                        (pedido?.clienteStats?.totalPedidos ?? 1) < 3\n                                            ? "⚠️ Datos insuficientes"\n                                            : (pedido?.clienteStats?.totalPedidos ?? 1) < 10\n                                                ? "📊 Datos parciales"\n                                                : "✅ Alta confianza"\n                                    } />\n                                </DrawerSection>\n\n                                <DrawerSection title="Factores de riesgo">\n                                    {factors.map((f, i) => (\n                                        <div key={f.key} style={{\n                                            display: "flex", justifyContent: "space-between", alignItems: "center",\n                                            padding: "3px 0",\n                                            borderBottom: i < factors.length - 1 ? "1px solid #f1f5f9" : "none",\n                                            minHeight: "24px",\n                                        }}>\n                                            <div style={{ flex: 1 }}>\n                                                <span style={{ fontSize: "12px", color: "#0f172a" }}>{f.label}</span>\n                                                <span style={{ fontSize: "10px", color: "#94a3b8", marginLeft: "5px" }}>{f.source}</span>\n                                            </div>\n                                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>\n                                                <span style={{ fontSize: "10px", color: f.points > 0 ? "#ef4444" : f.points < 0 ? "#16a34a" : "#94a3b8", fontWeight: 700 }}>\n                                                    {f.points > 0 ? `+${f.points}` : f.points < 0 ? f.points : "—"}\n                                                </span>\n                                                <span style={{\n                                                    fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px",\n                                                    background: f.risk === "high" ? "rgba(239,68,68,0.1)" : f.risk === "medium" ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)",\n                                                    color: f.risk === "high" ? "#ef4444" : f.risk === "medium" ? "#d97706" : "#16a34a",\n                                                }}>\n                                                    {f.value}\n                                                </span>\n                                            </div>\n                                        </div>\n                                    ))}\n                                </DrawerSection>\n\n                                <DrawerSection title="IP y geolocalización">\n                                    <DrawerRow label="IP" value={pedido?.ipAddress ?? "—"} />\n                                    <DrawerRow label="Ciudad" value={pedido?.geoCity ?? "—"} />\n                                    <DrawerRow label="País" value={pedido?.geoCountry ?? "—"} />\n                                    <DrawerRow label="ISP" value={pedido?.geoISP ?? "—"} />\n                                    <DrawerRow label="VPN/Proxy" value={pedido?.isProxy ? "⚠️ Detectado" : "No detectado"} />\n                                </DrawerSection>\n                            </div>\n                        );\n                    })()}\n\n                    {activeTab === "origen" && (\n                        <div style={{ animation: "fade-in 0.2s" }}>\n                            <DrawerSection title="Origen del pedido">\n                                <DrawerRow label="Fuente" value={pedido?.utmSource ?? "—"} />\n                                <DrawerRow label="Medio" value={pedido?.utmMedium ?? "—"} />\n                                <DrawerRow label="Campaña" value={pedido?.utmCampaign ?? "—"} />\n                                <DrawerRow label="Contenido" value={pedido?.utmContent ?? "—"} />\n                                <DrawerRow label="Placement" value={pedido?.utmPlacement ?? "—"} />\n                                <DrawerRow label="Ad ID" value={pedido?.metaAdId ?? "—"} />\n                                <DrawerRow label="Adset ID" value={pedido?.metaAdsetId ?? "—"} />\n                                <DrawerRow label="Campaign ID" value={pedido?.metaCampaignId ?? "—"} />\n                            </DrawerSection>\n\n                            {pedido?.metaAdId && metaAd && (\n                                <DrawerSection title="Creativo que generó la venta">\n                                    {metaAd.thumbnail_url && (\n                                        <img src={metaAd.thumbnail_url} alt="Creativo" style={{\n                                            width: "100%", maxHeight: "120px", objectFit: "cover",\n                                            borderRadius: "6px", marginBottom: "6px"\n                                        }} />\n                                    )}\n                                    <DrawerRow label="Nombre ad" value={metaAd.name} />\n                                    <DrawerRow label="Tipo" value={metaAd.creative?.object_type ?? "—"} />\n                                    <DrawerRow label="Estado" value={metaAd.effective_status} />\n                                    <DrawerRow label="Adset" value={metaAd.adset?.name ?? "—"} />\n                                    <DrawerRow label="Campaña" value={metaAd.campaign?.name ?? "—"} />\n                                    <DrawerRow label="CTR" value={metaAd.insights?.ctr ? `${metaAd.insights.ctr}%` : "—"} />\n                                    <DrawerRow label="CPC" value={metaAd.insights?.cpc ? `€${metaAd.insights.cpc}` : "—"} />\n                                    <DrawerRow label="CPM" value={metaAd.insights?.cpm ? `€${metaAd.insights.cpm}` : "—"} />\n                                    <a href={`https://www.facebook.com/ads/manager/account/ads/?selected_ad_ids=${pedido?.metaAdId}`}\n                                        target="_blank" rel="noreferrer"\n                                        style={{ fontSize: "11px", color: "#3b82f6", fontWeight: 600, display: "block", marginTop: "6px" }}>\n                                        Ver en Meta Ads Manager →\n                                    </a>\n                                </DrawerSection>\n                            )}\n\n                            <DrawerSection title="Landing de conversión">\n                                <DrawerRow label="URL" value={\n                                    pedido?.landingUrl\n                                        ? <a href={pedido.landingUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontSize: "11px" }}>\n                                            {pedido.landingUrl.replace("https://", "").substring(0, 40)}...\n                                        </a>\n                                        : "—"\n                                } />\n                                <DrawerRow label="Tipo" value={pedido?.landingType ?? "Advertorial"} />\n                            </DrawerSection>\n                        </div>\n                    )}\n\n                    {activeTab === "historial" && (() => {\n                        const historial = pedido?.historialCliente || [\n                            { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },\n                            { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" },\n                        ];\n                        const m = pedido?.clienteStats ? pedido.clienteStats : calcClienteMetrics(historial);\n                        return (\n                            <div style={{ animation: "fade-in 0.2s" }}>\n                                <DrawerSection title="Métricas del cliente">\n                                    <DrawerRow label="LTV total" value={`€${m.totalGastado}`} />\n                                    <DrawerRow label="Ticket medio" value={`€${m.ticketMedio}`} />\n                                    <DrawerRow label="Tasa entrega" value={`${m.tasaEntrega}%`} />\n                                    <DrawerRow label="Tasa devolución" value={`${m.tasaDevolucion}%`} />\n                                    <DrawerRow label="Tasa incidencia" value={`${m.tasaIncidencia}%`} />\n                                    <DrawerRow label="Pedidos entregados" value={m.pedidosEntregados} />\n                                    <DrawerRow label="Pedidos devueltos" value={m.pedidosDevoluciones} />\n                                    <DrawerRow label="Último pedido" value={formatDate(m.ultimoPedido ?? "")} />\n                                </DrawerSection>\n\n                                <p style={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", color: "#94a3b8", margin: "0 0 6px 0" }}>\n                                    {historial.length} pedidos anteriores\n                                </p>\n                                {(pedido?.historialCliente || [\n                                    { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },\n                                    { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" }\n                                ]).map((h: { id: string; ref: string; state: string; producto: string; importe: string; createdAt: string }) => (\n                                    <div key={h.id} onClick={(e) => { e.stopPropagation(); if (onSelectOrder) onSelectOrder(h); }} style={{\n                                        padding: "8px 10px", borderRadius: "8px",\n                                        border: "1px solid #e2e8f0", marginBottom: "6px",\n                                        cursor: "pointer", background: "white",\n                                        transition: "background 0.1s",\n                                    }}\n                                        onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}\n                                        onMouseLeave={e => e.currentTarget.style.background = "white"}\n                                    >\n                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>\n                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#3b82f6" }}>#{h.ref}</span>\n                                            <StateBadge state={h.state} />\n                                        </div>\n                                        <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>\n                                            {h.producto} · €{h.importe} · {formatDate(h.createdAt)}\n                                        </div>\n                                    </div>\n                                ))}\n                                {(historial.length === 0) && (\n                                    <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "12px", padding: "24px 0" }}>\n                                        Primera compra del cliente\n                                    </div>\n                                )}\n                            </div>\n                        );\n                    })()}\n                    {activeTab === "comunicaciones" && (\n                        <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 175px)", animation: "fade-in 0.2s" }}>\n\n                            {/* Selector de fuente */}\n                            <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexShrink: 0 }}>\n                                {["WhatsApp Business", "WhatsApp API"].map(source => (\n                                    <button key={source} onClick={() => setMsgSource(source)} style={{\n                                        padding: "4px 12px", fontSize: "11px", fontWeight: 600,\n                                        borderRadius: "20px", cursor: "pointer", border: "none",\n                                        background: msgSource === source ? "#25d366" : "#f1f5f9",\n                                        color: msgSource === source ? "white" : "#64748b",\n                                    }}>{source}</button>\n                                ))}\n                            </div>\n\n                            {/* Mensajes — ocupa todo el espacio restante */}\n                            <div className="ds-scrollbar" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>\n                                {mensajes.map((msg: { body: string; direction: string; timestamp: string; status: string }, i: number) => (\n                                    <div key={i} style={{ display: "flex", justifyContent: msg.direction === "outbound" ? "flex-end" : "flex-start" }}>\n                                        <div style={{\n                                            maxWidth: "75%", padding: "7px 10px", borderRadius: "10px",\n                                            fontSize: "12px", lineHeight: 1.4,\n                                            background: msg.direction === "outbound" ? "#dcf8c6" : "#f1f5f9",\n                                        }}>\n                                            {msg.body}\n                                            <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px", textAlign: "right" }}>\n                                                {formatTime(msg.timestamp)}\n                                                {msg.direction === "outbound" && <span style={{ marginLeft: "3px" }}>{msg.status === "read" ? "✓✓" : "✓"}</span>}\n                                            </div>\n                                        </div>\n                                    </div>\n                                ))}\n                            </div>\n\n                            {/* Plantillas r\u00e1pidas */}\n                            {(() => {\n                                const PLANTILLAS = [\n                                    { label: "Confirmar pedido", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, te confirmamos tu pedido ${pedido?.ref || ""}. En breve lo preparamos y te enviamos el tracking. \uD83D\uDE4C` },\n                                    { label: "Tracking enviado", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, tu pedido ya est\u00e1 en camino. N\u00famero de seguimiento: ${pedido?.trackingNumber || "—"}. Tiempo estimado: 24-48h. \uD83D\uDCE6` },\n                                    { label: "Intento fallido", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, hemos intentado entregarte el pedido pero no hab\u00eda nadie. \u00BFCu\u00e1ndo podemos volver a intentarlo? \uD83D\uDE9A` },\n                                    { label: "Solicitar rese\u00f1a", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, esperamos que est\u00e9s disfrutando tu compra. \u00BFPodr\u00EDas dejarnos una rese\u00f1a? Nos ayuda mucho \uD83D\uDE4F` },\n                                ];\n                                return (\n                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "8px", flexShrink: 0 }}>\n                                        {PLANTILLAS.map(p => (\n                                            <button key={p.label} onClick={() => setNewMessage(p.texto)} style={{\n                                                fontSize: "10px", fontWeight: 600, padding: "3px 8px",\n                                                borderRadius: "20px", border: "1px solid #e2e8f0",\n                                                background: "#f8fafc", color: "#64748b", cursor: "pointer",\n                                                whiteSpace: "nowrap",\n                                            }}>\n                                                {p.label}\n                                            </button>\n                                        ))}\n                                    </div>\n                                );\n                            })()}\n\n                            {/* Input pegado al fondo */}\n                            <div style={{ display: "flex", gap: "6px", paddingTop: "8px", borderTop: "1px solid #e2e8f0", flexShrink: 0 }}>\n                                <input\n                                    value={newMessage} onChange={e => setNewMessage(e.target.value)}\n                                    onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}\n                                    placeholder="Escribe un mensaje..."\n                                    style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px", outline: "none" }}\n                                />\n                                <button onClick={sendMessage} style={{\n                                    background: "#25d366", color: "white", border: "none",\n                                    borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontSize: "12px", fontWeight: 700\n                                }}>Enviar</button>\n                            </div>\n                        </div>\n                    )}\n\n                    {activeTab === "notas" && (\n                        <div style={{ animation: "fade-in 0.2s" }}>\n                            {notas.map((nota: { texto: string; autor: string; gestorAsignado?: string; createdAt: string }, i: number) => (\n                                <div key={i} style={{\n                                    padding: "8px 10px", background: "#fffbeb",\n                                    border: "1px solid #fef08a", borderRadius: "8px", marginBottom: "6px"\n                                }}>\n                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>\n                                        <span style={{ fontSize: "10px", fontWeight: 700, color: "#92400e" }}>\n                                            {nota.gestorAsignado ? `→ Para: ${nota.gestorAsignado}` : "Sin asignar"}\n                                        </span>\n                                        <span style={{ fontSize: "10px", color: "#94a3b8" }}>\n                                            {nota.autor} · {formatDate(nota.createdAt)}\n                                        </span>\n                                    </div>\n                                    <div style={{ fontSize: "12px", color: "#0f172a" }}>{nota.texto}</div>\n                                </div>\n                            ))}\n\n                            {/* Selector de gestor */}\n                            <div style={{ display: "flex", gap: "6px", marginBottom: "6px", alignItems: "center", marginTop: "8px" }}>\n                                <span style={{ fontSize: "11px", color: "#64748b", flexShrink: 0 }}>Asignar a:</span>\n                                <select value={notaGestor} onChange={e => setNotaGestor(e.target.value)} style={{\n                                    flex: 1, padding: "4px 8px", borderRadius: "6px",\n                                    border: "1px solid #e2e8f0", fontSize: "11px", outline: "none",\n                                    background: "white",\n                                }}>\n                                    <option value="">Sin asignar</option>\n                                    {gestores.map(g => (\n                                        <option key={g.id} value={g.nombre}>{g.emoji} {g.nombre}</option>\n                                    ))}\n                                </select>\n                            </div>\n\n                            <textarea\n                                value={newNota}\n                                onChange={e => setNewNota(e.target.value)}\n                                placeholder="Añadir nota interna..."\n                                rows={3}\n                                style={{\n                                    width: "100%", padding: "8px 10px", borderRadius: "8px",\n                                    border: "1px solid #e2e8f0", fontSize: "12px",\n                                    resize: "vertical", outline: "none", fontFamily: "inherit",\n                                    boxSizing: "border-box"\n                                }}\n                            />\n                            <button onClick={saveNota} style={{\n                                marginTop: "6px", background: "#3b82f6", color: "white",\n                                border: "none", borderRadius: "8px", padding: "7px 16px",\n                                fontSize: "12px", fontWeight: 700, cursor: "pointer"\n                            }}>Guardar nota</button>\n                        </div>\n                    )}\n\n                    {/* Failsafe for unfinished content tabs */}\n                    {!["cliente", "timeline", "riesgo", "origen", "historial", "comunicaciones", "notas"].includes(activeTab) && (\n                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 20px", flexDirection: "column", gap: "12px", textAlign: "center", opacity: 0.5, animation: "fade-in 0.2s" }}>\n                            <span style={{ fontSize: "48px" }}>🚧</span>\n                            <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#334155" }}>Tab en desarrollo</h3>\n                            <p style={{ fontSize: "14px", color: "#64748b" }}>El contenido para &lsquo;{activeTab}&rsquo; se está diseñando.</p>\n                        </div>\n                    )}\n                </div>\n            </div>\n        </>\n    );\n}\n\n\nexport default function PedidosPage() {\n    const [activeTab, setActiveTab] = useState('todos');\n    const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);\n    // Gestores — hook compartido con caché global + polling 30s\n    const { gestores: gestoresLive } = useGestores();\n\n    const pedidos = [\n        ...Array(42).fill({ state: 'nuevo' }),\n        ...Array(18).fill({ state: 'en_gestion' }),\n        ...Array(85).fill({ state: 'enviado' }),\n        ...Array(10).fill({ state: 'confirmado' }),\n        ...Array(30).fill({ state: 'en_preparacion' }),\n        ...Array(5).fill({ state: 'fallido' }),\n        ...Array(12).fill({ state: 'reintento' }),\n        ...Array(31).fill({ state: 'devolucion' }),\n        ...Array(15).fill({ state: 'entregado' }),\n        ...Array(6).fill({ state: 'cancelado' }),\n    ];\n    // eslint-disable-next-line @typescript-eslint/no-explicit-any\n    const [pedidosState, setPedidosState] = useState<Record<string, any>[]>(pedidos);\n\n\n    async function assignGestor(pedidoId: string, gestorId: string | null) {\n        try {\n            await fetch(`/api/pedidos/${pedidoId}/gestor`, {\n                method: "PATCH",\n                headers: { "Content-Type": "application/json" },\n                body: JSON.stringify({ gestorId }),\n            });\n        } catch { /* optimistic update — ignore error */ }\n        setPedidosState(prev => prev.map(p =>\n            p.id === pedidoId\n                ? { ...p, gestor: gestorId ? GESTORES_LIST.find(g => g.id === gestorId) ?? null : null }\n                : p\n        ));\n    }\n    const carritosAbandonados = Array(12).fill({ state: 'abandonado' });\n    const borradores = Array(5).fill({ state: 'borrador' });\n\n    const pedidosFiltrados = {\n        "todos": pedidos,\n        "por-gestionar": pedidos.filter(p => ["nuevo", "en_gestion"].includes(p.state)),\n        "en-transito": pedidos.filter(p => ["enviado", "confirmado", "en_preparacion"].includes(p.state)),\n        "incidencias": pedidos.filter(p => ["fallido", "reintento"].includes(p.state)),\n        "devoluciones": pedidos.filter(p => p.state === "devolucion"),\n        "carritos-abandonados": carritosAbandonados,\n        "borradores": borradores,\n        "historial": pedidos.filter(p => ["entregado", "cancelado"].includes(p.state)),\n    }[activeTab as string] ?? pedidos;\n\n\n\n    return (\n        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.3s ease-out" }}>\n            {/* Header + Actions */}\n            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>\n                <div>\n                    <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}>\n                        Gestión de Pedidos\n                    </h1>\n                    <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px", fontWeight: 500 }}>\n                        Control y seguimiento unificado del fulfillment (Shopify, Beeping, Dropea, Dropi)\n                    </p>\n                </div>\n\n                {/* Global Actions */}\n                <div style={{ display: "flex", gap: "8px" }}>\n                    <div style={{ position: "relative", width: "240px" }}>\n                        <Search style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", width: "14px", height: "14px", color: "var(--text-dim)" }} />\n                        <input\n                            type="text"\n                            placeholder="Buscar pedido, cliente, teléfono..."\n                            className="ds-input"\n                            style={{ paddingLeft: "32px", width: "100%" }}\n                        />\n                    </div>\n                    <button className="ds-btn" style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", textTransform: "none", letterSpacing: "normal", fontSize: "11px" }}>\n                        <Filter className="w-3.5 h-3.5" />\n                        Filtros\n                    </button>\n                </div>\n            </div>\n\n            <div className="module-tabs" style={{ '--tab-color': 'var(--ops)' } as React.CSSProperties}>\n                {TABS.map(tab => (\n                    <button\n                        key={tab.id}\n                        className={`module-tab ${activeTab === tab.id ? 'active' : ''}`}\n                        onClick={() => setActiveTab(tab.id)}\n                    >\n                        {tab.label}\n                    </button>\n                ))}\n            </div>\n\n            {/* Conditional KPIs for Por Gestionar */}\n            {activeTab === 'por-gestionar' && (\n                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>\n                    {[\n                        { label: "Sin gestionar", value: pedidosFiltrados.filter(p => p.state === 'nuevo').length.toString(), color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },\n                        { label: "En gestión", value: pedidosFiltrados.filter(p => p.state === 'en_gestion').length.toString(), color: "#eab308", bg: "#fefce8", border: "#fde047" },\n                        { label: "Fallidos", value: pedidosFiltrados.filter(p => p.state === 'fallido').length.toString(), color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },\n                        { label: "Reintentos", value: pedidosFiltrados.filter(p => p.state === 'reintento').length.toString(), color: "#f97316", bg: "#fff7ed", border: "#fed7aa" }\n                    ].map((kpi, i) => (\n                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>\n                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>\n                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>\n                                {kpi.value}\n                            </div>\n                        </div>\n                    ))}\n                </div>\n            )}\n\n            {/* Conditional KPIs for En Tránsito */}\n            {activeTab === 'en-transito' && (\n                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>\n                    {[\n                        { label: "En tránsito", value: pedidosFiltrados.filter(p => p.state === 'enviado').length.toString(), color: "#0ea5e9", bg: "#f0f9ff", border: "#bae6fd" },\n                        { label: "Con retraso", value: "14", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },\n                        { label: "Entregados hoy", value: "32", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },\n                        { label: "Tasa entrega 7d", value: "94%", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }\n                    ].map((kpi, i) => (\n                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>\n                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>\n                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>\n                                {kpi.value}\n                            </div>\n                        </div>\n                    ))}\n                </div>\n            )}\n\n            {/* Conditional KPIs for Incidencias */}\n            {activeTab === 'incidencias' && (\n                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>\n                    {[\n                        { label: "Incidencias abiertas", value: pedidosFiltrados.length.toString(), color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },\n                        { label: "Recuperadas hoy", value: "8", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },\n                        { label: "Tasa recuperación", value: "65%", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },\n                        { label: "Pérdida estimada", value: "€340", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" }\n                    ].map((kpi, i) => (\n                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>\n                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>\n                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>\n                                {kpi.value}\n                            </div>\n                        </div>\n                    ))}\n                </div>\n            )}\n\n            {/* Conditional KPIs for Devoluciones */}\n            {activeTab === 'devoluciones' && (\n                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>\n                    {[\n                        { label: "Devoluciones activas", value: pedidosFiltrados.length.toString(), color: "#f97316", bg: "#fff7ed", border: "#fed7aa" },\n                        { label: "Importe total", value: "€1,250", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },\n                        { label: "Procesadas hoy", value: "12", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },\n                        { label: "Tasa devolución", value: "3.2%", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }\n                    ].map((kpi, i) => (\n                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>\n                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>\n                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>\n                                {kpi.value}\n                            </div>\n                        </div>\n                    ))}\n                </div>\n            )}\n\n            {/* Conditional KPIs for Carritos Abandonados */}\n            {activeTab === 'carritos-abandonados' && (\n                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>\n                    {[\n                        { label: "Carritos abandonados", value: "12", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" },\n                        { label: "Valor potencial", value: "€850", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },\n                        { label: "Tasa recuperación", value: "25%", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },\n                        { label: "Recuperado", value: "€212.50", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }\n                    ].map((kpi, i) => (\n                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>\n                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>\n                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>\n                                {kpi.value}\n                            </div>\n                        </div>\n                    ))}\n                </div>\n            )}\n\n            {/* Conditional KPIs for Historial */}\n            {activeTab === 'historial' && (\n                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>\n                    {[\n                        { label: "Entregados total", value: pedidosFiltrados.filter(p => p.state === 'entregado').length.toString(), color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },\n                        { label: "Cancelados total", value: pedidosFiltrados.filter(p => p.state === 'cancelado').length.toString(), color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },\n                        { label: "Tasa éxito", value: "88.5%", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },\n                        { label: "Facturación total", value: "€148.5K", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }\n                    ].map((kpi, i) => (\n                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>\n                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>\n                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>\n                                {kpi.value}\n                            </div>\n                        </div>\n                    ))}\n                </div>\n            )}\n\n            {/* Content Body */}\n            <div className="ds-card" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: "500px", overflow: "hidden" }}>\n                {/* Controls Bar */}\n                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>\n                    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>\n                        <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--text)" }}>\n                            {TABS.find(t => t.id === activeTab)?.label}\n                        </span>\n                        <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "2px 8px", background: "white", borderRadius: "10px", border: "1px solid var(--border)", fontWeight: 600 }}>\n                            {pedidosFiltrados.length} {activeTab === 'carritos-abandonados' ? 'carritos' : activeTab === 'borradores' ? 'borradores' : 'pedidos'}\n                        </span>\n                    </div>\n                    <div style={{ display: "flex", gap: "8px" }}>\n                        {activeTab === 'historial' && (\n                            <select className="ds-input" style={{ fontSize: "11px", height: "30px", padding: "0 12px", background: "white", width: "120px" }}>\n                                <option>Este mes</option>\n                                <option>Mes anterior</option>\n                                <option>Este año</option>\n                                <option>Histórico completo</option>\n                            </select>\n                        )}\n                        <button className="ds-btn" style={{ background: "white", color: "var(--text-muted)", textTransform: "none", letterSpacing: "normal", fontSize: "11px", fontWeight: 600 }}>\n                            <RefreshCw className="w-3.5 h-3.5" />\n                            Sincronizar Estados\n                        </button>\n                    </div>\n                </div>\n\n                {/* Mock Table */}\n\n                {/* Custom compact table styles */}\n                <div style={{ width: "100%", overflowX: "auto", flex: 1 }}>\n                    <table className="ds-table ds-compact-table" style={{ borderTop: "none", width: "100%", tableLayout: "auto", borderCollapse: "collapse", fontSize: "12px" }}>\n                        <thead>\n                            <tr>\n                                <th style={{ width: "3%", padding: "0 0 0 12px" }}>\n                                    <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />\n                                </th>\n                                {activeTab === 'carritos-abandonados' ? (\n                                    <>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>ID</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Cliente</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Teléfono</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Producto</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Importe €</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>UTM Source</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>UTM Campaign</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Landing</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Dispositivo</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Abandono Hace</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Estado</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "95px" }}></th>\n                                    </>\n                                ) : activeTab === 'borradores' ? (\n                                    <>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>ID</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Cliente</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Últ. Actualización</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "95px" }}></th>\n                                    </>\n                                ) : (\n                                    <>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "6%" }}>Pedido</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "9%" }}>Estado</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "8%" }}>Fulfillment</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Transportista</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "11%" }}>Cliente</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>CP / Zona</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "13%" }}>Producto</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Importe</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "8%" }}>Gestor</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Riesgo</th>\n\n                                        {activeTab === 'incidencias' && (\n                                            <>\n                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Tipo Incid.</th>\n                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Intentos</th>\n                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Días Abierta</th>\n                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Pérdida Est.</th>\n                                            </>\n                                        )}\n\n                                        {activeTab === 'devoluciones' && (\n                                            <>\n                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Motivo Devol.</th>\n                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Importe Devol.</th>\n                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Estado Devol.</th>\n                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Reembolso</th>\n                                            </>\n                                        )}\n\n                                        {activeTab === 'en-transito' && <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Días</th>}\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Entrada</th>\n                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}></th>\n                                    </>\n                                )}\n                            </tr>\n                        </thead>\n                        <tbody>\n\n                            {/* Example Row - 10045 */}\n                            {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (\n                                <tr style={{\n                                    cursor: "pointer",\n                                    borderBottom: "1px solid #f1f5f9",\n                                    height: "52px",\n                                    maxHeight: "52px",\n                                    transition: "background 0.1s",\n                                }}\n                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}\n                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}\n                                    onClick={(e) => {\n                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;\n                                        setSelectedOrder({ ref: "Example" });\n                                    }}\n                                >\n                                    <ColumnaCheckbox />\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10045</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{\n                                            display: "inline-flex", alignItems: "center", gap: "4px",\n                                            padding: "2px 8px", borderRadius: "20px",\n                                            fontSize: "10px", fontWeight: 700,\n                                            background: ORDER_STATES.en_preparacion.bg,\n                                            color: ORDER_STATES.en_preparacion.color\n                                        }}>\n                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.en_preparacion.icon}</span>\n                                            {ORDER_STATES.en_preparacion.label}\n                                        </span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <FulfillmentBadge type="beeping" />\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <CarrierBadge type="GLS" />\n                                        <a href={getTrackingUrl("GLS", "BP-1234444")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "none", fontWeight: 600 }}>BP-1234444</a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Juan Pérez</span>\n                                        <a href={`https://wa.me/${"+34 600 000 000"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>\n                                            💬 +34 600 000 000\n                                        </a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>28001</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Madrid</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span title="Zapatillas Nike Air Force" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>\n                                            Zapatillas Nike Air Force\n                                        </span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.99</span>\n                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>\n                                    </td>\n                                    <GestorCell gestores={gestoresLive} pedido={{ id: "mock-1", gestor: { "id": "bot_cod", "nombre": "Bot COD", "tipo": "bot", "emoji": "🤖" } }} onAssign={assignGestor} />\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaRiesgo riesgo={{ status: "green", score: 98 }} />\n                                    </td>\n\n\n\n\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:42</span>\n                                    </td>\n                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaAcciones pedido={{ state: "en_preparacion" }} />\n                                    </td>\n                                </tr>\n                            )}\n\n                            {/* Example Row - 10046 */}\n                            {activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (\n                                <tr style={{\n                                    cursor: "pointer",\n                                    borderBottom: "1px solid #f1f5f9",\n                                    height: "52px",\n                                    maxHeight: "52px",\n                                    transition: "background 0.1s",\n                                }}\n                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}\n                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}\n                                    onClick={(e) => {\n                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;\n                                        setSelectedOrder({ ref: "Example" });\n                                    }}\n                                >\n                                    <ColumnaCheckbox />\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10046</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{\n                                            display: "inline-flex", alignItems: "center", gap: "4px",\n                                            padding: "2px 8px", borderRadius: "20px",\n                                            fontSize: "10px", fontWeight: 700,\n                                            background: ORDER_STATES.reintento.bg,\n                                            color: ORDER_STATES.reintento.color\n                                        }}>\n                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.reintento.icon}</span>\n                                            {ORDER_STATES.reintento.label}\n                                        </span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <FulfillmentBadge type="dropea" />\n                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <CarrierBadge type="GLS" />\n                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>María Gómez</span>\n                                        <a href={`https://wa.me/${"+34 600 000 001"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>\n                                            💬 +34 600 000 001\n                                        </a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>41002</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Sevilla</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span title="Camiseta Básica Blanca" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>\n                                            Camiseta Básica Blanca\n                                        </span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 2</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€29.99</span>\n                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>STRIPE</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaRiesgo riesgo={{ status: "yellow", score: 65 }} />\n                                    </td>\n\n\n\n\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:35</span>\n                                    </td>\n                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaAcciones pedido={{ state: "reintento" }} />\n                                    </td>\n                                </tr>\n                            )}\n\n                            {/* Example Row - 10047 */}\n                            {activeTab === 'todos' || activeTab === 'por-gestionar' && (\n                                <tr style={{\n                                    cursor: "pointer",\n                                    borderBottom: "1px solid #f1f5f9",\n                                    height: "52px",\n                                    maxHeight: "52px",\n                                    transition: "background 0.1s",\n                                }}\n                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}\n                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}\n                                    onClick={(e) => {\n                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;\n                                        setSelectedOrder({ ref: "Example" });\n                                    }}\n                                >\n                                    <ColumnaCheckbox />\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10047</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{\n                                            display: "inline-flex", alignItems: "center", gap: "4px",\n                                            padding: "2px 8px", borderRadius: "20px",\n                                            fontSize: "10px", fontWeight: 700,\n                                            background: ORDER_STATES.nuevo.bg,\n                                            color: ORDER_STATES.nuevo.color\n                                        }}>\n                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.nuevo.icon}</span>\n                                            {ORDER_STATES.nuevo.label}\n                                        </span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8" }}>—</span>\n                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8" }}>—</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Carlos López</span>\n                                        <a href={`https://wa.me/${"+34 600 000 002"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>\n                                            💬 +34 600 000 002\n                                        </a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>08001</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Barcelona</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span title="Sudadera Urban Black" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>\n                                            Sudadera Urban Black\n                                        </span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€59.90</span>\n                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>⚠️ Sin gest.</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaRiesgo riesgo={{ status: "red", score: 15 }} />\n                                    </td>\n\n\n\n\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Ayer</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>18:20</span>\n                                    </td>\n                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaAcciones pedido={{ state: "nuevo" }} />\n                                    </td>\n                                </tr>\n                            )}\n\n                            {/* Example Row - 10048 */}\n                            {activeTab === 'todos' || activeTab === 'en-transito' && (\n                                <tr style={{\n                                    cursor: "pointer",\n                                    borderBottom: "1px solid #f1f5f9",\n                                    height: "52px",\n                                    maxHeight: "52px",\n                                    transition: "background 0.1s",\n                                }}\n                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}\n                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}\n                                    onClick={(e) => {\n                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;\n                                        setSelectedOrder({ ref: "Example" });\n                                    }}\n                                >\n                                    <ColumnaCheckbox />\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10048</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{\n                                            display: "inline-flex", alignItems: "center", gap: "4px",\n                                            padding: "2px 8px", borderRadius: "20px",\n                                            fontSize: "10px", fontWeight: 700,\n                                            background: ORDER_STATES.enviado.bg,\n                                            color: ORDER_STATES.enviado.color\n                                        }}>\n                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.enviado.icon}</span>\n                                            {ORDER_STATES.enviado.label}\n                                        </span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <FulfillmentBadge type="beeping" />\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <CarrierBadge type="Correos Exp." />\n                                        <a href={getTrackingUrl("Correos Exp.", "PQ41029312")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "none", fontWeight: 600 }}>PQ41029312</a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Ana Martínez</span>\n                                        <a href={`https://wa.me/${"+34 600 000 003"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>\n                                            💬 +34 600 000 003\n                                        </a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>46001</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Valencia</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span title="Auriculares Inalámbricos" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>\n                                            Auriculares Inalámbricos\n                                        </span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€89.00</span>\n                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaRiesgo riesgo={{ status: "green", score: 99 }} />\n                                    </td>\n\n\n\n                                    {activeTab === 'en-transito' && (\n                                        <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                            <span style={{ fontSize: "10px", fontWeight: 800, padding: "4px 8px", borderRadius: "6px", background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca" }}>\n                                                8 Días\n                                            </span>\n                                        </td>\n                                    )}\n\n\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 8d</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>12:05</span>\n                                    </td>\n                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaAcciones pedido={{ state: "enviado" }} />\n                                    </td>\n                                </tr>\n                            )}\n\n                            {/* Example Row - 10049 */}\n                            {activeTab === 'todos' || activeTab === 'incidencias' && (\n                                <tr style={{\n                                    cursor: "pointer",\n                                    borderBottom: "1px solid #f1f5f9",\n                                    height: "52px",\n                                    maxHeight: "52px",\n                                    transition: "background 0.1s",\n                                }}\n                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}\n                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}\n                                    onClick={(e) => {\n                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;\n                                        setSelectedOrder({ ref: "Example" });\n                                    }}\n                                >\n                                    <ColumnaCheckbox />\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10049</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{\n                                            display: "inline-flex", alignItems: "center", gap: "4px",\n                                            padding: "2px 8px", borderRadius: "20px",\n                                            fontSize: "10px", fontWeight: 700,\n                                            background: ORDER_STATES.fallido.bg,\n                                            color: ORDER_STATES.fallido.color\n                                        }}>\n                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.fallido.icon}</span>\n                                            {ORDER_STATES.fallido.label}\n                                        </span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <FulfillmentBadge type="beeping" />\n                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <CarrierBadge type="GLS" />\n                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Luis García</span>\n                                        <a href={`https://wa.me/${"+34 600 000 004"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>\n                                            💬 +34 600 000 004\n                                        </a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>29001</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Málaga</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span title="Chaqueta Invierno XL" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>\n                                            Chaqueta Invierno XL\n                                        </span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€120.00</span>\n                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaRiesgo riesgo={{ status: "yellow", score: 33 }} />\n                                    </td>\n\n\n                                    {activeTab === 'incidencias' && (\n                                        <>\n                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                                <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#fee2e2", color: "#b91c1c", whiteSpace: "nowrap" }}>\n                                                    Dirección Incorrecta\n                                                </span>\n                                            </td>\n                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>2</td>\n                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                                <span style={{ fontSize: "10px", fontWeight: 700 }}>4 días</span>\n                                            </td>\n                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>€15.50</td>\n                                        </>\n                                    )}\n\n\n\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 6d</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>09:12</span>\n                                    </td>\n                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaAcciones pedido={{ state: "fallido" }} />\n                                    </td>\n                                </tr>\n                            )}\n\n                            {/* Example Row - 10050 */}\n                            {activeTab === 'todos' || activeTab === 'devoluciones' && (\n                                <tr style={{\n                                    cursor: "pointer",\n                                    borderBottom: "1px solid #f1f5f9",\n                                    height: "52px",\n                                    maxHeight: "52px",\n                                    transition: "background 0.1s",\n                                }}\n                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}\n                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}\n                                    onClick={(e) => {\n                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;\n                                        setSelectedOrder({ ref: "Example" });\n                                    }}\n                                >\n                                    <ColumnaCheckbox />\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10050</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{\n                                            display: "inline-flex", alignItems: "center", gap: "4px",\n                                            padding: "2px 8px", borderRadius: "20px",\n                                            fontSize: "10px", fontWeight: 700,\n                                            background: ORDER_STATES.devolucion.bg,\n                                            color: ORDER_STATES.devolucion.color\n                                        }}>\n                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.devolucion.icon}</span>\n                                            {ORDER_STATES.devolucion.label}\n                                        </span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <FulfillmentBadge type="beeping" />\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <CarrierBadge type="Correos Exp." />\n                                        <a href={getTrackingUrl("Correos Exp.", "PQ41029888")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "none", fontWeight: 600 }}>PQ41029888</a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Marta Díaz</span>\n                                        <a href={`https://wa.me/${"+34 600 000 005"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>\n                                            💬 +34 600 000 005\n                                        </a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>03001</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Alicante</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span title="Bolso Piel Sintética" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>\n                                            Bolso Piel Sintética\n                                        </span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.90</span>\n                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaRiesgo riesgo={{ status: "green", score: 80 }} />\n                                    </td>\n\n\n                                    {activeTab === 'devoluciones' && (\n                                        <>\n                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>Cliente Rechaza</span></td>\n                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>€49.90</td>\n                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "12px", background: "#fef3c7", color: "#d97706" }}>En proceso</span></td>\n                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>-</td>\n                                        </>\n                                    )}\n\n\n\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 2d</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>14:15</span>\n                                    </td>\n                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaAcciones pedido={{ state: "devolucion" }} />\n                                    </td>\n                                </tr>\n                            )}\n\n                            {/* Example Row - 10041 */}\n                            {activeTab === 'todos' || activeTab === 'historial' && (\n                                <tr style={{\n                                    cursor: "pointer",\n                                    borderBottom: "1px solid #f1f5f9",\n                                    height: "52px",\n                                    maxHeight: "52px",\n                                    transition: "background 0.1s",\n                                }}\n                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}\n                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}\n                                    onClick={(e) => {\n                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;\n                                        setSelectedOrder({ ref: "Example" });\n                                    }}\n                                >\n                                    <ColumnaCheckbox />\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10041</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{\n                                            display: "inline-flex", alignItems: "center", gap: "4px",\n                                            padding: "2px 8px", borderRadius: "20px",\n                                            fontSize: "10px", fontWeight: 700,\n                                            background: ORDER_STATES.entregado.bg,\n                                            color: ORDER_STATES.entregado.color\n                                        }}>\n                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.entregado.icon}</span>\n                                            {ORDER_STATES.entregado.label}\n                                        </span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <FulfillmentBadge type="beeping" />\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <CarrierBadge type="GLS" />\n                                        <a href={getTrackingUrl("GLS", "GLS0012929")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "none", fontWeight: 600 }}>GLS0012929</a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Javier Nieto</span>\n                                        <a href={`https://wa.me/${"+34 600 000 006"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>\n                                            💬 +34 600 000 006\n                                        </a>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>15001</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>A Coruña</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span title="Monitor Gaming 24&quot;" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>\n                                            Monitor Gaming 24&quot;\n                                        </span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€199.00</span>\n                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>\n                                    </td>\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaRiesgo riesgo={{ status: "green", score: 100 }} />\n                                    </td>\n\n\n\n\n                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 12d</span>\n                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:00</span>\n                                    </td>\n                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaAcciones pedido={{ state: "entregado" }} />\n                                    </td>\n                                </tr>\n                            )}\n\n\n                            {/* Example Row - CARRITO ABANDONADO */}\n                            {activeTab === 'carritos-abandonados' && (\n                                <tr style={{\n                                    cursor: "pointer",\n                                    borderBottom: "1px solid #f1f5f9",\n                                    height: "52px",\n                                    maxHeight: "52px",\n                                    transition: "background 0.1s",\n                                }}\n                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}\n                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}\n                                    onClick={(e) => {\n                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;\n                                        setSelectedOrder({ ref: "Example" });\n                                    }}\n                                >\n                                    <td style={{ padding: "0 8px 0 12px", height: "52px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />\n                                    </td>\n                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#C-4291</a></td>\n                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>Ana Martínez</td>\n                                    <td style={{ color: "var(--text-muted)", fontSize: "11px", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>+34 600 000 010</td>\n                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />\n                                        <div style={{ display: "flex", flexDirection: "column" }}>\n                                            <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Pack Cosmética</span>\n                                            <span style={{ color: "var(--text-dim)", fontSize: "10px", marginTop: "2px" }}>Qty: 2</span>\n                                        </div>\n                                    </td>\n                                    <td style={{ fontWeight: 700, margin: "0 auto", textAlign: "right", color: "var(--color-text-primary)", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>€89.00</td>\n                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>ig_story</span></td>\n                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>promo_sanvalentin</span></td>\n                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>/p/cosmetica-pack</span></td>\n                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>\n                                            <span style={{ fontSize: "12px" }}>📱</span>\n                                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>iPhone (iOS 17)</span>\n                                        </div>\n                                    </td>\n                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "10px", fontWeight: 800, padding: "2px 6px", borderRadius: "12px", background: "#fee2e2", color: "#dc2626" }}>\n                                            45 min\n                                        </span>\n                                    </td>\n                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "20px", background: "#fef3c7", color: "#d97706" }}>\n                                            Abandonado\n                                        </span>\n                                    </td>\n                                    <td data-no-drawer style={{ padding: "8px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>\n                                        <ColumnaAcciones pedido={{ state: "nuevo" }} />\n                                    </td>\n                                </tr>\n                            )}\n                        </tbody>\n                    </table>\n                </div>\n            </div>\n            {selectedOrder && <OrderDrawer pedido={selectedOrder} onClose={() => setSelectedOrder(null)} onSelectOrder={setSelectedOrder} />}\n        </div>\n    );\n}\n
+type RiskLevel = "low" | "medium" | "high";
+
+interface RiskFactor {
+    key: string;
+    label: string;
+    value: string;
+    risk: RiskLevel;
+    points: number;
+    source: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function calcClienteMetrics(pedidos: Record<string, any>[]) {
+    const total = pedidos.length;
+    const entregados = pedidos.filter(p => p.state === "entregado").length;
+    const devueltos = pedidos.filter(p => ["devolucion", "devuelto"].includes(p.state)).length;
+    const incidencias = pedidos.filter(p => p.state === "incidencia").length;
+    const totalGastado = pedidos
+        .filter(p => p.state === "entregado")
+        .reduce((acc, p) => acc + parseFloat(p.importe || "0"), 0);
+    const sorted = [...pedidos].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return {
+        totalPedidos: total,
+        totalGastado: totalGastado.toFixed(2),
+        ticketMedio: entregados > 0 ? (totalGastado / entregados).toFixed(2) : "0.00",
+        tasaEntrega: total > 0 ? ((entregados / total) * 100).toFixed(1) : "0",
+        tasaDevolucion: total > 0 ? ((devueltos / total) * 100).toFixed(1) : "0",
+        tasaIncidencia: total > 0 ? ((incidencias / total) * 100).toFixed(1) : "0",
+        pedidosEntregados: entregados,
+        pedidosDevoluciones: devueltos,
+        ultimoPedido: sorted[0]?.createdAt ?? null,
+        primerPedido: sorted[sorted.length - 1]?.createdAt ?? null,
+    };
+}
+
+function getCPRiskLevel(cp: string): { label: string; level: RiskLevel } {
+    // Hardcoded high-risk CPs known from returns history; replace with DB query
+    const high = ["18008", "18009", "18010", "29001", "28005", "28012", "08001", "08002", "08003"];
+    const medium = ["41001", "41002", "46001", "46002", "50001", "03001", "03002"];
+    if (high.some(x => cp.startsWith(x.slice(0, 3)))) return { label: "Alto riesgo", level: "high" };
+    if (medium.some(x => cp.startsWith(x.slice(0, 3)))) return { label: "Riesgo medio", level: "medium" };
+    return { label: "Riesgo bajo", level: "low" };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function calcRiskScore(pedido: Record<string, any>): { score: number; factors: RiskFactor[] } {
+    const factors: RiskFactor[] = [];
+
+    // CP zona
+    const cpRisk = getCPRiskLevel(pedido?.shipping_zip || "00000");
+    factors.push({
+        key: "cp", label: `Zona CP ${pedido?.shipping_zip || "—"}`,
+        value: cpRisk.label, risk: cpRisk.level,
+        points: cpRisk.level === "high" ? 40 : cpRisk.level === "medium" ? 20 : 0,
+        source: "datos propios"
+    });
+
+    // Devoluciones previas
+    const devs = pedido?.clienteStats?.totalDevoluciones ?? 0;
+    if (devs > 2) factors.push({
+        key: "devoluciones", label: "Devoluciones previas",
+        value: `${devs} devoluciones`, risk: "high", points: 30, source: "historial"
+    });
+    else if (devs > 0) factors.push({
+        key: "devoluciones", label: "Devoluciones previas",
+        value: `${devs} devolución`, risk: "medium", points: 10, source: "historial"
+    });
+    else factors.push({
+        key: "devoluciones", label: "Sin devoluciones previas",
+        value: "OK", risk: "low", points: -10, source: "historial"
+    });
+
+    // Teléfono válido
+    const tel = (pedido?.telefono || "").replace(/\s/g, "");
+    const telValid = /^(\+34|0034|34)?[6789]\d{8}$/.test(tel);
+    factors.push({
+        key: "telefono", label: "Teléfono válido",
+        value: telValid ? "OK" : "Inválido", risk: telValid ? "low" : "high",
+        points: telValid ? -5 : 25, source: "validación local"
+    });
+
+    // IP vs dirección
+    if (pedido?.geoCity && pedido?.shipping_city) {
+        const match = pedido.geoCity.toLowerCase() === pedido.shipping_city.toLowerCase();
+        factors.push({
+            key: "ip_geo", label: "IP coincide con dirección",
+            value: match ? "Coincide" : `IP: ${pedido.geoCity}`, risk: match ? "low" : "medium",
+            points: match ? -5 : 15, source: "geolocalización"
+        });
+    }
+
+    // VPN/Proxy
+    if (pedido?.isProxy) factors.push({
+        key: "vpn", label: "VPN/Proxy detectado",
+        value: "⚠️ Detectado", risk: "high", points: 35, source: "ipinfo.io"
+    });
+
+    // Nombre completo
+    const hasRealName = (pedido?.cliente || "").trim().split(" ").length >= 2;
+    factors.push({
+        key: "nombre", label: "Nombre completo",
+        value: hasRealName ? "OK" : "Solo un nombre", risk: hasRealName ? "low" : "medium",
+        points: hasRealName ? 0 : 10, source: "validación local"
+    });
+
+    // Cliente nuevo vs recurrente
+    const totalPedidos = pedido?.clienteStats?.totalPedidos ?? 1;
+    if (totalPedidos === 1) factors.push({
+        key: "nuevo", label: "Primera compra",
+        value: "Cliente nuevo", risk: "medium", points: 10, source: "historial"
+    });
+    else factors.push({
+        key: "recurrente", label: "Cliente recurrente",
+        value: `${totalPedidos} pedidos`, risk: "low", points: -15, source: "historial"
+    });
+
+    // Método de pago
+    const isCOD = ["COD", "Contra reembolso"].includes(pedido?.pago || "");
+    factors.push({
+        key: "pago", label: "Método de pago",
+        value: isCOD ? "COD (mayor riesgo)" : (pedido?.pago || "—"), risk: isCOD ? "medium" : "low",
+        points: isCOD ? 20 : 0, source: "shopify"
+    });
+
+    // Hora del pedido
+    const hour = new Date(pedido?.createdAt || Date.now()).getHours();
+    if (hour >= 2 && hour <= 6) factors.push({
+        key: "hora", label: "Pedido en madrugada",
+        value: `${hour}:00h`, risk: "medium", points: 10, source: "shopify"
+    });
+
+    const totalPoints = factors.reduce((acc, f) => acc + f.points, 0);
+    const score = Math.max(0, Math.min(100, 100 - totalPoints));
+    return { score, factors };
+}
+
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string, any> | null, onClose: () => void, onSelectOrder?: (p: any) => void }) {
+    const [activeTab, setActiveTab] = React.useState("cliente");
+    const [msgSource, setMsgSource] = React.useState("WhatsApp Business");
+    const [newMessage, setNewMessage] = React.useState("");
+
+    const mensajes = pedido?.mensajes || [
+        { "direction": "inbound", "body": "¿Cuándo llega mi pedido?", "timestamp": "2023-10-12T14:30:00Z", "status": "read" },
+        { "direction": "outbound", "body": "Buenas tardes Juan. Hemos enviado tu pedido hoy, debería llegar en 24-48 horas.", "timestamp": "2023-10-12T14:35:00Z", "status": "read" }
+    ];
+
+    const sendMessage = () => {
+        if (!newMessage.trim()) return;
+        setNewMessage("");
+    };
+
+    const [newNota, setNewNota] = React.useState("");
+    const [notaGestor, setNotaGestor] = React.useState("");
+    const gestores = [
+        { id: "maria", nombre: "María", emoji: "👩" },
+        { id: "carlos", nombre: "Carlos", emoji: "👨" },
+        { id: "ana", nombre: "Ana", emoji: "👩" },
+        { id: "soporte", nombre: "Soporte", emoji: "🏋️" },
+    ];
+    const notas = pedido?.notas || [
+        { texto: "El cliente ha llamado para confirmar la dirección de entrega, le faltaba poner que es el Bajo A.", autor: "María (A. Cliente)", gestorAsignado: "Carlos", createdAt: "2023-10-12T15:00:00Z" }
+    ];
+    const saveNota = () => {
+        if (!newNota.trim()) return;
+        setNewNota("");
+        setNotaGestor("");
+    };
+
+    // Meta Ad creativo — cargado desde Graph API cuando pedido.metaAdId exista
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [metaAd, setMetaAd] = React.useState<Record<string, any> | null>(null);
+    React.useEffect(() => {
+        if (!pedido?.metaAdId) { setMetaAd(null); return; }
+        const token = process.env.NEXT_PUBLIC_META_ACCESS_TOKEN;
+        if (token) {
+            fetchMetaAd(pedido.metaAdId, token).then(setMetaAd).catch(() => setMetaAd(null));
+        } else {
+            // Mock mientras no hay token configurado
+            setMetaAd({
+                name: "VSL Zapatos | Retargeting Compra | ES",
+                effective_status: "ACTIVE",
+                thumbnail_url: null,
+                creative: { object_type: "VIDEO" },
+                adset: { name: "Retargeting 30 d\u00edas" },
+                campaign: { name: "CON | Zapatillas | ES | Octubre" },
+                insights: { ctr: "2.41", cpc: "0.38", cpm: "9.15" },
+            });
+        }
+    }, [pedido?.metaAdId]);
+
+    if (!pedido) return null;
+    return (
+        <>
+            <div
+                onClick={onClose}
+                style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(2px)", zIndex: 100, animation: "fade-in 0.2s ease-out" }}
+            />
+            <div
+                style={{
+                    position: "fixed", right: 0, top: 0, bottom: 0, width: "620px", maxWidth: "100%",
+                    background: "white", zIndex: 101, boxShadow: "-8px 0 24px rgba(0,0,0,0.1)",
+                    display: "flex", flexDirection: "column",
+                    animation: "slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+                }}
+            >
+
+                <div style={{
+                    position: "sticky", top: 0, zIndex: 10,
+                    background: "white", borderBottom: "1px solid #e2e8f0",
+                    padding: "16px 20px 0",
+                }}>
+                    {/* Fila 1: ref + estado + cerrar */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <span style={{ fontSize: "18px", fontWeight: 900, color: "#3b82f6" }}>#{pedido.ref || "10045"}</span>
+                            <StateBadge state={pedido.state || 'nuevo'} />
+                        </div>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                            {/* Botón Enviar */}
+                            <button style={{
+                                background: "rgba(22,163,74,0.1)", color: "#16a34a",
+                                border: "1px solid rgba(22,163,74,0.3)", borderRadius: "7px",
+                                padding: "5px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer"
+                            }}>Enviar</button>
+                            {/* Botón Cancelar */}
+                            <button style={{
+                                background: "rgba(239,68,68,0.08)", color: "#ef4444",
+                                border: "1px solid rgba(239,68,68,0.2)", borderRadius: "7px",
+                                padding: "5px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer"
+                            }}>Cancelar</button>
+                            {/* Cerrar */}
+                            <button onClick={onClose} style={{
+                                background: "#f1f5f9", border: "none", borderRadius: "7px",
+                                width: "30px", height: "30px", cursor: "pointer", fontSize: "14px",
+                                display: "flex", alignItems: "center", justifyContent: "center"
+                            }}>✕</button>
+                        </div>
+                    </div>
+
+                    {/* Fila 2: cliente + fecha rápida */}
+                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "12px" }}>
+                        {pedido.cliente || "Juan Pérez"} · {pedido.telefono || "+34 600 000 000"} · Entrada: {formatDate(pedido.createdAt)} {formatTime(pedido.createdAt)}
+                    </div>
+
+                    {/* Tabs */}
+                    <div style={{ display: "flex", gap: "2px", overflowX: "auto" }} className="ds-scrollbar-hide">
+                        {DRAWER_TABS.map(tab => (
+                            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+                                padding: "7px 12px", fontSize: "11px", fontWeight: 600,
+                                border: "none", background: "none", cursor: "pointer",
+                                borderBottom: activeTab === tab.key ? "2px solid #3b82f6" : "2px solid transparent",
+                                color: activeTab === tab.key ? "#3b82f6" : "#64748b",
+                                whiteSpace: "nowrap",
+                            }}>
+                                {tab.icon} {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Body scrollable content per tab */}
+                <div className="ds-scrollbar" style={{ height: "calc(100vh - 130px)", padding: "8px 14px", overflowY: "auto", background: "white" }}>
+
+                    {activeTab === "cliente" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                            <DrawerSection title="Datos del cliente">
+                                <DrawerRow label="Nombre" value={pedido?.cliente || "Juan Pérez"} />
+                                <DrawerRow label="Teléfono" value={
+                                    <a href={`https://wa.me/${(pedido?.telefono || "+34 600 000 000").replace(/\D/g, "")}`}
+                                        target="_blank" rel="noreferrer" style={{ color: "#25d366", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
+                                        💬 {pedido?.telefono || "+34 600 000 000"}
+                                    </a>
+                                } />
+                                <DrawerRow label="Email" value={pedido?.email ?? "juan.perez@email.com"} />
+                                <DrawerRow label="Documento" value={pedido?.dni ?? "—"} />
+                            </DrawerSection>
+
+                            {(() => {
+                                const cliente = pedido?.clienteStats || {
+                                    totalGastado: "269.97",
+                                    totalPedidos: 3,
+                                    tasaEntrega: 67,
+                                    totalDevoluciones: 1,
+                                    primerPedido: "2023-09-12T14:20:00Z",
+                                };
+                                return (
+                                    <DrawerSection title="Resumen del cliente">
+                                        <DrawerRow label="Total gastado" value={`€${cliente.totalGastado}`} />
+                                        <DrawerRow label="Pedidos totales" value={cliente.totalPedidos} />
+                                        <DrawerRow label="Tasa entrega" value={`${cliente.tasaEntrega}%`} />
+                                        <DrawerRow label="Devoluciones" value={cliente.totalDevoluciones} />
+                                        <DrawerRow label="Primera compra" value={formatDate(cliente.primerPedido)} />
+                                        <DrawerRow label="Cliente desde" value={calcTiempo(cliente.primerPedido, new Date()) + " atrás"} />
+                                    </DrawerSection>
+                                );
+                            })()}
+
+                            <DrawerSection title="Dirección de envío">
+                                <DrawerRow label="Dirección" value={pedido?.shipping_address_1 || "Calle Principal 123, Piso 4B"} />
+                                <DrawerRow label="CP" value={pedido?.shipping_zip || "28001"} />
+                                <DrawerRow label="Ciudad" value={pedido?.shipping_city || "Madrid"} />
+                                <DrawerRow label="Provincia" value={pedido?.shipping_province || "Comunidad de Madrid"} />
+                                <DrawerRow label="País" value={pedido?.shipping_country || "España"} />
+                                {/* Enlace Google Maps */}
+                                <a href={`https://www.google.com/maps/search/${encodeURIComponent(
+                                    `${pedido?.shipping_address_1 || "Calle Principal 123"} ${pedido?.shipping_zip || "28001"} ${pedido?.shipping_city || "Madrid"}`
+                                )}`} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: "#3b82f6", display: "block", marginTop: "6px", fontWeight: 600 }}>
+                                    📍 Ver en Google Maps
+                                </a>
+                            </DrawerSection>
+
+                            <DrawerSection title="Pedido">
+                                <DrawerRow label="Producto" value={`${pedido?.producto || "Zapatillas Deportivas X"} · Qty: ${pedido?.cantidad || 1}`} />
+                                <DrawerRow label="Importe" value={`€${pedido?.importe || "89.99"}`} />
+                                <DrawerRow label="Pago" value={pedido?.pago || "Stripe"} />
+                                <DrawerRow label="Descuento" value={pedido?.descuento ? `€${pedido?.descuento}` : "—"} />
+                                <DrawerRow label="Fulfillment" value={<FulfillmentBadge type={pedido?.fulfillment || "beeping"} />} />
+                                <DrawerRow label="Transportista" value={<CarrierBadge type={pedido?.carrier || "GLS"} />} />
+                                <DrawerRow label="Tracking" value={
+                                    pedido?.trackingNumber
+                                        ? <a href={getTrackingUrl(pedido?.carrier || "GLS", pedido?.trackingNumber)}
+                                            target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontWeight: 700 }}>
+                                            {pedido?.trackingNumber}
+                                        </a>
+                                        : "Sin tracking"
+                                } />
+                            </DrawerSection>
+
+                            <DrawerSection title="Métricas del pedido">
+                                <DrawerRow label="Hora entrada" value={formatTime(pedido?.createdAt)} />
+                                <DrawerRow label="Dispositivo" value={pedido?.deviceType ?? "—"} />
+                                <DrawerRow label="T. gestión" value={calcTiempo(pedido?.createdAt, pedido?.timestamps?.primerCambio)} />
+                                <DrawerRow label="T. preparación" value={calcTiempo(pedido?.timestamps?.pendiente, pedido?.timestamps?.enviado)} />
+                                <DrawerRow label="T. tránsito" value={calcTiempo(pedido?.timestamps?.enviado, pedido?.timestamps?.entregado)} />
+                                <DrawerRow label="Intentos entrega" value={pedido?.intentosEntrega ?? "—"} />
+                            </DrawerSection>
+                        </div>
+                    )}
+
+                    {activeTab === "timeline" && (
+                        <div style={{ display: "flex", flexDirection: "column", animation: "fade-in 0.2s", paddingTop: "4px" }}>
+                            {(pedido?.timeline as TimelineEvent[] || MOCK_TIMELINE).map((event, i, arr) => {
+                                const typeColor = event.type === "error" ? "#ef4444" : event.type === "warning" ? "#f59e0b" : event.type === "success" ? "#16a34a" : "#3b82f6";
+                                const srcColor = SOURCE_COLORS[event.source as TimelineSource] ?? "#94a3b8";
+                                return (
+                                    <div key={i} style={{ display: "flex", gap: "10px", paddingBottom: "10px" }}>
+                                        {/* Punto + línea vertical */}
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                                            <div style={{
+                                                width: "9px", height: "9px", borderRadius: "50%", marginTop: "3px",
+                                                background: typeColor, border: "2px solid white",
+                                                boxShadow: "0 0 0 1.5px " + typeColor,
+                                            }} />
+                                            {i < arr.length - 1 && (
+                                                <div style={{ width: "1px", flex: 1, background: "#e2e8f0", marginTop: "3px" }} />
+                                            )}
+                                        </div>
+                                        {/* Texto del evento */}
+                                        <div style={{ flex: 1, paddingBottom: "2px" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                                <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a", lineHeight: 1.3 }}>{event.label}</span>
+                                            </div>
+                                            {event.description && (
+                                                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "1px", lineHeight: 1.3 }}>{event.description}</div>
+                                            )}
+                                            <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "1px", display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                                                <span style={{
+                                                    fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px",
+                                                    background: srcColor + "22",
+                                                    color: srcColor,
+                                                    textTransform: "uppercase",
+                                                }}>
+                                                    {event.source}
+                                                </span>
+                                                {formatDate(event.timestamp)} · {formatTime(event.timestamp)}
+                                                {i > 0 && (
+                                                    <span style={{ color: "#cbd5e1" }}>
+                                                        +{calcTiempo(arr[i - 1].timestamp, event.timestamp)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {activeTab === "riesgo" && (() => {
+                        const { score, factors } = calcRiskScore(pedido);
+                        const scoreColor = score >= 80 ? "#16a34a" : score >= 50 ? "#d97706" : "#ef4444";
+                        return (
+                            <div style={{ animation: "fade-in 0.2s" }}>
+                                <DrawerSection title="Score de riesgo">
+                                    <div style={{ padding: "4px 0 8px" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                                            <span style={{ fontSize: "12px", color: "#64748b" }}>Score calculado</span>
+                                            <span style={{ fontSize: "20px", fontWeight: 900, color: scoreColor }}>{score}/100</span>
+                                        </div>
+                                        <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "999px" }}>
+                                            <div style={{
+                                                height: "6px", borderRadius: "999px", width: `${score}%`,
+                                                background: scoreColor,
+                                                transition: "width 0.5s ease",
+                                            }} />
+                                        </div>
+                                        <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "4px" }}>
+                                            {score >= 80 ? "✅ Bajo riesgo" : score >= 50 ? "⚠️ Riesgo moderado" : "🔴 Alto riesgo — revisar antes de enviar"}
+                                        </div>
+                                    </div>
+                                    <DrawerRow label="Confianza del score" value={
+                                        (pedido?.clienteStats?.totalPedidos ?? 1) < 3
+                                            ? "⚠️ Datos insuficientes"
+                                            : (pedido?.clienteStats?.totalPedidos ?? 1) < 10
+                                                ? "📊 Datos parciales"
+                                                : "✅ Alta confianza"
+                                    } />
+                                </DrawerSection>
+
+                                <DrawerSection title="Factores de riesgo">
+                                    {factors.map((f, i) => (
+                                        <div key={f.key} style={{
+                                            display: "flex", justifyContent: "space-between", alignItems: "center",
+                                            padding: "3px 0",
+                                            borderBottom: i < factors.length - 1 ? "1px solid #f1f5f9" : "none",
+                                            minHeight: "24px",
+                                        }}>
+                                            <div style={{ flex: 1 }}>
+                                                <span style={{ fontSize: "12px", color: "#0f172a" }}>{f.label}</span>
+                                                <span style={{ fontSize: "10px", color: "#94a3b8", marginLeft: "5px" }}>{f.source}</span>
+                                            </div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                <span style={{ fontSize: "10px", color: f.points > 0 ? "#ef4444" : f.points < 0 ? "#16a34a" : "#94a3b8", fontWeight: 700 }}>
+                                                    {f.points > 0 ? `+${f.points}` : f.points < 0 ? f.points : "—"}
+                                                </span>
+                                                <span style={{
+                                                    fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px",
+                                                    background: f.risk === "high" ? "rgba(239,68,68,0.1)" : f.risk === "medium" ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)",
+                                                    color: f.risk === "high" ? "#ef4444" : f.risk === "medium" ? "#d97706" : "#16a34a",
+                                                }}>
+                                                    {f.value}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </DrawerSection>
+
+                                <DrawerSection title="IP y geolocalización">
+                                    <DrawerRow label="IP" value={pedido?.ipAddress ?? "—"} />
+                                    <DrawerRow label="Ciudad" value={pedido?.geoCity ?? "—"} />
+                                    <DrawerRow label="País" value={pedido?.geoCountry ?? "—"} />
+                                    <DrawerRow label="ISP" value={pedido?.geoISP ?? "—"} />
+                                    <DrawerRow label="VPN/Proxy" value={pedido?.isProxy ? "⚠️ Detectado" : "No detectado"} />
+                                </DrawerSection>
+                            </div>
+                        );
+                    })()}
+
+                    {activeTab === "origen" && (
+                        <div style={{ animation: "fade-in 0.2s" }}>
+                            <DrawerSection title="Origen del pedido">
+                                <DrawerRow label="Fuente" value={pedido?.utmSource ?? "—"} />
+                                <DrawerRow label="Medio" value={pedido?.utmMedium ?? "—"} />
+                                <DrawerRow label="Campaña" value={pedido?.utmCampaign ?? "—"} />
+                                <DrawerRow label="Contenido" value={pedido?.utmContent ?? "—"} />
+                                <DrawerRow label="Placement" value={pedido?.utmPlacement ?? "—"} />
+                                <DrawerRow label="Ad ID" value={pedido?.metaAdId ?? "—"} />
+                                <DrawerRow label="Adset ID" value={pedido?.metaAdsetId ?? "—"} />
+                                <DrawerRow label="Campaign ID" value={pedido?.metaCampaignId ?? "—"} />
+                            </DrawerSection>
+
+                            {pedido?.metaAdId && metaAd && (
+                                <DrawerSection title="Creativo que generó la venta">
+                                    {metaAd.thumbnail_url && (
+                                        <img src={metaAd.thumbnail_url} alt="Creativo" style={{
+                                            width: "100%", maxHeight: "120px", objectFit: "cover",
+                                            borderRadius: "6px", marginBottom: "6px"
+                                        }} />
+                                    )}
+                                    <DrawerRow label="Nombre ad" value={metaAd.name} />
+                                    <DrawerRow label="Tipo" value={metaAd.creative?.object_type ?? "—"} />
+                                    <DrawerRow label="Estado" value={metaAd.effective_status} />
+                                    <DrawerRow label="Adset" value={metaAd.adset?.name ?? "—"} />
+                                    <DrawerRow label="Campaña" value={metaAd.campaign?.name ?? "—"} />
+                                    <DrawerRow label="CTR" value={metaAd.insights?.ctr ? `${metaAd.insights.ctr}%` : "—"} />
+                                    <DrawerRow label="CPC" value={metaAd.insights?.cpc ? `€${metaAd.insights.cpc}` : "—"} />
+                                    <DrawerRow label="CPM" value={metaAd.insights?.cpm ? `€${metaAd.insights.cpm}` : "—"} />
+                                    <a href={`https://www.facebook.com/ads/manager/account/ads/?selected_ad_ids=${pedido?.metaAdId}`}
+                                        target="_blank" rel="noreferrer"
+                                        style={{ fontSize: "11px", color: "#3b82f6", fontWeight: 600, display: "block", marginTop: "6px" }}>
+                                        Ver en Meta Ads Manager →
+                                    </a>
+                                </DrawerSection>
+                            )}
+
+                            <DrawerSection title="Landing de conversión">
+                                <DrawerRow label="URL" value={
+                                    pedido?.landingUrl
+                                        ? <a href={pedido.landingUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontSize: "11px" }}>
+                                            {pedido.landingUrl.replace("https://", "").substring(0, 40)}...
+                                        </a>
+                                        : "—"
+                                } />
+                                <DrawerRow label="Tipo" value={pedido?.landingType ?? "Advertorial"} />
+                            </DrawerSection>
+                        </div>
+                    )}
+
+                    {activeTab === "historial" && (() => {
+                        const historial = pedido?.historialCliente || [
+                            { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },
+                            { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" },
+                        ];
+                        const m = pedido?.clienteStats ? pedido.clienteStats : calcClienteMetrics(historial);
+                        return (
+                            <div style={{ animation: "fade-in 0.2s" }}>
+                                <DrawerSection title="Métricas del cliente">
+                                    <DrawerRow label="LTV total" value={`€${m.totalGastado}`} />
+                                    <DrawerRow label="Ticket medio" value={`€${m.ticketMedio}`} />
+                                    <DrawerRow label="Tasa entrega" value={`${m.tasaEntrega}%`} />
+                                    <DrawerRow label="Tasa devolución" value={`${m.tasaDevolucion}%`} />
+                                    <DrawerRow label="Tasa incidencia" value={`${m.tasaIncidencia}%`} />
+                                    <DrawerRow label="Pedidos entregados" value={m.pedidosEntregados} />
+                                    <DrawerRow label="Pedidos devueltos" value={m.pedidosDevoluciones} />
+                                    <DrawerRow label="Último pedido" value={formatDate(m.ultimoPedido ?? "")} />
+                                </DrawerSection>
+
+                                <p style={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", color: "#94a3b8", margin: "0 0 6px 0" }}>
+                                    {historial.length} pedidos anteriores
+                                </p>
+                                {(pedido?.historialCliente || [
+                                    { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },
+                                    { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" }
+                                ]).map((h: { id: string; ref: string; state: string; producto: string; importe: string; createdAt: string }) => (
+                                    <div key={h.id} onClick={(e) => { e.stopPropagation(); if (onSelectOrder) onSelectOrder(h); }} style={{
+                                        padding: "8px 10px", borderRadius: "8px",
+                                        border: "1px solid #e2e8f0", marginBottom: "6px",
+                                        cursor: "pointer", background: "white",
+                                        transition: "background 0.1s",
+                                    }}
+                                        onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                        onMouseLeave={e => e.currentTarget.style.background = "white"}
+                                    >
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#3b82f6" }}>#{h.ref}</span>
+                                            <StateBadge state={h.state} />
+                                        </div>
+                                        <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                                            {h.producto} · €{h.importe} · {formatDate(h.createdAt)}
+                                        </div>
+                                    </div>
+                                ))}
+                                {(historial.length === 0) && (
+                                    <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "12px", padding: "24px 0" }}>
+                                        Primera compra del cliente
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
+                    {activeTab === "comunicaciones" && (
+                        <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 175px)", animation: "fade-in 0.2s" }}>
+
+                            {/* Selector de fuente */}
+                            <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexShrink: 0 }}>
+                                {["WhatsApp Business", "WhatsApp API"].map(source => (
+                                    <button key={source} onClick={() => setMsgSource(source)} style={{
+                                        padding: "4px 12px", fontSize: "11px", fontWeight: 600,
+                                        borderRadius: "20px", cursor: "pointer", border: "none",
+                                        background: msgSource === source ? "#25d366" : "#f1f5f9",
+                                        color: msgSource === source ? "white" : "#64748b",
+                                    }}>{source}</button>
+                                ))}
+                            </div>
+
+                            {/* Mensajes — ocupa todo el espacio restante */}
+                            <div className="ds-scrollbar" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+                                {mensajes.map((msg: { body: string; direction: string; timestamp: string; status: string }, i: number) => (
+                                    <div key={i} style={{ display: "flex", justifyContent: msg.direction === "outbound" ? "flex-end" : "flex-start" }}>
+                                        <div style={{
+                                            maxWidth: "75%", padding: "7px 10px", borderRadius: "10px",
+                                            fontSize: "12px", lineHeight: 1.4,
+                                            background: msg.direction === "outbound" ? "#dcf8c6" : "#f1f5f9",
+                                        }}>
+                                            {msg.body}
+                                            <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px", textAlign: "right" }}>
+                                                {formatTime(msg.timestamp)}
+                                                {msg.direction === "outbound" && <span style={{ marginLeft: "3px" }}>{msg.status === "read" ? "✓✓" : "✓"}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Plantillas r\u00e1pidas */}
+                            {(() => {
+                                const PLANTILLAS = [
+                                    { label: "Confirmar pedido", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, te confirmamos tu pedido ${pedido?.ref || ""}. En breve lo preparamos y te enviamos el tracking. \uD83D\uDE4C` },
+                                    { label: "Tracking enviado", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, tu pedido ya est\u00e1 en camino. N\u00famero de seguimiento: ${pedido?.trackingNumber || "—"}. Tiempo estimado: 24-48h. \uD83D\uDCE6` },
+                                    { label: "Intento fallido", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, hemos intentado entregarte el pedido pero no hab\u00eda nadie. \u00BFCu\u00e1ndo podemos volver a intentarlo? \uD83D\uDE9A` },
+                                    { label: "Solicitar rese\u00f1a", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, esperamos que est\u00e9s disfrutando tu compra. \u00BFPodr\u00EDas dejarnos una rese\u00f1a? Nos ayuda mucho \uD83D\uDE4F` },
+                                ];
+                                return (
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "8px", flexShrink: 0 }}>
+                                        {PLANTILLAS.map(p => (
+                                            <button key={p.label} onClick={() => setNewMessage(p.texto)} style={{
+                                                fontSize: "10px", fontWeight: 600, padding: "3px 8px",
+                                                borderRadius: "20px", border: "1px solid #e2e8f0",
+                                                background: "#f8fafc", color: "#64748b", cursor: "pointer",
+                                                whiteSpace: "nowrap",
+                                            }}>
+                                                {p.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Input pegado al fondo */}
+                            <div style={{ display: "flex", gap: "6px", paddingTop: "8px", borderTop: "1px solid #e2e8f0", flexShrink: 0 }}>
+                                <input
+                                    value={newMessage} onChange={e => setNewMessage(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
+                                    placeholder="Escribe un mensaje..."
+                                    style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px", outline: "none" }}
+                                />
+                                <button onClick={sendMessage} style={{
+                                    background: "#25d366", color: "white", border: "none",
+                                    borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontSize: "12px", fontWeight: 700
+                                }}>Enviar</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "notas" && (
+                        <div style={{ animation: "fade-in 0.2s" }}>
+                            {notas.map((nota: { texto: string; autor: string; gestorAsignado?: string; createdAt: string }, i: number) => (
+                                <div key={i} style={{
+                                    padding: "8px 10px", background: "#fffbeb",
+                                    border: "1px solid #fef08a", borderRadius: "8px", marginBottom: "6px"
+                                }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                                        <span style={{ fontSize: "10px", fontWeight: 700, color: "#92400e" }}>
+                                            {nota.gestorAsignado ? `→ Para: ${nota.gestorAsignado}` : "Sin asignar"}
+                                        </span>
+                                        <span style={{ fontSize: "10px", color: "#94a3b8" }}>
+                                            {nota.autor} · {formatDate(nota.createdAt)}
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: "12px", color: "#0f172a" }}>{nota.texto}</div>
+                                </div>
+                            ))}
+
+                            {/* Selector de gestor */}
+                            <div style={{ display: "flex", gap: "6px", marginBottom: "6px", alignItems: "center", marginTop: "8px" }}>
+                                <span style={{ fontSize: "11px", color: "#64748b", flexShrink: 0 }}>Asignar a:</span>
+                                <select value={notaGestor} onChange={e => setNotaGestor(e.target.value)} style={{
+                                    flex: 1, padding: "4px 8px", borderRadius: "6px",
+                                    border: "1px solid #e2e8f0", fontSize: "11px", outline: "none",
+                                    background: "white",
+                                }}>
+                                    <option value="">Sin asignar</option>
+                                    {gestores.map(g => (
+                                        <option key={g.id} value={g.nombre}>{g.emoji} {g.nombre}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <textarea
+                                value={newNota}
+                                onChange={e => setNewNota(e.target.value)}
+                                placeholder="Añadir nota interna..."
+                                rows={3}
+                                style={{
+                                    width: "100%", padding: "8px 10px", borderRadius: "8px",
+                                    border: "1px solid #e2e8f0", fontSize: "12px",
+                                    resize: "vertical", outline: "none", fontFamily: "inherit",
+                                    boxSizing: "border-box"
+                                }}
+                            />
+                            <button onClick={saveNota} style={{
+                                marginTop: "6px", background: "#3b82f6", color: "white",
+                                border: "none", borderRadius: "8px", padding: "7px 16px",
+                                fontSize: "12px", fontWeight: 700, cursor: "pointer"
+                            }}>Guardar nota</button>
+                        </div>
+                    )}
+
+                    {/* Failsafe for unfinished content tabs */}
+                    {!["cliente", "timeline", "riesgo", "origen", "historial", "comunicaciones", "notas"].includes(activeTab) && (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 20px", flexDirection: "column", gap: "12px", textAlign: "center", opacity: 0.5, animation: "fade-in 0.2s" }}>
+                            <span style={{ fontSize: "48px" }}>🚧</span>
+                            <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#334155" }}>Tab en desarrollo</h3>
+                            <p style={{ fontSize: "14px", color: "#64748b" }}>El contenido para &lsquo;{activeTab}&rsquo; se está diseñando.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </>
+    );
+}
+
+
+export default function PedidosPage() {
+    const [activeTab, setActiveTab] = useState('todos');
+    const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);
+    // Gestores — hook compartido con caché global + polling 30s
+    const { gestores: gestoresLive } = useGestores();
+
+    const pedidos = [
+        ...Array(42).fill({ state: 'nuevo' }),
+        ...Array(18).fill({ state: 'en_gestion' }),
+        ...Array(85).fill({ state: 'enviado' }),
+        ...Array(10).fill({ state: 'confirmado' }),
+        ...Array(30).fill({ state: 'en_preparacion' }),
+        ...Array(5).fill({ state: 'fallido' }),
+        ...Array(12).fill({ state: 'reintento' }),
+        ...Array(31).fill({ state: 'devolucion' }),
+        ...Array(15).fill({ state: 'entregado' }),
+        ...Array(6).fill({ state: 'cancelado' }),
+    ];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [pedidosState, setPedidosState] = useState<Record<string, any>[]>(pedidos);
+
+
+    async function assignGestor(pedidoId: string, gestorId: string | null) {
+        try {
+            await fetch(`/api/pedidos/${pedidoId}/gestor`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ gestorId }),
+            });
+        } catch { /* optimistic update — ignore error */ }
+        setPedidosState(prev => prev.map(p =>
+            p.id === pedidoId
+                ? { ...p, gestor: gestorId ? GESTORES_LIST.find(g => g.id === gestorId) ?? null : null }
+                : p
+        ));
+    }
+    const carritosAbandonados = Array(12).fill({ state: 'abandonado' });
+    const borradores = Array(5).fill({ state: 'borrador' });
+
+    const pedidosFiltrados = {
+        "todos": pedidos,
+        "por-gestionar": pedidos.filter(p => ["nuevo", "en_gestion"].includes(p.state)),
+        "en-transito": pedidos.filter(p => ["enviado", "confirmado", "en_preparacion"].includes(p.state)),
+        "incidencias": pedidos.filter(p => ["fallido", "reintento"].includes(p.state)),
+        "devoluciones": pedidos.filter(p => p.state === "devolucion"),
+        "carritos-abandonados": carritosAbandonados,
+        "borradores": borradores,
+        "historial": pedidos.filter(p => ["entregado", "cancelado"].includes(p.state)),
+    }[activeTab as string] ?? pedidos;
+
+
+
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.3s ease-out" }}>
+            {/* Header + Actions */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                    <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}>
+                        Gestión de Pedidos
+                    </h1>
+                    <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px", fontWeight: 500 }}>
+                        Control y seguimiento unificado del fulfillment (Shopify, Beeping, Dropea, Dropi)
+                    </p>
+                </div>
+
+                {/* Global Actions */}
+                <div style={{ display: "flex", gap: "8px" }}>
+                    <div style={{ position: "relative", width: "240px" }}>
+                        <Search style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", width: "14px", height: "14px", color: "var(--text-dim)" }} />
+                        <input
+                            type="text"
+                            placeholder="Buscar pedido, cliente, teléfono..."
+                            className="ds-input"
+                            style={{ paddingLeft: "32px", width: "100%" }}
+                        />
+                    </div>
+                    <button className="ds-btn" style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", textTransform: "none", letterSpacing: "normal", fontSize: "11px" }}>
+                        <Filter className="w-3.5 h-3.5" />
+                        Filtros
+                    </button>
+                </div>
+            </div>
+
+            <div className="module-tabs" style={{ '--tab-color': 'var(--ops)' } as React.CSSProperties}>
+                {TABS.map(tab => (
+                    <button
+                        key={tab.id}
+                        className={`module-tab ${activeTab === tab.id ? 'active' : ''}`}
+                        onClick={() => setActiveTab(tab.id)}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Conditional KPIs for Por Gestionar */}
+            {activeTab === 'por-gestionar' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "Sin gestionar", value: pedidosFiltrados.filter(p => p.state === 'nuevo').length.toString(), color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
+                        { label: "En gestión", value: pedidosFiltrados.filter(p => p.state === 'en_gestion').length.toString(), color: "#eab308", bg: "#fefce8", border: "#fde047" },
+                        { label: "Fallidos", value: pedidosFiltrados.filter(p => p.state === 'fallido').length.toString(), color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Reintentos", value: pedidosFiltrados.filter(p => p.state === 'reintento').length.toString(), color: "#f97316", bg: "#fff7ed", border: "#fed7aa" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Conditional KPIs for En Tránsito */}
+            {activeTab === 'en-transito' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "En tránsito", value: pedidosFiltrados.filter(p => p.state === 'enviado').length.toString(), color: "#0ea5e9", bg: "#f0f9ff", border: "#bae6fd" },
+                        { label: "Con retraso", value: "14", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Entregados hoy", value: "32", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Tasa entrega 7d", value: "94%", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Conditional KPIs for Incidencias */}
+            {activeTab === 'incidencias' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "Incidencias abiertas", value: pedidosFiltrados.length.toString(), color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Recuperadas hoy", value: "8", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Tasa recuperación", value: "65%", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
+                        { label: "Pérdida estimada", value: "€340", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Conditional KPIs for Devoluciones */}
+            {activeTab === 'devoluciones' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "Devoluciones activas", value: pedidosFiltrados.length.toString(), color: "#f97316", bg: "#fff7ed", border: "#fed7aa" },
+                        { label: "Importe total", value: "€1,250", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Procesadas hoy", value: "12", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Tasa devolución", value: "3.2%", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Conditional KPIs for Carritos Abandonados */}
+            {activeTab === 'carritos-abandonados' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "Carritos abandonados", value: "12", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" },
+                        { label: "Valor potencial", value: "€850", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
+                        { label: "Tasa recuperación", value: "25%", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Recuperado", value: "€212.50", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Conditional KPIs for Historial */}
+            {activeTab === 'historial' && (
+                <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
+                    {[
+                        { label: "Entregados total", value: pedidosFiltrados.filter(p => p.state === 'entregado').length.toString(), color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Cancelados total", value: pedidosFiltrados.filter(p => p.state === 'cancelado').length.toString(), color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Tasa éxito", value: "88.5%", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
+                        { label: "Facturación total", value: "€148.5K", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
+                    ].map((kpi, i) => (
+                        <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
+                            <div style={{ background: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}`, padding: "4px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: 800 }}>
+                                {kpi.value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Content Body */}
+            <div className="ds-card" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: "500px", overflow: "hidden" }}>
+                {/* Controls Bar */}
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                        <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--text)" }}>
+                            {TABS.find(t => t.id === activeTab)?.label}
+                        </span>
+                        <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "2px 8px", background: "white", borderRadius: "10px", border: "1px solid var(--border)", fontWeight: 600 }}>
+                            {pedidosFiltrados.length} {activeTab === 'carritos-abandonados' ? 'carritos' : activeTab === 'borradores' ? 'borradores' : 'pedidos'}
+                        </span>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                        {activeTab === 'historial' && (
+                            <select className="ds-input" style={{ fontSize: "11px", height: "30px", padding: "0 12px", background: "white", width: "120px" }}>
+                                <option>Este mes</option>
+                                <option>Mes anterior</option>
+                                <option>Este año</option>
+                                <option>Histórico completo</option>
+                            </select>
+                        )}
+                        <button className="ds-btn" style={{ background: "white", color: "var(--text-muted)", textTransform: "none", letterSpacing: "normal", fontSize: "11px", fontWeight: 600 }}>
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Sincronizar Estados
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mock Table */}
+
+                {/* Custom compact table styles */}
+                <div style={{ width: "100%", overflowX: "auto", flex: 1 }}>
+                    <table className="ds-table ds-compact-table" style={{ borderTop: "none", width: "100%", tableLayout: "auto", borderCollapse: "collapse", fontSize: "12px" }}>
+                        <thead>
+                            <tr>
+                                <th style={{ width: "3%", padding: "0 0 0 12px" }}>
+                                    <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
+                                </th>
+                                {activeTab === 'carritos-abandonados' ? (
+                                    <>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>ID</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Cliente</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Teléfono</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Producto</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Importe €</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>UTM Source</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>UTM Campaign</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Landing</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Dispositivo</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Abandono Hace</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Estado</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "95px" }}></th>
+                                    </>
+                                ) : activeTab === 'borradores' ? (
+                                    <>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>ID</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Cliente</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Últ. Actualización</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "95px" }}></th>
+                                    </>
+                                ) : (
+                                    <>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "6%" }}>Pedido</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "9%" }}>Estado</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "8%" }}>Fulfillment</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Transportista</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "11%" }}>Cliente</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>CP / Zona</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "13%" }}>Producto</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Importe</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "8%" }}>Gestor</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Riesgo</th>
+
+                                        {activeTab === 'incidencias' && (
+                                            <>
+                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Tipo Incid.</th>
+                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Intentos</th>
+                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Días Abierta</th>
+                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Pérdida Est.</th>
+                                            </>
+                                        )}
+
+                                        {activeTab === 'devoluciones' && (
+                                            <>
+                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Motivo Devol.</th>
+                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Importe Devol.</th>
+                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Estado Devol.</th>
+                                                <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Reembolso</th>
+                                            </>
+                                        )}
+
+                                        {activeTab === 'en-transito' && <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white" }}>Días</th>}
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Entrada</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}></th>
+                                    </>
+                                )}
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {/* Example Row - 10045 */}
+                            {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    height: "52px",
+                                    maxHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
+                                >
+                                    <ColumnaCheckbox />
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10045</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.en_preparacion.bg,
+                                            color: ORDER_STATES.en_preparacion.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.en_preparacion.icon}</span>
+                                            {ORDER_STATES.en_preparacion.label}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <FulfillmentBadge type="beeping" />
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <CarrierBadge type="GLS" />
+                                        <a href={getTrackingUrl("GLS", "BP-1234444")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "none", fontWeight: 600 }}>BP-1234444</a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Juan Pérez</span>
+                                        <a href={`https://wa.me/${"+34 600 000 000"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                            💬 +34 600 000 000
+                                        </a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>28001</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Madrid</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span title="Zapatillas Nike Air Force" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
+                                            Zapatillas Nike Air Force
+                                        </span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.99</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
+                                    </td>
+                                    <GestorCell gestores={gestoresLive} pedido={{ id: "mock-1", gestor: { "id": "bot_cod", "nombre": "Bot COD", "tipo": "bot", "emoji": "🤖" } }} onAssign={assignGestor} />
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaRiesgo riesgo={{ status: "green", score: 98 }} />
+                                    </td>
+
+
+
+
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:42</span>
+                                    </td>
+                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaAcciones pedido={{ state: "en_preparacion" }} />
+                                    </td>
+                                </tr>
+                            )}
+
+                            {/* Example Row - 10046 */}
+                            {activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    height: "52px",
+                                    maxHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
+                                >
+                                    <ColumnaCheckbox />
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10046</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.reintento.bg,
+                                            color: ORDER_STATES.reintento.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.reintento.icon}</span>
+                                            {ORDER_STATES.reintento.label}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <FulfillmentBadge type="dropea" />
+                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <CarrierBadge type="GLS" />
+                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>María Gómez</span>
+                                        <a href={`https://wa.me/${"+34 600 000 001"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                            💬 +34 600 000 001
+                                        </a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>41002</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Sevilla</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span title="Camiseta Básica Blanca" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
+                                            Camiseta Básica Blanca
+                                        </span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 2</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€29.99</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>STRIPE</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaRiesgo riesgo={{ status: "yellow", score: 65 }} />
+                                    </td>
+
+
+
+
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:35</span>
+                                    </td>
+                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaAcciones pedido={{ state: "reintento" }} />
+                                    </td>
+                                </tr>
+                            )}
+
+                            {/* Example Row - 10047 */}
+                            {activeTab === 'todos' || activeTab === 'por-gestionar' && (
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    height: "52px",
+                                    maxHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
+                                >
+                                    <ColumnaCheckbox />
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10047</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.nuevo.bg,
+                                            color: ORDER_STATES.nuevo.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.nuevo.icon}</span>
+                                            {ORDER_STATES.nuevo.label}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8" }}>—</span>
+                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8" }}>—</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Carlos López</span>
+                                        <a href={`https://wa.me/${"+34 600 000 002"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                            💬 +34 600 000 002
+                                        </a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>08001</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Barcelona</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span title="Sudadera Urban Black" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
+                                            Sudadera Urban Black
+                                        </span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€59.90</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>⚠️ Sin gest.</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaRiesgo riesgo={{ status: "red", score: 15 }} />
+                                    </td>
+
+
+
+
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Ayer</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>18:20</span>
+                                    </td>
+                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaAcciones pedido={{ state: "nuevo" }} />
+                                    </td>
+                                </tr>
+                            )}
+
+                            {/* Example Row - 10048 */}
+                            {activeTab === 'todos' || activeTab === 'en-transito' && (
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    height: "52px",
+                                    maxHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
+                                >
+                                    <ColumnaCheckbox />
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10048</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.enviado.bg,
+                                            color: ORDER_STATES.enviado.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.enviado.icon}</span>
+                                            {ORDER_STATES.enviado.label}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <FulfillmentBadge type="beeping" />
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <CarrierBadge type="Correos Exp." />
+                                        <a href={getTrackingUrl("Correos Exp.", "PQ41029312")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "none", fontWeight: 600 }}>PQ41029312</a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Ana Martínez</span>
+                                        <a href={`https://wa.me/${"+34 600 000 003"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                            💬 +34 600 000 003
+                                        </a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>46001</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Valencia</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span title="Auriculares Inalámbricos" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
+                                            Auriculares Inalámbricos
+                                        </span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€89.00</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaRiesgo riesgo={{ status: "green", score: 99 }} />
+                                    </td>
+
+
+
+                                    {activeTab === 'en-transito' && (
+                                        <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                            <span style={{ fontSize: "10px", fontWeight: 800, padding: "4px 8px", borderRadius: "6px", background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca" }}>
+                                                8 Días
+                                            </span>
+                                        </td>
+                                    )}
+
+
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 8d</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>12:05</span>
+                                    </td>
+                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaAcciones pedido={{ state: "enviado" }} />
+                                    </td>
+                                </tr>
+                            )}
+
+                            {/* Example Row - 10049 */}
+                            {activeTab === 'todos' || activeTab === 'incidencias' && (
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    height: "52px",
+                                    maxHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
+                                >
+                                    <ColumnaCheckbox />
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10049</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.fallido.bg,
+                                            color: ORDER_STATES.fallido.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.fallido.icon}</span>
+                                            {ORDER_STATES.fallido.label}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <FulfillmentBadge type="beeping" />
+                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <CarrierBadge type="GLS" />
+                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Luis García</span>
+                                        <a href={`https://wa.me/${"+34 600 000 004"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                            💬 +34 600 000 004
+                                        </a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>29001</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Málaga</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span title="Chaqueta Invierno XL" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
+                                            Chaqueta Invierno XL
+                                        </span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€120.00</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaRiesgo riesgo={{ status: "yellow", score: 33 }} />
+                                    </td>
+
+
+                                    {activeTab === 'incidencias' && (
+                                        <>
+                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                                <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#fee2e2", color: "#b91c1c", whiteSpace: "nowrap" }}>
+                                                    Dirección Incorrecta
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>2</td>
+                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                                <span style={{ fontSize: "10px", fontWeight: 700 }}>4 días</span>
+                                            </td>
+                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>€15.50</td>
+                                        </>
+                                    )}
+
+
+
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 6d</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>09:12</span>
+                                    </td>
+                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaAcciones pedido={{ state: "fallido" }} />
+                                    </td>
+                                </tr>
+                            )}
+
+                            {/* Example Row - 10050 */}
+                            {activeTab === 'todos' || activeTab === 'devoluciones' && (
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    height: "52px",
+                                    maxHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
+                                >
+                                    <ColumnaCheckbox />
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10050</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.devolucion.bg,
+                                            color: ORDER_STATES.devolucion.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.devolucion.icon}</span>
+                                            {ORDER_STATES.devolucion.label}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <FulfillmentBadge type="beeping" />
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <CarrierBadge type="Correos Exp." />
+                                        <a href={getTrackingUrl("Correos Exp.", "PQ41029888")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "none", fontWeight: 600 }}>PQ41029888</a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Marta Díaz</span>
+                                        <a href={`https://wa.me/${"+34 600 000 005"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                            💬 +34 600 000 005
+                                        </a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>03001</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Alicante</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span title="Bolso Piel Sintética" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
+                                            Bolso Piel Sintética
+                                        </span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.90</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaRiesgo riesgo={{ status: "green", score: 80 }} />
+                                    </td>
+
+
+                                    {activeTab === 'devoluciones' && (
+                                        <>
+                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>Cliente Rechaza</span></td>
+                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>€49.90</td>
+                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "12px", background: "#fef3c7", color: "#d97706" }}>En proceso</span></td>
+                                            <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>-</td>
+                                        </>
+                                    )}
+
+
+
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 2d</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>14:15</span>
+                                    </td>
+                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaAcciones pedido={{ state: "devolucion" }} />
+                                    </td>
+                                </tr>
+                            )}
+
+                            {/* Example Row - 10041 */}
+                            {activeTab === 'todos' || activeTab === 'historial' && (
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    height: "52px",
+                                    maxHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
+                                >
+                                    <ColumnaCheckbox />
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10041</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "110px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                            padding: "2px 8px", borderRadius: "20px",
+                                            fontSize: "10px", fontWeight: 700,
+                                            background: ORDER_STATES.entregado.bg,
+                                            color: ORDER_STATES.entregado.color
+                                        }}>
+                                            <span style={{ fontSize: "6px" }}>{ORDER_STATES.entregado.icon}</span>
+                                            {ORDER_STATES.entregado.label}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <FulfillmentBadge type="beeping" />
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <CarrierBadge type="GLS" />
+                                        <a href={getTrackingUrl("GLS", "GLS0012929")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "none", fontWeight: 600 }}>GLS0012929</a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "130px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Javier Nieto</span>
+                                        <a href={`https://wa.me/${"+34 600 000 006"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                            💬 +34 600 000 006
+                                        </a>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>15001</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>A Coruña</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "140px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span title="Monitor Gaming 24&quot;" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
+                                            Monitor Gaming 24&quot;
+                                        </span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "75px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€199.00</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
+                                    </td>
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaRiesgo riesgo={{ status: "green", score: 100 }} />
+                                    </td>
+
+
+
+
+                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 12d</span>
+                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:00</span>
+                                    </td>
+                                    <td data-no-drawer style={{ padding: "0 14px 0 6px", height: "52px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaAcciones pedido={{ state: "entregado" }} />
+                                    </td>
+                                </tr>
+                            )}
+
+
+                            {/* Example Row - CARRITO ABANDONADO */}
+                            {activeTab === 'carritos-abandonados' && (
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    height: "52px",
+                                    maxHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
+                                >
+                                    <td style={{ padding: "0 8px 0 12px", height: "52px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
+                                    </td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#C-4291</a></td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>Ana Martínez</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "11px", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>+34 600 000 010</td>
+                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Pack Cosmética</span>
+                                            <span style={{ color: "var(--text-dim)", fontSize: "10px", marginTop: "2px" }}>Qty: 2</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 700, margin: "0 auto", textAlign: "right", color: "var(--color-text-primary)", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>€89.00</td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>ig_story</span></td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>promo_sanvalentin</span></td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>/p/cosmetica-pack</span></td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                            <span style={{ fontSize: "12px" }}>📱</span>
+                                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>iPhone (iOS 17)</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "10px", fontWeight: 800, padding: "2px 6px", borderRadius: "12px", background: "#fee2e2", color: "#dc2626" }}>
+                                            45 min
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "20px", background: "#fef3c7", color: "#d97706" }}>
+                                            Abandonado
+                                        </span>
+                                    </td>
+                                    <td data-no-drawer style={{ padding: "8px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
+                                        <ColumnaAcciones pedido={{ state: "nuevo" }} />
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {selectedOrder && <OrderDrawer pedido={selectedOrder} onClose={() => setSelectedOrder(null)} onSelectOrder={setSelectedOrder} />}
+        </div>
+    );
+}

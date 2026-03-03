@@ -406,7 +406,7 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                 </div>
 
                 {/* Body scrollable content per tab */}
-                <div className="ds-scrollbar" style={{ flex: 1, padding: "6px 12px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0", background: "white" }}>
+                <div className="ds-scrollbar" style={{ height: "calc(100vh - 130px)", padding: "8px 14px", overflowY: "auto", background: "white" }}>
 
                     {activeTab === "cliente" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>

@@ -590,7 +590,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
+                                    <ColumnaCheckbox />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10045</span>
                                     </td>
@@ -670,7 +670,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
+                                    <ColumnaCheckbox />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10046</span>
                                     </td>
@@ -749,7 +749,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
+                                    <ColumnaCheckbox />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10047</span>
                                     </td>
@@ -828,7 +828,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
+                                    <ColumnaCheckbox />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10048</span>
                                     </td>
@@ -916,7 +916,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
+                                    <ColumnaCheckbox />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10049</span>
                                     </td>
@@ -1010,7 +1010,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
+                                    <ColumnaCheckbox />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10050</span>
                                     </td>
@@ -1099,7 +1099,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
+                                    <ColumnaCheckbox />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10041</span>
                                     </td>

@@ -46,8 +46,10 @@ interface CompetitorEntry { url: string; country: string; price: string; analyzi
 interface AmazonEntry { url: string; }
 interface LandingEntry { url: string; }
 
-const COUNTRIES = ['ES', 'MX', 'CO', 'AR', 'PE', 'FR', 'IT', 'DE', 'US', 'UK', 'GLOBAL'];
+const COUNTRIES = ['ES', 'MX', 'CO', 'AR', 'PE', 'FR', 'IT', 'DE', 'US', 'UK', 'GLOBAL', 'LATAM'];
 const NICHES = ['Salud', 'Belleza', 'Mascotas', 'Hogar', 'Fitness', 'Cocina', 'Moda', 'Tecnología', 'Juguetes', 'Alimentación', 'Otro'];
+
+const FULFILLMENT_OPTIONS = ['Beeping', 'Dropea', 'Dropi', 'Manual'];
 const FAMILIES = ['Suplementos', 'Cosmética', 'Gadgets', 'Ropa', 'Electrodomésticos', 'Alimentos', 'Equipamiento', 'Accesorios', 'Software', 'Servicios', 'Otro'];
 
 // ─── Section wrapper ──────────────────────────────────────────
@@ -85,12 +87,17 @@ export function AddProductDialog() {
 
     // ── Form fields ─────────────────────────────────────────
     const [title, setTitle] = useState('');
+    const [sku, setSku] = useState('');
     const [country, setCountry] = useState('ES');
     const [niche, setNiche] = useState('Salud');
     const [family, setFamily] = useState('Suplementos');
     const [pvp, setPvp] = useState('');
     const [unitCost, setUnitCost] = useState('');
     const [shippingCost, setShippingCost] = useState('');
+    const [handlingCost, setHandlingCost] = useState('');
+    const [returnRate, setReturnRate] = useState('5');
+    const [fulfillment, setFulfillment] = useState('Manual');
+    const [deliveryRate, setDeliveryRate] = useState('70');
     const [cvr, setCvr] = useState('');
     const [landingUrl, setLandingUrl] = useState('');
     const [imageUrl, setImageUrl] = useState('');
@@ -108,9 +115,28 @@ export function AddProductDialog() {
 
     // ── Live breakeven ──────────────────────────────────────
     const pvpNum = parseFloat(pvp) || 0;
-    const costNum = (parseFloat(unitCost) || 0) + (parseFloat(shippingCost) || 0);
+    const handleNum = parseFloat(handlingCost) || 0;
+    const returnNum = parseFloat(returnRate) || 0;
+    const productNum = parseFloat(unitCost) || 0;
+    const shippingNum = parseFloat(shippingCost) || 0;
+
+    // costeReal = costeProducto + costeEnvio + costeManipulacion + (% devolucion basado en coste producto/envio)
+    const costeReal = productNum + shippingNum + handleNum + ((productNum + shippingNum) * (returnNum / 100));
+
+    const deliveryNum = parseFloat(deliveryRate) || 70;
+
+    // beneficioNeto = (tasaEntrega/100 * precioVenta) - costeReal
+    const beneficioNeto = (deliveryNum / 100 * pvpNum) - costeReal;
+    const margenBrutoNum = pvpNum - productNum - shippingNum - handleNum;
+
     const cvrNum = parseFloat(cvr) || 0;
-    const be = pvpNum > 0 ? calcBreakeven(pvpNum, costNum, niche, cvrNum || undefined) : null;
+    const cvrTarget = cvrNum || NICHE_CVR[niche] || 2.0;
+    const be = pvpNum > 0 ? {
+        margin: margenBrutoNum,
+        roasBE: beneficioNeto > 0 ? pvpNum / beneficioNeto : 0,
+        cpaMax: beneficioNeto > 0 ? beneficioNeto : 0,
+        cpcBE: beneficioNeto > 0 ? beneficioNeto * (cvrTarget / 100) : 0
+    } : null;
 
     // ── Image upload ─────────────────────────────────────────
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,8 +154,9 @@ export function AddProductDialog() {
 
     // ── Auto-suggest price ───────────────────────────────────
     const handleAutoPrice = () => {
-        if (costNum > 0) {
-            setPvp((costNum * 3).toFixed(2));
+        const totalBaseCost = productNum + shippingNum + handleNum;
+        if (totalBaseCost > 0) {
+            setPvp((totalBaseCost * 3).toFixed(2));
             toast.success('Precio sugerido: 3× coste');
         } else if (niche) {
             // Benchmark: suggest based on typical AOV by niche
@@ -204,6 +231,8 @@ export function AddProductDialog() {
         try {
             const payload = {
                 title,
+                sku: sku || ('PROD_' + title.toUpperCase().replace(/[^A-Z0-9]/g, '_') + '_01').substring(0, 20),
+                fulfillment,
                 country,
                 niche,
                 productFamily: family,
@@ -256,8 +285,9 @@ export function AddProductDialog() {
                 })
             }).catch(() => { /* silent */ });
 
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err) {
+            if (err instanceof Error) toast.error(err.message);
+            else toast.error('Error desconocido');
         } finally {
             setLoading(false);
         }
@@ -266,6 +296,7 @@ export function AddProductDialog() {
     const resetForm = () => {
         setTitle(''); setCountry('ES'); setNiche('Salud'); setFamily('Suplementos');
         setPvp(''); setUnitCost(''); setShippingCost(''); setCvr('');
+        setHandlingCost(''); setReturnRate('5'); setFulfillment('Manual'); setDeliveryRate('70'); setSku('');
         setLandingUrl(''); setImageUrl(''); setDescription('');
         setGoogleDocUrl(''); setForeplayUrl('');
         setAdLibraryUrls(['']); setCompetitors([{ url: '', country: 'ES', price: '', analyzing: false, done: false }]);
@@ -326,6 +357,11 @@ export function AddProductDialog() {
                                 <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Nombre del producto *</label>
                                 <Input required value={title} onChange={e => setTitle(e.target.value)}
                                     placeholder="Ej: NeckRelief Pro — Masajeador Cervical" className="h-9 text-[11px] font-medium" />
+                            </div>
+                            <div className="space-y-1.5 hidden">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">SKU (opcional)</label>
+                                <Input value={sku} onChange={e => setSku(e.target.value)}
+                                    placeholder="PROD_NOMBRE_01" className="h-9 text-[11px]" />
                             </div>
 
                             <div className="grid grid-cols-3 gap-3">
@@ -436,6 +472,25 @@ export function AddProductDialog() {
                                     <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Coste envío (€)</label>
                                     <Input type="number" step="0.01" value={shippingCost} onChange={e => setShippingCost(e.target.value)} className="h-9 text-[11px]" placeholder="0.00" />
                                 </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">C. Manipulación (€)</label>
+                                    <Input type="number" step="0.01" value={handlingCost} onChange={e => setHandlingCost(e.target.value)} className="h-9 text-[11px]" placeholder="0.00" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Fullfilment</label>
+                                    <Select value={fulfillment} onValueChange={setFulfillment}>
+                                        <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
+                                        <SelectContent>{FULFILLMENT_OPTIONS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Tasa Entrega (%)</label>
+                                    <Input type="number" step="1" value={deliveryRate} onChange={e => setDeliveryRate(e.target.value)} className="h-9 text-[11px]" placeholder="70" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Cancel./Dev. (%)</label>
+                                    <Input type="number" step="1" value={returnRate} onChange={e => setReturnRate(e.target.value)} className="h-9 text-[11px]" placeholder="5" />
+                                </div>
                                 <div className="space-y-1.5 col-span-2">
                                     <div className="flex items-center justify-between">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text)]">PVP Estimado (€) *</label>
@@ -471,7 +526,7 @@ export function AddProductDialog() {
                             )}
 
                             {be && <p className="text-[8px] text-[var(--text-dim)]">
-                                Margen estimado: {be.margin.toFixed(0)}% — Alertas Facebook Ads se crearán automáticamente al guardar.
+                                Margen Bruto: €{margenBrutoNum.toFixed(2)} | Beneficio Neto (CPA Máx): €{beneficioNeto.toFixed(2)} — Alertas Facebook Ads se crearán automáticamente al guardar.
                             </p>}
                         </Section>
 

@@ -32,66 +32,58 @@ function getTrackingUrl(carrier: string, trackingNumber: string): string {
     return `https://www.17track.net/es/track#nums=${trackingNumber}`;
 }
 
-function PrimaryActionButton({ pedido }: { pedido: { state: string } }) {
-    const actions: Record<string, { label: string; color: string; bg: string }> = {
-        "nuevo": { label: "Enviar", color: "#16a34a", bg: "rgba(22,163,74,0.1)" },
-        "en_gestion": { label: "Confirmar", color: "#2563eb", bg: "rgba(37,99,235,0.1)" },
-        "confirmado": { label: "Enviar", color: "#7c3aed", bg: "rgba(124,58,237,0.1)" },
-        "en_preparacion": { label: "Enviar", color: "#7c3aed", bg: "rgba(124,58,237,0.1)" },
-        "enviado": { label: "Tracking", color: "#0891b2", bg: "rgba(8,145,178,0.1)" },
-        "fallido": { label: "Reintentar", color: "#d97706", bg: "rgba(217,119,6,0.1)" },
-        "reintento": { label: "Reintentar", color: "#d97706", bg: "rgba(217,119,6,0.1)" },
-        "devolucion": { label: "Gestionar", color: "#ec4899", bg: "rgba(236,72,153,0.1)" },
-        "entregado": { label: "Cerrado", color: "#64748b", bg: "rgba(100,116,139,0.1)" },
-        "cancelado": { label: "Anulado", color: "#64748b", bg: "rgba(100,116,139,0.1)" },
-    };
-
-    const action = actions[pedido.state] ?? actions["nuevo"];
+function ColumnaAcciones({ pedido }: { pedido: { state: string } }) {
+    const handleEnviar = (p: { state: string }) => console.log("Enviando", p);
+    const handleCancelar = (p: { state: string }) => console.log("Cancelando", p);
 
     return (
-        <button
-            onClick={e => { e.stopPropagation(); console.log("Action", pedido); }}
-            style={{
-                background: action.bg, color: action.color,
-                border: `1px solid ${action.color}20`,
-                borderRadius: "6px", padding: "3px 8px",
-                fontSize: "11px", fontWeight: 700, cursor: "pointer",
-                whiteSpace: "nowrap", minWidth: "72px",
-            }}
-        >
-            {action.label}
-        </button>
-    );
-}
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end", minWidth: "80px" }}>
 
-function RowActionsMenu({ pedido, onOpenDrawer }: { pedido: { state: string }, onOpenDrawer: () => void }) {
-    const [open, setOpen] = React.useState(false);
-
-    return (
-        <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setOpen(!open)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
-                ···
+            {/* ENVIAR — verde, solo activo si el estado lo permite */}
+            <button
+                onClick={e => { e.stopPropagation(); handleEnviar(pedido) }}
+                disabled={["enviado", "entregado", "cancelado"].includes(pedido.state)}
+                style={{
+                    fontSize: "11px", fontWeight: 700,
+                    padding: "4px 10px", borderRadius: "6px",
+                    cursor: ["enviado", "entregado", "cancelado"].includes(pedido.state) ? "not-allowed" : "pointer",
+                    whiteSpace: "nowrap",
+                    width: "100%",          // ← ocupa todo el ancho de la celda
+                    textAlign: "center",
+                    border: "none",
+                    background: ["enviado", "entregado", "cancelado"].includes(pedido.state)
+                        ? "#f1f5f9" : "rgba(22,163,74,0.1)",
+                    color: ["enviado", "entregado", "cancelado"].includes(pedido.state)
+                        ? "#94a3b8" : "#16a34a",
+                }}
+            >
+                Enviar
             </button>
-            {open && (
-                <div style={{
-                    position: "absolute", right: 0, top: "100%", zIndex: 50,
-                    background: "white", border: "1px solid var(--border)",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: "8px",
-                    padding: "4px", minWidth: "160px",
-                    display: "flex", flexDirection: "column", gap: "2px"
-                }}>
-                    <button onClick={() => onOpenDrawer()} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", borderRadius: "4px" }}>
-                        Ver detalles
-                    </button>
-                    <button onClick={() => console.log("Cancelando...", pedido)} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", color: "#ef4444", borderRadius: "4px" }}>
-                        ✕ Cancelar pedido
-                    </button>
-                </div>
-            )}
+
+            {/* CANCELAR — rojo, siempre visible salvo entregado */}
+            <button
+                onClick={e => { e.stopPropagation(); handleCancelar(pedido) }}
+                disabled={["entregado", "cancelado"].includes(pedido.state)}
+                style={{
+                    fontSize: "11px", fontWeight: 700,
+                    padding: "4px 10px", borderRadius: "6px",
+                    cursor: ["entregado", "cancelado"].includes(pedido.state) ? "not-allowed" : "pointer",
+                    whiteSpace: "nowrap",
+                    width: "100%",          // ← ocupa todo el ancho de la celda
+                    textAlign: "center",
+                    border: "none",
+                    background: ["entregado", "cancelado"].includes(pedido.state)
+                        ? "#f1f5f9" : "rgba(239,68,68,0.08)",
+                    color: ["entregado", "cancelado"].includes(pedido.state)
+                        ? "#94a3b8" : "#ef4444",
+                }}
+            >
+                Cancelar
+            </button>
+
         </div>
     );
 }
-
 
 function OrderDrawer({ pedido, onClose }: { pedido: { ref: string } | null, onClose: () => void }) {
     if (!pedido) return null;
@@ -510,12 +502,12 @@ export default function PedidosPage() {
                                     minHeight: "52px",
                                     transition: "background 0.1s",
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                onClick={(e) => {
-                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
-                                    setSelectedOrder({ ref: "Example" });
-                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
                                 >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
@@ -584,10 +576,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:42</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
-                                            <PrimaryActionButton pedido={{ state: "en_preparacion" }} />
-                                            <RowActionsMenu pedido={{ state: "en_preparacion" }} onOpenDrawer={() => { }} />
-                                        </div>
+                                        <ColumnaAcciones pedido={{ state: "en_preparacion" }} />
                                     </td>
                                 </tr>
                             )}
@@ -600,12 +589,12 @@ export default function PedidosPage() {
                                     minHeight: "52px",
                                     transition: "background 0.1s",
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                onClick={(e) => {
-                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
-                                    setSelectedOrder({ ref: "Example" });
-                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
                                 >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
@@ -673,10 +662,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:35</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
-                                            <PrimaryActionButton pedido={{ state: "reintento" }} />
-                                            <RowActionsMenu pedido={{ state: "reintento" }} onOpenDrawer={() => { }} />
-                                        </div>
+                                        <ColumnaAcciones pedido={{ state: "reintento" }} />
                                     </td>
                                 </tr>
                             )}
@@ -689,12 +675,12 @@ export default function PedidosPage() {
                                     minHeight: "52px",
                                     transition: "background 0.1s",
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                onClick={(e) => {
-                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
-                                    setSelectedOrder({ ref: "Example" });
-                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
                                 >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
@@ -762,10 +748,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>18:20</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
-                                            <PrimaryActionButton pedido={{ state: "nuevo" }} />
-                                            <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
-                                        </div>
+                                        <ColumnaAcciones pedido={{ state: "nuevo" }} />
                                     </td>
                                 </tr>
                             )}
@@ -778,12 +761,12 @@ export default function PedidosPage() {
                                     minHeight: "52px",
                                     transition: "background 0.1s",
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                onClick={(e) => {
-                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
-                                    setSelectedOrder({ ref: "Example" });
-                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
                                 >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
@@ -860,10 +843,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>12:05</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
-                                            <PrimaryActionButton pedido={{ state: "enviado" }} />
-                                            <RowActionsMenu pedido={{ state: "enviado" }} onOpenDrawer={() => { }} />
-                                        </div>
+                                        <ColumnaAcciones pedido={{ state: "enviado" }} />
                                     </td>
                                 </tr>
                             )}
@@ -876,12 +856,12 @@ export default function PedidosPage() {
                                     minHeight: "52px",
                                     transition: "background 0.1s",
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                onClick={(e) => {
-                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
-                                    setSelectedOrder({ ref: "Example" });
-                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
                                 >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
@@ -964,10 +944,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>09:12</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
-                                            <PrimaryActionButton pedido={{ state: "fallido" }} />
-                                            <RowActionsMenu pedido={{ state: "fallido" }} onOpenDrawer={() => { }} />
-                                        </div>
+                                        <ColumnaAcciones pedido={{ state: "fallido" }} />
                                     </td>
                                 </tr>
                             )}
@@ -980,12 +957,12 @@ export default function PedidosPage() {
                                     minHeight: "52px",
                                     transition: "background 0.1s",
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                onClick={(e) => {
-                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
-                                    setSelectedOrder({ ref: "Example" });
-                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
                                 >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
@@ -1063,10 +1040,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>14:15</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
-                                            <PrimaryActionButton pedido={{ state: "devolucion" }} />
-                                            <RowActionsMenu pedido={{ state: "devolucion" }} onOpenDrawer={() => { }} />
-                                        </div>
+                                        <ColumnaAcciones pedido={{ state: "devolucion" }} />
                                     </td>
                                 </tr>
                             )}
@@ -1079,12 +1053,12 @@ export default function PedidosPage() {
                                     minHeight: "52px",
                                     transition: "background 0.1s",
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                onClick={(e) => {
-                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
-                                    setSelectedOrder({ ref: "Example" });
-                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
                                 >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
@@ -1153,10 +1127,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:00</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
-                                            <PrimaryActionButton pedido={{ state: "entregado" }} />
-                                            <RowActionsMenu pedido={{ state: "entregado" }} onOpenDrawer={() => { }} />
-                                        </div>
+                                        <ColumnaAcciones pedido={{ state: "entregado" }} />
                                     </td>
                                 </tr>
                             )}
@@ -1170,12 +1141,12 @@ export default function PedidosPage() {
                                     minHeight: "52px",
                                     transition: "background 0.1s",
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                onClick={(e) => {
-                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
-                                    setSelectedOrder({ ref: "Example" });
-                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                        setSelectedOrder({ ref: "Example" });
+                                    }}
                                 >
                                     <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
@@ -1211,10 +1182,7 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "8px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
-                                            <PrimaryActionButton pedido={{ state: "nuevo" }} />
-                                            <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
-                                        </div>
+                                        <ColumnaAcciones pedido={{ state: "nuevo" }} />
                                     </td>
                                 </tr>
                             )}

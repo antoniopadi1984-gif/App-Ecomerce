@@ -358,6 +358,109 @@ function CarrierBadge({ type }: { type: string }) {
         </span>
     );
 }
+
+// Gestores disponibles — bots + equipo humano
+const GESTORES_LIST = [
+    { id: "bot_cod",     nombre: "Bot COD",     tipo: "bot",    emoji: "🤖" },
+    { id: "bot_general", nombre: "Bot General",  tipo: "bot",    emoji: "🤖" },
+    { id: "maria",       nombre: "María",        tipo: "humano", emoji: "👩" },
+    { id: "carlos",      nombre: "Carlos",       tipo: "humano", emoji: "👨" },
+    { id: "ana",         nombre: "Ana",          tipo: "humano", emoji: "👩" },
+    { id: "soporte",     nombre: "Soporte",      tipo: "humano", emoji: "🏋️" },
+] as const;
+
+ 
+function DropdownOption({ emoji, nombre, tipo, active, onClick }: { emoji: string; nombre: string; tipo: string; active: boolean; onClick: () => void }) {
+    return (
+        <div onClick={onClick} style={{
+            display: "flex", alignItems: "center", gap: "8px",
+            padding: "6px 8px", borderRadius: "7px", cursor: "pointer",
+            background: active ? "#eff6ff" : "transparent",
+            transition: "background 0.1s",
+        }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f8fafc"; }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+        >
+            <span style={{ fontSize: "14px" }}>
+                {tipo === "bot" ? "🤖" : tipo === "none" ? "➖" : "👤"}
+            </span>
+            <span style={{ fontSize: "12px", fontWeight: active ? 700 : 500, color: active ? "#3b82f6" : "#0f172a" }}>
+                {nombre}
+            </span>
+            {active && <span style={{ marginLeft: "auto", fontSize: "10px", color: "#3b82f6" }}>✓</span>}
+        </div>
+    );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function GestorCell({ pedido, onAssign }: { pedido: Record<string, any>; onAssign: (id: string, gestorId: string | null) => void }) {
+    const [open, setOpen] = React.useState(false);
+    const ref = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
+
+    const gestor = pedido?.gestor;
+
+    return (
+        <td style={{ padding: "0 10px", verticalAlign: "middle", height: "52px", position: "relative", overflow: "visible" }}
+            onClick={e => e.stopPropagation()}>
+            <div ref={ref}>
+                <div onClick={() => setOpen(!open)} style={{
+                    display: "flex", alignItems: "center", gap: "5px",
+                    cursor: "pointer", padding: "3px 6px", borderRadius: "6px",
+                    background: open ? "#f1f5f9" : "transparent",
+                    transition: "background 0.1s", userSelect: "none",
+                }}>
+                    <span style={{ fontSize: "14px" }}>{gestor?.tipo === "bot" ? "🤖" : gestor ? "👤" : "➖"}</span>
+                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>
+                        {gestor?.nombre ?? "Sin asignar"}
+                    </span>
+                    <span style={{ fontSize: "10px", color: "#94a3b8" }}>▾</span>
+                </div>
+
+                {open && (
+                    <div style={{
+                        position: "absolute", top: "100%", left: 0, zIndex: 50,
+                        background: "white", border: "1px solid #e2e8f0",
+                        borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                        minWidth: "180px", padding: "4px", marginTop: "4px",
+                    }}>
+                        <DropdownOption emoji="➖" nombre="Sin asignar" tipo="none"
+                            active={!gestor}
+                            onClick={() => { onAssign(pedido.id, null); setOpen(false); }}
+                        />
+                        <div style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase",
+                            color: "#94a3b8", padding: "4px 8px 2px", letterSpacing: "0.08em" }}>
+                            Agentes IA
+                        </div>
+                        {GESTORES_LIST.filter(g => g.tipo === "bot").map(g => (
+                            <DropdownOption key={g.id} emoji={g.emoji} nombre={g.nombre} tipo={g.tipo}
+                                active={gestor?.id === g.id}
+                                onClick={() => { onAssign(pedido.id, g.id); setOpen(false); }}
+                            />
+                        ))}
+                        <div style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase",
+                            color: "#94a3b8", padding: "4px 8px 2px", letterSpacing: "0.08em" }}>
+                            Equipo
+                        </div>
+                        {GESTORES_LIST.filter(g => g.tipo === "humano").map(g => (
+                            <DropdownOption key={g.id} emoji={g.emoji} nombre={g.nombre} tipo={g.tipo}
+                                active={gestor?.id === g.id}
+                                onClick={() => { onAssign(pedido.id, g.id); setOpen(false); }}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+        </td>
+    );
+}
 type RiskLevel = "low" | "medium" | "high";
 
 interface RiskFactor {
@@ -1079,6 +1182,24 @@ export default function PedidosPage() {
         ...Array(15).fill({ state: 'entregado' }),
         ...Array(6).fill({ state: 'cancelado' }),
     ];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [pedidosState, setPedidosState] = useState<Record<string, any>[]>(pedidos);
+
+     
+    async function assignGestor(pedidoId: string, gestorId: string | null) {
+        try {
+            await fetch(`/api/pedidos/${pedidoId}/gestor`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ gestorId }),
+            });
+        } catch { /* optimistic update — ignore error */ }
+        setPedidosState(prev => prev.map(p =>
+            p.id === pedidoId
+                ? { ...p, gestor: gestorId ? GESTORES_LIST.find(g => g.id === gestorId) ?? null : null }
+                : p
+        ));
+    }
     const carritosAbandonados = Array(12).fill({ state: 'abandonado' });
     const borradores = Array(5).fill({ state: 'borrador' });
 
@@ -1411,9 +1532,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.99</span>
                                         <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                     </td>
-                                    <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>🤖 Bot COD</span>
-                                    </td>
+                                    <GestorCell pedido={{ id: "mock-1", gestor: {"id":"bot_cod","nombre":"Bot COD","tipo":"bot","emoji":"🤖"} }} onAssign={assignGestor} />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <ColumnaRiesgo riesgo={{ status: "green", score: 98 }} />
                                     </td>

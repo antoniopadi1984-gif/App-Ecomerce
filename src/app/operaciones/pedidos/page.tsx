@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { RefreshCw, Search, Filter, X, MapPin, User, AlertTriangle } from 'lucide-react';
-import { ORDER_STATES, OrderState } from '@/lib/orderStates';
+import { ORDER_STATES } from '@/lib/orderStates';
 
 const TABS = [
     { id: 'todos', label: 'Todos' },

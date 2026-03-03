@@ -28,6 +28,8 @@ export interface Usuario {
 export interface Gestor {
     id: string;
     nombre: string;         // nombre + apellido corto: "María G."
+    apellido?: string;
+    rol?: string;
     tipo: UserTipo;
     activo: boolean;        // estado === "activo"
     avatar?: string;
@@ -39,7 +41,9 @@ export interface Gestor {
 export function usuarioToGestor(u: Usuario): Gestor {
     return {
         id: u.id,
-        nombre: `${u.nombre} ${u.apellido.charAt(0)}.`,
+        nombre: u.nombre, // Let the frontend formatting decide what to do
+        apellido: u.apellido,
+        rol: u.rol,
         tipo: u.tipo,
         activo: u.estado === "activo",
         avatar: u.avatar,

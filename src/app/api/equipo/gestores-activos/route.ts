@@ -45,9 +45,9 @@ export async function GET() {
 
         const gestores: Gestor[] = usuarios.map((u, idx) => ({
             id: u.id,
-            nombre: u.apellido
-                ? `${u.nombre ?? "Usuario"} ${String(u.apellido).charAt(0)}.`
-                : (u.nombre ?? `Usuario ${idx + 1}`),
+            nombre: u.nombre ?? `Usuario ${idx + 1}`,
+            apellido: u.apellido ?? undefined,
+            rol: u.rol ?? "gestor",
             tipo: (u.tipo as "humano" | "bot") ?? "humano",
             activo: u.estado === "activo" || u.tipo === "bot",
             avatar: u.avatar ?? undefined,

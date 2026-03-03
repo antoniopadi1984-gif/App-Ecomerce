@@ -18,12 +18,12 @@ const TABS = [
 
 
 const FULFILLMENT_BADGES: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    "beeping": { label: "Beeping", color: "#d97706", bg: "rgba(217,119,6,0.12)", border: "rgba(217,119,6,0.3)" },
-    "dropea":  { label: "Dropea",  color: "#1e40af", bg: "rgba(30,64,175,0.1)",   border: "rgba(30,64,175,0.3)" },
-    "shopify": { label: "Shopify", color: "#16a34a", bg: "rgba(22,163,74,0.1)",   border: "rgba(22,163,74,0.3)" },
-    "dropi":   { label: "Dropi",   color: "#ea580c", bg: "rgba(234,88,12,0.1)",   border: "rgba(234,88,12,0.3)" },
-    "manual":  { label: "Manual",  color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.3)" },
-    "none":    { label: "—",       color: "#94a3b8", bg: "transparent",           border: "transparent" }
+    "beeping": { label: "Beeping", color: "#ca8a04", bg: "rgba(234,179,8,0.15)", border: "rgba(234,179,8,0.4)" },
+    "dropea": { label: "Dropea", color: "#1e40af", bg: "rgba(30,64,175,0.1)", border: "rgba(30,64,175,0.3)" },
+    "shopify": { label: "Shopify", color: "#16a34a", bg: "rgba(22,163,74,0.1)", border: "rgba(22,163,74,0.3)" },
+    "dropi": { label: "Dropi", color: "#ea580c", bg: "rgba(234,88,12,0.1)", border: "rgba(234,88,12,0.3)" },
+    "manual": { label: "Manual", color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.3)" },
+    "none": { label: "—", color: "#94a3b8", bg: "transparent", border: "transparent" }
 };
 
 function FulfillmentBadge({ type }: { type: string }) {

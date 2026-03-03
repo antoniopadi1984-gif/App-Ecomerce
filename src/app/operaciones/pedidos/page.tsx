@@ -946,6 +946,30 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                                 ))}
                             </div>
 
+                            {/* Plantillas r\u00e1pidas */}
+                            {(() => {
+                                const PLANTILLAS = [
+                                    { label: "Confirmar pedido", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, te confirmamos tu pedido ${pedido?.ref || ""}. En breve lo preparamos y te enviamos el tracking. \uD83D\uDE4C` },
+                                    { label: "Tracking enviado", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, tu pedido ya est\u00e1 en camino. N\u00famero de seguimiento: ${pedido?.trackingNumber || "—"}. Tiempo estimado: 24-48h. \uD83D\uDCE6` },
+                                    { label: "Intento fallido", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, hemos intentado entregarte el pedido pero no hab\u00eda nadie. \u00BFCu\u00e1ndo podemos volver a intentarlo? \uD83D\uDE9A` },
+                                    { label: "Solicitar rese\u00f1a", texto: `Hola ${(pedido?.cliente || "cliente").split(" ")[0]}, esperamos que est\u00e9s disfrutando tu compra. \u00BFPodr\u00EDas dejarnos una rese\u00f1a? Nos ayuda mucho \uD83D\uDE4F` },
+                                ];
+                                return (
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "8px", flexShrink: 0 }}>
+                                        {PLANTILLAS.map(p => (
+                                            <button key={p.label} onClick={() => setNewMessage(p.texto)} style={{
+                                                fontSize: "10px", fontWeight: 600, padding: "3px 8px",
+                                                borderRadius: "20px", border: "1px solid #e2e8f0",
+                                                background: "#f8fafc", color: "#64748b", cursor: "pointer",
+                                                whiteSpace: "nowrap",
+                                            }}>
+                                                {p.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
+
                             {/* Input pegado al fondo */}
                             <div style={{ display: "flex", gap: "6px", paddingTop: "8px", borderTop: "1px solid #e2e8f0", flexShrink: 0 }}>
                                 <input

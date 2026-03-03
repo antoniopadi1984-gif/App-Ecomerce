@@ -31,6 +31,13 @@
   --radius-md: var(--r-md);
   --radius-sm: var(--r-sm);
   --shadow-premium: var(--sh-sm);
+
+  /* Nuevos tokens en Tailwind theme mapping */
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-subtle: var(--color-text-subtle);
+  --color-text-disabled: var(--color-text-disabled);
 }
 
 /* ============================================================
@@ -54,12 +61,23 @@
   /* bordes suaves */
   --border-high: #D0D4E0;
   /* bordes con más contraste */
-  --text: #1A1D2E;
-  /* texto principal */
-  --text-muted: #6B7080;
-  /* texto secundario */
-  --text-dim: #A0A5B8;
-  /* texto apagado, labels */
+
+  /* ── Escala de Grises Nueva (Legibilidad) ── */
+  --color-text-primary: #0f172a;
+  /* títulos principales */
+  --color-text-secondary: #334155;
+  /* texto normal */
+  --color-text-muted: #64748b;
+  /* textos de apoyo */
+  --color-text-subtle: #94a3b8;
+  /* solo para decorativo — nunca para texto importante */
+  --color-text-disabled: #cbd5e1;
+  /* solo para deshabilitados */
+
+  /* Aliases para compatibilidad */
+  --text: var(--color-text-primary);
+  --text-muted: var(--color-text-muted);
+  --text-dim: var(--color-text-subtle);
 
   /* ── Dimensiones del layout ── */
   --sidebar-w: 52px;
@@ -945,9 +963,38 @@ table tbody td:first-child {
   padding-left: 10px !important;
 }
 
-/* ACUM — violeta */
-table thead th:nth-child(7),
-table tbody td:nth-child(7) {
-  background: #f5f3ff !important;
-  color: #7c3aed !important;
+/* ============================================================
+   SECCIÓN 12 — GLOBAL ACCESSIBILITY & TEXT FIXES (Legibilidad)
+   ============================================================ */
+
+/* Cabeceras de tabla — th */
+table thead th {
+  color: #334155 !important;
+  /* antes #94a3b8 */
+}
+
+/* Labels de cards y KPIs */
+.card-label,
+[class*="label"],
+[class*="lbl"] {
+  color: #475569 !important;
+  /* antes #94a3b8 */
+}
+
+/* Textos secundarios generales */
+[class*="muted"],
+[class*="secondary"],
+[class*="dim"] {
+  color: #64748b !important;
+  /* antes #94a3b8 */
+}
+
+/* Placeholder de inputs */
+::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Valores vacíos — guiones y ceros sin datos */
+.empty-value {
+  color: #cbd5e1 !important;
 }

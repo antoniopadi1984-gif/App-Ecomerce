@@ -54,7 +54,7 @@ function DataCell({ value, unit, status, variation, isBest }: DataCellProps) {
         green: { bg: "rgba(34,197,94,0.13)", color: "#166534", dotBg: "#22c55e" },
         yellow: { bg: "rgba(234,179,8,0.15)", color: "#92400e", dotBg: "#eab308" },
         red: { bg: "#ef4444", color: "#ffffff", dotBg: "#ffffff" },
-        neutral: { bg: "transparent", color: "#1e293b", dotBg: "#cbd5e1" }
+        neutral: { bg: "transparent", color: "#1e293b", dotBg: "var(--text-dim)" }
     }[status];
 
     return (
@@ -248,7 +248,7 @@ function TargetCell({ target, unit, hasTarget, onEdit }: TargetCellProps) {
 
 function CategoryRow({ label, colSpan }: { label: string, colSpan: number }) {
     return (
-        <tr style={{ background: "#f1f5f9", borderTop: "2px solid #cbd5e1", borderBottom: "1px solid #cbd5e1" }}>
+        <tr style={{ background: "#f1f5f9", borderTop: "2px solid var(--text-dim)", borderBottom: "1px solid var(--text-dim)" }}>
             <td colSpan={colSpan} style={{ padding: "10px 12px", fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155" }}>
                 {label}
             </td>
@@ -463,7 +463,7 @@ export default function ScorecardPage() {
                         <col style={{ width: "6%" }} />    {/* TARGET */}
                     </colgroup>
                     <thead>
-                        <tr style={{ position: "sticky", top: 0, background: "white", zIndex: 10, borderBottom: "2px solid #cbd5e1" }}>
+                        <tr style={{ position: "sticky", top: 0, background: "white", zIndex: 10, borderBottom: "2px solid var(--text-dim)" }}>
                             <th style={{ textAlign: "left", padding: "10px 12px", fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155", overflow: "hidden" }}>
                                 Variable
                             </th>
@@ -556,7 +556,7 @@ export default function ScorecardPage() {
                         {/* Header */}
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
                             <div>
-                                <p style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "2px" }}>
+                                <p style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-muted)", marginBottom: "2px" }}>
                                     Objetivo mensual
                                 </p>
                                 <h3 style={{ fontSize: "14px", fontWeight: 900, color: "#1e293b", margin: 0 }}>
@@ -565,7 +565,7 @@ export default function ScorecardPage() {
                             </div>
                             <button
                                 onClick={() => setModalData(null)}
-                                style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: "18px", lineHeight: 1, padding: "2px" }}
+                                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: "18px", lineHeight: 1, padding: "2px" }}
                             >
                                 ×
                             </button>
@@ -629,7 +629,7 @@ export default function ScorecardPage() {
                                 disabled={!inputValue || loading}
                                 style={{
                                     flex: 1, background: inputValue ? "#7c3aed" : "#e2e8f0",
-                                    color: inputValue ? "white" : "#94a3b8",
+                                    color: inputValue ? "white" : "var(--text-dim)",
                                     border: "none", borderRadius: "10px",
                                     padding: "10px", fontWeight: 900,
                                     fontSize: "12px", cursor: inputValue ? "pointer" : "not-allowed",

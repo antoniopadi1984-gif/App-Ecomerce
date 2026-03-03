@@ -20,13 +20,13 @@ function CRMChart({ data, viewMode, tab }: CRMChartProps) {
                 <ComposedChart data={data}>
                     <XAxis
                         dataKey="label"
-                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tick={{ fontSize: 10, fill: "var(--text-dim)" }}
                         axisLine={false}
                         tickLine={false}
                     />
                     <YAxis
                         yAxisId="left"
-                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tick={{ fontSize: 10, fill: "var(--text-dim)" }}
                         axisLine={false}
                         tickLine={false}
                         tickFormatter={v => `€${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
@@ -34,7 +34,7 @@ function CRMChart({ data, viewMode, tab }: CRMChartProps) {
                     <YAxis
                         yAxisId="right"
                         orientation="right"
-                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tick={{ fontSize: 10, fill: "var(--text-dim)" }}
                         axisLine={false}
                         tickLine={false}
                         tickFormatter={v => `${v}%`}
@@ -131,7 +131,7 @@ function ColHeader({ line1, line2, colKey, sortKey, sortDir, onSort }: any) {
                 padding: "5px 6px",
                 fontSize: "8px", fontWeight: 900,
                 textTransform: "uppercase", letterSpacing: "0.04em",
-                color: isActive ? "#7c3aed" : "#94a3b8",
+                color: isActive ? "#7c3aed !important" : "var(--color-text-secondary)",
                 textAlign: "center", lineHeight: 1.2,
                 cursor: "pointer", userSelect: "none",
                 whiteSpace: "normal", wordBreak: "break-word",
@@ -143,7 +143,7 @@ function ColHeader({ line1, line2, colKey, sortKey, sortDir, onSort }: any) {
             }}
         >
             <span style={{ display: "block" }}>{line1}</span>
-            {line2 && <span style={{ display: "block", color: isActive ? "#a78bfa" : "#cbd5e1" }}>{line2}</span>}
+            {line2 && <span style={{ display: "block" }}>{line2}</span>}
             <span style={{ display: "block", fontSize: "7px", marginTop: "1px", minHeight: "8px" }}>
                 {isActive ? (sortDir === "asc" ? "↑" : "↓") : ""}
             </span>
@@ -966,7 +966,7 @@ export default function CrmForensePage() {
                             padding: "4px 14px", fontSize: "11px", fontWeight: 700,
                             borderRadius: "6px", border: "none", cursor: "pointer",
                             background: viewMode === mode ? "white" : "transparent",
-                            color: viewMode === mode ? "#1e293b" : "#94a3b8",
+                            color: viewMode === mode ? "#1e293b" : "var(--text-muted)",
                             boxShadow: viewMode === mode ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
                             transition: "all 0.15s"
                         }}>
@@ -1054,10 +1054,10 @@ export default function CrmForensePage() {
                                     {/* Header tarjeta */}
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
                                         <div>
-                                            <p style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", margin: 0 }}>
+                                            <p style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)", margin: 0 }}>
                                                 {week.label}
                                             </p>
-                                            <p style={{ fontSize: "8px", color: "#cbd5e1", margin: 0 }}>{week.dateRange}</p>
+                                            <p style={{ fontSize: "8px", color: "var(--text-dim)", margin: 0 }}>{week.dateRange}</p>
                                         </div>
                                         {/* Variación vs semana anterior */}
                                         {week.varVsPrev !== null && (
@@ -1083,7 +1083,7 @@ export default function CrmForensePage() {
                                         <span>·</span>
                                         <span>{week.entregados} entr.</span>
                                         <span>·</span>
-                                        <span style={{ color: week.incidencias > 0 ? "#ef4444" : "#94a3b8" }}>
+                                        <span style={{ color: week.incidencias > 0 ? "#ef4444" : "var(--text-dim)" }}>
                                             {week.incidencias} inc.
                                         </span>
                                     </div>
@@ -1122,10 +1122,10 @@ export default function CrmForensePage() {
                                     {/* Header tarjeta */}
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
                                         <div>
-                                            <p style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", margin: 0 }}>
+                                            <p style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)", margin: 0 }}>
                                                 {q.label}
                                             </p>
-                                            <p style={{ fontSize: "8px", color: "#cbd5e1", margin: 0 }}>{q.dateRange}</p>
+                                            <p style={{ fontSize: "8px", color: "var(--text-dim)", margin: 0 }}>{q.dateRange}</p>
                                         </div>
                                         {/* Variación vs Q anterior */}
                                         {q.varVsPrev !== null && (
@@ -1151,7 +1151,7 @@ export default function CrmForensePage() {
                                         <span>·</span>
                                         <span>{q.entregados} entr.</span>
                                         <span>·</span>
-                                        <span style={{ color: q.incidencias > 0 ? "#ef4444" : "#94a3b8" }}>
+                                        <span style={{ color: q.incidencias > 0 ? "#ef4444" : "var(--text-dim)" }}>
                                             {q.incidencias} inc.
                                         </span>
                                     </div>

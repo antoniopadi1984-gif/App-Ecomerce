@@ -83,6 +83,7 @@ export function AddProductDialog() {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [genDesc, setGenDesc] = useState(false);
+    const [step, setStep] = useState(1);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -308,6 +309,7 @@ export function AddProductDialog() {
         setGoogleDocUrl(''); setForeplayUrl('');
         setAdLibraryUrls(['']); setCompetitors([{ name: '', url: '', country: 'ES', price: '', analyzing: false, done: false }]);
         setAmazonLinks([{ url: '' }]); setOwnLandings([{ url: '' }]);
+        setStep(1);
     };
 
     return (
@@ -335,361 +337,273 @@ export function AddProductDialog() {
                 </DialogHeader>
 
                 {/* Scrollable body */}
-                <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-6 flex flex-col gap-8">
+                    {/* Stepper Header */}
+                    <div className="flex items-center gap-4 mb-2">
+                        <div className={`flex-1 h-1.5 rounded-full ${step === 1 ? 'bg-[var(--inv)]' : 'bg-[var(--border)] transition-colors'}`}></div>
+                        <div className={`flex-1 h-1.5 rounded-full ${step === 2 ? 'bg-[var(--inv)]' : 'bg-[var(--border)] transition-colors'}`}></div>
+                        <div className="text-[10px] font-black tracking-widest uppercase text-[var(--text-dim)] shrink-0">
+                            Paso {step} de 2
+                        </div>
+                    </div>
 
-                    {/* ══ COL 1 ══════════════════════════════════════════ */}
-                    <div className="space-y-8">
-
-                        {/* INFORMACIÓN BÁSICA */}
-                        <Section icon={<Target className="w-4 h-4" />} title="Información Básica">
-                            {/* Image upload */}
-                            <div className="cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
-                                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-                                {imageUrl ? (
-                                    <div className="relative h-28 w-full rounded-xl overflow-hidden border border-[var(--border)] group-hover:opacity-80 transition-opacity">
-                                        <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                            <span className="text-[10px] text-white font-black uppercase">Cambiar imagen</span>
+                    {step === 1 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                            {/* COL 1: IDENTIDAD */}
+                            <div className="space-y-8">
+                                <Section icon={<Target className="w-4 h-4" />} title="Identidad">
+                                    <div className="cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
+                                        <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                                        {imageUrl ? (
+                                            <div className="relative h-28 w-full rounded-xl overflow-hidden border border-[var(--border)] group-hover:opacity-80 transition-opacity">
+                                                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                    <span className="text-[10px] text-white font-black uppercase">Cambiar imagen</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="h-20 w-full rounded-xl border-2 border-dashed border-[var(--border-high)] flex items-center justify-center gap-2 group-hover:border-[var(--inv)] group-hover:bg-[var(--inv)]/5 transition-all">
+                                                <UploadCloud className="w-4 h-4 text-[var(--text-dim)]" />
+                                                <span className="text-[10px] text-[var(--text-dim)] font-semibold">Subir imagen del producto</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Nombre del producto *</label>
+                                        <Input required value={title} onChange={e => {
+                                            setTitle(e.target.value);
+                                            if (!sku) setSku(('PROD_' + e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '_') + '_01').substring(0, 20));
+                                        }} placeholder="Ej: NeckRelief Pro" className="h-9 text-[11px] font-medium" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">SKU (Gen. Automática)</label>
+                                        <Input value={sku} onChange={e => setSku(e.target.value)} placeholder="PROD_NOMBRE_01" className="h-9 text-[11px]" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1"><Globe className="w-3 h-3" /> País *</label>
+                                            <Select value={country} onValueChange={setCountry}>
+                                                <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
+                                                <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Categoría / Nicho *</label>
+                                            <Select value={niche} onValueChange={setNiche}>
+                                                <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
+                                                <SelectContent>{NICHES.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
-                                ) : (
-                                    <div className="h-20 w-full rounded-xl border-2 border-dashed border-[var(--border-high)] flex items-center justify-center gap-2 group-hover:border-[var(--inv)] group-hover:bg-[var(--inv)]/5 transition-all">
-                                        <UploadCloud className="w-4 h-4 text-[var(--text-dim)]" />
-                                        <span className="text-[10px] text-[var(--text-dim)] font-semibold">Subir imagen del producto</span>
+                                </Section>
+                            </div>
+
+                            {/* COL 2: FINANCIERO */}
+                            <div className="space-y-8">
+                                <Section icon={<Euro className="w-4 h-4" />} title="Financiero & Unit Economics" accent="var(--mkt)">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text)]">Precio de Venta (€) *</label>
+                                            </div>
+                                            <Input required type="number" step="0.01" value={pvp} onChange={e => setPvp(e.target.value)}
+                                                className="h-10 text-[13px] font-black bg-[var(--inv)]/5 border-[var(--inv)]/30 focus-visible:ring-[var(--inv)]/40 text-[var(--inv)]" placeholder="0.00" />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Coste Producto (€)</label>
+                                            <Input type="number" step="0.01" value={unitCost} onChange={e => setUnitCost(e.target.value)} className="h-10 text-[11px]" placeholder="0.00" />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Coste Envío (€)</label>
+                                            <Input type="number" step="0.01" value={shippingCost} onChange={e => setShippingCost(e.target.value)} className="h-9 text-[11px]" placeholder="0.00" />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">C. Manipulación (€)</label>
+                                            <Input type="number" step="0.01" value={handlingCost} onChange={e => setHandlingCost(e.target.value)} className="h-9 text-[11px]" placeholder="0.00" />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Tasa Dev./Cancel. (%)</label>
+                                            <Input type="number" step="1" value={returnRate} onChange={e => setReturnRate(e.target.value)} className="h-9 text-[11px]" placeholder="5" />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Fulfillment</label>
+                                            <Select value={fulfillment} onValueChange={setFulfillment}>
+                                                <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
+                                                <SelectContent>{FULFILLMENT_OPTIONS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Entrega Esperada (%)</label>
+                                            <Input type="number" step="1" value={deliveryRate} onChange={e => setDeliveryRate(e.target.value)} className="h-9 text-[11px]" placeholder="70" />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Conversión CVR (%) default {NICHE_CVR[niche] ?? 2.0}%</label>
+                                            <Input type="number" step="0.1" value={cvr} onChange={e => setCvr(e.target.value)} placeholder={`(Aprox ${NICHE_CVR[niche] ?? 2.0}%)`} className="h-9 text-[11px]" />
+                                        </div>
                                     </div>
-                                )}
-                            </div>
 
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Nombre del producto *</label>
-                                <Input required value={title} onChange={e => setTitle(e.target.value)}
-                                    placeholder="Ej: NeckRelief Pro — Masajeador Cervical" className="h-9 text-[11px] font-medium" />
+                                    {be && pvpNum > 0 ? (
+                                        <div className="mt-6 flex flex-col gap-2 p-3 border border-[var(--border)] rounded-xl bg-[var(--surface2)]">
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <Tile label="ROAS BE" value={`${be.roasBE.toFixed(2)}x`} color="var(--inv)" />
+                                                <Tile label="CPA Máx" value={`€${be.cpaMax.toFixed(2)}`} color="var(--s-ko)" />
+                                                <Tile label="CPC BE" value={`€${be.cpcBE.toFixed(2)}`} color="var(--ops)" />
+                                            </div>
+                                            <div className="flex items-center gap-2 justify-between px-2 pt-2 border-t border-[var(--border)]">
+                                                <div className="text-[10px] text-[var(--text-dim)] uppercase font-black">
+                                                    Margen Bruto: <span className="text-[var(--text)]">€{margenBrutoNum.toFixed(2)}</span>
+                                                </div>
+                                                <div className="text-[10px] text-[var(--text-dim)] uppercase font-black">
+                                                    Neto (CPA Máx): <span className="text-[var(--text)]">€{beneficioNeto.toFixed(2)}</span>
+                                                </div>
+                                                <div className="text-[10px] text-[var(--text-dim)] uppercase font-black">
+                                                    Coste Real: <span className="text-[var(--text)]">€{costeReal.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="mt-4 p-4 text-center rounded-xl border border-dashed border-[var(--border-high)] text-[10px] font-black uppercase tracking-widest text-[var(--text-dim)]">
+                                            <Euro className="w-4 h-4 mx-auto mb-2 opacity-30" />
+                                            Introduce PVP para Live Metrics
+                                        </div>
+                                    )}
+                                </Section>
                             </div>
-                            <div className="space-y-1.5 hidden">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">SKU (opcional)</label>
-                                <Input value={sku} onChange={e => setSku(e.target.value)}
-                                    placeholder="PROD_NOMBRE_01" className="h-9 text-[11px]" />
-                            </div>
+                        </div>
+                    )}
 
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1"><Globe className="w-3 h-3" /> País *</label>
-                                    <Select value={country} onValueChange={setCountry}>
-                                        <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
-                                        <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Nicho *</label>
-                                    <Select value={niche} onValueChange={setNiche}>
-                                        <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
-                                        <SelectContent>{NICHES.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Familia *</label>
-                                    <Select value={family} onValueChange={setFamily}>
-                                        <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
-                                        <SelectContent>{FAMILIES.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">URL Tienda / Landing (si existe)</label>
-                                <Input value={landingUrl} onChange={e => setLandingUrl(e.target.value)}
-                                    placeholder="https://tu-tienda.com/producto" className="h-9 text-[11px]" />
-                            </div>
-
-                            {/* Description */}
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Descripción</label>
-                                    <button type="button" onClick={handleGenDescription} disabled={genDesc}
-                                        className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-[var(--inv)] hover:brightness-110 disabled:opacity-50">
-                                        {genDesc ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                                        Generar con IA
+                    {step === 2 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                            {/* COL 1: COMPETENCIA */}
+                            <div className="space-y-8">
+                                <Section icon={<Microscope className="w-4 h-4" />} title="Competidores" accent="var(--crm)">
+                                    <p className="text-[9px] text-[var(--text-dim)] leading-relaxed">
+                                        Se crearán directorios SPY y pipelines de scraping automático de copy y diseño para cada competidor.
+                                    </p>
+                                    <div className="space-y-3">
+                                        {competitors.map((c, i) => (
+                                            <div key={i} className="space-y-2 p-3 bg-[var(--surface2)] border border-[var(--border)] rounded-xl relative group">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <Input className="h-8 text-[11px]" placeholder="Nombre competidor" value={c.name} onChange={e => {
+                                                        const next = [...competitors]; next[i].name = e.target.value; setCompetitors(next);
+                                                    }} />
+                                                    <Input className="h-8 text-[11px]" placeholder="URL Tienda Web" value={c.url} onChange={e => {
+                                                        const next = [...competitors]; next[i].url = e.target.value; setCompetitors(next);
+                                                    }} />
+                                                    <Input className="h-8 text-[11px]" placeholder="URL Amazon (opc)" value={c.urlAmazon || ''} onChange={e => {
+                                                        const next = [...competitors]; next[i].urlAmazon = e.target.value; setCompetitors(next);
+                                                    }} />
+                                                    <Input className="h-8 text-[11px]" placeholder="URL Meta Ad Library (opc)" value={c.urlMetaLibrary || ''} onChange={e => {
+                                                        const next = [...competitors]; next[i].urlMetaLibrary = e.target.value; setCompetitors(next);
+                                                    }} />
+                                                    <Input className="h-8 text-[11px]" placeholder="URL TikTok Ad Library (opc)" value={c.urlTikTokLibrary || ''} onChange={e => {
+                                                        const next = [...competitors]; next[i].urlTikTokLibrary = e.target.value; setCompetitors(next);
+                                                    }} />
+                                                    <div className="flex gap-2">
+                                                        <Input className="h-8 text-[11px] w-20" placeholder="PVP" value={c.price || ''} onChange={e => {
+                                                            const next = [...competitors]; next[i].price = e.target.value; setCompetitors(next);
+                                                        }} />
+                                                    </div>
+                                                </div>
+                                                {competitors.length > 1 && (
+                                                    <button type="button" onClick={() => setCompetitors(competitors.filter((_, j) => j !== i))}
+                                                        className="absolute -top-2 -right-2 p-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-full text-[var(--text-dim)] hover:bg-[var(--s-ko)]/10 hover:text-[var(--s-ko)] hover:border-[var(--s-ko)] transition-all z-10 opacity-0 group-hover:opacity-100">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button type="button" onClick={() => setCompetitors([...competitors, { name: '', url: '', urlAmazon: '', urlMetaLibrary: '', urlTikTokLibrary: '', country: 'ES', price: '', analyzing: false, done: false }])}
+                                        className="text-[9px] font-black uppercase tracking-widest text-[var(--crm)] hover:brightness-110 flex items-center gap-1">
+                                        <Plus className="w-3 h-3" /> Añadir competidor extra
                                     </button>
-                                </div>
-                                <Textarea value={description} onChange={e => setDescription(e.target.value)}
-                                    placeholder="La IA generará una descripción profesional automáticamente al pulsar 'Generar con IA'..."
-                                    className="text-[11px] resize-none" rows={3} />
-                            </div>
-                        </Section>
-
-                        {/* AMAZON REVIEWS */}
-                        <Section icon={<Target className="w-4 h-4" />} title="Competidores & Inteligencia">
-                            <p className="text-[9px] text-[var(--text-dim)]">Define competidores principales (Se crearán subcarpetas automáticas en Drive/Spy).</p>
-                            {competitors.map((c, i) => (
-                                <div key={i} className="space-y-2 p-3 border border-[var(--border)] rounded-lg bg-[var(--surface2)] relative">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Input value={c.name} onChange={e => {
-                                            const next = [...competitors];
-                                            next[i].name = e.target.value;
-                                            setCompetitors(next);
-                                        }} placeholder="Nombre marca" className="h-8 text-[11px]" />
-                                        <Input value={c.url} onChange={e => {
-                                            const next = [...competitors];
-                                            next[i].url = e.target.value;
-                                            setCompetitors(next);
-                                        }} placeholder="URL web (Shopify/Woo)" className="h-8 text-[11px]" />
-                                        <Input value={c.urlAmazon || ''} onChange={e => {
-                                            const next = [...competitors];
-                                            next[i].urlAmazon = e.target.value;
-                                            setCompetitors(next);
-                                        }} placeholder="URL Amazon (opcional)" className="h-8 text-[11px]" />
-                                        <Input value={c.urlMetaLibrary || ''} onChange={e => {
-                                            const next = [...competitors];
-                                            next[i].urlMetaLibrary = e.target.value;
-                                            setCompetitors(next);
-                                        }} placeholder="Meta Ad Library (opcional)" className="h-8 text-[11px]" />
-                                    </div>
-                                    {competitors.length > 1 && (
-                                        <button type="button" onClick={() => setCompetitors(competitors.filter((_, j) => j !== i))}
-                                            className="absolute -top-2 -right-2 p-1 bg-[var(--bg)] border border-[var(--border)] rounded-full text-[var(--text-dim)] hover:text-[var(--s-ko)] transition-colors">
-                                            <Trash2 className="w-3 h-3" />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                            <button type="button" onClick={() => setCompetitors([...competitors, { name: '', url: '', urlAmazon: '', urlMetaLibrary: '', urlTikTokLibrary: '', country: 'ES', price: '', analyzing: false, done: false }])}
-                                className="text-[9px] font-black uppercase tracking-widest text-[var(--inv)] hover:brightness-110 flex items-center gap-1">
-                                <Plus className="w-3 h-3" /> Añadir competidor
-                            </button>
-                        </Section>
-
-                        <Section icon={<ShoppingBag className="w-4 h-4" />} title="Amazon — Investigación de Mercado" accent="var(--ops)">
-                            <p className="text-[9px] text-[var(--text-dim)]">El agente extrae reviews, dolores, lenguaje y objeciones automáticamente.</p>
-                            {amazonLinks.map((a, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                    <Input value={a.url} onChange={e => {
-                                        const next = [...amazonLinks];
-                                        next[i] = { url: e.target.value };
-                                        setAmazonLinks(next);
-                                    }} placeholder="https://amazon.es/dp/..." className="h-8 text-[11px]" />
-                                    {amazonLinks.length > 1 && (
-                                        <button type="button" onClick={() => setAmazonLinks(amazonLinks.filter((_, j) => j !== i))}
-                                            className="p-1.5 text-[var(--text-dim)] hover:text-[var(--s-ko)] transition-colors">
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                            <button type="button" onClick={() => setAmazonLinks([...amazonLinks, { url: '' }])}
-                                className="text-[9px] font-black uppercase tracking-widest text-[var(--ops)] hover:brightness-110 flex items-center gap-1">
-                                <Plus className="w-3 h-3" /> Añadir URL Amazon
-                            </button>
-                        </Section>
-
-                        {/* LANDINGS PROPIAS */}
-                        <Section icon={<ExternalLink className="w-4 h-4" />} title="Landings Propias (CRO Analysis)" accent="var(--mkt)">
-                            {ownLandings.map((l, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                    <Input value={l.url} onChange={e => {
-                                        const next = [...ownLandings];
-                                        next[i] = { url: e.target.value };
-                                        setOwnLandings(next);
-                                    }} placeholder="https://tu-landing.com" className="h-8 text-[11px]" />
-                                    {ownLandings.length > 1 && (
-                                        <button type="button" onClick={() => setOwnLandings(ownLandings.filter((_, j) => j !== i))}
-                                            className="p-1.5 text-[var(--text-dim)] hover:text-[var(--s-ko)] transition-colors">
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                            <button type="button" onClick={() => setOwnLandings([...ownLandings, { url: '' }])}
-                                className="text-[9px] font-black uppercase tracking-widest text-[var(--mkt)] hover:brightness-110 flex items-center gap-1">
-                                <Plus className="w-3 h-3" /> Añadir landing
-                            </button>
-                        </Section>
-                    </div>
-
-                    {/* ══ COL 2 ══════════════════════════════════════════ */}
-                    <div className="space-y-8">
-
-                        {/* UNIT ECONOMICS + BREAKEVEN */}
-                        <Section icon={<FileText className="w-4 h-4" />} title="Fuentes Adicionales">
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Google Doc (Investigación previa libre)</label>
-                                <Input value={googleDocUrl} onChange={e => setGoogleDocUrl(e.target.value)}
-                                    placeholder="https://docs.google.com/document/d/..." className="h-9 text-[11px]" />
-                            </div>
-                        </Section>
-
-                        <Section icon={<Euro className="w-4 h-4" />} title="Unit Economics & Breakeven Auto">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Coste producto (€)</label>
-                                    <Input type="number" step="0.01" value={unitCost} onChange={e => setUnitCost(e.target.value)} className="h-9 text-[11px]" placeholder="0.00" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Coste envío (€)</label>
-                                    <Input type="number" step="0.01" value={shippingCost} onChange={e => setShippingCost(e.target.value)} className="h-9 text-[11px]" placeholder="0.00" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">C. Manipulación (€)</label>
-                                    <Input type="number" step="0.01" value={handlingCost} onChange={e => setHandlingCost(e.target.value)} className="h-9 text-[11px]" placeholder="0.00" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Fullfilment</label>
-                                    <Select value={fulfillment} onValueChange={setFulfillment}>
-                                        <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
-                                        <SelectContent>{FULFILLMENT_OPTIONS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Tasa Entrega (%)</label>
-                                    <Input type="number" step="1" value={deliveryRate} onChange={e => setDeliveryRate(e.target.value)} className="h-9 text-[11px]" placeholder="70" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Cancel./Dev. (%)</label>
-                                    <Input type="number" step="1" value={returnRate} onChange={e => setReturnRate(e.target.value)} className="h-9 text-[11px]" placeholder="5" />
-                                </div>
-                                <div className="space-y-1.5 col-span-2">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text)]">PVP Estimado (€) *</label>
-                                        <button type="button" onClick={handleAutoPrice}
-                                            className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-[var(--inv)] hover:brightness-110">
-                                            <Sparkles className="w-3 h-3" /> Sugerir IA
-                                        </button>
-                                    </div>
-                                    <Input required type="number" step="0.01" value={pvp} onChange={e => setPvp(e.target.value)}
-                                        className="h-10 text-[13px] font-black bg-[var(--inv)]/5 border-[var(--inv)]/30 focus-visible:ring-[var(--inv)]/40" placeholder="0.00" />
-                                </div>
-                                <div className="space-y-1.5 col-span-2">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">
-                                        Tasa Conversión % (CVR) — benchmark: {NICHE_CVR[niche] ?? 2.0}%
-                                    </label>
-                                    <Input type="number" step="0.1" value={cvr} onChange={e => setCvr(e.target.value)}
-                                        placeholder={`Dejar vacío para usar benchmark (${NICHE_CVR[niche] ?? 2.0}%)`} className="h-9 text-[11px]" />
-                                </div>
+                                </Section>
                             </div>
 
-                            {/* Live breakeven tiles */}
-                            {be && pvpNum > 0 ? (
-                                <div className="grid grid-cols-4 gap-2 pt-2">
-                                    <Tile label="ROAS BE" value={`${be.roasBE.toFixed(2)}x`} color="var(--inv)" note="mínimo" />
-                                    <Tile label="CPC BE" value={`€${be.cpcBE.toFixed(2)}`} color="var(--ops)" note="calculado" />
-                                    <Tile label="CPA Máx" value={`€${be.cpaMax.toFixed(2)}`} color="var(--mkt)" note="40% margen" />
-                                    <Tile label="CVR Target" value={`${(cvrNum || (NICHE_CVR[niche] ?? 2.0)).toFixed(1)}%`} color="var(--mando)" note={cvrNum ? 'manual' : 'benchmark'} />
-                                </div>
-                            ) : (
-                                <div className="p-3 bg-[var(--surface2)] rounded-xl text-center text-[10px] text-[var(--text-dim)] border border-dashed border-[var(--border-high)]">
-                                    Introduce el PVP para calcular ROAS BE, CPC BE, CPA Máx automáticamente
-                                </div>
-                            )}
-
-                            {be && <p className="text-[8px] text-[var(--text-dim)]">
-                                Margen Bruto: €{margenBrutoNum.toFixed(2)} | Beneficio Neto (CPA Máx): €{beneficioNeto.toFixed(2)} — Alertas Facebook Ads se crearán automáticamente al guardar.
-                            </p>}
-                        </Section>
-
-                        {/* COMPETIDORES */}
-                        <Section icon={<Microscope className="w-4 h-4" />} title="Competencia — Análisis Automático" accent="var(--crm)">
-                            <p className="text-[9px] text-[var(--text-dim)]">El agente hace scraping de cada landing y extrae estructura, oferta, precio, garantía, CTA.</p>
-                            {competitors.map((c, i) => (
-                                <div key={i} className="space-y-2 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-xl">
-                                    <div className="flex items-center gap-2">
-                                        <Input value={c.url} onChange={e => {
-                                            const next = [...competitors];
-                                            next[i] = { ...next[i], url: e.target.value };
-                                            setCompetitors(next);
-                                        }} placeholder="https://competidor.com" className="h-8 text-[11px] flex-1" />
-                                        <select value={c.country} onChange={e => {
-                                            const next = [...competitors];
-                                            next[i] = { ...next[i], country: e.target.value };
-                                            setCompetitors(next);
-                                        }} className="h-8 text-[10px] border border-[var(--border)] rounded-lg px-2 bg-[var(--surface2)] font-bold">
-                                            {COUNTRIES.map(co => <option key={co} value={co}>{co}</option>)}
-                                        </select>
-                                        <Input value={c.price} onChange={e => {
-                                            const next = [...competitors];
-                                            next[i] = { ...next[i], price: e.target.value };
-                                            setCompetitors(next);
-                                        }} placeholder="Precio" className="h-8 text-[11px] w-20" />
+                            {/* COL 2: FUENTES */}
+                            <div className="space-y-8">
+                                <Section icon={<FileText className="w-4 h-4" />} title="Fuentes Adicionales" accent="var(--mando)">
+                                    <div className="space-y-1.5 p-4 border border-[var(--mando)]/20 bg-[var(--mando)]/5 rounded-xl">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--mando)]">Google Doc (Investigación Privada)</label>
+                                        <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mb-2">
+                                            Pega la URL de tu Google Doc. Nuestro pipeline extraerá el contenido automáticamente y enriquecerá tu Avatar / Angle Builder con tus notas sin indexarlas a la IA global.
+                                        </p>
+                                        <Input value={googleDocUrl} onChange={e => setGoogleDocUrl(e.target.value)}
+                                            placeholder="https://docs.google.com/document/d/..." className="h-10 text-[11px] border-[var(--mando)]/30 focus-visible:ring-[var(--mando)]/20" />
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <button type="button" onClick={() => analyzeCompetitor(i)} disabled={c.analyzing || !c.url.trim()}
-                                            className={cn('flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all',
-                                                c.done ? 'bg-[var(--s-ok)]/10 text-[var(--s-ok)]' :
-                                                    'bg-[var(--crm)]/10 text-[var(--crm)] hover:bg-[var(--crm)]/20 disabled:opacity-40'
-                                            )}>
-                                            {c.analyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : c.done ? '✓ Analizado' : <><Play className="w-3 h-3" /> Analizar</>}
+
+                                    <div className="space-y-2 mt-6">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1">
+                                            <ExternalLink className="w-3 h-3" /> Landings Propias (opcional)
+                                        </label>
+                                        <p className="text-[9px] text-[var(--text-dim)] pb-2">Si ya existe una página de ventas (Shopify/Advetorials). O asigna después.</p>
+                                        {ownLandings.map((l, i) => (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <Input value={l.url} onChange={e => {
+                                                    const next = [...ownLandings]; next[i].url = e.target.value; setOwnLandings(next);
+                                                }} placeholder="https://tu-tienda.com/..." className="h-8 text-[11px]" />
+                                                {ownLandings.length > 1 && (
+                                                    <button type="button" onClick={() => setOwnLandings(ownLandings.filter((_, j) => j !== i))}
+                                                        className="p-1.5 text-[var(--text-dim)] hover:text-[var(--s-ko)] transition-colors">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        <button type="button" onClick={() => setOwnLandings([...ownLandings, { url: '' }])}
+                                            className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-white flex items-center gap-1 transition-colors">
+                                            <Plus className="w-3 h-3" /> Añadir landing
                                         </button>
-                                        {competitors.length > 1 && (
-                                            <button type="button" onClick={() => setCompetitors(competitors.filter((_, j) => j !== i))}
-                                                className="p-1.5 text-[var(--text-dim)] hover:text-[var(--s-ko)] transition-colors">
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        )}
                                     </div>
-                                </div>
-                            ))}
-                            {competitors.length < 10 && (
-                                <button type="button" onClick={() => setCompetitors([...competitors, { name: '', url: '', country: 'ES', price: '', analyzing: false, done: false }])}
-                                    className="text-[9px] font-black uppercase tracking-widest text-[var(--crm)] hover:brightness-110 flex items-center gap-1">
-                                    <Plus className="w-3 h-3" /> Añadir competidor
-                                </button>
-                            )}
-                        </Section>
 
-                        {/* AD LIBRARY */}
-                        <Section icon={<Brain className="w-4 h-4" />} title="Biblioteca de Anuncios Competencia" accent="var(--mkt)">
-                            <div className="space-y-2">
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Foreplay Board URL</label>
-                                    <Input value={foreplayUrl} onChange={e => setForeplayUrl(e.target.value)}
-                                        placeholder="https://app.foreplay.co/board/..." className="h-8 text-[11px]" />
-                                </div>
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Facebook Ad Library URLs</label>
-                                {adLibraryUrls.map((u, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                        <Input value={u} onChange={e => {
-                                            const next = [...adLibraryUrls];
-                                            next[i] = e.target.value;
-                                            setAdLibraryUrls(next);
-                                        }} placeholder="https://facebook.com/ads/library/..." className="h-8 text-[11px]" />
-                                        {adLibraryUrls.length > 1 && (
-                                            <button type="button" onClick={() => setAdLibraryUrls(adLibraryUrls.filter((_, j) => j !== i))}
-                                                className="p-1.5 text-[var(--text-dim)] hover:text-[var(--s-ko)]">
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        )}
+                                    <div className="space-y-2 mt-6 hidden">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1">
+                                            <Brain className="w-3 h-3" /> IA Description Override
+                                        </label>
+                                        <Textarea value={description} onChange={e => setDescription(e.target.value)} className="h-20 text-[11px]"></Textarea>
                                     </div>
-                                ))}
-                                <button type="button" onClick={() => setAdLibraryUrls([...adLibraryUrls, ''])}
-                                    className="text-[9px] font-black uppercase tracking-widest text-[var(--mkt)] hover:brightness-110 flex items-center gap-1">
-                                    <Plus className="w-3 h-3" /> Añadir URL Ad Library
-                                </button>
+                                </Section>
                             </div>
-                        </Section>
+                        </div>
+                    )}
 
-                        {/* FUENTES ADICIONALES */}
-                        <Section icon={<FileText className="w-4 h-4" />} title="Fuentes Adicionales" accent="var(--sis)">
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Google Docs URL (brief, research previo)</label>
-                                <Input value={googleDocUrl} onChange={e => setGoogleDocUrl(e.target.value)}
-                                    placeholder="https://docs.google.com/..." className="h-8 text-[11px]" />
-                            </div>
-                        </Section>
-                    </div>
-
-                    {/* ══ FOOTER ═══════════════════════════════════════════ */}
-                    <div className="col-span-full pt-4 border-t border-[var(--border)] flex items-center justify-between gap-4">
+                    {/* FOOTER */}
+                    <div className="col-span-full pt-4 border-t border-[var(--border)] flex items-center justify-between gap-4 sticky bottom-0 bg-[var(--bg)] shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.5)]">
                         <div className="flex items-center gap-2 text-[9px] text-[var(--text-dim)]">
                             <AlertCircle className="w-3.5 h-3.5 text-[var(--inv)]" />
-                            Al crear: se lanza el God Tier Pipeline automáticamente + alertas de Facebook Ads se configuran con los breakevens calculados.
+                            {step === 1 ? 'Completa la Identidad y Setup Financiero' : 'Al crear se descargará el SPY de competidores y el Research Pipeline.'}
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
-                            <Button type="button" variant="ghost" onClick={() => setOpen(false)}
-                                className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl">
-                                Cancelar
-                            </Button>
-                            <Button type="submit" disabled={loading}
-                                className="h-10 px-8 bg-[var(--inv)] hover:brightness-110 text-white rounded-xl shadow-lg font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2">
-                                {loading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Creando...</> : <><Microscope className="w-3.5 h-3.5" /> Crear & Launch Research</>}
-                            </Button>
+                            {step === 1 ? (
+                                <>
+                                    <Button type="button" variant="ghost" onClick={() => setOpen(false)}
+                                        className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl">
+                                        Cancelar
+                                    </Button>
+                                    <Button type="button" onClick={() => {
+                                        if (!title.trim() || !pvpNum) return toast.error('Rellena nombre y PVP primero');
+                                        setStep(2);
+                                    }}
+                                        className="h-10 px-8 bg-[var(--surface2)] hover:bg-[var(--border)] text-white rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2">
+                                        Siguiente Paso <ChevronRight className="w-3.5 h-3.5" />
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button type="button" variant="ghost" onClick={() => setStep(1)}
+                                        className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl">
+                                        Volver Atrás
+                                    </Button>
+                                    <Button type="submit" disabled={loading}
+                                        className="h-10 px-8 bg-[var(--inv)] hover:brightness-110 text-white rounded-xl shadow-lg font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2">
+                                        {loading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Creando...</> : <><Microscope className="w-3.5 h-3.5" /> Crear & Lanzar Operación</>}
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </form>

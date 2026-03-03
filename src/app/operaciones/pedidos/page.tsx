@@ -290,6 +290,15 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
         setNewMessage("");
     };
 
+    const [newNota, setNewNota] = React.useState("");
+    const notas = pedido?.notas || [
+        { texto: "El cliente ha llamado para confirmar la dirección de entrega, le faltaba poner que es el Bajo A.", autor: "María (A. Cliente)", createdAt: "2023-10-12T15:00:00Z" }
+    ];
+    const saveNota = () => {
+        if (!newNota.trim()) return;
+        setNewNota("");
+    };
+
     if (!pedido) return null;
     return (
         <>
@@ -637,8 +646,48 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                         </div>
                     )}
 
+                    {activeTab === "notas" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                            <div className="ds-card" style={{ padding: "16px 20px" }}>
+                                {/* Notas existentes */}
+                                {notas.map((nota: { texto: string; autor: string; createdAt: string }, i: number) => (
+                                    <div key={i} style={{
+                                        padding: "10px 12px", background: "#fffbeb",
+                                        border: "1px solid #fef08a", borderRadius: "8px", marginBottom: "8px"
+                                    }}>
+                                        <div style={{ fontSize: "12px", color: "#0f172a" }}>{nota.texto}</div>
+                                        <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "4px" }}>
+                                            {nota.autor} · {formatDate(nota.createdAt)} {formatTime(nota.createdAt)}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* Nueva nota */}
+                                <textarea
+                                    value={newNota}
+                                    onChange={e => setNewNota(e.target.value)}
+                                    placeholder="Añadir nota interna..."
+                                    rows={3}
+                                    style={{
+                                        width: "100%", padding: "10px 12px", borderRadius: "8px",
+                                        border: "1px solid #e2e8f0", fontSize: "12px",
+                                        resize: "vertical", outline: "none", fontFamily: "inherit",
+                                        boxSizing: "border-box"
+                                    }}
+                                />
+                                <button onClick={saveNota} style={{
+                                    marginTop: "8px", background: "#3b82f6", color: "white",
+                                    border: "none", borderRadius: "8px", padding: "8px 16px",
+                                    fontSize: "12px", fontWeight: 700, cursor: "pointer"
+                                }}>
+                                    Guardar nota
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Failsafe for unfinished content tabs */}
-                    {!["cliente", "timeline", "riesgo", "origen", "historial", "comunicaciones"].includes(activeTab) && (
+                    {!["cliente", "timeline", "riesgo", "origen", "historial", "comunicaciones", "notas"].includes(activeTab) && (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 20px", flexDirection: "column", gap: "12px", textAlign: "center", opacity: 0.5, animation: "fade-in 0.2s" }}>
                             <span style={{ fontSize: "48px" }}>🚧</span>
                             <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#334155" }}>Tab en desarrollo</h3>

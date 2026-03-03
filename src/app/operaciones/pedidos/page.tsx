@@ -474,8 +474,8 @@ export default function PedidosPage() {
                     <table className="ds-table ds-compact-table" style={{ borderTop: "none", width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
                         <thead>
                             <tr>
-                                <th style={{ width: "3%", padding: "12px" }}>
-                                    <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                <th style={{ width: "3%", padding: "0 0 0 12px" }}>
+                                    <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                 </th>
                                 {activeTab === 'carritos-abandonados' ? (
                                     <>
@@ -542,8 +542,8 @@ export default function PedidosPage() {
                             {/* Example Row - 10045 */}
                             {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "12px", minHeight: "56px" }}>
-                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    <td style={{ padding: "0 0 0 12px" }}>
+                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10045</span>
@@ -620,8 +620,8 @@ export default function PedidosPage() {
                             {/* Example Row - 10046 */}
                             {activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "12px", minHeight: "56px" }}>
-                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    <td style={{ padding: "0 0 0 12px" }}>
+                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10046</span>
@@ -697,8 +697,8 @@ export default function PedidosPage() {
                             {/* Example Row - 10047 */}
                             {activeTab === 'todos' || activeTab === 'por-gestionar' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "12px", minHeight: "56px" }}>
-                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    <td style={{ padding: "0 0 0 12px" }}>
+                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10047</span>
@@ -774,8 +774,8 @@ export default function PedidosPage() {
                             {/* Example Row - 10048 */}
                             {activeTab === 'todos' || activeTab === 'en-transito' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "12px", minHeight: "56px" }}>
-                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    <td style={{ padding: "0 0 0 12px" }}>
+                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10048</span>
@@ -860,8 +860,8 @@ export default function PedidosPage() {
                             {/* Example Row - 10049 */}
                             {activeTab === 'todos' || activeTab === 'incidencias' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "12px", minHeight: "56px" }}>
-                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    <td style={{ padding: "0 0 0 12px" }}>
+                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10049</span>
@@ -952,8 +952,8 @@ export default function PedidosPage() {
                             {/* Example Row - 10050 */}
                             {activeTab === 'todos' || activeTab === 'devoluciones' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "12px", minHeight: "56px" }}>
-                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    <td style={{ padding: "0 0 0 12px" }}>
+                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10050</span>
@@ -1039,8 +1039,8 @@ export default function PedidosPage() {
                             {/* Example Row - 10041 */}
                             {activeTab === 'todos' || activeTab === 'historial' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "12px", minHeight: "56px" }}>
-                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    <td style={{ padding: "0 0 0 12px" }}>
+                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10041</span>
@@ -1118,8 +1118,8 @@ export default function PedidosPage() {
                             {/* Example Row - CARRITO ABANDONADO */}
                             {activeTab === 'carritos-abandonados' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "12px", minHeight: "56px" }}>
-                                        <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
+                                    <td style={{ padding: "0 0 0 12px" }}>
+                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
                                     <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#C-4291</a></td>
                                     <td>Ana Martínez</td>

@@ -40,6 +40,83 @@ const TABS = [
     { id: 'historial', label: 'Historial' }
 ];
 
+
+function getTrackingUrl(carrier: string, trackingNumber: string): string {
+    const urls: Record<string, string> = {
+        "correos_express": `https://www.correos.es/ss/Satellite/site/aplicacion-oficina_virtual-1349167560549/detalle_app-sidioma=es_ES&numero=${trackingNumber}`,
+        "gls": `https://gls-group.com/ES/es/seguimiento-envios?match=${trackingNumber}`,
+        "seur": `https://www.seur.com/livetracking/?segmentationLevel=3&hash=${trackingNumber}`,
+        "mrw": `https://www.mrw.es/seguimiento_envios/MRW_resultados_consultas.asp?Num=${trackingNumber}`,
+        "dhl": `https://www.dhl.com/es-es/home/tracking.html?tracking-id=${trackingNumber}`,
+        "nacex": `https://www.nacex.es/seguimiento.do?numero_albaran=${trackingNumber}`,
+    };
+    const c = carrier.toLowerCase().replace(/\s/g, "_").replace(/\./g, "");
+    for (const key of Object.keys(urls)) {
+        if (c.includes(key)) return urls[key];
+    }
+    return `https://www.17track.net/es/track#nums=${trackingNumber}`;
+}
+
+function PrimaryActionButton({ pedido }: { pedido: { state: string } }) {
+    const actions: Record<string, { label: string; color: string; bg: string }> = {
+        "nuevo": { label: "Enviar", color: "#16a34a", bg: "rgba(22,163,74,0.1)" },
+        "en_gestion": { label: "Confirmar", color: "#2563eb", bg: "rgba(37,99,235,0.1)" },
+        "confirmado": { label: "Enviar", color: "#7c3aed", bg: "rgba(124,58,237,0.1)" },
+        "en_preparacion": { label: "Enviar", color: "#7c3aed", bg: "rgba(124,58,237,0.1)" },
+        "enviado": { label: "Tracking", color: "#0891b2", bg: "rgba(8,145,178,0.1)" },
+        "fallido": { label: "Reintentar", color: "#d97706", bg: "rgba(217,119,6,0.1)" },
+        "reintento": { label: "Reintentar", color: "#d97706", bg: "rgba(217,119,6,0.1)" },
+        "devolucion": { label: "Gestionar", color: "#ec4899", bg: "rgba(236,72,153,0.1)" },
+        "entregado": { label: "Cerrado", color: "#64748b", bg: "rgba(100,116,139,0.1)" },
+        "cancelado": { label: "Anulado", color: "#64748b", bg: "rgba(100,116,139,0.1)" },
+    };
+
+    const action = actions[pedido.state] ?? actions["nuevo"];
+
+    return (
+        <button
+            onClick={e => { e.stopPropagation(); console.log("Action", pedido); }}
+            style={{
+                background: action.bg, color: action.color,
+                border: `1px solid ${action.color}20`,
+                borderRadius: "6px", padding: "3px 8px",
+                fontSize: "11px", fontWeight: 700, cursor: "pointer",
+                whiteSpace: "nowrap",
+            }}
+        >
+            {action.label}
+        </button>
+    );
+}
+
+function RowActionsMenu({ pedido, onOpenDrawer }: { pedido: { state: string }, onOpenDrawer: () => void }) {
+    const [open, setOpen] = React.useState(false);
+
+    return (
+        <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setOpen(!open)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                <MoreHorizontal size={14} />
+            </button>
+            {open && (
+                <div style={{
+                    position: "absolute", right: 0, top: "100%", zIndex: 50,
+                    background: "white", border: "1px solid var(--border)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: "8px",
+                    padding: "4px", minWidth: "160px",
+                    display: "flex", flexDirection: "column", gap: "2px"
+                }}>
+                    <button onClick={() => onOpenDrawer()} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", borderRadius: "4px" }}>
+                        Ver detalles
+                    </button>
+                    <button onClick={() => console.log("Cancelando...", pedido)} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", color: "#ef4444", borderRadius: "4px" }}>
+                        ✕ Cancelar pedido
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function PedidosPage() {
     const { activeStoreId: storeId } = useStore();
     const [activeTab, setActiveTab] = useState('todos');
@@ -348,7 +425,7 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10045</span>
-                                        </td>
+                                    </td>
                                     <td>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
@@ -362,14 +439,16 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        {/** Tracking */}
+                                        <a href={getTrackingUrl("GLS", "BP-1234444")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>BP-1234444</a>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Juan Pérez</span>
-                                        <a href={`https://wa.me/${"34 600 000 000"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                        <a href={`https://wa.me/${"+34 600 000 000"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 000
                                         </a>
                                     </td>
@@ -385,17 +464,19 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.99</span>
-                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "inline-block", marginTop: "4px" }}>COD</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>🤖 Bot COD</span>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>🤖 Bot COD</span>
                                     </td>
                                     <td>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                            <span style={{ fontSize: "14px" }}>🟢</span>
-                                            <span style={{ fontSize: "11px", fontWeight: 600, color: "#0f172a" }}>98</span>
+
+                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
+                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>98</span>
                                         </div>
-                                        <a href="#" target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>BP-1234444</a>
+                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#16a34a", fontWeight: 600 }}>Sin riesgo</span>
+
                                     </td>
 
 
@@ -405,10 +486,9 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:42</span>
                                     </td>
-                                    <td>
-                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                            <MoreHorizontal size={14} />
-                                        </button>
+                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                                        <PrimaryActionButton pedido={{ state: "en_preparacion" }} />
+                                        <RowActionsMenu pedido={{ state: "en_preparacion" }} onOpenDrawer={() => { }} />
                                     </td>
                                 </tr>
                             )}
@@ -421,7 +501,7 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10046</span>
-                                        </td>
+                                    </td>
                                     <td>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
@@ -435,14 +515,15 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fce7f3", border: "1px solid #fbcfe8", color: "#ec4899" }}>Dropea</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fce7f3", border: "1px solid #fbcfe8", color: "#ec4899" }}>Dropea</span>
+                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>María Gómez</span>
-                                        <a href={`https://wa.me/${"34 600 000 001"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                        <a href={`https://wa.me/${"+34 600 000 001"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 001
                                         </a>
                                     </td>
@@ -458,17 +539,19 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€29.99</span>
-                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "inline-block", marginTop: "4px" }}>STRIPE</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>STRIPE</span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>👤 María G.</span>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
                                     <td>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                            <span style={{ fontSize: "14px" }}>🟢</span>
-                                            <span style={{ fontSize: "11px", fontWeight: 600, color: "#0f172a" }}>98</span>
+
+                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#eab308" }} />
+                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>65</span>
                                         </div>
-                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
+                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#d97706", fontWeight: 600 }}>Revisar</span>
+
                                     </td>
 
 
@@ -478,10 +561,9 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:35</span>
                                     </td>
-                                    <td>
-                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                            <MoreHorizontal size={14} />
-                                        </button>
+                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                                        <PrimaryActionButton pedido={{ state: "reintento" }} />
+                                        <RowActionsMenu pedido={{ state: "reintento" }} onOpenDrawer={() => { }} />
                                     </td>
                                 </tr>
                             )}
@@ -494,7 +576,7 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10047</span>
-                                        </td>
+                                    </td>
                                     <td>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
@@ -509,13 +591,14 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8" }}>—</span>
+                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8" }}>—</span>
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Carlos López</span>
-                                        <a href={`https://wa.me/${"34 600 000 002"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                        <a href={`https://wa.me/${"+34 600 000 002"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 002
                                         </a>
                                     </td>
@@ -531,17 +614,19 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€59.90</span>
-                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "inline-block", marginTop: "4px" }}>COD</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>⚠️ Sin gest.</span>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>⚠️ Sin gest.</span>
                                     </td>
                                     <td>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                            <span style={{ fontSize: "14px" }}>🟢</span>
-                                            <span style={{ fontSize: "11px", fontWeight: 600, color: "#0f172a" }}>98</span>
+
+                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#ef4444" }} />
+                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>15</span>
                                         </div>
-                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
+                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#ef4444", fontWeight: 600 }}>Alto riesgo</span>
+
                                     </td>
 
 
@@ -551,10 +636,9 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Ayer</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>18:20</span>
                                     </td>
-                                    <td>
-                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                            <MoreHorizontal size={14} />
-                                        </button>
+                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                                        <PrimaryActionButton pedido={{ state: "nuevo" }} />
+                                        <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
                                     </td>
                                 </tr>
                             )}
@@ -567,7 +651,7 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10048</span>
-                                        </td>
+                                    </td>
                                     <td>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
@@ -581,14 +665,16 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        {/** Tracking */}
+                                        <a href={getTrackingUrl("Correos Exp.", "PQ41029312")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>PQ41029312</a>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#bfdbfe", border: "1px solid #93c5fd", color: "#2563eb" }}>Correos Exp.</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#bfdbfe", border: "1px solid #93c5fd", color: "#2563eb" }}>Correos Exp.</span>
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Ana Martínez</span>
-                                        <a href={`https://wa.me/${"34 600 000 003"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                        <a href={`https://wa.me/${"+34 600 000 003"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 003
                                         </a>
                                     </td>
@@ -604,17 +690,19 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€89.00</span>
-                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "inline-block", marginTop: "4px" }}>TARJETA</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>👤 Sistema</span>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
                                     </td>
                                     <td>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                            <span style={{ fontSize: "14px" }}>🟢</span>
-                                            <span style={{ fontSize: "11px", fontWeight: 600, color: "#0f172a" }}>98</span>
+
+                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
+                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>99</span>
                                         </div>
-                                        <a href="#" target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>PQ41029312</a>
+                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#16a34a", fontWeight: 600 }}>Sin riesgo</span>
+
                                     </td>
 
 
@@ -632,10 +720,9 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 8d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>12:05</span>
                                     </td>
-                                    <td>
-                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                            <MoreHorizontal size={14} />
-                                        </button>
+                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                                        <PrimaryActionButton pedido={{ state: "enviado" }} />
+                                        <RowActionsMenu pedido={{ state: "enviado" }} onOpenDrawer={() => { }} />
                                     </td>
                                 </tr>
                             )}
@@ -648,7 +735,7 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10049</span>
-                                        </td>
+                                    </td>
                                     <td>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
@@ -662,14 +749,15 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Luis García</span>
-                                        <a href={`https://wa.me/${"34 600 000 004"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                        <a href={`https://wa.me/${"+34 600 000 004"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 004
                                         </a>
                                     </td>
@@ -685,17 +773,19 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€120.00</span>
-                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "inline-block", marginTop: "4px" }}>COD</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>👤 María G.</span>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
                                     <td>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                            <span style={{ fontSize: "14px" }}>🟢</span>
-                                            <span style={{ fontSize: "11px", fontWeight: 600, color: "#0f172a" }}>98</span>
+
+                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#eab308" }} />
+                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>33</span>
                                         </div>
-                                        <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
+                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#d97706", fontWeight: 600 }}>Revisar</span>
+
                                     </td>
 
 
@@ -720,10 +810,9 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 6d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>09:12</span>
                                     </td>
-                                    <td>
-                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                            <MoreHorizontal size={14} />
-                                        </button>
+                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                                        <PrimaryActionButton pedido={{ state: "fallido" }} />
+                                        <RowActionsMenu pedido={{ state: "fallido" }} onOpenDrawer={() => { }} />
                                     </td>
                                 </tr>
                             )}
@@ -736,7 +825,7 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10050</span>
-                                        </td>
+                                    </td>
                                     <td>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
@@ -750,14 +839,16 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        {/** Tracking */}
+                                        <a href={getTrackingUrl("Correos Exp.", "PQ41029888")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>PQ41029888</a>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#bfdbfe", border: "1px solid #93c5fd", color: "#2563eb" }}>Correos Exp.</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#bfdbfe", border: "1px solid #93c5fd", color: "#2563eb" }}>Correos Exp.</span>
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Marta Díaz</span>
-                                        <a href={`https://wa.me/${"34 600 000 005"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                        <a href={`https://wa.me/${"+34 600 000 005"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 005
                                         </a>
                                     </td>
@@ -773,17 +864,19 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.90</span>
-                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "inline-block", marginTop: "4px" }}>TARJETA</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>👤 María G.</span>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
                                     <td>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                            <span style={{ fontSize: "14px" }}>🟢</span>
-                                            <span style={{ fontSize: "11px", fontWeight: 600, color: "#0f172a" }}>98</span>
+
+                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
+                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>80</span>
                                         </div>
-                                        <a href="#" target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>PQ41029888</a>
+                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#16a34a", fontWeight: 600 }}>Sin riesgo</span>
+
                                     </td>
 
 
@@ -802,10 +895,9 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 2d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>14:15</span>
                                     </td>
-                                    <td>
-                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                            <MoreHorizontal size={14} />
-                                        </button>
+                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                                        <PrimaryActionButton pedido={{ state: "devolucion" }} />
+                                        <RowActionsMenu pedido={{ state: "devolucion" }} onOpenDrawer={() => { }} />
                                     </td>
                                 </tr>
                             )}
@@ -818,7 +910,7 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10041</span>
-                                        </td>
+                                    </td>
                                     <td>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
@@ -832,14 +924,16 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        {/** Tracking */}
+                                        <a href={getTrackingUrl("GLS", "GLS0012929")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>GLS0012929</a>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
+                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Javier Nieto</span>
-                                        <a href={`https://wa.me/${"34 600 000 006"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
+                                        <a href={`https://wa.me/${"+34 600 000 006"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 006
                                         </a>
                                     </td>
@@ -855,17 +949,19 @@ export default function PedidosPage() {
                                     </td>
                                     <td>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€199.00</span>
-                                        <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "inline-block", marginTop: "4px" }}>TARJETA</span>
+                                        <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>👤 Sistema</span>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
                                     </td>
                                     <td>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                            <span style={{ fontSize: "14px" }}>🟢</span>
-                                            <span style={{ fontSize: "11px", fontWeight: 600, color: "#0f172a" }}>98</span>
+
+                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
+                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>100</span>
                                         </div>
-                                        <a href="#" target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>GLS0012929</a>
+                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#16a34a", fontWeight: 600 }}>Sin riesgo</span>
+
                                     </td>
 
 
@@ -875,10 +971,9 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 12d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:00</span>
                                     </td>
-                                    <td>
-                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                            <MoreHorizontal size={14} />
-                                        </button>
+                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                                        <PrimaryActionButton pedido={{ state: "entregado" }} />
+                                        <RowActionsMenu pedido={{ state: "entregado" }} onOpenDrawer={() => { }} />
                                     </td>
                                 </tr>
                             )}
@@ -920,10 +1015,9 @@ export default function PedidosPage() {
                                             Abandonado
                                         </span>
                                     </td>
-                                    <td>
-                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                                            <MoreHorizontal size={14} />
-                                        </button>
+                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                                        <PrimaryActionButton pedido={{ state: "nuevo" }} />
+                                        <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
                                     </td>
                                 </tr>
                             )}

@@ -58,6 +58,7 @@ function ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green
 }
 
 function ColumnaAcciones({ pedido }: { pedido: { state: string } }) {
+    const [menuOpen, setMenuOpen] = React.useState(false);
     const handleEnviar = (p: { state: string }) => console.log("Enviando", p);
     const handleCancelar = (p: { state: string }) => console.log("Cancelando", p);
 
@@ -104,6 +105,18 @@ function ColumnaAcciones({ pedido }: { pedido: { state: string } }) {
                 }}
             >
                 Cancelar
+            </button>
+
+            {/* MENÚ OPCIONES */}
+            <button
+                onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+                style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    color: "#94a3b8", fontSize: "14px", padding: "2px 4px",
+                    alignSelf: "flex-end",
+                }}
+            >
+                ···
             </button>
 
         </div>
@@ -584,8 +597,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>🤖 Bot COD</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-<ColumnaRiesgo riesgo={{ status: "green", score: 98 }} />
-</td>
+                                        <ColumnaRiesgo riesgo={{ status: "green", score: 98 }} />
+                                    </td>
 
 
 
@@ -664,8 +677,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-<ColumnaRiesgo riesgo={{ status: "yellow", score: 65 }} />
-</td>
+                                        <ColumnaRiesgo riesgo={{ status: "yellow", score: 65 }} />
+                                    </td>
 
 
 
@@ -744,8 +757,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>⚠️ Sin gest.</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-<ColumnaRiesgo riesgo={{ status: "red", score: 15 }} />
-</td>
+                                        <ColumnaRiesgo riesgo={{ status: "red", score: 15 }} />
+                                    </td>
 
 
 
@@ -825,8 +838,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-<ColumnaRiesgo riesgo={{ status: "green", score: 99 }} />
-</td>
+                                        <ColumnaRiesgo riesgo={{ status: "green", score: 99 }} />
+                                    </td>
 
 
 
@@ -913,8 +926,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-<ColumnaRiesgo riesgo={{ status: "yellow", score: 33 }} />
-</td>
+                                        <ColumnaRiesgo riesgo={{ status: "yellow", score: 33 }} />
+                                    </td>
 
 
                                     {activeTab === 'incidencias' && (
@@ -1009,8 +1022,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-<ColumnaRiesgo riesgo={{ status: "green", score: 80 }} />
-</td>
+                                        <ColumnaRiesgo riesgo={{ status: "green", score: 80 }} />
+                                    </td>
 
 
                                     {activeTab === 'devoluciones' && (
@@ -1099,8 +1112,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-<ColumnaRiesgo riesgo={{ status: "green", score: 100 }} />
-</td>
+                                        <ColumnaRiesgo riesgo={{ status: "green", score: 100 }} />
+                                    </td>
 
 
 

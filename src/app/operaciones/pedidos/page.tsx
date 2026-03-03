@@ -37,9 +37,10 @@ function ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green
         <div style={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "flex-start",
+            alignItems: "center",
             justifyContent: "center",
             gap: "3px",
+            height: "100%",
         }}>
             {/* Línea 1: punto + número — siempre juntos */}
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -57,7 +58,7 @@ function ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green
             {/* Línea 2: etiqueta — alineada con el número, no con el punto */}
             <span style={{
                 fontSize: "11px", fontWeight: 600,
-                paddingLeft: "15px",
+                textAlign: "center",
                 lineHeight: 1,
                 color: riesgo.status === "red" ? "#ef4444"
                     : riesgo.status === "yellow" ? "#d97706" : "#16a34a"
@@ -552,7 +553,7 @@ export default function PedidosPage() {
                                         <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "13%" }}>Producto</th>
                                         <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "right", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Importe</th>
                                         <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "8%" }}>Gestor</th>
-                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Riesgo</th>
+                                        <th style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", whiteSpace: "nowrap", borderBottom: "2px solid #e2e8f0", background: "white", width: "7%" }}>Riesgo</th>
 
                                         {activeTab === 'incidencias' && (
                                             <>

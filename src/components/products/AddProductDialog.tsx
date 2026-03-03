@@ -85,6 +85,12 @@ export function AddProductDialog() {
     const [genDesc, setGenDesc] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    useEffect(() => {
+        const handleOpen = () => setOpen(true);
+        document.addEventListener('open-create-product-modal', handleOpen);
+        return () => document.removeEventListener('open-create-product-modal', handleOpen);
+    }, []);
+
     // ── Form fields ─────────────────────────────────────────
     const [title, setTitle] = useState('');
     const [sku, setSku] = useState('');
@@ -300,7 +306,7 @@ export function AddProductDialog() {
         setHandlingCost(''); setReturnRate('5'); setFulfillment('Manual'); setDeliveryRate('70'); setSku('');
         setLandingUrl(''); setImageUrl(''); setDescription('');
         setGoogleDocUrl(''); setForeplayUrl('');
-        setAdLibraryUrls(['']); setCompetitors([{ url: '', country: 'ES', price: '', analyzing: false, done: false }]);
+        setAdLibraryUrls(['']); setCompetitors([{ name: '', url: '', country: 'ES', price: '', analyzing: false, done: false }]);
         setAmazonLinks([{ url: '' }]); setOwnLandings([{ url: '' }]);
     };
 
@@ -413,46 +419,46 @@ export function AddProductDialog() {
 
                         {/* AMAZON REVIEWS */}
                         <Section icon={<Target className="w-4 h-4" />} title="Competidores & Inteligencia">
-            <p className="text-[9px] text-[var(--text-dim)]">Define competidores principales (Se crearán subcarpetas automáticas en Drive/Spy).</p>
-            {competitors.map((c, i) => (
-                <div key={i} className="space-y-2 p-3 border border-[var(--border)] rounded-lg bg-[var(--surface2)] relative">
-                    <div className="grid grid-cols-2 gap-2">
-                        <Input value={c.name} onChange={e => {
-                            const next = [...competitors];
-                            next[i].name = e.target.value;
-                            setCompetitors(next);
-                        }} placeholder="Nombre marca" className="h-8 text-[11px]" />
-                        <Input value={c.url} onChange={e => {
-                            const next = [...competitors];
-                            next[i].url = e.target.value;
-                            setCompetitors(next);
-                        }} placeholder="URL web (Shopify/Woo)" className="h-8 text-[11px]" />
-                        <Input value={c.urlAmazon || ''} onChange={e => {
-                            const next = [...competitors];
-                            next[i].urlAmazon = e.target.value;
-                            setCompetitors(next);
-                        }} placeholder="URL Amazon (opcional)" className="h-8 text-[11px]" />
-                        <Input value={c.urlMetaLibrary || ''} onChange={e => {
-                            const next = [...competitors];
-                            next[i].urlMetaLibrary = e.target.value;
-                            setCompetitors(next);
-                        }} placeholder="Meta Ad Library (opcional)" className="h-8 text-[11px]" />
-                    </div>
-                    {competitors.length > 1 && (
-                        <button type="button" onClick={() => setCompetitors(competitors.filter((_, j) => j !== i))}
-                            className="absolute -top-2 -right-2 p-1 bg-[var(--bg)] border border-[var(--border)] rounded-full text-[var(--text-dim)] hover:text-[var(--s-ko)] transition-colors">
-                            <Trash2 className="w-3 h-3" />
-                        </button>
-                    )}
-                </div>
-            ))}
-            <button type="button" onClick={() => setCompetitors([...competitors, { name: '', url: '', urlAmazon: '', urlMetaLibrary: '', urlTikTokLibrary: '', country: 'ES', price: '', analyzing: false, done: false }])}
-                className="text-[9px] font-black uppercase tracking-widest text-[var(--inv)] hover:brightness-110 flex items-center gap-1">
-                <Plus className="w-3 h-3" /> Añadir competidor
-            </button>
-        </Section>
-        
-        <Section icon={<ShoppingBag className="w-4 h-4" />} title="Amazon — Investigación de Mercado" accent="var(--ops)">
+                            <p className="text-[9px] text-[var(--text-dim)]">Define competidores principales (Se crearán subcarpetas automáticas en Drive/Spy).</p>
+                            {competitors.map((c, i) => (
+                                <div key={i} className="space-y-2 p-3 border border-[var(--border)] rounded-lg bg-[var(--surface2)] relative">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Input value={c.name} onChange={e => {
+                                            const next = [...competitors];
+                                            next[i].name = e.target.value;
+                                            setCompetitors(next);
+                                        }} placeholder="Nombre marca" className="h-8 text-[11px]" />
+                                        <Input value={c.url} onChange={e => {
+                                            const next = [...competitors];
+                                            next[i].url = e.target.value;
+                                            setCompetitors(next);
+                                        }} placeholder="URL web (Shopify/Woo)" className="h-8 text-[11px]" />
+                                        <Input value={c.urlAmazon || ''} onChange={e => {
+                                            const next = [...competitors];
+                                            next[i].urlAmazon = e.target.value;
+                                            setCompetitors(next);
+                                        }} placeholder="URL Amazon (opcional)" className="h-8 text-[11px]" />
+                                        <Input value={c.urlMetaLibrary || ''} onChange={e => {
+                                            const next = [...competitors];
+                                            next[i].urlMetaLibrary = e.target.value;
+                                            setCompetitors(next);
+                                        }} placeholder="Meta Ad Library (opcional)" className="h-8 text-[11px]" />
+                                    </div>
+                                    {competitors.length > 1 && (
+                                        <button type="button" onClick={() => setCompetitors(competitors.filter((_, j) => j !== i))}
+                                            className="absolute -top-2 -right-2 p-1 bg-[var(--bg)] border border-[var(--border)] rounded-full text-[var(--text-dim)] hover:text-[var(--s-ko)] transition-colors">
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            <button type="button" onClick={() => setCompetitors([...competitors, { name: '', url: '', urlAmazon: '', urlMetaLibrary: '', urlTikTokLibrary: '', country: 'ES', price: '', analyzing: false, done: false }])}
+                                className="text-[9px] font-black uppercase tracking-widest text-[var(--inv)] hover:brightness-110 flex items-center gap-1">
+                                <Plus className="w-3 h-3" /> Añadir competidor
+                            </button>
+                        </Section>
+
+                        <Section icon={<ShoppingBag className="w-4 h-4" />} title="Amazon — Investigación de Mercado" accent="var(--ops)">
                             <p className="text-[9px] text-[var(--text-dim)]">El agente extrae reviews, dolores, lenguaje y objeciones automáticamente.</p>
                             {amazonLinks.map((a, i) => (
                                 <div key={i} className="flex items-center gap-2">
@@ -510,7 +516,7 @@ export function AddProductDialog() {
                                     placeholder="https://docs.google.com/document/d/..." className="h-9 text-[11px]" />
                             </div>
                         </Section>
-                        
+
                         <Section icon={<Euro className="w-4 h-4" />} title="Unit Economics & Breakeven Auto">
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
@@ -621,7 +627,7 @@ export function AddProductDialog() {
                                 </div>
                             ))}
                             {competitors.length < 10 && (
-                                <button type="button" onClick={() => setCompetitors([...competitors, { url: '', country: 'ES', price: '', analyzing: false, done: false }])}
+                                <button type="button" onClick={() => setCompetitors([...competitors, { name: '', url: '', country: 'ES', price: '', analyzing: false, done: false }])}
                                     className="text-[9px] font-black uppercase tracking-widest text-[var(--crm)] hover:brightness-110 flex items-center gap-1">
                                     <Plus className="w-3 h-3" /> Añadir competidor
                                 </button>

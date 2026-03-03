@@ -37,8 +37,25 @@ export default function InvestigacionLayout({ children }: { children: React.Reac
                     <p className="text-[11px] text-[var(--text-muted)] mt-2 max-w-[280px] leading-relaxed">
                         Selecciona una tienda y un producto específico en la barra superior para iniciar o visualizar el ciclo de investigación.
                     </p>
-                    <div className="mt-8 flex items-center gap-2 text-[10px] font-black text-[var(--inv)] uppercase tracking-widest animate-pulse">
-                        ↑ Pulsa el selector "Producto" arriba
+                    <div className="mt-8 flex flex-col items-center gap-2">
+                        <div className="flex items-center gap-2 text-[10px] font-black text-[var(--inv)] uppercase tracking-widest animate-pulse">
+                            ↑ Pulsa el selector &quot;Producto&quot; arriba
+                        </div>
+                        <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                            <span style={{ fontSize: "11px", color: "#94a3b8", letterSpacing: "0.05em" }}>O BIEN</span>
+                            <button
+                                onClick={() => document.dispatchEvent(new CustomEvent('open-create-product-modal'))}
+                                style={{
+                                    background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                                    color: "white", border: "none", borderRadius: "12px",
+                                    padding: "12px 32px", fontSize: "14px", fontWeight: 700,
+                                    cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.35)",
+                                    letterSpacing: "0.02em"
+                                }}
+                            >
+                                + Crear nuevo producto
+                            </button>
+                        </div>
                     </div>
                 </div>
             ) : (

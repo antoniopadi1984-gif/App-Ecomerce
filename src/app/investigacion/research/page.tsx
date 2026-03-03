@@ -106,15 +106,16 @@ export default function ResearchCorePage() {
                     </p>
                     <div className="flex flex-col items-center gap-3">
                         <AddProductDialog />
-                        <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>o</span>
+                        <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                            <span style={{ fontSize: "11px", color: "#94a3b8", letterSpacing: "0.05em" }}>O BIEN</span>
                             <button
                                 onClick={() => document.dispatchEvent(new CustomEvent('open-create-product-modal'))}
                                 style={{
-                                    background: "#7c3aed", color: "white", border: "none",
-                                    borderRadius: "10px", padding: "10px 24px",
-                                    fontSize: "13px", fontWeight: 700, cursor: "pointer",
-                                    boxShadow: "0 4px 12px rgba(124,58,237,0.3)"
+                                    background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                                    color: "white", border: "none", borderRadius: "12px",
+                                    padding: "12px 32px", fontSize: "14px", fontWeight: 700,
+                                    cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.35)",
+                                    letterSpacing: "0.02em"
                                 }}
                             >
                                 + Crear nuevo producto
@@ -231,17 +232,17 @@ export default function ResearchCorePage() {
                     return (
                         <div key={step.id}
                             className={`ds-card-padded border-l-4 transition-all duration-300 relative overflow-hidden flex flex-col ${isError ? 'border-l-[var(--s-ko)] bg-[var(--s-ko)]/5 border-t border-r border-b' :
-                                    isCompleted ? 'border-l-[var(--s-ok)] bg-[var(--s-ok)]/5' :
-                                        isActive ? 'border-l-[var(--inv)] border-t border-r border-b border-[var(--inv)] shadow-[0_4px_20px_rgba(139,92,246,0.15)] scale-[1.02] z-10' :
-                                            'border-l-[var(--border-high)] bg-[var(--surface)] opacity-50 grayscale-[50%]'
+                                isCompleted ? 'border-l-[var(--s-ok)] bg-[var(--s-ok)]/5' :
+                                    isActive ? 'border-l-[var(--inv)] border-t border-r border-b border-[var(--inv)] shadow-[0_4px_20px_rgba(139,92,246,0.15)] scale-[1.02] z-10' :
+                                        'border-l-[var(--border-high)] bg-[var(--surface)] opacity-50 grayscale-[50%]'
                                 }`}
                         >
                             {isActive && <div className="absolute top-0 left-0 w-full h-[2px] bg-[var(--inv)] animate-pulse" />}
                             <div className="flex justify-between items-start mb-2">
                                 <div className={`p-1.5 rounded-md ${isError ? 'bg-[var(--s-ko)]/20 text-[var(--s-ko)]' :
-                                        isCompleted ? 'bg-[var(--s-ok)]/20 text-[var(--s-ok)]' :
-                                            isActive ? 'bg-[var(--inv)]/20 text-[var(--inv)]' :
-                                                'bg-[var(--surface2)] text-[var(--text-dim)]'
+                                    isCompleted ? 'bg-[var(--s-ok)]/20 text-[var(--s-ok)]' :
+                                        isActive ? 'bg-[var(--inv)]/20 text-[var(--inv)]' :
+                                            'bg-[var(--surface2)] text-[var(--text-dim)]'
                                     }`}>
                                     <step.icon size={16} />
                                 </div>

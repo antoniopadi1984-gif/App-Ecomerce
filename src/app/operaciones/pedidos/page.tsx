@@ -351,52 +351,52 @@ function OrderDrawer({ pedido, onClose }: { pedido: { ref?: string; state?: stri
                 <div className="ds-scrollbar" style={{ flex: 1, padding: "32px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "32px", background: "white" }}>
 
                     {activeTab === "cliente" && (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
-        <DrawerSection title="Datos del cliente">
-          <DrawerRow label="Nombre"     value={pedido?.cliente || "Juan Pérez"} />
-          <DrawerRow label="Teléfono"   value={
-            <a href={`https://wa.me/${(pedido?.telefono || "+34 600 000 000").replace(/\D/g,"")}`}
-               target="_blank" rel="noreferrer" style={{ color: "#25d366", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
-              💬 {pedido?.telefono || "+34 600 000 000"}
-            </a>
-          } />
-          <DrawerRow label="Email"      value={pedido?.email ?? "juan.perez@email.com"} />
-        </DrawerSection>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                            <DrawerSection title="Datos del cliente">
+                                <DrawerRow label="Nombre" value={pedido?.cliente || "Juan Pérez"} />
+                                <DrawerRow label="Teléfono" value={
+                                    <a href={`https://wa.me/${(pedido?.telefono || "+34 600 000 000").replace(/\D/g, "")}`}
+                                        target="_blank" rel="noreferrer" style={{ color: "#25d366", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
+                                        💬 {pedido?.telefono || "+34 600 000 000"}
+                                    </a>
+                                } />
+                                <DrawerRow label="Email" value={pedido?.email ?? "juan.perez@email.com"} />
+                            </DrawerSection>
 
-        <DrawerSection title="Dirección de envío">
-          <DrawerRow label="Dirección"  value={pedido?.shipping_address_1 || "Calle Principal 123, Piso 4B"} />
-          <DrawerRow label="CP"         value={pedido?.shipping_zip || "28001"} />
-          <DrawerRow label="Ciudad"     value={pedido?.shipping_city || "Madrid"} />
-          <DrawerRow label="Provincia"  value={pedido?.shipping_province || "Comunidad de Madrid"} />
-          <DrawerRow label="País"       value={pedido?.shipping_country || "España"} />
-          {/* Enlace Google Maps */}
-          <a href={`https://www.google.com/maps/search/${encodeURIComponent(
-            `${pedido?.shipping_address_1 || "Calle Principal 123"} ${pedido?.shipping_zip || "28001"} ${pedido?.shipping_city || "Madrid"}`
-          )}`} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: "#3b82f6", display: "block", marginTop: "6px", fontWeight: 600 }}>
-            📍 Ver en Google Maps
-          </a>
-        </DrawerSection>
+                            <DrawerSection title="Dirección de envío">
+                                <DrawerRow label="Dirección" value={pedido?.shipping_address_1 || "Calle Principal 123, Piso 4B"} />
+                                <DrawerRow label="CP" value={pedido?.shipping_zip || "28001"} />
+                                <DrawerRow label="Ciudad" value={pedido?.shipping_city || "Madrid"} />
+                                <DrawerRow label="Provincia" value={pedido?.shipping_province || "Comunidad de Madrid"} />
+                                <DrawerRow label="País" value={pedido?.shipping_country || "España"} />
+                                {/* Enlace Google Maps */}
+                                <a href={`https://www.google.com/maps/search/${encodeURIComponent(
+                                    `${pedido?.shipping_address_1 || "Calle Principal 123"} ${pedido?.shipping_zip || "28001"} ${pedido?.shipping_city || "Madrid"}`
+                                )}`} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: "#3b82f6", display: "block", marginTop: "6px", fontWeight: 600 }}>
+                                    📍 Ver en Google Maps
+                                </a>
+                            </DrawerSection>
 
-        <DrawerSection title="Pedido">
-          <DrawerRow label="Producto"   value={`${pedido?.producto || "Zapatillas Deportivas X"} · Qty: ${pedido?.cantidad || 1}`} />
-          <DrawerRow label="Importe"    value={`€${pedido?.importe || "89.99"}`} />
-          <DrawerRow label="Pago"       value={pedido?.pago || "Stripe"} />
-          <DrawerRow label="Descuento"  value={pedido?.descuento ? `€${pedido?.descuento}` : "—"} />
-          <DrawerRow label="Fulfillment" value={<FulfillmentBadge type={pedido?.fulfillment || "beeping"} />} />
-          <DrawerRow label="Transportista" value={<CarrierBadge type={pedido?.carrier || "GLS"} />} />
-          <DrawerRow label="Tracking"   value={
-            (pedido?.trackingNumber || "GLS0012929")
-              ? <a href={getTrackingUrl(pedido?.carrier || "GLS", pedido?.trackingNumber || "GLS0012929")}
-                   target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontWeight: 700 }}>
-                  {pedido?.trackingNumber || "GLS0012929"}
-                </a>
-              : "Sin tracking"
-          } />
-        </DrawerSection>
-    </div>
-)}
+                            <DrawerSection title="Pedido">
+                                <DrawerRow label="Producto" value={`${pedido?.producto || "Zapatillas Deportivas X"} · Qty: ${pedido?.cantidad || 1}`} />
+                                <DrawerRow label="Importe" value={`€${pedido?.importe || "89.99"}`} />
+                                <DrawerRow label="Pago" value={pedido?.pago || "Stripe"} />
+                                <DrawerRow label="Descuento" value={pedido?.descuento ? `€${pedido?.descuento}` : "—"} />
+                                <DrawerRow label="Fulfillment" value={<FulfillmentBadge type={pedido?.fulfillment || "beeping"} />} />
+                                <DrawerRow label="Transportista" value={<CarrierBadge type={pedido?.carrier || "GLS"} />} />
+                                <DrawerRow label="Tracking" value={
+                                    (pedido?.trackingNumber || "GLS0012929")
+                                        ? <a href={getTrackingUrl(pedido?.carrier || "GLS", pedido?.trackingNumber || "GLS0012929")}
+                                            target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontWeight: 700 }}>
+                                            {pedido?.trackingNumber || "GLS0012929"}
+                                        </a>
+                                        : "Sin tracking"
+                                } />
+                            </DrawerSection>
+                        </div>
+                    )}
 
-{activeTab === "timeline" && (
+                    {activeTab === "timeline" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
                             <div className="ds-card" style={{ padding: "24px", border: "1px solid #f1f5f9" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingLeft: "8px" }}>
@@ -421,26 +421,66 @@ function OrderDrawer({ pedido, onClose }: { pedido: { ref?: string; state?: stri
 
                     {activeTab === "riesgo" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
-                            <div className="ds-card" style={{ padding: "24px", background: "#fff1f2", border: "1px solid #ffe4e6", display: "flex", flexDirection: "column", gap: "16px" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#e11d48" }}>
-                                    <AlertTriangle size={20} />
-                                    <h3 style={{ fontSize: "16px", fontWeight: 800 }}>Análisis de Fraude (Score: 15/100)</h3>
+
+                            <DrawerSection title="Score de riesgo">
+                                {/* Barra visual de score */}
+                                <div style={{ marginBottom: "12px" }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                                        <span style={{ fontSize: "12px", color: "#64748b" }}>Score</span>
+                                        <span style={{
+                                            fontSize: "16px", fontWeight: 900, color:
+                                                (pedido?.riesgo?.score || 15) >= 80 ? "#16a34a" :
+                                                    (pedido?.riesgo?.score || 15) >= 50 ? "#d97706" : "#ef4444"
+                                        }}>{(pedido?.riesgo?.score || 15)}/100</span>
+                                    </div>
+                                    <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "999px" }}>
+                                        <div style={{
+                                            height: "6px", borderRadius: "999px",
+                                            width: `${(pedido?.riesgo?.score || 15)}%`,
+                                            background: (pedido?.riesgo?.score || 15) >= 80 ? "#16a34a" :
+                                                (pedido?.riesgo?.score || 15) >= 50 ? "#f59e0b" : "#ef4444",
+                                            transition: "width 0.4s ease"
+                                        }} />
+                                    </div>
                                 </div>
-                                <p style={{ fontSize: "14px", color: "#be123c", lineHeight: "1.6", fontWeight: 500 }}>
-                                    Se han detectado irregularidades graves en el perfil del cliente. Hay un historial previo de devoluciones y discrepancias en la huella digital.
-                                </p>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
-                                    <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "13px", color: "#be123c" }}>
-                                        <span style={{ fontWeight: 800 }}>•</span> El cliente ha realizado 3 devoluciones en los últimos 6 meses.
+                            </DrawerSection>
+
+                            <DrawerSection title="Factores de riesgo">
+                                {/* Cada factor con su peso */}
+                                {(pedido?.riesgo?.factors || [
+                                    { key: "cp_zona", label: "Zona CP 18008", risk: "high", value: "Alto riesgo" },
+                                    { key: "telefono", label: "Teléfono válido", risk: "low", value: "OK" },
+                                    { key: "historial", label: "Devoluciones previas", risk: "medium", value: "1 devolución" },
+                                    { key: "ip", label: "IP geolocalizada", risk: "low", value: "Madrid, ES" },
+                                    { key: "nombre", label: "Nombre real detectado", risk: "low", value: "OK" },
+                                    { key: "patron_fraude", label: "Patrón de fraude", risk: "low", value: "Sin alertas" }
+                                ]).map((f: { key: string; label: string; risk: string; value: string }) => (
+                                    <div key={f.key} style={{
+                                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                                        padding: "6px 0", borderBottom: "1px solid #f1f5f9"
+                                    }}>
+                                        <span style={{ fontSize: "12px", color: "#0f172a" }}>{f.label}</span>
+                                        <span style={{
+                                            fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px",
+                                            background: f.risk === "high" ? "rgba(239,68,68,0.1)" :
+                                                f.risk === "medium" ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)",
+                                            color: f.risk === "high" ? "#ef4444" :
+                                                f.risk === "medium" ? "#d97706" : "#16a34a"
+                                        }}>
+                                            {f.value}
+                                        </span>
                                     </div>
-                                    <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "13px", color: "#be123c" }}>
-                                        <span style={{ fontWeight: 800 }}>•</span> La IP de compra no coincide con la zona de entrega geográfica.
-                                    </div>
-                                    <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "13px", color: "#be123c" }}>
-                                        <span style={{ fontWeight: 800 }}>•</span> El teléfono se identifica como terminal VoIP de alto riesgo.
-                                    </div>
-                                </div>
-                            </div>
+                                ))}
+                            </DrawerSection>
+
+                            <DrawerSection title="IP y geolocalización">
+                                <DrawerRow label="IP" value={pedido?.ipAddress ?? "92.176.43.12"} />
+                                <DrawerRow label="Ciudad" value={pedido?.geoCity ?? "Madrid"} />
+                                <DrawerRow label="País" value={pedido?.geoCountry ?? "ES"} />
+                                <DrawerRow label="ISP" value={pedido?.geoISP ?? "Telefonica de Espana"} />
+                                <DrawerRow label="VPN/Proxy" value={pedido?.isProxy ? "⚠️ Detectado" : "No detectado"} />
+                            </DrawerSection>
+
                         </div>
                     )}
 

@@ -1,15 +1,21 @@
 function extractTikTokAds() {
-    // TikTok specific selectors for the CC Library
-    const ads = document.querySelectorAll('.cc-ad-card, .video-card');
+    const cards = document.querySelectorAll('.creative-card, [class*="adCard"]');
 
-    return Array.from(ads).map(card => {
+    return Array.from(cards).map(card => {
         const videoEl = card.querySelector('video');
-        const title = card.querySelector('.title, .ad-title')?.innerText;
+        const imageEl = card.querySelector('img');
+
+        // TikTok a veces sirve webm
+        const sources = Array.from(videoEl?.querySelectorAll('source') ?? []);
+        const webmUrl = sources.find(s => s.type === "video/webm")?.src;
+        const mp4Url = sources.find(s => s.type === "video/mp4")?.src;
 
         return {
-            type: "video",
-            videoUrl: videoEl?.src,
-            title,
+            type: videoEl ? "video" : "image",
+            videoUrl: mp4Url ?? webmUrl ?? videoEl?.src,
+            webmUrl: webmUrl,
+            imageUrl: imageEl?.src,
+            format: webmUrl ? "webm" : (videoEl ? "mp4" : "image"),
             source: "tiktok"
         };
     });

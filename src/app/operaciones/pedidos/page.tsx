@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Search, Filter, MapPin, User, AlertTriangle } from 'lucide-react';
 import { ORDER_STATES } from '@/lib/orderStates';
+import { useGestores } from '@/hooks/useGestores';
 
 const TABS = [
     { id: 'todos', label: 'Todos' },
@@ -1184,15 +1185,8 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
 export default function PedidosPage() {
     const [activeTab, setActiveTab] = useState('todos');
     const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);
-    const [gestoresLive, setGestoresLive] = useState<Gestor[]>(GESTORES_LIST);
-
-    // Cargar gestores desde la DB — single source of truth para todos los módulos
-    useEffect(() => {
-        fetch("/api/equipo/gestores-activos")
-            .then(r => r.json())
-            .then(data => { if (data.gestores) setGestoresLive(data.gestores); })
-            .catch(() => { /* fallback silencioso al mock GESTORES_LIST */ });
-    }, []);
+    // Gestores — hook compartido con caché global (un solo fetch para toda la app)
+    const gestoresLive = useGestores();
 
     const pedidos = [
         ...Array(42).fill({ state: 'nuevo' }),

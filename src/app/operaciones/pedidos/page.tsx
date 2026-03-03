@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { RefreshCw, Search, Filter, X, MapPin, User, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Search, Filter, MapPin, User, AlertTriangle } from 'lucide-react';
 import { ORDER_STATES } from '@/lib/orderStates';
 
 const TABS = [
@@ -43,6 +43,31 @@ function FulfillmentBadge({ type }: { type: string }) {
             {b.label}
         </span>
     );
+}
+
+
+function StateBadge({ state }: { state: string }) {
+    // @ts-expect-error - Dictionary indexing safe
+    const s = ORDER_STATES[state] || ORDER_STATES.nuevo;
+    return (
+        <div style={{
+            display: "inline-flex", alignItems: "center", gap: "4px",
+            padding: "4px 8px", borderRadius: "6px",
+            background: s.bg, color: s.color,
+            fontSize: "10px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase"
+        }}>
+            <span style={{ fontSize: "6px" }}>{s.icon}</span>
+            {s.label}
+        </div>
+    );
+}
+
+function formatDate(_date?: string) {
+    return "12 Oct 2023";
+}
+
+function formatTime(_date?: string) {
+    return "14:32";
 }
 
 function getTrackingUrl(carrier: string, trackingNumber: string): string {
@@ -213,7 +238,7 @@ const DRAWER_TABS = [
     { key: "notas", label: "Notas", icon: "📝" }
 ];
 
-function OrderDrawer({ pedido, onClose }: { pedido: { ref: string } | null, onClose: () => void }) {
+function OrderDrawer({ pedido, onClose }: { pedido: { ref?: string; state?: string; cliente?: string; telefono?: string; createdAt?: string } | null, onClose: () => void }) {
     const [activeTab, setActiveTab] = React.useState("cliente");
 
     if (!pedido) return null;
@@ -231,45 +256,56 @@ function OrderDrawer({ pedido, onClose }: { pedido: { ref: string } | null, onCl
                     animation: "slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
                 }}
             >
-                {/* Header Actions & Info */}
-                <div style={{ padding: "24px 32px 0 32px", background: "#f8fafc", flexShrink: 0 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
-                        <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
-                                <h2 style={{ fontSize: "22px", fontWeight: 900, color: "var(--color-text-primary)", letterSpacing: "-0.5px" }}>#{pedido.ref || "10045"}</h2>
-                                <span style={{ fontSize: "11px", fontWeight: 800, padding: "4px 10px", borderRadius: "20px", background: "#dcfce7", color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.5px" }}>Pagado</span>
-                            </div>
-                            <p style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 500 }}>12 Oct 2023, 14:32</p>
+
+                <div style={{
+                    position: "sticky", top: 0, zIndex: 10,
+                    background: "white", borderBottom: "1px solid #e2e8f0",
+                    padding: "16px 20px 0",
+                }}>
+                    {/* Fila 1: ref + estado + cerrar */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <span style={{ fontSize: "18px", fontWeight: 900, color: "#3b82f6" }}>#{pedido.ref || "10045"}</span>
+                            <StateBadge state={pedido.state || 'nuevo'} />
                         </div>
-                        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                            <button style={{ padding: "8px 16px", borderRadius: "8px", background: "white", border: "1px solid #e2e8f0", fontSize: "13px", fontWeight: 700, color: "#0f172a", cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-                                Enviar a Beeping
-                            </button>
-                            <button onClick={onClose} style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-dim)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-                                <X size={18} />
-                            </button>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                            {/* Botón Enviar */}
+                            <button style={{
+                                background: "rgba(22,163,74,0.1)", color: "#16a34a",
+                                border: "1px solid rgba(22,163,74,0.3)", borderRadius: "7px",
+                                padding: "5px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer"
+                            }}>Enviar</button>
+                            {/* Botón Cancelar */}
+                            <button style={{
+                                background: "rgba(239,68,68,0.08)", color: "#ef4444",
+                                border: "1px solid rgba(239,68,68,0.2)", borderRadius: "7px",
+                                padding: "5px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer"
+                            }}>Cancelar</button>
+                            {/* Cerrar */}
+                            <button onClick={onClose} style={{
+                                background: "#f1f5f9", border: "none", borderRadius: "7px",
+                                width: "30px", height: "30px", cursor: "pointer", fontSize: "14px",
+                                display: "flex", alignItems: "center", justifyContent: "center"
+                            }}>✕</button>
                         </div>
                     </div>
 
-                    {/* Tabs Navigation */}
-                    <div style={{ display: "flex", gap: "24px", borderBottom: "1px solid #e2e8f0", overflowX: "auto" }} className="ds-scrollbar-hide">
+                    {/* Fila 2: cliente + fecha rápida */}
+                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "12px" }}>
+                        {pedido.cliente || "Juan Pérez"} · {pedido.telefono || "+34 600 000 000"} · Entrada: {formatDate(pedido.createdAt)} {formatTime(pedido.createdAt)}
+                    </div>
+
+                    {/* Tabs */}
+                    <div style={{ display: "flex", gap: "2px", overflowX: "auto" }} className="ds-scrollbar-hide">
                         {DRAWER_TABS.map(tab => (
-                            <button
-                                key={tab.key}
-                                onClick={() => setActiveTab(tab.key)}
-                                style={{
-                                    display: "flex", alignItems: "center", gap: "6px",
-                                    padding: "12px 0",
-                                    background: "none", border: "none",
-                                    borderBottom: `3px solid ${activeTab === tab.key ? "#2563eb" : "transparent"}`,
-                                    fontSize: "13px", fontWeight: activeTab === tab.key ? 800 : 600,
-                                    color: activeTab === tab.key ? "#2563eb" : "#64748b",
-                                    cursor: "pointer", transition: "all 0.1s",
-                                    whiteSpace: "nowrap"
-                                }}
-                            >
-                                <span style={{ fontSize: "14px", opacity: activeTab === tab.key ? 1 : 0.7 }}>{tab.icon}</span>
-                                {tab.label}
+                            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+                                padding: "7px 12px", fontSize: "11px", fontWeight: 600,
+                                border: "none", background: "none", cursor: "pointer",
+                                borderBottom: activeTab === tab.key ? "2px solid #3b82f6" : "2px solid transparent",
+                                color: activeTab === tab.key ? "#3b82f6" : "#64748b",
+                                whiteSpace: "nowrap",
+                            }}>
+                                {tab.icon} {tab.label}
                             </button>
                         ))}
                     </div>

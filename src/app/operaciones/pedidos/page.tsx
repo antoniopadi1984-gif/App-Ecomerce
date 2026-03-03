@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store/store-context';
-import { RefreshCw, Search, Filter, MoreHorizontal } from 'lucide-react';
+import { RefreshCw, Search, Filter, MoreHorizontal, X, MapPin, User, Tag, Clock, AlertTriangle } from 'lucide-react';
 import { ORDER_STATES, OrderState } from '@/lib/orderStates';
 
 const ACTIONS_BY_STATE: Record<OrderState, string[]> = {
@@ -117,9 +117,131 @@ function RowActionsMenu({ pedido, onOpenDrawer }: { pedido: { state: string }, o
     );
 }
 
+
+function OrderDrawer({ pedido, onClose }: { pedido: { ref: string } | null, onClose: () => void }) {
+    if (!pedido) return null;
+    return (
+        <>
+            <div
+                onClick={onClose}
+                style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(2px)", zIndex: 100, animation: "fade-in 0.2s ease-out" }}
+            />
+            <div
+                style={{
+                    position: "fixed", right: 0, top: 0, bottom: 0, width: "33vw", minWidth: "400px", maxWidth: "480px",
+                    background: "white", zIndex: 101, boxShadow: "-8px 0 24px rgba(0,0,0,0.1)",
+                    display: "flex", flexDirection: "column",
+                    animation: "slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+                }}
+            >
+                {/* Header */}
+                <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                    <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <h2 style={{ fontSize: "18px", fontWeight: 800, color: "var(--color-text-primary)" }}>#{pedido.ref || "10045"}</h2>
+                            <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "20px", background: "#dcfce7", color: "#16a34a" }}>Pagado</span>
+                        </div>
+                        <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>12 Oct 2023, 14:32</p>
+                    </div>
+                    <button onClick={onClose} style={{ background: "white", border: "1px solid var(--border)", borderRadius: "8px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-dim)" }}>
+                        <X size={16} />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="ds-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}>
+
+                    {/* Riesgo */}
+                    <div className="ds-card" style={{ padding: "16px", background: "#fff1f2", border: "1px solid #ffe4e6", display: "flex", flexDirection: "column", gap: "12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#e11d48" }}>
+                            <AlertTriangle size={16} />
+                            <h3 style={{ fontSize: "13px", fontWeight: 800 }}>Análisis de Fraude (Score: 15/100)</h3>
+                        </div>
+                        <p style={{ fontSize: "12px", color: "#be123c", lineHeight: "1.5" }}>
+                            El cliente ha realizado 3 devoluciones en los últimos 6 meses. La IP de compra no coincide con la zona de entrega y el teléfono es VoIP.
+                        </p>
+                    </div>
+
+                    {/* Cliente & Dirección */}
+                    <div>
+                        <h3 style={{ fontSize: "11px", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>Cliente & Dirección</h3>
+                        <div className="ds-card" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+                                    <User size={16} />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>Juan Pérez</p>
+                                    <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>juan.perez@email.com · +34 600 000 000</p>
+                                </div>
+                            </div>
+                            <hr style={{ border: "none", borderTop: "1px dashed var(--border)" }} />
+                            <div style={{ display: "flex", gap: "12px" }}>
+                                <div style={{ color: "#64748b", marginTop: "2px" }}><MapPin size={16} /></div>
+                                <div>
+                                    <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>Calle Principal 123, Piso 4B</p>
+                                    <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>28001 Madrid, Comunidad de Madrid, España</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* UTMs */}
+                    <div>
+                        <h3 style={{ fontSize: "11px", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>Atribución UTM</h3>
+                        <div className="ds-card" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Source:</span>
+                                <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)" }}>ig_story</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Campaign:</span>
+                                <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)" }}>promo_verano_fb</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Medium:</span>
+                                <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)" }}>social_paid</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Timeline */}
+                    <div>
+                        <h3 style={{ fontSize: "11px", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>Timeline</h3>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingLeft: "8px" }}>
+                            {[
+                                { title: "Pedido creado en Shopify", time: "Hoy, 10:42", detail: "Referencia #10045" },
+                                { title: "Dropea: Pago procesado", time: "Hoy, 10:45", detail: "Stripe CH_12932" },
+                                { title: "Beeping: Etiqueta generada", time: "Hoy, 11:30", detail: "GLS 00012929" },
+                            ].map((evt, i) => (
+                                <div key={i} style={{ display: "flex", gap: "12px", position: "relative" }}>
+                                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#3b82f6", marginTop: "4px", zIndex: 2 }} />
+                                    {i < 2 && <div style={{ position: "absolute", left: "3px", top: "12px", bottom: "-12px", width: "2px", background: "var(--border)" }} />}
+                                    <div>
+                                        <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>{evt.title}</p>
+                                        <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>{evt.time} · {evt.detail}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Notas */}
+                    <div>
+                        <h3 style={{ fontSize: "11px", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>Notas del Pedido</h3>
+                        <textarea className="ds-input" placeholder="Añadir nota interna..." style={{ width: "100%", height: "80px", resize: "none" }} />
+                        <button className="ds-btn" style={{ background: "var(--color-primary)", color: "white", marginTop: "8px", width: "100%" }}>Guardar Nota</button>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}
+
 export default function PedidosPage() {
     const { activeStoreId: storeId } = useStore();
     const [activeTab, setActiveTab] = useState('todos');
+    const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);
 
     const pedidos = [
         ...Array(42).fill({ state: 'nuevo' }),
@@ -352,7 +474,7 @@ export default function PedidosPage() {
                     <table className="ds-table ds-compact-table" style={{ borderTop: "none" }}>
                         <thead>
                             <tr>
-                                <th style={{ width: "40px", padding: "12px" }}>
+                                <th style={{ width: "36px", padding: "12px" }}>
                                     <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                 </th>
                                 {activeTab === 'carritos-abandonados' ? (
@@ -368,27 +490,27 @@ export default function PedidosPage() {
                                         <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Dispositivo</th>
                                         <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Abandono Hace</th>
                                         <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Estado</th>
-                                        <th style={{ color: "var(--color-text-secondary)", width: "40px", textAlign: "center" }}></th>
+                                        <th style={{ color: "var(--color-text-secondary)", width: "95px", textAlign: "center" }}></th>
                                     </>
                                 ) : activeTab === 'borradores' ? (
                                     <>
                                         <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>ID</th>
                                         <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Cliente</th>
                                         <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Últ. Actualización</th>
-                                        <th style={{ color: "var(--color-text-secondary)", width: "40px", textAlign: "center" }}></th>
+                                        <th style={{ color: "var(--color-text-secondary)", width: "95px", textAlign: "center" }}></th>
                                     </>
                                 ) : (
                                     <>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "80px" }}>Pedido</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "110px" }}>Estado</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "95px" }}>Fulfillment</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "105px" }}>Transportista</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "145px" }}>Cliente</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "90px" }}>CP / Zona</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "155px" }}>Producto</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right", width: "90px" }}>Importe</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "105px" }}>Gestor</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "100px" }}>Riesgo</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "75px" }}>Pedido</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "105px" }}>Estado</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "90px" }}>Fulfillment</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "75px" }}>Transportista</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "135px" }}>Cliente</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "85px" }}>CP / Zona</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "150px" }}>Producto</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right", width: "80px" }}>Importe</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "95px" }}>Gestor</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "85px" }}>Riesgo</th>
 
                                         {activeTab === 'incidencias' && (
                                             <>
@@ -409,8 +531,8 @@ export default function PedidosPage() {
                                         )}
 
                                         {activeTab === 'en-transito' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días</th>}
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "80px" }}>Entrada</th>
-                                        <th style={{ color: "var(--color-text-secondary)", width: "40px", textAlign: "center" }}></th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "75px" }}>Entrada</th>
+                                        <th style={{ color: "var(--color-text-secondary)", width: "95px", textAlign: "center" }}></th>
                                     </>
                                 )}
                             </tr>
@@ -419,7 +541,7 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10045 */}
                             {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
-                                <tr>
+                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
                                     <td style={{ padding: "12px", minHeight: "56px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                     </td>
@@ -495,7 +617,7 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10046 */}
                             {activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
-                                <tr>
+                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
                                     <td style={{ padding: "12px", minHeight: "56px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                     </td>
@@ -570,7 +692,7 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10047 */}
                             {activeTab === 'todos' || activeTab === 'por-gestionar' && (
-                                <tr>
+                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
                                     <td style={{ padding: "12px", minHeight: "56px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                     </td>
@@ -645,7 +767,7 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10048 */}
                             {activeTab === 'todos' || activeTab === 'en-transito' && (
-                                <tr>
+                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
                                     <td style={{ padding: "12px", minHeight: "56px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                     </td>
@@ -729,7 +851,7 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10049 */}
                             {activeTab === 'todos' || activeTab === 'incidencias' && (
-                                <tr>
+                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
                                     <td style={{ padding: "12px", minHeight: "56px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                     </td>
@@ -819,7 +941,7 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10050 */}
                             {activeTab === 'todos' || activeTab === 'devoluciones' && (
-                                <tr>
+                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
                                     <td style={{ padding: "12px", minHeight: "56px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                     </td>
@@ -904,7 +1026,7 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10041 */}
                             {activeTab === 'todos' || activeTab === 'historial' && (
-                                <tr>
+                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
                                     <td style={{ padding: "12px", minHeight: "56px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                     </td>
@@ -981,7 +1103,7 @@ export default function PedidosPage() {
 
                             {/* Example Row - CARRITO ABANDONADO */}
                             {activeTab === 'carritos-abandonados' && (
-                                <tr>
+                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
                                     <td style={{ padding: "12px", minHeight: "56px" }}>
                                         <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                     </td>
@@ -1025,6 +1147,7 @@ export default function PedidosPage() {
                     </table>
                 </div>
             </div>
-        </div >
+            {selectedOrder && <OrderDrawer pedido={selectedOrder} onClose={() => setSelectedOrder(null)} />}
+        </div>
     );
 }

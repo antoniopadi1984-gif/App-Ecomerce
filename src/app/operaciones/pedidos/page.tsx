@@ -275,7 +275,7 @@ function CarrierBadge({ type }: { type: string }) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function OrderDrawer({ pedido, onClose }: { pedido: Record<string, any> | null, onClose: () => void }) {
+function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string, any> | null, onClose: () => void, onSelectOrder?: (p: any) => void }) {
     const [activeTab, setActiveTab] = React.useState("cliente");
 
     if (!pedido) return null;
@@ -508,8 +508,46 @@ function OrderDrawer({ pedido, onClose }: { pedido: Record<string, any> | null, 
                         </div>
                     )}
 
+                    {activeTab === "historial" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                            <div className="ds-card" style={{ padding: "16px 20px" }}>
+                                <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                    {pedido?.historialCliente?.length || 2} pedidos anteriores
+                                </div>
+
+                                {(pedido?.historialCliente || [
+                                    { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },
+                                    { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" }
+                                ]).map((h: { id: string; ref: string; state: string; producto: string; importe: string; createdAt: string }) => (
+                                    <div key={h.id} onClick={(e) => { e.stopPropagation(); if (onSelectOrder) onSelectOrder(h); }} style={{
+                                        padding: "12px 16px", borderRadius: "8px",
+                                        border: "1px solid #e2e8f0", marginBottom: "8px",
+                                        cursor: "pointer", transition: "background 0.1s, transform 0.1s",
+                                    }}
+                                        onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                        onMouseLeave={e => e.currentTarget.style.background = "white"}
+                                    >
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                                            <span style={{ fontSize: "13px", fontWeight: 800, color: "#3b82f6" }}>#{h.ref}</span>
+                                            <StateBadge state={h.state} />
+                                        </div>
+                                        <div style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>
+                                            {h.producto} · €{h.importe} · {formatDate(h.createdAt)}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {(pedido?.historialCliente?.length === 0) && (
+                                    <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "13px", padding: "32px 0", fontWeight: 500 }}>
+                                        Primera compra del cliente
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Failsafe for unfinished content tabs */}
-                    {!["cliente", "timeline", "riesgo", "origen"].includes(activeTab) && (
+                    {!["cliente", "timeline", "riesgo", "origen", "historial"].includes(activeTab) && (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 20px", flexDirection: "column", gap: "12px", textAlign: "center", opacity: 0.5, animation: "fade-in 0.2s" }}>
                             <span style={{ fontSize: "48px" }}>🚧</span>
                             <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#334155" }}>Tab en desarrollo</h3>
@@ -1460,7 +1498,7 @@ export default function PedidosPage() {
                     </table>
                 </div>
             </div>
-            {selectedOrder && <OrderDrawer pedido={selectedOrder} onClose={() => setSelectedOrder(null)} />}
+            {selectedOrder && <OrderDrawer pedido={selectedOrder} onClose={() => setSelectedOrder(null)} onSelectOrder={setSelectedOrder} />}
         </div>
     );
 }

@@ -157,6 +157,16 @@ export class DriveSync {
         return folderMap;
     }
 
+    
+    /**
+     * Helper to simply create a folder with a name and optional parent 
+     * (wraps findOrCreateFolder for API compatibility with AssetOrganizer)
+     */
+    async createFolder(name: string, parentId?: string): Promise<{id: string}> {
+        const id = await this.findOrCreateFolder(name, parentId);
+        return { id };
+    }
+
     private async findOrCreateFolder(name: string, parentId?: string): Promise<string> {
         console.log(`[DriveSync] findOrCreateFolder: "${name}" parent=${parentId || 'root'}`);
 

@@ -17,6 +17,100 @@ interface ClassificationResult {
 }
 
 export class AssetOrganizer {
+
+    /**
+     * Create the full canonical folder structure for a product
+     */
+    async productSetup(storeId: string, productId: string, productSku: string, competitors: Record<string, unknown>[]): Promise<Record<string, unknown>> {
+        console.log(`[Drive Setup] ${productId}`);
+
+        let rootFolderId;
+
+        // Ensure Store root exists
+        const store = await prisma.store.findUnique({ where: { id: storeId } });
+        if (!store) throw new Error("Store not found");
+
+        if (store.driveRootFolderId) {
+            rootFolderId = store.driveRootFolderId;
+        } else {
+            const res = await this.driveSync.createFolder('EcomBoom');
+            const res2 = await this.driveSync.createFolder(storeId, res.id);
+            rootFolderId = res2.id;
+            await prisma.store.update({ where: { id: storeId }, data: { driveRootFolderId: rootFolderId } });
+        }
+
+        // Product folder
+        const pFol = await this.driveSync.createFolder(productSku, rootFolderId);
+
+        // 00_INBOX
+        const inb = await this.driveSync.createFolder('00_INBOX', pFol.id);
+        await this.driveSync.createFolder('VIDEOS', inb.id);
+        await this.driveSync.createFolder('IMAGENES', inb.id);
+        await this.driveSync.createFolder('LANDINGS', inb.id);
+        await this.driveSync.createFolder('SPY', inb.id);
+        await this.driveSync.createFolder('OTROS', inb.id);
+
+        // 01_RESEARCH
+        const res = await this.driveSync.createFolder('01_RESEARCH', pFol.id);
+        await this.driveSync.createFolder('CORE', res.id);
+        await this.driveSync.createFolder('AVATARES', res.id);
+        await this.driveSync.createFolder('ANGULOS', res.id);
+        await this.driveSync.createFolder('COMBOS', res.id);
+        await this.driveSync.createFolder('VECTORES', res.id);
+
+        // 02_SPY
+        const spy = await this.driveSync.createFolder('02_SPY', pFol.id);
+        for (const comp of competitors) {
+            if (comp.name) {
+                const compFol = await this.driveSync.createFolder(comp.name as string, spy.id);
+                await this.driveSync.createFolder('ADS', compFol.id);
+                await this.driveSync.createFolder('IMAGES', compFol.id);
+                await this.driveSync.createFolder('LANDINGS', compFol.id);
+                await this.driveSync.createFolder('WEBM', compFol.id);
+            }
+        }
+
+        // 03_CONCEPTOS
+        const conc = await this.driveSync.createFolder('03_CONCEPTOS', pFol.id);
+        // We will create the dynamic folders later when concepts are generated
+
+        // 04_PRODUCCION
+        const prod = await this.driveSync.createFolder('04_PRODUCCION', pFol.id);
+        for (const stage of ['TOF', 'MOF', 'BOF', 'RETARGETING']) {
+            const stg = await this.driveSync.createFolder(stage, prod.id);
+            await this.driveSync.createFolder('UGC', stg.id);
+            await this.driveSync.createFolder('FACECAM', stg.id);
+            await this.driveSync.createFolder('DEMO', stg.id);
+            await this.driveSync.createFolder('STATIC', stg.id);
+        }
+
+        // 05_LANDINGS
+        const lan = await this.driveSync.createFolder('05_LANDINGS', pFol.id);
+        await this.driveSync.createFolder('VSL', lan.id);
+        await this.driveSync.createFolder('ADVERTORIAL', lan.id);
+        await this.driveSync.createFolder('LISTICLE', lan.id);
+        await this.driveSync.createFolder('PRODUCT_PAGE', lan.id);
+
+        // 06_AVATARES_IA
+        const ai = await this.driveSync.createFolder('06_AVATARES_IA', pFol.id);
+        await this.driveSync.createFolder('FACE_MODELS', ai.id);
+        await this.driveSync.createFolder('VOICE_PROFILES', ai.id);
+        await this.driveSync.createFolder('RENDERS', ai.id);
+
+        // 07_BIBLIOTECA
+        const bib = await this.driveSync.createFolder('07_BIBLIOTECA', pFol.id);
+        await this.driveSync.createFolder('GANADORES', bib.id);
+        await this.driveSync.createFolder('EN_TEST', bib.id);
+        await this.driveSync.createFolder('ARCHIVADOS', bib.id);
+
+        await prisma.product.update({
+            where: { id: productId },
+            data: { driveFolderId: pFol.id, driveRootPath: pFol.id, driveSetupDone: true }
+        });
+
+        return { id: pFol.id };
+    }
+
     private driveSync: DriveSync;
 
     constructor() {
@@ -78,11 +172,11 @@ export class AssetOrganizer {
                 newPath: targetFolder
             };
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('[AssetOrganizer] Error:', error);
             return {
                 success: false,
-                error: error.message
+                error: error instanceof Error ? error.message : String(error)
             };
         }
     }
@@ -174,7 +268,7 @@ export class AssetOrganizer {
         let researchContext = "";
         if (productId) {
             try {
-                const latestResearch = await (prisma as any).researchRun.findFirst({
+                const latestResearch = await prisma.researchRun.findFirst({
                     where: { productId, status: 'READY' },
                     orderBy: { createdAt: 'desc' }
                 });
@@ -257,7 +351,7 @@ Return JSON:
             throw new Error('Product has no Drive root path');
         }
 
-        const base = product.driveRootPath;
+        const base = product.driveRootPath || '';
 
         // Map category to folder structure
         if (classification.category.startsWith('concept_')) {

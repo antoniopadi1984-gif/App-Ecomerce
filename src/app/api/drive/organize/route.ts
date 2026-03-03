@@ -13,6 +13,15 @@ export async function POST(req: NextRequest) {
 
         const organizer = new AssetOrganizer();
 
+        // Action: Initial structure creation for a product
+        if (action === 'create_structure') {
+            if (!productId || !body.sku || !body.storeId) {
+                return NextResponse.json({ success: false, error: 'Missing productId, sku or storeId' }, { status: 400 });
+            }
+            const structure = await organizer.productSetup(body.storeId, productId, body.sku, body.competitors || []);
+            return NextResponse.json({ success: true, structure });
+        }
+
         // Action: Organize single file
         if (action === 'organize_file') {
             if (!fileId || !fileName || !productId) {

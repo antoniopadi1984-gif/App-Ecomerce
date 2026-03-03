@@ -202,7 +202,20 @@ function ColumnaCheckbox() {
     );
 }
 
+
+const DRAWER_TABS = [
+    { key: "cliente", label: "Cliente", icon: "👤" },
+    { key: "timeline", label: "Timeline", icon: "📋" },
+    { key: "riesgo", label: "Riesgo", icon: "🛡️" },
+    { key: "origen", label: "Origen", icon: "📡" },
+    { key: "historial", label: "Historial", icon: "🕐" },
+    { key: "comunicaciones", label: "Mensajes", icon: "💬" },
+    { key: "notas", label: "Notas", icon: "📝" }
+];
+
 function OrderDrawer({ pedido, onClose }: { pedido: { ref: string } | null, onClose: () => void }) {
+    const [activeTab, setActiveTab] = React.useState("cliente");
+
     if (!pedido) return null;
     return (
         <>
@@ -212,115 +225,161 @@ function OrderDrawer({ pedido, onClose }: { pedido: { ref: string } | null, onCl
             />
             <div
                 style={{
-                    position: "fixed", right: 0, top: 0, bottom: 0, width: "33vw", minWidth: "400px", maxWidth: "480px",
+                    position: "fixed", right: 0, top: 0, bottom: 0, width: "620px", maxWidth: "100%",
                     background: "white", zIndex: 101, boxShadow: "-8px 0 24px rgba(0,0,0,0.1)",
                     display: "flex", flexDirection: "column",
                     animation: "slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
                 }}
             >
-                {/* Header */}
-                <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
-                    <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <h2 style={{ fontSize: "18px", fontWeight: 800, color: "var(--color-text-primary)" }}>#{pedido.ref || "10045"}</h2>
-                            <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "20px", background: "#dcfce7", color: "#16a34a" }}>Pagado</span>
+                {/* Header Actions & Info */}
+                <div style={{ padding: "24px 32px 0 32px", background: "#f8fafc", flexShrink: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+                        <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
+                                <h2 style={{ fontSize: "22px", fontWeight: 900, color: "var(--color-text-primary)", letterSpacing: "-0.5px" }}>#{pedido.ref || "10045"}</h2>
+                                <span style={{ fontSize: "11px", fontWeight: 800, padding: "4px 10px", borderRadius: "20px", background: "#dcfce7", color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.5px" }}>Pagado</span>
+                            </div>
+                            <p style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 500 }}>12 Oct 2023, 14:32</p>
                         </div>
-                        <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>12 Oct 2023, 14:32</p>
+                        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                            <button style={{ padding: "8px 16px", borderRadius: "8px", background: "white", border: "1px solid #e2e8f0", fontSize: "13px", fontWeight: 700, color: "#0f172a", cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                                Enviar a Beeping
+                            </button>
+                            <button onClick={onClose} style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-dim)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                                <X size={18} />
+                            </button>
+                        </div>
                     </div>
-                    <button onClick={onClose} style={{ background: "white", border: "1px solid var(--border)", borderRadius: "8px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-dim)" }}>
-                        <X size={16} />
-                    </button>
+
+                    {/* Tabs Navigation */}
+                    <div style={{ display: "flex", gap: "24px", borderBottom: "1px solid #e2e8f0", overflowX: "auto" }} className="ds-scrollbar-hide">
+                        {DRAWER_TABS.map(tab => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setActiveTab(tab.key)}
+                                style={{
+                                    display: "flex", alignItems: "center", gap: "6px",
+                                    padding: "12px 0",
+                                    background: "none", border: "none",
+                                    borderBottom: `3px solid ${activeTab === tab.key ? "#2563eb" : "transparent"}`,
+                                    fontSize: "13px", fontWeight: activeTab === tab.key ? 800 : 600,
+                                    color: activeTab === tab.key ? "#2563eb" : "#64748b",
+                                    cursor: "pointer", transition: "all 0.1s",
+                                    whiteSpace: "nowrap"
+                                }}
+                            >
+                                <span style={{ fontSize: "14px", opacity: activeTab === tab.key ? 1 : 0.7 }}>{tab.icon}</span>
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Body */}
-                <div className="ds-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}>
+                {/* Body scrollable content per tab */}
+                <div className="ds-scrollbar" style={{ flex: 1, padding: "32px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "32px", background: "white" }}>
 
-                    {/* Riesgo */}
-                    <div className="ds-card" style={{ padding: "16px", background: "#fff1f2", border: "1px solid #ffe4e6", display: "flex", flexDirection: "column", gap: "12px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#e11d48" }}>
-                            <AlertTriangle size={16} />
-                            <h3 style={{ fontSize: "13px", fontWeight: 800 }}>Análisis de Fraude (Score: 15/100)</h3>
-                        </div>
-                        <p style={{ fontSize: "12px", color: "#be123c", lineHeight: "1.5" }}>
-                            El cliente ha realizado 3 devoluciones en los últimos 6 meses. La IP de compra no coincide con la zona de entrega y el teléfono es VoIP.
-                        </p>
-                    </div>
-
-                    {/* Cliente & Dirección */}
-                    <div>
-                        <h3 style={{ fontSize: "11px", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>Cliente & Dirección</h3>
-                        <div className="ds-card" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
-                                    <User size={16} />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>Juan Pérez</p>
-                                    <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>juan.perez@email.com · +34 600 000 000</p>
-                                </div>
-                            </div>
-                            <hr style={{ border: "none", borderTop: "1px dashed var(--border)" }} />
-                            <div style={{ display: "flex", gap: "12px" }}>
-                                <div style={{ color: "#64748b", marginTop: "2px" }}><MapPin size={16} /></div>
-                                <div>
-                                    <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>Calle Principal 123, Piso 4B</p>
-                                    <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>28001 Madrid, Comunidad de Madrid, España</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* UTMs */}
-                    <div>
-                        <h3 style={{ fontSize: "11px", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>Atribución UTM</h3>
-                        <div className="ds-card" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Source:</span>
-                                <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)" }}>ig_story</span>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Campaign:</span>
-                                <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)" }}>promo_verano_fb</span>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Medium:</span>
-                                <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)" }}>social_paid</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Timeline */}
-                    <div>
-                        <h3 style={{ fontSize: "11px", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>Timeline</h3>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingLeft: "8px" }}>
-                            {[
-                                { title: "Pedido creado en Shopify", time: "Hoy, 10:42", detail: "Referencia #10045" },
-                                { title: "Dropea: Pago procesado", time: "Hoy, 10:45", detail: "Stripe CH_12932" },
-                                { title: "Beeping: Etiqueta generada", time: "Hoy, 11:30", detail: "GLS 00012929" },
-                            ].map((evt, i) => (
-                                <div key={i} style={{ display: "flex", gap: "12px", position: "relative" }}>
-                                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#3b82f6", marginTop: "4px", zIndex: 2 }} />
-                                    {i < 2 && <div style={{ position: "absolute", left: "3px", top: "12px", bottom: "-12px", width: "2px", background: "var(--border)" }} />}
+                    {activeTab === "cliente" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                            <div className="ds-card" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px", border: "1px solid #f1f5f9", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)" }}>
+                                <h3 style={{ fontSize: "12px", fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "1px" }}>Identidad & Contacto</h3>
+                                <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+                                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#f8fafc", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+                                        <User size={20} />
+                                    </div>
                                     <div>
-                                        <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>{evt.title}</p>
-                                        <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>{evt.time} · {evt.detail}</p>
+                                        <p style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>Juan Pérez</p>
+                                        <p style={{ fontSize: "13px", color: "#64748b", marginTop: "2px" }}>juan.perez@email.com</p>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                                <hr style={{ border: "none", borderTop: "1px dashed #e2e8f0" }} />
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                                    <div>
+                                        <p style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Teléfono Principal</p>
+                                        <p style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a", marginTop: "4px" }}>+34 600 000 000</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>ID Cliente</p>
+                                        <p style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a", marginTop: "4px" }}>CUST-98212</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                    {/* Notas */}
-                    <div>
-                        <h3 style={{ fontSize: "11px", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>Notas del Pedido</h3>
-                        <textarea className="ds-input" placeholder="Añadir nota interna..." style={{ width: "100%", height: "80px", resize: "none" }} />
-                        <button className="ds-btn" style={{ background: "var(--color-primary)", color: "white", marginTop: "8px", width: "100%" }}>Guardar Nota</button>
-                    </div>
+                            <div className="ds-card" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px", border: "1px solid #f1f5f9", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)" }}>
+                                <h3 style={{ fontSize: "12px", fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "1px" }}>Dirección de Envío</h3>
+                                <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                                    <div style={{ color: "#3b82f6", marginTop: "4px" }}><MapPin size={20} /></div>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                        <p style={{ fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>Calle Principal 123, Piso 4B</p>
+                                        <p style={{ fontSize: "14px", color: "#64748b" }}>28001 Madrid</p>
+                                        <p style={{ fontSize: "14px", color: "#64748b" }}>Comunidad de Madrid, España</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "timeline" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                            <div className="ds-card" style={{ padding: "24px", border: "1px solid #f1f5f9" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingLeft: "8px" }}>
+                                    {[
+                                        { title: "Beeping: Etiqueta generada", time: "Hoy, 11:30", detail: "GLS 00012929", color: "#d97706" },
+                                        { title: "Dropea: Pago procesado", time: "Hoy, 10:45", detail: "Stripe CH_12932", color: "#1e40af" },
+                                        { title: "Pedido creado en Shopify", time: "Hoy, 10:42", detail: "Referencia #10045", color: "#16a34a" },
+                                    ].map((evt, i) => (
+                                        <div key={i} style={{ display: "flex", gap: "16px", position: "relative" }}>
+                                            <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: evt.color, marginTop: "5px", zIndex: 2, border: "2px solid white", boxShadow: `0 0 0 2px ${evt.color}40` }} />
+                                            {i < 2 && <div style={{ position: "absolute", left: "4px", top: "16px", bottom: "-20px", width: "2px", background: "#f1f5f9" }} />}
+                                            <div style={{ paddingBottom: i < 2 ? "12px" : "0" }}>
+                                                <p style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{evt.title}</p>
+                                                <p style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>{evt.time} · {evt.detail}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "riesgo" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                            <div className="ds-card" style={{ padding: "24px", background: "#fff1f2", border: "1px solid #ffe4e6", display: "flex", flexDirection: "column", gap: "16px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#e11d48" }}>
+                                    <AlertTriangle size={20} />
+                                    <h3 style={{ fontSize: "16px", fontWeight: 800 }}>Análisis de Fraude (Score: 15/100)</h3>
+                                </div>
+                                <p style={{ fontSize: "14px", color: "#be123c", lineHeight: "1.6", fontWeight: 500 }}>
+                                    Se han detectado irregularidades graves en el perfil del cliente. Hay un historial previo de devoluciones y discrepancias en la huella digital.
+                                </p>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+                                    <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "13px", color: "#be123c" }}>
+                                        <span style={{ fontWeight: 800 }}>•</span> El cliente ha realizado 3 devoluciones en los últimos 6 meses.
+                                    </div>
+                                    <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "13px", color: "#be123c" }}>
+                                        <span style={{ fontWeight: 800 }}>•</span> La IP de compra no coincide con la zona de entrega geográfica.
+                                    </div>
+                                    <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "13px", color: "#be123c" }}>
+                                        <span style={{ fontWeight: 800 }}>•</span> El teléfono se identifica como terminal VoIP de alto riesgo.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Failsafe for unfinished content tabs */}
+                    {!["cliente", "timeline", "riesgo"].includes(activeTab) && (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 20px", flexDirection: "column", gap: "12px", textAlign: "center", opacity: 0.5, animation: "fade-in 0.2s" }}>
+                            <span style={{ fontSize: "48px" }}>🚧</span>
+                            <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#334155" }}>Tab en desarrollo</h3>
+                            <p style={{ fontSize: "14px", color: "#64748b" }}>El contenido para &lsquo;{activeTab}&rsquo; se está diseñando.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </>
     );
 }
+
 
 export default function PedidosPage() {
     const [activeTab, setActiveTab] = useState('todos');

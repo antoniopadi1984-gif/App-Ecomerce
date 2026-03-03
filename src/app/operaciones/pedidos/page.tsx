@@ -274,7 +274,8 @@ function CarrierBadge({ type }: { type: string }) {
     );
 }
 
-function OrderDrawer({ pedido, onClose }: { pedido: { ref?: string; state?: string; cliente?: string; telefono?: string; createdAt?: string } | null, onClose: () => void }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function OrderDrawer({ pedido, onClose }: { pedido: Record<string, any> | null, onClose: () => void }) {
     const [activeTab, setActiveTab] = React.useState("cliente");
 
     if (!pedido) return null;
@@ -484,8 +485,31 @@ function OrderDrawer({ pedido, onClose }: { pedido: { ref?: string; state?: stri
                         </div>
                     )}
 
+                    {activeTab === "origen" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                            <DrawerSection title="Origen del pedido">
+                                <DrawerRow label="Fuente" value={pedido?.utmSource ?? "—"} />
+                                <DrawerRow label="Medio" value={pedido?.utmMedium ?? "—"} />
+                                <DrawerRow label="Campaña" value={pedido?.utmCampaign ?? "—"} />
+                                <DrawerRow label="Contenido" value={pedido?.utmContent ?? "—"} />
+                                <DrawerRow label="Term" value={pedido?.utmTerm ?? "—"} />
+                                <DrawerRow label="Placement" value={pedido?.utmPlacement ?? "—"} />
+                                <DrawerRow label="Ad ID" value={pedido?.metaAdId ?? "—"} />
+                                <DrawerRow label="Adset ID" value={pedido?.metaAdsetId ?? "—"} />
+                                <DrawerRow label="Campaign ID" value={pedido?.metaCampaignId ?? "—"} />
+                            </DrawerSection>
+
+                            <DrawerSection title="Landing de conversión">
+                                <DrawerRow label="Landing" value={
+                                    pedido?.landingUrl ? <a href={pedido.landingUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", textDecoration: "underline" }}>{pedido.landingUrl}</a> : "—"
+                                } />
+                                <DrawerRow label="Tipo" value={pedido?.landingType ?? "Advertorial"} />
+                            </DrawerSection>
+                        </div>
+                    )}
+
                     {/* Failsafe for unfinished content tabs */}
-                    {!["cliente", "timeline", "riesgo"].includes(activeTab) && (
+                    {!["cliente", "timeline", "riesgo", "origen"].includes(activeTab) && (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 20px", flexDirection: "column", gap: "12px", textAlign: "center", opacity: 0.5, animation: "fade-in 0.2s" }}>
                             <span style={{ fontSize: "48px" }}>🚧</span>
                             <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#334155" }}>Tab en desarrollo</h3>

@@ -591,40 +591,37 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                     )}
 
                     {activeTab === "historial" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
-                            <div className="ds-card" style={{ padding: "16px 20px" }}>
-                                <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                                    {pedido?.historialCliente?.length || 2} pedidos anteriores
+                        <div style={{ animation: "fade-in 0.2s" }}>
+                            <p style={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", color: "#94a3b8", margin: "0 0 6px 0" }}>
+                                {pedido?.historialCliente?.length || 2} pedidos anteriores
+                            </p>
+                            {(pedido?.historialCliente || [
+                                { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },
+                                { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" }
+                            ]).map((h: { id: string; ref: string; state: string; producto: string; importe: string; createdAt: string }) => (
+                                <div key={h.id} onClick={(e) => { e.stopPropagation(); if (onSelectOrder) onSelectOrder(h); }} style={{
+                                    padding: "8px 10px", borderRadius: "8px",
+                                    border: "1px solid #e2e8f0", marginBottom: "6px",
+                                    cursor: "pointer", background: "white",
+                                    transition: "background 0.1s",
+                                }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "white"}
+                                >
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 700, color: "#3b82f6" }}>#{h.ref}</span>
+                                        <StateBadge state={h.state} />
+                                    </div>
+                                    <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                                        {h.producto} · €{h.importe} · {formatDate(h.createdAt)}
+                                    </div>
                                 </div>
-
-                                {(pedido?.historialCliente || [
-                                    { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },
-                                    { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" }
-                                ]).map((h: { id: string; ref: string; state: string; producto: string; importe: string; createdAt: string }) => (
-                                    <div key={h.id} onClick={(e) => { e.stopPropagation(); if (onSelectOrder) onSelectOrder(h); }} style={{
-                                        padding: "12px 16px", borderRadius: "8px",
-                                        border: "1px solid #e2e8f0", marginBottom: "8px",
-                                        cursor: "pointer", transition: "background 0.1s, transform 0.1s",
-                                    }}
-                                        onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                        onMouseLeave={e => e.currentTarget.style.background = "white"}
-                                    >
-                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                                            <span style={{ fontSize: "13px", fontWeight: 800, color: "#3b82f6" }}>#{h.ref}</span>
-                                            <StateBadge state={h.state} />
-                                        </div>
-                                        <div style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>
-                                            {h.producto} · €{h.importe} · {formatDate(h.createdAt)}
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {(pedido?.historialCliente?.length === 0) && (
-                                    <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "13px", padding: "32px 0", fontWeight: 500 }}>
-                                        Primera compra del cliente
-                                    </div>
-                                )}
-                            </div>
+                            ))}
+                            {(pedido?.historialCliente?.length === 0) && (
+                                <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "12px", padding: "24px 0" }}>
+                                    Primera compra del cliente
+                                </div>
+                            )}
                         </div>
                     )}
                     {activeTab === "comunicaciones" && (

@@ -238,6 +238,42 @@ const DRAWER_TABS = [
     { key: "notas", label: "Notas", icon: "📝" }
 ];
 
+
+function DrawerSection({ title, children }: { title: string, children: React.ReactNode }) {
+    return (
+        <div className="ds-card" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px", border: "1px solid #f1f5f9", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)" }}>
+            <h3 style={{ fontSize: "12px", fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>{title}</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {children}
+            </div>
+        </div>
+    );
+}
+
+function DrawerRow({ label, value }: { label: string, value: React.ReactNode }) {
+    return (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
+            <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 500, flexShrink: 0 }}>{label}</span>
+            <span style={{ fontSize: "13px", color: "#0f172a", fontWeight: 600, textAlign: "right" }}>{value}</span>
+        </div>
+    );
+}
+
+function CarrierBadge({ type }: { type: string }) {
+    const bg = type === "Correos Exp." ? "#dbeafe" : "#fef3c7";
+    const color = type === "Correos Exp." ? "#2563eb" : "#d97706";
+    const border = type === "Correos Exp." ? "#bfdbfe" : "#fde68a";
+    return (
+        <span style={{
+            background: bg, color: color, border: `1px solid ${border}`,
+            fontSize: "10px", fontWeight: 700, borderRadius: "4px",
+            padding: "2px 8px", whiteSpace: "nowrap", display: "inline-block"
+        }}>
+            {type || "GLS"}
+        </span>
+    );
+}
+
 function OrderDrawer({ pedido, onClose }: { pedido: { ref?: string; state?: string; cliente?: string; telefono?: string; createdAt?: string } | null, onClose: () => void }) {
     const [activeTab, setActiveTab] = React.useState("cliente");
 
@@ -315,46 +351,52 @@ function OrderDrawer({ pedido, onClose }: { pedido: { ref?: string; state?: stri
                 <div className="ds-scrollbar" style={{ flex: 1, padding: "32px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "32px", background: "white" }}>
 
                     {activeTab === "cliente" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
-                            <div className="ds-card" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px", border: "1px solid #f1f5f9", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)" }}>
-                                <h3 style={{ fontSize: "12px", fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "1px" }}>Identidad & Contacto</h3>
-                                <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-                                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#f8fafc", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
-                                        <User size={20} />
-                                    </div>
-                                    <div>
-                                        <p style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>Juan Pérez</p>
-                                        <p style={{ fontSize: "13px", color: "#64748b", marginTop: "2px" }}>juan.perez@email.com</p>
-                                    </div>
-                                </div>
-                                <hr style={{ border: "none", borderTop: "1px dashed #e2e8f0" }} />
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                                    <div>
-                                        <p style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Teléfono Principal</p>
-                                        <p style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a", marginTop: "4px" }}>+34 600 000 000</p>
-                                    </div>
-                                    <div>
-                                        <p style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>ID Cliente</p>
-                                        <p style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a", marginTop: "4px" }}>CUST-98212</p>
-                                    </div>
-                                </div>
-                            </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+        <DrawerSection title="Datos del cliente">
+          <DrawerRow label="Nombre"     value={pedido?.cliente || "Juan Pérez"} />
+          <DrawerRow label="Teléfono"   value={
+            <a href={`https://wa.me/${(pedido?.telefono || "+34 600 000 000").replace(/\D/g,"")}`}
+               target="_blank" rel="noreferrer" style={{ color: "#25d366", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
+              💬 {pedido?.telefono || "+34 600 000 000"}
+            </a>
+          } />
+          <DrawerRow label="Email"      value={pedido?.email ?? "juan.perez@email.com"} />
+        </DrawerSection>
 
-                            <div className="ds-card" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px", border: "1px solid #f1f5f9", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)" }}>
-                                <h3 style={{ fontSize: "12px", fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "1px" }}>Dirección de Envío</h3>
-                                <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                                    <div style={{ color: "#3b82f6", marginTop: "4px" }}><MapPin size={20} /></div>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                        <p style={{ fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>Calle Principal 123, Piso 4B</p>
-                                        <p style={{ fontSize: "14px", color: "#64748b" }}>28001 Madrid</p>
-                                        <p style={{ fontSize: "14px", color: "#64748b" }}>Comunidad de Madrid, España</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+        <DrawerSection title="Dirección de envío">
+          <DrawerRow label="Dirección"  value={pedido?.shipping_address_1 || "Calle Principal 123, Piso 4B"} />
+          <DrawerRow label="CP"         value={pedido?.shipping_zip || "28001"} />
+          <DrawerRow label="Ciudad"     value={pedido?.shipping_city || "Madrid"} />
+          <DrawerRow label="Provincia"  value={pedido?.shipping_province || "Comunidad de Madrid"} />
+          <DrawerRow label="País"       value={pedido?.shipping_country || "España"} />
+          {/* Enlace Google Maps */}
+          <a href={`https://www.google.com/maps/search/${encodeURIComponent(
+            `${pedido?.shipping_address_1 || "Calle Principal 123"} ${pedido?.shipping_zip || "28001"} ${pedido?.shipping_city || "Madrid"}`
+          )}`} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: "#3b82f6", display: "block", marginTop: "6px", fontWeight: 600 }}>
+            📍 Ver en Google Maps
+          </a>
+        </DrawerSection>
 
-                    {activeTab === "timeline" && (
+        <DrawerSection title="Pedido">
+          <DrawerRow label="Producto"   value={`${pedido?.producto || "Zapatillas Deportivas X"} · Qty: ${pedido?.cantidad || 1}`} />
+          <DrawerRow label="Importe"    value={`€${pedido?.importe || "89.99"}`} />
+          <DrawerRow label="Pago"       value={pedido?.pago || "Stripe"} />
+          <DrawerRow label="Descuento"  value={pedido?.descuento ? `€${pedido?.descuento}` : "—"} />
+          <DrawerRow label="Fulfillment" value={<FulfillmentBadge type={pedido?.fulfillment || "beeping"} />} />
+          <DrawerRow label="Transportista" value={<CarrierBadge type={pedido?.carrier || "GLS"} />} />
+          <DrawerRow label="Tracking"   value={
+            (pedido?.trackingNumber || "GLS0012929")
+              ? <a href={getTrackingUrl(pedido?.carrier || "GLS", pedido?.trackingNumber || "GLS0012929")}
+                   target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontWeight: 700 }}>
+                  {pedido?.trackingNumber || "GLS0012929"}
+                </a>
+              : "Sin tracking"
+          } />
+        </DrawerSection>
+    </div>
+)}
+
+{activeTab === "timeline" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
                             <div className="ds-card" style={{ padding: "24px", border: "1px solid #f1f5f9" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingLeft: "8px" }}>

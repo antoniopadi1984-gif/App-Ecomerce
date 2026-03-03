@@ -1,60 +1,60 @@
 'use client';
 
 /**
- * useGestores — hook reutilizable para obtener gestores activos.
+ * useGestores — hook reutilizable con polling ligero y refresco manual.
  *
- * Caché a nivel de módulo: todos los componentes que llamen a useGestores()
- * comparten un único fetch. Las re-renderizaciones no generan llamadas duplicadas.
+ * Estrategia:
+ *   - Primera llamada → fetch inmediato
+ *   - Polling cada 30s mientras el componente esté montado (sincronización entre pestañas)
+ *   - refetch() → fuerza refresco inmediato (útil tras crear/invitar un usuario)
+ *   - Caché a nivel de módulo → mounts adicionales reciben datos inmediatamente
+ *     sin esperar a la red
  *
- * Flujo:
- *   1. Primera llamada → fetch /api/equipo/gestores-activos, rellena cache
- *   2. Llamadas siguientes → devuelven la cache inmediatamente
- *   3. Si el admin crea/activa un usuario → llamar invalidateGestoresCache()
- *      para forzar un nuevo fetch en el próximo mount
+ * Retorna: { gestores, refetch }
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Gestor } from '@/types/usuario';
 
 // ── Module-level cache ────────────────────────────────────────────────────────
 let _cache: Gestor[] | null = null;
-let _promise: Promise<Gestor[]> | null = null;
 
-async function fetchGestores(): Promise<Gestor[]> {
-    if (_cache) return _cache;
-    if (!_promise) {
-        _promise = fetch('/api/equipo/gestores-activos')
-            .then(r => r.json())
-            .then(data => {
-                _cache = data.gestores ?? [];
-                _promise = null;
-                return _cache as Gestor[];
-            })
-            .catch(() => {
-                _promise = null; // allow retry on next mount
-                return [] as Gestor[];
-            });
+async function loadGestores(): Promise<Gestor[]> {
+    try {
+        const res = await fetch('/api/equipo/gestores-activos');
+        const data = await res.json();
+        const list: Gestor[] = data.gestores ?? [];
+        _cache = list;
+        return list;
+    } catch {
+        return _cache ?? []; // red caída → devuelve última caché conocida
     }
-    return _promise;
 }
 
-/** Force a fresh fetch on next useGestores() mount (call after creating/inviting a user) */
+/** Fuerza un nuevo fetch en el próximo poll o refetch() */
 export function invalidateGestoresCache() {
     _cache = null;
-    _promise = null;
 }
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
-export function useGestores(): Gestor[] {
+const POLL_INTERVAL_MS = 30_000; // 30 segundos
+
+export function useGestores(): { gestores: Gestor[]; refetch: () => void } {
     const [gestores, setGestores] = useState<Gestor[]>(_cache ?? []);
 
-    useEffect(() => {
-        let cancelled = false;
-        fetchGestores().then(data => {
-            if (!cancelled) setGestores(data);
-        });
-        return () => { cancelled = true; };
+    const fetchAndSet = useCallback(async () => {
+        const data = await loadGestores();
+        setGestores(data);
     }, []);
 
-    return gestores;
+    useEffect(() => {
+        // Fetch inmediato al montar
+        fetchAndSet();
+
+        // Polling ligero — sincroniza cambios desde otras pestañas/sesiones
+        const interval = setInterval(fetchAndSet, POLL_INTERVAL_MS);
+        return () => clearInterval(interval);
+    }, [fetchAndSet]);
+
+    return { gestores, refetch: fetchAndSet };
 }

@@ -1185,8 +1185,8 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
 export default function PedidosPage() {
     const [activeTab, setActiveTab] = useState('todos');
     const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);
-    // Gestores — hook compartido con caché global (un solo fetch para toda la app)
-    const gestoresLive = useGestores();
+    // Gestores — hook compartido con caché global + polling 30s
+    const { gestores: gestoresLive } = useGestores();
 
     const pedidos = [
         ...Array(42).fill({ state: 'nuevo' }),

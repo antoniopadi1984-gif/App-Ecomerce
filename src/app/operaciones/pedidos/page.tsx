@@ -625,82 +625,52 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                         </div>
                     )}
                     {activeTab === "comunicaciones" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
-                            {/* Panel de conversaciones WhatsApp con el cliente */}
-                            <div className="ds-card" style={{ padding: "16px 20px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 175px)", animation: "fade-in 0.2s" }}>
 
-                                {/* Selector de fuente */}
-                                <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-                                    {["WhatsApp Business", "WhatsApp API"].map(source => (
-                                        <button key={source} onClick={() => setMsgSource(source)} style={{
-                                            padding: "5px 12px", fontSize: "11px", fontWeight: 600,
-                                            borderRadius: "20px", cursor: "pointer",
-                                            background: msgSource === source ? "#25d366" : "#f1f5f9",
-                                            color: msgSource === source ? "white" : "#64748b",
-                                            border: "none",
-                                        }}>
-                                            {source}
-                                        </button>
-                                    ))}
-                                </div>
+                          {/* Selector de fuente */}
+                          <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexShrink: 0 }}>
+                            {["WhatsApp Business", "WhatsApp API"].map(source => (
+                              <button key={source} onClick={() => setMsgSource(source)} style={{
+                                padding: "4px 12px", fontSize: "11px", fontWeight: 600,
+                                borderRadius: "20px", cursor: "pointer", border: "none",
+                                background: msgSource === source ? "#25d366" : "#f1f5f9",
+                                color: msgSource === source ? "white" : "#64748b",
+                              }}>{source}</button>
+                            ))}
+                          </div>
 
-                                {/* Historial de mensajes */}
-                                <div className="ds-scrollbar" style={{
-                                    height: "320px", overflowY: "auto",
-                                    display: "flex", flexDirection: "column", gap: "8px",
-                                    padding: "4px"
-                                }}>
-                                    {mensajes.map((msg: { body: string; direction: string; timestamp: string; status: string }, i: number) => (
-                                        <div key={i} style={{
-                                            display: "flex", flexShrink: 0,
-                                            justifyContent: msg.direction === "outbound" ? "flex-end" : "flex-start"
-                                        }}>
-                                            <div style={{
-                                                maxWidth: "75%", padding: "8px 12px", borderRadius: "12px",
-                                                fontSize: "13px", lineHeight: 1.4,
-                                                background: msg.direction === "outbound" ? "#dcf8c6" : "#f1f5f9",
-                                                color: "#0f172a",
-                                            }}>
-                                                {msg.body}
-                                                <div style={{ fontSize: "10px", color: msg.direction === "outbound" ? "#5e8c4e" : "#94a3b8", marginTop: "4px", textAlign: msg.direction === "outbound" ? "right" : "left" }}>
-                                                    {formatTime(msg.timestamp)}
-                                                    {msg.direction === "outbound" && (
-                                                        <span style={{ marginLeft: "4px" }}>
-                                                            {msg.status === "read" ? "✓✓" : msg.status === "delivered" ? "✓✓" : "✓"}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Input para enviar mensaje rápido */}
+                          {/* Mensajes — ocupa todo el espacio restante */}
+                          <div className="ds-scrollbar" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+                            {mensajes.map((msg: { body: string; direction: string; timestamp: string; status: string }, i: number) => (
+                              <div key={i} style={{ display: "flex", justifyContent: msg.direction === "outbound" ? "flex-end" : "flex-start" }}>
                                 <div style={{
-                                    display: "flex", gap: "8px", marginTop: "12px",
-                                    borderTop: "1px solid #e2e8f0", paddingTop: "12px"
+                                  maxWidth: "75%", padding: "7px 10px", borderRadius: "10px",
+                                  fontSize: "12px", lineHeight: 1.4,
+                                  background: msg.direction === "outbound" ? "#dcf8c6" : "#f1f5f9",
                                 }}>
-                                    <input
-                                        value={newMessage}
-                                        onChange={e => setNewMessage(e.target.value)}
-                                        placeholder="Escribe un mensaje..."
-                                        style={{
-                                            flex: 1, padding: "8px 12px", borderRadius: "8px",
-                                            border: "1px solid #e2e8f0", fontSize: "12px", outline: "none"
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') sendMessage();
-                                        }}
-                                    />
-                                    <button onClick={sendMessage} style={{
-                                        background: "#25d366", color: "white", border: "none",
-                                        borderRadius: "8px", padding: "8px 14px", cursor: "pointer",
-                                        fontSize: "12px", fontWeight: 700
-                                    }}>
-                                        Enviar
-                                    </button>
+                                  {msg.body}
+                                  <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px", textAlign: "right" }}>
+                                    {formatTime(msg.timestamp)}
+                                    {msg.direction === "outbound" && <span style={{ marginLeft: "3px" }}>{msg.status === "read" ? "✓✓" : "✓"}</span>}
+                                  </div>
                                 </div>
-                            </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Input pegado al fondo */}
+                          <div style={{ display: "flex", gap: "6px", paddingTop: "8px", borderTop: "1px solid #e2e8f0", flexShrink: 0 }}>
+                            <input
+                              value={newMessage} onChange={e => setNewMessage(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
+                              placeholder="Escribe un mensaje..."
+                              style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px", outline: "none" }}
+                            />
+                            <button onClick={sendMessage} style={{
+                              background: "#25d366", color: "white", border: "none",
+                              borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontSize: "12px", fontWeight: 700
+                            }}>Enviar</button>
+                          </div>
                         </div>
                     )}
 

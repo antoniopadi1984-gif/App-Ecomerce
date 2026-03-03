@@ -459,8 +459,8 @@ export default function PedidosPage() {
                 {/* Mock Table */}
 
                 {/* Custom compact table styles */}
-                <div style={{ overflowX: "auto", flex: 1 }}>
-                    <table className="ds-table ds-compact-table" style={{ borderTop: "none", width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
+                <div style={{ width: "100%", overflowX: "auto", flex: 1 }}>
+                    <table className="ds-table ds-compact-table" style={{ borderTop: "none", width: "100%", tableLayout: "auto", borderCollapse: "collapse", fontSize: "12px" }}>
                         <thead>
                             <tr>
                                 <th style={{ width: "3%", padding: "0 0 0 12px" }}>

@@ -471,7 +471,7 @@ export default function PedidosPage() {
                     }
                 `}</style>
                 <div style={{ overflowX: "auto", flex: 1 }}>
-                    <table className="ds-table ds-compact-table" style={{ borderTop: "none" }}>
+                    <table className="ds-table ds-compact-table" style={{ borderTop: "none", width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
                         <thead>
                             <tr>
                                 <th style={{ width: "36px", padding: "12px" }}>

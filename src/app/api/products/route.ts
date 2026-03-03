@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         // Auto-create ThresholdConfig from breakeven values
         if (computedROASBE > 0) {
             try {
-                await (prisma as any).thresholdConfig.create({
+                await prisma.thresholdConfig.create({
                     data: {
                         storeId,
                         type: 'PRODUCT',
@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
                         maxCpc: computedCPCBE * 1.3,
                     }
                 });
-            } catch (e) {
-                console.warn('[API] ThresholdConfig creation skipped:', (e as any)?.message);
+            } catch (e: unknown) {
+                console.warn('[API] ThresholdConfig creation skipped:', e instanceof Error ? e.message : String(e));
             }
         }
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
         fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/drive/organize`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'organize_all', productId: newProduct.id })
+            body: JSON.stringify({ action: 'create_structure', storeId, productId: newProduct.id, sku: body.sku || newProduct.sku, competitors: body.competitors || [] })
         }).catch(() => { });
 
         return NextResponse.json({ success: true, product: newProduct });

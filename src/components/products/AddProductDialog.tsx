@@ -42,7 +42,7 @@ function calcBreakeven(pvp: number, cost: number, niche: string, cvrOverride?: n
 }
 
 // ── Types ─────────────────────────────────────────────────────
-interface CompetitorEntry { url: string; country: string; price: string; analyzing: boolean; done: boolean; }
+interface CompetitorEntry { name: string; url: string; urlAmazon?: string; urlMetaLibrary?: string; urlTikTokLibrary?: string; country: string; price: string; analyzing: boolean; done: boolean; }
 interface AmazonEntry { url: string; }
 interface LandingEntry { url: string; }
 
@@ -108,7 +108,7 @@ export function AddProductDialog() {
 
     // ── Dynamic lists ───────────────────────────────────────
     const [competitors, setCompetitors] = useState<CompetitorEntry[]>([
-        { url: '', country: 'ES', price: '', analyzing: false, done: false }
+        { name: '', url: '', urlAmazon: '', urlMetaLibrary: '', urlTikTokLibrary: '', country: 'ES', price: '', analyzing: false, done: false }
     ]);
     const [amazonLinks, setAmazonLinks] = useState<AmazonEntry[]>([{ url: '' }]);
     const [ownLandings, setOwnLandings] = useState<LandingEntry[]>([{ url: '' }]);
@@ -253,6 +253,7 @@ export function AddProductDialog() {
                 amazonLinks: JSON.stringify(amazonLinks.map(a => a.url).filter(u => u.trim())),
                 landingUrls: JSON.stringify(ownLandings.map(l => l.url).filter(u => u.trim())),
                 competitorLinks: competitors.filter(c => c.url.trim()).map(c => c.url),
+                competitors: competitors.filter(c => c.name.trim() || c.url.trim()),
                 agentDescription: description,
                 marketLanguage: countryToLang(country),
                 interfaceLanguage: 'ES',
@@ -411,7 +412,47 @@ export function AddProductDialog() {
                         </Section>
 
                         {/* AMAZON REVIEWS */}
-                        <Section icon={<ShoppingBag className="w-4 h-4" />} title="Amazon — Investigación de Mercado" accent="var(--ops)">
+                        <Section icon={<Target className="w-4 h-4" />} title="Competidores & Inteligencia">
+            <p className="text-[9px] text-[var(--text-dim)]">Define competidores principales (Se crearán subcarpetas automáticas en Drive/Spy).</p>
+            {competitors.map((c, i) => (
+                <div key={i} className="space-y-2 p-3 border border-[var(--border)] rounded-lg bg-[var(--surface2)] relative">
+                    <div className="grid grid-cols-2 gap-2">
+                        <Input value={c.name} onChange={e => {
+                            const next = [...competitors];
+                            next[i].name = e.target.value;
+                            setCompetitors(next);
+                        }} placeholder="Nombre marca" className="h-8 text-[11px]" />
+                        <Input value={c.url} onChange={e => {
+                            const next = [...competitors];
+                            next[i].url = e.target.value;
+                            setCompetitors(next);
+                        }} placeholder="URL web (Shopify/Woo)" className="h-8 text-[11px]" />
+                        <Input value={c.urlAmazon || ''} onChange={e => {
+                            const next = [...competitors];
+                            next[i].urlAmazon = e.target.value;
+                            setCompetitors(next);
+                        }} placeholder="URL Amazon (opcional)" className="h-8 text-[11px]" />
+                        <Input value={c.urlMetaLibrary || ''} onChange={e => {
+                            const next = [...competitors];
+                            next[i].urlMetaLibrary = e.target.value;
+                            setCompetitors(next);
+                        }} placeholder="Meta Ad Library (opcional)" className="h-8 text-[11px]" />
+                    </div>
+                    {competitors.length > 1 && (
+                        <button type="button" onClick={() => setCompetitors(competitors.filter((_, j) => j !== i))}
+                            className="absolute -top-2 -right-2 p-1 bg-[var(--bg)] border border-[var(--border)] rounded-full text-[var(--text-dim)] hover:text-[var(--s-ko)] transition-colors">
+                            <Trash2 className="w-3 h-3" />
+                        </button>
+                    )}
+                </div>
+            ))}
+            <button type="button" onClick={() => setCompetitors([...competitors, { name: '', url: '', urlAmazon: '', urlMetaLibrary: '', urlTikTokLibrary: '', country: 'ES', price: '', analyzing: false, done: false }])}
+                className="text-[9px] font-black uppercase tracking-widest text-[var(--inv)] hover:brightness-110 flex items-center gap-1">
+                <Plus className="w-3 h-3" /> Añadir competidor
+            </button>
+        </Section>
+        
+        <Section icon={<ShoppingBag className="w-4 h-4" />} title="Amazon — Investigación de Mercado" accent="var(--ops)">
                             <p className="text-[9px] text-[var(--text-dim)]">El agente extrae reviews, dolores, lenguaje y objeciones automáticamente.</p>
                             {amazonLinks.map((a, i) => (
                                 <div key={i} className="flex items-center gap-2">
@@ -462,6 +503,14 @@ export function AddProductDialog() {
                     <div className="space-y-8">
 
                         {/* UNIT ECONOMICS + BREAKEVEN */}
+                        <Section icon={<FileText className="w-4 h-4" />} title="Fuentes Adicionales">
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Google Doc (Investigación previa libre)</label>
+                                <Input value={googleDocUrl} onChange={e => setGoogleDocUrl(e.target.value)}
+                                    placeholder="https://docs.google.com/document/d/..." className="h-9 text-[11px]" />
+                            </div>
+                        </Section>
+                        
                         <Section icon={<Euro className="w-4 h-4" />} title="Unit Economics & Breakeven Auto">
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">

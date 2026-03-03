@@ -512,12 +512,20 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
     };
 
     const [newNota, setNewNota] = React.useState("");
+    const [notaGestor, setNotaGestor] = React.useState("");
+    const gestores = [
+        { id: "maria", nombre: "María", emoji: "👩" },
+        { id: "carlos", nombre: "Carlos", emoji: "👨" },
+        { id: "ana", nombre: "Ana", emoji: "👩" },
+        { id: "soporte", nombre: "Soporte", emoji: "🏋️" },
+    ];
     const notas = pedido?.notas || [
-        { texto: "El cliente ha llamado para confirmar la dirección de entrega, le faltaba poner que es el Bajo A.", autor: "María (A. Cliente)", createdAt: "2023-10-12T15:00:00Z" }
+        { texto: "El cliente ha llamado para confirmar la dirección de entrega, le faltaba poner que es el Bajo A.", autor: "María (A. Cliente)", gestorAsignado: "Carlos", createdAt: "2023-10-12T15:00:00Z" }
     ];
     const saveNota = () => {
         if (!newNota.trim()) return;
         setNewNota("");
+        setNotaGestor("");
     };
 
     // Meta Ad creativo — cargado desde Graph API cuando pedido.metaAdId exista
@@ -988,17 +996,38 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
 
                     {activeTab === "notas" && (
                         <div style={{ animation: "fade-in 0.2s" }}>
-                            {notas.map((nota: { texto: string; autor: string; createdAt: string }, i: number) => (
+                            {notas.map((nota: { texto: string; autor: string; gestorAsignado?: string; createdAt: string }, i: number) => (
                                 <div key={i} style={{
                                     padding: "8px 10px", background: "#fffbeb",
                                     border: "1px solid #fef08a", borderRadius: "8px", marginBottom: "6px"
                                 }}>
-                                    <div style={{ fontSize: "12px", color: "#0f172a" }}>{nota.texto}</div>
-                                    <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "3px" }}>
-                                        {nota.autor} · {formatDate(nota.createdAt)}
+                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                                        <span style={{ fontSize: "10px", fontWeight: 700, color: "#92400e" }}>
+                                            {nota.gestorAsignado ? `→ Para: ${nota.gestorAsignado}` : "Sin asignar"}
+                                        </span>
+                                        <span style={{ fontSize: "10px", color: "#94a3b8" }}>
+                                            {nota.autor} · {formatDate(nota.createdAt)}
+                                        </span>
                                     </div>
+                                    <div style={{ fontSize: "12px", color: "#0f172a" }}>{nota.texto}</div>
                                 </div>
                             ))}
+
+                            {/* Selector de gestor */}
+                            <div style={{ display: "flex", gap: "6px", marginBottom: "6px", alignItems: "center", marginTop: "8px" }}>
+                                <span style={{ fontSize: "11px", color: "#64748b", flexShrink: 0 }}>Asignar a:</span>
+                                <select value={notaGestor} onChange={e => setNotaGestor(e.target.value)} style={{
+                                    flex: 1, padding: "4px 8px", borderRadius: "6px",
+                                    border: "1px solid #e2e8f0", fontSize: "11px", outline: "none",
+                                    background: "white",
+                                }}>
+                                    <option value="">Sin asignar</option>
+                                    {gestores.map(g => (
+                                        <option key={g.id} value={g.nombre}>{g.emoji} {g.nombre}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <textarea
                                 value={newNota}
                                 onChange={e => setNewNota(e.target.value)}
@@ -1008,7 +1037,7 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                                     width: "100%", padding: "8px 10px", borderRadius: "8px",
                                     border: "1px solid #e2e8f0", fontSize: "12px",
                                     resize: "vertical", outline: "none", fontFamily: "inherit",
-                                    boxSizing: "border-box", marginTop: "4px"
+                                    boxSizing: "border-box"
                                 }}
                             />
                             <button onClick={saveNota} style={{

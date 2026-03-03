@@ -81,7 +81,7 @@ function PrimaryActionButton({ pedido }: { pedido: { state: string } }) {
                 border: `1px solid ${action.color}20`,
                 borderRadius: "6px", padding: "3px 8px",
                 fontSize: "11px", fontWeight: 700, cursor: "pointer",
-                whiteSpace: "nowrap",
+                whiteSpace: "nowrap", minWidth: "72px",
             }}
         >
             {action.label}
@@ -608,9 +608,11 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:42</span>
                                     </td>
-                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                                        <PrimaryActionButton pedido={{ state: "en_preparacion" }} />
-                                        <RowActionsMenu pedido={{ state: "en_preparacion" }} onOpenDrawer={() => { }} />
+                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
+                                            <PrimaryActionButton pedido={{ state: "en_preparacion" }} />
+                                            <RowActionsMenu pedido={{ state: "en_preparacion" }} onOpenDrawer={() => { }} />
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -683,9 +685,11 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:35</span>
                                     </td>
-                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                                        <PrimaryActionButton pedido={{ state: "reintento" }} />
-                                        <RowActionsMenu pedido={{ state: "reintento" }} onOpenDrawer={() => { }} />
+                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
+                                            <PrimaryActionButton pedido={{ state: "reintento" }} />
+                                            <RowActionsMenu pedido={{ state: "reintento" }} onOpenDrawer={() => { }} />
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -758,9 +762,11 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Ayer</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>18:20</span>
                                     </td>
-                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                                        <PrimaryActionButton pedido={{ state: "nuevo" }} />
-                                        <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
+                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
+                                            <PrimaryActionButton pedido={{ state: "nuevo" }} />
+                                            <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -842,9 +848,11 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 8d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>12:05</span>
                                     </td>
-                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                                        <PrimaryActionButton pedido={{ state: "enviado" }} />
-                                        <RowActionsMenu pedido={{ state: "enviado" }} onOpenDrawer={() => { }} />
+                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
+                                            <PrimaryActionButton pedido={{ state: "enviado" }} />
+                                            <RowActionsMenu pedido={{ state: "enviado" }} onOpenDrawer={() => { }} />
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -932,9 +940,11 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 6d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>09:12</span>
                                     </td>
-                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                                        <PrimaryActionButton pedido={{ state: "fallido" }} />
-                                        <RowActionsMenu pedido={{ state: "fallido" }} onOpenDrawer={() => { }} />
+                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
+                                            <PrimaryActionButton pedido={{ state: "fallido" }} />
+                                            <RowActionsMenu pedido={{ state: "fallido" }} onOpenDrawer={() => { }} />
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -1017,9 +1027,11 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 2d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>14:15</span>
                                     </td>
-                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                                        <PrimaryActionButton pedido={{ state: "devolucion" }} />
-                                        <RowActionsMenu pedido={{ state: "devolucion" }} onOpenDrawer={() => { }} />
+                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
+                                            <PrimaryActionButton pedido={{ state: "devolucion" }} />
+                                            <RowActionsMenu pedido={{ state: "devolucion" }} onOpenDrawer={() => { }} />
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -1093,9 +1105,11 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 12d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:00</span>
                                     </td>
-                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                                        <PrimaryActionButton pedido={{ state: "entregado" }} />
-                                        <RowActionsMenu pedido={{ state: "entregado" }} onOpenDrawer={() => { }} />
+                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
+                                            <PrimaryActionButton pedido={{ state: "entregado" }} />
+                                            <RowActionsMenu pedido={{ state: "entregado" }} onOpenDrawer={() => { }} />
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -1137,9 +1151,11 @@ export default function PedidosPage() {
                                             Abandonado
                                         </span>
                                     </td>
-                                    <td data-no-drawer style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                                        <PrimaryActionButton pedido={{ state: "nuevo" }} />
-                                        <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
+                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
+                                            <PrimaryActionButton pedido={{ state: "nuevo" }} />
+                                            <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
+                                        </div>
                                     </td>
                                 </tr>
                             )}

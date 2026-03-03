@@ -12,6 +12,15 @@ model User {
   email        String            @unique
   name         String?
   password     String?
+  // Usuario extended fields
+  nombre       String?          // nombre propio  (migración añadida)
+  apellido     String?          // apellido
+  rol          String           @default("visor")   // admin | gestor | agente_ia | visor
+  tipo         String           @default("humano")  // humano | bot
+  estado       String           @default("activo")  // activo | invitado | inactivo
+  avatar       String?          // URL foto o avatar
+  color        String           @default("#64748b") // color identificativo en la UI
+  invitadoPor  String?          // id del usuario que lo invitó
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   auditLogs    AuditLog[]

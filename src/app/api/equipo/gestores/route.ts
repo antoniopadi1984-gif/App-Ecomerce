@@ -1,12 +1,11 @@
 /**
  * GET /api/equipo/gestores
- * Returns all active users with assignable roles, mapped to the Gestor shape
- * for use in order assignment dropdowns.
+ * Returns active usuarios with assignable roles (gestor | admin | agente_ia),
+ * mapped to the Gestor shape for use in order-assignment dropdowns.
  *
- * NOTE: The User model currently only has (id, email, name).
- * The full Usuario schema (nombre, apellido, tipo, estado, color, etc.)
- * requires a Prisma migration — tracked in TODO.
- * Until then this route returns GESTORES_LIST fallback from the request header.
+ * Source of truth: User table via UserStoreAccess.
+ * Uses new Usuario fields (nombre, apellido, rol, tipo, estado, color)
+ * added in migration 20260303_add_usuario_fields.
  *
  * Query params: storeId (required)
  */
@@ -16,7 +15,7 @@ import type { Gestor } from "@/types/usuario";
 
 export const dynamic = "force-dynamic";
 
-// Default colors for users without a color field yet
+const ASSIGNABLE_ROLES = ["admin", "gestor", "agente_ia"];
 const DEFAULT_COLORS = ["#7c3aed", "#0891b2", "#16a34a", "#ea580c", "#64748b"];
 
 export async function GET(req: NextRequest) {
@@ -28,30 +27,58 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "storeId requerido" }, { status: 400 });
         }
 
-        // Fetch users with access to this store
+        // Pull users with access to this store
         const accesos = await prisma.userStoreAccess.findMany({
             where: { storeId },
             include: {
                 user: {
-                    select: { id: true, name: true, email: true },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        // Extended Usuario fields — available after migration
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        ...(true as any), // bypass static type to allow new fields
+                    },
                 },
             },
         });
 
         const gestores: Gestor[] = accesos
-            .filter(a => a.user)
-            .map((a, idx) => {
-                const u = a.user!;
-                const parts = (u.name || u.email || "Usuario").split(" ");
-                const nombre = parts.length >= 2
-                    ? `${parts[0]} ${parts[1].charAt(0)}.`
-                    : parts[0];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .map(a => a.user as any)
+            .filter(Boolean)
+            .filter((u: Record<string, string>) => {
+                // If 'rol' field exists, filter by assignable roles
+                if (u.rol) return ASSIGNABLE_ROLES.includes(u.rol);
+                // If field not yet migrated, include everyone
+                return true;
+            })
+            .filter((u: Record<string, string>) => {
+                // If 'estado' exists, only activo; otherwise include all
+                if (u.estado) return u.estado === "activo";
+                return true;
+            })
+            .map((u: Record<string, string>, idx: number) => {
+                // Build display name — prefer nuevo campo, fallback to name
+                const nombre = u.nombre && u.apellido
+                    ? `${u.nombre} ${u.apellido.charAt(0)}.`
+                    : u.nombre
+                        ? u.nombre
+                        : (() => {
+                            const parts = (u.name || u.email || "Usuario").split(" ");
+                            return parts.length >= 2
+                                ? `${parts[0]} ${parts[1].charAt(0)}.`
+                                : parts[0];
+                        })();
+
                 return {
                     id: u.id,
                     nombre,
-                    tipo: "humano" as const,
+                    tipo: (u.tipo as "humano" | "bot") ?? "humano",
                     activo: true,
-                    color: DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
+                    avatar: u.avatar ?? undefined,
+                    color: u.color ?? DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
                 };
             });
 

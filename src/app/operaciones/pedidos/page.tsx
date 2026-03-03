@@ -34,7 +34,12 @@ function getTrackingUrl(carrier: string, trackingNumber: string): string {
 
 function ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green", score: number } }) {
     return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px" }}>
+        <div style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            gap: "2px",
+        }}>
             <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <span style={{
                     width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0,
@@ -46,7 +51,7 @@ function ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green
                 </span>
             </div>
             <span style={{
-                fontSize: "10px", fontWeight: 600,
+                fontSize: "10px", fontWeight: 600, paddingLeft: "13px",
                 color: riesgo.status === "red" ? "#ef4444"
                     : riesgo.status === "yellow" ? "#d97706" : "#16a34a"
             }}>

@@ -675,42 +675,35 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                     )}
 
                     {activeTab === "notas" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
-                            <div className="ds-card" style={{ padding: "16px 20px" }}>
-                                {/* Notas existentes */}
-                                {notas.map((nota: { texto: string; autor: string; createdAt: string }, i: number) => (
-                                    <div key={i} style={{
-                                        padding: "10px 12px", background: "#fffbeb",
-                                        border: "1px solid #fef08a", borderRadius: "8px", marginBottom: "8px"
-                                    }}>
-                                        <div style={{ fontSize: "12px", color: "#0f172a" }}>{nota.texto}</div>
-                                        <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "4px" }}>
-                                            {nota.autor} · {formatDate(nota.createdAt)} {formatTime(nota.createdAt)}
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {/* Nueva nota */}
-                                <textarea
-                                    value={newNota}
-                                    onChange={e => setNewNota(e.target.value)}
-                                    placeholder="Añadir nota interna..."
-                                    rows={3}
-                                    style={{
-                                        width: "100%", padding: "10px 12px", borderRadius: "8px",
-                                        border: "1px solid #e2e8f0", fontSize: "12px",
-                                        resize: "vertical", outline: "none", fontFamily: "inherit",
-                                        boxSizing: "border-box"
-                                    }}
-                                />
-                                <button onClick={saveNota} style={{
-                                    marginTop: "8px", background: "#3b82f6", color: "white",
-                                    border: "none", borderRadius: "8px", padding: "8px 16px",
-                                    fontSize: "12px", fontWeight: 700, cursor: "pointer"
+                        <div style={{ animation: "fade-in 0.2s" }}>
+                            {notas.map((nota: { texto: string; autor: string; createdAt: string }, i: number) => (
+                                <div key={i} style={{
+                                    padding: "8px 10px", background: "#fffbeb",
+                                    border: "1px solid #fef08a", borderRadius: "8px", marginBottom: "6px"
                                 }}>
-                                    Guardar nota
-                                </button>
-                            </div>
+                                    <div style={{ fontSize: "12px", color: "#0f172a" }}>{nota.texto}</div>
+                                    <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "3px" }}>
+                                        {nota.autor} · {formatDate(nota.createdAt)}
+                                    </div>
+                                </div>
+                            ))}
+                            <textarea
+                                value={newNota}
+                                onChange={e => setNewNota(e.target.value)}
+                                placeholder="Añadir nota interna..."
+                                rows={3}
+                                style={{
+                                    width: "100%", padding: "8px 10px", borderRadius: "8px",
+                                    border: "1px solid #e2e8f0", fontSize: "12px",
+                                    resize: "vertical", outline: "none", fontFamily: "inherit",
+                                    boxSizing: "border-box", marginTop: "4px"
+                                }}
+                            />
+                            <button onClick={saveNota} style={{
+                                marginTop: "6px", background: "#3b82f6", color: "white",
+                                border: "none", borderRadius: "8px", padding: "7px 16px",
+                                fontSize: "12px", fontWeight: 700, cursor: "pointer"
+                            }}>Guardar nota</button>
                         </div>
                     )}
 

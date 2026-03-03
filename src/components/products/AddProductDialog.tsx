@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     Plus, Brain, Sparkles, Box, Euro, Globe, Target, UploadCloud,
-    Link as LinkIcon, Trash2, ChevronDown, ChevronRight, Loader2,
+    Link as LinkIcon, Trash2, ChevronDown, ChevronRight, Loader2, X,
     ShoppingBag, Microscope, Play, AlertCircle, ExternalLink, FileText
 } from 'lucide-react';
 import { useProduct } from '@/context/ProductContext';
@@ -511,7 +511,7 @@ export function AddProductDialog() {
                                                 {competitors.length > 1 && (
                                                     <button type="button" onClick={() => setCompetitors(competitors.filter((_, j) => j !== i))}
                                                         className="absolute -top-2 -right-2 p-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-full text-[var(--text-dim)] hover:bg-[var(--s-ko)]/10 hover:text-[var(--s-ko)] hover:border-[var(--s-ko)] transition-all z-10 opacity-0 group-hover:opacity-100">
-                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        <X className="w-3.5 h-3.5" />
                                                     </button>
                                                 )}
                                             </div>
@@ -519,7 +519,7 @@ export function AddProductDialog() {
                                     </div>
                                     <button type="button" onClick={() => setCompetitors([...competitors, { name: '', url: '', urlAmazon: '', urlMetaLibrary: '', urlTikTokLibrary: '', country: 'ES', price: '', analyzing: false, done: false }])}
                                         className="text-[9px] font-black uppercase tracking-widest text-[var(--crm)] hover:brightness-110 flex items-center gap-1">
-                                        <Plus className="w-3 h-3" /> Añadir competidor extra
+                                        <Plus className="w-3 h-3" /> Añadir competidor
                                     </button>
                                 </Section>
                             </div>
@@ -538,26 +538,11 @@ export function AddProductDialog() {
 
                                     <div className="space-y-2 mt-6">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1">
-                                            <ExternalLink className="w-3 h-3" /> Landings Propias (opcional)
+                                            <ExternalLink className="w-3 h-3" /> Landings Existentes
                                         </label>
-                                        <p className="text-[9px] text-[var(--text-dim)] pb-2">Si ya existe una página de ventas (Shopify/Advetorials). O asigna después.</p>
-                                        {ownLandings.map((l, i) => (
-                                            <div key={i} className="flex items-center gap-2">
-                                                <Input value={l.url} onChange={e => {
-                                                    const next = [...ownLandings]; next[i].url = e.target.value; setOwnLandings(next);
-                                                }} placeholder="https://tu-tienda.com/..." className="h-8 text-[11px]" />
-                                                {ownLandings.length > 1 && (
-                                                    <button type="button" onClick={() => setOwnLandings(ownLandings.filter((_, j) => j !== i))}
-                                                        className="p-1.5 text-[var(--text-dim)] hover:text-[var(--s-ko)] transition-colors">
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
-                                        <button type="button" onClick={() => setOwnLandings([...ownLandings, { url: '' }])}
-                                            className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-white flex items-center gap-1 transition-colors">
-                                            <Plus className="w-3 h-3" /> Añadir landing
-                                        </button>
+                                        <div className="p-4 border border-dashed border-[var(--border-high)] rounded-xl bg-[var(--surface2)] items-center justify-center text-center flex">
+                                            <p className="text-[10px] text-[var(--text-dim)] font-medium">Podrás asignar landings después</p>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2 mt-6 hidden">

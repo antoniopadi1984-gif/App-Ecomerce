@@ -241,9 +241,18 @@ const DRAWER_TABS = [
 
 function DrawerSection({ title, children }: { title: string, children: React.ReactNode }) {
     return (
-        <div className="ds-card" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px", border: "1px solid #f1f5f9", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)" }}>
-            <h3 style={{ fontSize: "12px", fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>{title}</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div style={{ marginBottom: "14px" }}>
+            <p style={{
+                fontSize: "10px", fontWeight: 900, textTransform: "uppercase",
+                color: "#94a3b8", letterSpacing: "0.08em",
+                margin: "0 0 6px 0",
+            }}>
+                {title}
+            </p>
+            <div style={{
+                background: "#f8fafc", borderRadius: "8px",
+                padding: "6px 10px",
+            }}>
                 {children}
             </div>
         </div>
@@ -252,9 +261,19 @@ function DrawerSection({ title, children }: { title: string, children: React.Rea
 
 function DrawerRow({ label, value }: { label: string, value: React.ReactNode }) {
     return (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
-            <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 500, flexShrink: 0 }}>{label}</span>
-            <span style={{ fontSize: "13px", color: "#0f172a", fontWeight: 600, textAlign: "right" }}>{value}</span>
+        <div style={{
+            display: "flex", justifyContent: "space-between",
+            alignItems: "center",
+            padding: "4px 0",
+            borderBottom: "1px solid #f1f5f9",
+            minHeight: "28px",
+        }}>
+            <span style={{ fontSize: "12px", color: "#64748b", minWidth: "110px" }}>
+                {label}
+            </span>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", textAlign: "right" }}>
+                {value}
+            </span>
         </div>
     );
 }
@@ -370,7 +389,7 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                 </div>
 
                 {/* Body scrollable content per tab */}
-                <div className="ds-scrollbar" style={{ flex: 1, padding: "32px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "32px", background: "white" }}>
+                <div className="ds-scrollbar" style={{ flex: 1, padding: "10px 16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0", background: "white" }}>
 
                     {activeTab === "cliente" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>

@@ -117,6 +117,18 @@ const MOCK_TIMELINE: TimelineEvent[] = [
     { label: "Entregado", description: "Firmado por cliente", type: "success", source: "17track", timestamp: "2023-10-14T11:20:00Z" },
 ];
 
+async function fetchMetaAd(adId: string, accessToken: string) {
+    const fields = "name,effective_status,creative{thumbnail_url,object_type},adset{name},campaign{name}";
+    const insightFields = "ctr,cpc,cpm,impressions,clicks,spend";
+    const [adRes, insightsRes] = await Promise.all([
+        fetch(`https://graph.facebook.com/v19.0/${adId}?fields=${fields}&access_token=${accessToken}`),
+        fetch(`https://graph.facebook.com/v19.0/${adId}/insights?fields=${insightFields}&access_token=${accessToken}`)
+    ]);
+    const ad = await adRes.json();
+    const insights = await insightsRes.json();
+    return { ...ad, insights: insights.data?.[0] ?? null };
+}
+
 function getTrackingUrl(carrier: string, trackingNumber: string): string {
     const urls: Record<string, string> = {
         "correos_express": `https://www.correos.es/ss/Satellite/site/aplicacion-oficina_virtual-1349167560549/detalle_app-sidioma=es_ES&numero=${trackingNumber}`,
@@ -371,6 +383,28 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
         if (!newNota.trim()) return;
         setNewNota("");
     };
+
+    // Meta Ad creativo — cargado desde Graph API cuando pedido.metaAdId exista
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [metaAd, setMetaAd] = React.useState<Record<string, any> | null>(null);
+    React.useEffect(() => {
+        if (!pedido?.metaAdId) { setMetaAd(null); return; }
+        const token = process.env.NEXT_PUBLIC_META_ACCESS_TOKEN;
+        if (token) {
+            fetchMetaAd(pedido.metaAdId, token).then(setMetaAd).catch(() => setMetaAd(null));
+        } else {
+            // Mock mientras no hay token configurado
+            setMetaAd({
+                name: "VSL Zapatos | Retargeting Compra | ES",
+                effective_status: "ACTIVE",
+                thumbnail_url: null,
+                creative: { object_type: "VIDEO" },
+                adset: { name: "Retargeting 30 d\u00edas" },
+                campaign: { name: "CON | Zapatillas | ES | Octubre" },
+                insights: { ctr: "2.41", cpc: "0.38", cpm: "9.15" },
+            });
+        }
+    }, [pedido?.metaAdId]);
 
     if (!pedido) return null;
     return (
@@ -636,22 +670,49 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                     )}
 
                     {activeTab === "origen" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                        <div style={{ animation: "fade-in 0.2s" }}>
                             <DrawerSection title="Origen del pedido">
                                 <DrawerRow label="Fuente" value={pedido?.utmSource ?? "—"} />
                                 <DrawerRow label="Medio" value={pedido?.utmMedium ?? "—"} />
                                 <DrawerRow label="Campaña" value={pedido?.utmCampaign ?? "—"} />
                                 <DrawerRow label="Contenido" value={pedido?.utmContent ?? "—"} />
-                                <DrawerRow label="Term" value={pedido?.utmTerm ?? "—"} />
                                 <DrawerRow label="Placement" value={pedido?.utmPlacement ?? "—"} />
                                 <DrawerRow label="Ad ID" value={pedido?.metaAdId ?? "—"} />
                                 <DrawerRow label="Adset ID" value={pedido?.metaAdsetId ?? "—"} />
                                 <DrawerRow label="Campaign ID" value={pedido?.metaCampaignId ?? "—"} />
                             </DrawerSection>
 
+                            {pedido?.metaAdId && metaAd && (
+                                <DrawerSection title="Creativo que generó la venta">
+                                    {metaAd.thumbnail_url && (
+                                        <img src={metaAd.thumbnail_url} alt="Creativo" style={{
+                                            width: "100%", maxHeight: "120px", objectFit: "cover",
+                                            borderRadius: "6px", marginBottom: "6px"
+                                        }} />
+                                    )}
+                                    <DrawerRow label="Nombre ad" value={metaAd.name} />
+                                    <DrawerRow label="Tipo" value={metaAd.creative?.object_type ?? "—"} />
+                                    <DrawerRow label="Estado" value={metaAd.effective_status} />
+                                    <DrawerRow label="Adset" value={metaAd.adset?.name ?? "—"} />
+                                    <DrawerRow label="Campaña" value={metaAd.campaign?.name ?? "—"} />
+                                    <DrawerRow label="CTR" value={metaAd.insights?.ctr ? `${metaAd.insights.ctr}%` : "—"} />
+                                    <DrawerRow label="CPC" value={metaAd.insights?.cpc ? `€${metaAd.insights.cpc}` : "—"} />
+                                    <DrawerRow label="CPM" value={metaAd.insights?.cpm ? `€${metaAd.insights.cpm}` : "—"} />
+                                    <a href={`https://www.facebook.com/ads/manager/account/ads/?selected_ad_ids=${pedido?.metaAdId}`}
+                                        target="_blank" rel="noreferrer"
+                                        style={{ fontSize: "11px", color: "#3b82f6", fontWeight: 600, display: "block", marginTop: "6px" }}>
+                                        Ver en Meta Ads Manager →
+                                    </a>
+                                </DrawerSection>
+                            )}
+
                             <DrawerSection title="Landing de conversión">
-                                <DrawerRow label="Landing" value={
-                                    pedido?.landingUrl ? <a href={pedido.landingUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", textDecoration: "underline" }}>{pedido.landingUrl}</a> : "—"
+                                <DrawerRow label="URL" value={
+                                    pedido?.landingUrl
+                                        ? <a href={pedido.landingUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontSize: "11px" }}>
+                                            {pedido.landingUrl.replace("https://", "").substring(0, 40)}...
+                                        </a>
+                                        : "—"
                                 } />
                                 <DrawerRow label="Tipo" value={pedido?.landingType ?? "Advertorial"} />
                             </DrawerSection>

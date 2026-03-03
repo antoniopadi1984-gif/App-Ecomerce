@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RefreshCw, Search, Filter, MapPin, User, AlertTriangle } from 'lucide-react';
 import { ORDER_STATES } from '@/lib/orderStates';
 
@@ -452,7 +452,7 @@ function GestorCell({ pedido, onAssign }: { pedido: Record<string, any>; onAssig
                             Agentes IA
                         </div>
                         {GESTORES_LIST.filter(g => g.tipo === "bot").map(g => (
-                            <DropdownOption key={g.id} emoji={g.emoji} nombre={g.nombre} tipo={g.tipo}
+                            <DropdownOption key={g.id} emoji={g.emoji ?? "🤖"} nombre={g.nombre} tipo={g.tipo}
                                 active={gestor?.id === g.id}
                                 onClick={() => { onAssign(pedido.id, g.id); setOpen(false); }}
                             />
@@ -464,7 +464,7 @@ function GestorCell({ pedido, onAssign }: { pedido: Record<string, any>; onAssig
                             Equipo
                         </div>
                         {GESTORES_LIST.filter(g => g.tipo === "humano").map(g => (
-                            <DropdownOption key={g.id} emoji={g.emoji} nombre={g.nombre} tipo={g.tipo}
+                            <DropdownOption key={g.id} emoji={g.emoji ?? "👤"} nombre={g.nombre} tipo={g.tipo}
                                 active={gestor?.id === g.id}
                                 onClick={() => { onAssign(pedido.id, g.id); setOpen(false); }}
                             />
@@ -1184,6 +1184,17 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
 export default function PedidosPage() {
     const [activeTab, setActiveTab] = useState('todos');
     const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);
+    const [gestoresLive, setGestoresLive] = useState<Gestor[]>(GESTORES_LIST);
+
+    // Cargar gestores desde la DB — single source of truth
+    useEffect(() => {
+        const storeId = new URLSearchParams(window.location.search).get("storeId") ?? "";
+        if (!storeId) return; // sin storeId → usa mock hardcodeado
+        fetch(`/api/equipo/gestores?storeId=${storeId}`)
+            .then(r => r.json())
+            .then(data => { if (data.gestores) setGestoresLive(data.gestores); })
+            .catch(() => { /* fallback silencioso al mock */ });
+    }, []);
 
     const pedidos = [
         ...Array(42).fill({ state: 'nuevo' }),

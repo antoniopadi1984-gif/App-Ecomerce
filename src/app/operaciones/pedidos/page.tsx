@@ -70,6 +70,16 @@ function formatTime(_date?: string) {
     return "14:32";
 }
 
+function calcTiempo(from?: string, to?: string): string {
+    if (!from || !to) return "—";
+    const diff = new Date(to).getTime() - new Date(from).getTime();
+    if (isNaN(diff) || diff < 0) return "—";
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    if (h === 0) return `${m}min`;
+    return `${h}h ${m}min`;
+}
+
 function getTrackingUrl(carrier: string, trackingNumber: string): string {
     const urls: Record<string, string> = {
         "correos_express": `https://www.correos.es/ss/Satellite/site/aplicacion-oficina_virtual-1349167560549/detalle_app-sidioma=es_ES&numero=${trackingNumber}`,
@@ -426,13 +436,22 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                                 <DrawerRow label="Fulfillment" value={<FulfillmentBadge type={pedido?.fulfillment || "beeping"} />} />
                                 <DrawerRow label="Transportista" value={<CarrierBadge type={pedido?.carrier || "GLS"} />} />
                                 <DrawerRow label="Tracking" value={
-                                    (pedido?.trackingNumber || "GLS0012929")
-                                        ? <a href={getTrackingUrl(pedido?.carrier || "GLS", pedido?.trackingNumber || "GLS0012929")}
+                                    pedido?.trackingNumber
+                                        ? <a href={getTrackingUrl(pedido?.carrier || "GLS", pedido?.trackingNumber)}
                                             target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontWeight: 700 }}>
-                                            {pedido?.trackingNumber || "GLS0012929"}
+                                            {pedido?.trackingNumber}
                                         </a>
                                         : "Sin tracking"
                                 } />
+                            </DrawerSection>
+
+                            <DrawerSection title="Métricas del pedido">
+                                <DrawerRow label="Hora entrada" value={formatTime(pedido?.createdAt)} />
+                                <DrawerRow label="Dispositivo" value={pedido?.deviceType ?? "—"} />
+                                <DrawerRow label="T. gestión" value={calcTiempo(pedido?.createdAt, pedido?.timestamps?.primerCambio)} />
+                                <DrawerRow label="T. preparación" value={calcTiempo(pedido?.timestamps?.pendiente, pedido?.timestamps?.enviado)} />
+                                <DrawerRow label="T. tránsito" value={calcTiempo(pedido?.timestamps?.enviado, pedido?.timestamps?.entregado)} />
+                                <DrawerRow label="Intentos entrega" value={pedido?.intentosEntrega ?? "—"} />
                             </DrawerSection>
                         </div>
                     )}

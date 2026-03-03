@@ -257,11 +257,11 @@ function DrawerSection({ title, children }: { title: string, children: React.Rea
             : child
     );
     return (
-        <div style={{ marginBottom: "8px" }}>
+        <div style={{ marginBottom: "6px" }}>
             <p style={{
                 fontSize: "10px", fontWeight: 900, textTransform: "uppercase",
                 color: "#94a3b8", letterSpacing: "0.08em",
-                margin: "0 0 3px 0",
+                margin: "0 0 2px 0",
                 paddingLeft: "2px",
             }}>
                 {title}
@@ -283,7 +283,7 @@ function DrawerRow({ label, value, isLast }: { label: string, value: React.React
             alignItems: "center",
             padding: "3px 0",
             borderBottom: isLast ? "none" : "1px solid #f1f5f9",
-            minHeight: "26px",
+            minHeight: "24px",
         }}>
             <span style={{ fontSize: "12px", color: "#64748b", minWidth: "110px" }}>
                 {label}
@@ -406,7 +406,7 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                 </div>
 
                 {/* Body scrollable content per tab */}
-                <div className="ds-scrollbar" style={{ flex: 1, padding: "8px 14px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0", background: "white" }}>
+                <div className="ds-scrollbar" style={{ flex: 1, padding: "6px 12px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0", background: "white" }}>
 
                     {activeTab === "cliente" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
@@ -464,25 +464,41 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                     )}
 
                     {activeTab === "timeline" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
-                            <div className="ds-card" style={{ padding: "24px", border: "1px solid #f1f5f9" }}>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingLeft: "8px" }}>
-                                    {[
-                                        { title: "Beeping: Etiqueta generada", time: "Hoy, 11:30", detail: "GLS 00012929", color: "#d97706" },
-                                        { title: "Dropea: Pago procesado", time: "Hoy, 10:45", detail: "Stripe CH_12932", color: "#1e40af" },
-                                        { title: "Pedido creado en Shopify", time: "Hoy, 10:42", detail: "Referencia #10045", color: "#16a34a" },
-                                    ].map((evt, i) => (
-                                        <div key={i} style={{ display: "flex", gap: "16px", position: "relative" }}>
-                                            <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: evt.color, marginTop: "5px", zIndex: 2, border: "2px solid white", boxShadow: `0 0 0 2px ${evt.color}40` }} />
-                                            {i < 2 && <div style={{ position: "absolute", left: "4px", top: "16px", bottom: "-20px", width: "2px", background: "#f1f5f9" }} />}
-                                            <div style={{ paddingBottom: i < 2 ? "12px" : "0" }}>
-                                                <p style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{evt.title}</p>
-                                                <p style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>{evt.time} · {evt.detail}</p>
-                                            </div>
+                        <div style={{ display: "flex", flexDirection: "column", animation: "fade-in 0.2s", paddingTop: "4px" }}>
+                            {(pedido?.timeline || [
+                                { label: "Beeping: Etiqueta generada", description: "GLS 00012929", timestamp: "2023-10-12T11:30:00Z", type: "warning" },
+                                { label: "Dropea: Pago procesado", description: "Stripe CH_12932", timestamp: "2023-10-12T10:45:00Z", type: "info" },
+                                { label: "Pedido creado en Shopify", description: "Referencia #10045", timestamp: "2023-10-12T10:42:00Z", type: "success" },
+                            ]).map((event: { label: string; description: string; timestamp: string; type: string }, i: number, arr: { label: string; description: string; timestamp: string; type: string }[]) => (
+                                <div key={i} style={{ display: "flex", gap: "10px", paddingBottom: "10px" }}>
+                                    {/* Punto + línea vertical */}
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                                        <div style={{
+                                            width: "9px", height: "9px", borderRadius: "50%", marginTop: "3px",
+                                            background: event.type === "error" ? "#ef4444"
+                                                : event.type === "warning" ? "#f59e0b"
+                                                    : event.type === "success" ? "#16a34a" : "#3b82f6",
+                                            border: "2px solid white",
+                                            boxShadow: "0 0 0 1.5px " + (event.type === "error" ? "#ef4444" : event.type === "warning" ? "#f59e0b" : event.type === "success" ? "#16a34a" : "#3b82f6"),
+                                        }} />
+                                        {i < arr.length - 1 && (
+                                            <div style={{ width: "1px", flex: 1, background: "#e2e8f0", marginTop: "3px" }} />
+                                        )}
+                                    </div>
+                                    {/* Texto del evento */}
+                                    <div style={{ flex: 1, paddingBottom: "2px" }}>
+                                        <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a", lineHeight: 1.3 }}>
+                                            {event.label}
                                         </div>
-                                    ))}
+                                        <div style={{ fontSize: "11px", color: "#64748b", marginTop: "1px", lineHeight: 1.3 }}>
+                                            {event.description}
+                                        </div>
+                                        <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "1px" }}>
+                                            {formatDate(event.timestamp)} · {formatTime(event.timestamp)}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            ))}
                         </div>
                     )}
 

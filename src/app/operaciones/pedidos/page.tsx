@@ -83,6 +83,40 @@ function calcTiempo(from?: string, to?: string | Date): string {
     return `${h}h ${m}min`;
 }
 
+type TimelineEventType = "info" | "success" | "warning" | "error";
+type TimelineSource = "shopify" | "beeping" | "dropea" | "dropi" | "17track" | "sistema" | "usuario";
+
+interface TimelineEvent {
+    label: string;
+    description: string;
+    type: TimelineEventType;
+    source: TimelineSource;
+    timestamp: string;
+}
+
+const SOURCE_COLORS: Record<TimelineSource, string> = {
+    shopify:  "#16a34a",
+    beeping:  "#ca8a04",
+    dropea:   "#1e40af",
+    dropi:    "#ea580c",
+    "17track":"#7c3aed",
+    sistema:  "#0891b2",
+    usuario:  "#64748b",
+};
+
+const MOCK_TIMELINE: TimelineEvent[] = [
+    { label: "Pedido creado en Shopify",       description: "Referencia #10045",  type: "info",    source: "shopify",  timestamp: "2023-10-12T10:42:00Z" },
+    { label: "Pago procesado",                 description: "Stripe · CH_12932",  type: "success", source: "shopify",  timestamp: "2023-10-12T10:42:30Z" },
+    { label: "Pedido enviado a Beeping",       description: "Sync automática",     type: "info",    source: "sistema", timestamp: "2023-10-12T10:43:00Z" },
+    { label: "Beeping: Pedido recibido",       description: "Status 1",            type: "info",    source: "beeping", timestamp: "2023-10-12T10:45:00Z" },
+    { label: "Beeping: En preparación",        description: "Status 3",            type: "info",    source: "beeping", timestamp: "2023-10-12T11:00:00Z" },
+    { label: "Beeping: Etiqueta generada",     description: "GLS · GLS0012929",    type: "info",    source: "beeping", timestamp: "2023-10-12T11:30:00Z" },
+    { label: "Tracking registrado en 17track", description: "GLS0012929",          type: "info",    source: "17track", timestamp: "2023-10-12T12:00:00Z" },
+    { label: "Recogido por carrier",           description: "GLS en Madrid",       type: "info",    source: "17track", timestamp: "2023-10-13T08:00:00Z" },
+    { label: "En réparto hoy",                 description: "Repartidor asignado", type: "info",    source: "17track", timestamp: "2023-10-14T09:00:00Z" },
+    { label: "Entregado",                      description: "Firmado por cliente",  type: "success", source: "17track", timestamp: "2023-10-14T11:20:00Z" },
+];
+
 function getTrackingUrl(carrier: string, trackingNumber: string): string {
     const urls: Record<string, string> = {
         "correos_express": `https://www.correos.es/ss/Satellite/site/aplicacion-oficina_virtual-1349167560549/detalle_app-sidioma=es_ES&numero=${trackingNumber}`,
@@ -489,40 +523,38 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
 
                     {activeTab === "timeline" && (
                         <div style={{ display: "flex", flexDirection: "column", animation: "fade-in 0.2s", paddingTop: "4px" }}>
-                            {(pedido?.timeline || [
-                                { label: "Beeping: Etiqueta generada", description: "GLS 00012929", timestamp: "2023-10-12T11:30:00Z", type: "warning" },
-                                { label: "Dropea: Pago procesado", description: "Stripe CH_12932", timestamp: "2023-10-12T10:45:00Z", type: "info" },
-                                { label: "Pedido creado en Shopify", description: "Referencia #10045", timestamp: "2023-10-12T10:42:00Z", type: "success" },
-                            ]).map((event: { label: string; description: string; timestamp: string; type: string }, i: number, arr: { label: string; description: string; timestamp: string; type: string }[]) => (
-                                <div key={i} style={{ display: "flex", gap: "10px", paddingBottom: "10px" }}>
-                                    {/* Punto + línea vertical */}
-                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-                                        <div style={{
-                                            width: "9px", height: "9px", borderRadius: "50%", marginTop: "3px",
-                                            background: event.type === "error" ? "#ef4444"
-                                                : event.type === "warning" ? "#f59e0b"
-                                                    : event.type === "success" ? "#16a34a" : "#3b82f6",
-                                            border: "2px solid white",
-                                            boxShadow: "0 0 0 1.5px " + (event.type === "error" ? "#ef4444" : event.type === "warning" ? "#f59e0b" : event.type === "success" ? "#16a34a" : "#3b82f6"),
-                                        }} />
-                                        {i < arr.length - 1 && (
-                                            <div style={{ width: "1px", flex: 1, background: "#e2e8f0", marginTop: "3px" }} />
-                                        )}
-                                    </div>
-                                    {/* Texto del evento */}
-                                    <div style={{ flex: 1, paddingBottom: "2px" }}>
-                                        <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a", lineHeight: 1.3 }}>
-                                            {event.label}
+                            {(pedido?.timeline as TimelineEvent[] || MOCK_TIMELINE).map((event, i, arr) => {
+                                const typeColor = event.type === "error" ? "#ef4444" : event.type === "warning" ? "#f59e0b" : event.type === "success" ? "#16a34a" : "#3b82f6";
+                                const srcColor  = SOURCE_COLORS[event.source as TimelineSource] ?? "#94a3b8";
+                                return (
+                                    <div key={i} style={{ display: "flex", gap: "10px", paddingBottom: "10px" }}>
+                                        {/* Punto + línea vertical */}
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                                            <div style={{
+                                                width: "9px", height: "9px", borderRadius: "50%", marginTop: "3px",
+                                                background: typeColor, border: "2px solid white",
+                                                boxShadow: "0 0 0 1.5px " + typeColor,
+                                            }} />
+                                            {i < arr.length - 1 && (
+                                                <div style={{ width: "1px", flex: 1, background: "#e2e8f0", marginTop: "3px" }} />
+                                            )}
                                         </div>
-                                        <div style={{ fontSize: "11px", color: "#64748b", marginTop: "1px", lineHeight: 1.3 }}>
-                                            {event.description}
-                                        </div>
-                                        <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "1px" }}>
-                                            {formatDate(event.timestamp)} · {formatTime(event.timestamp)}
+                                        {/* Texto del evento */}
+                                        <div style={{ flex: 1, paddingBottom: "2px" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                                <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a", lineHeight: 1.3 }}>{event.label}</span>
+                                                <span style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", color: srcColor, letterSpacing: "0.05em", opacity: 0.85 }}>{event.source}</span>
+                                            </div>
+                                            {event.description && (
+                                                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "1px", lineHeight: 1.3 }}>{event.description}</div>
+                                            )}
+                                            <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "1px" }}>
+                                                {formatDate(event.timestamp)} · {formatTime(event.timestamp)}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
 

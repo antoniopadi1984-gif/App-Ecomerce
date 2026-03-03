@@ -94,8 +94,8 @@ function RowActionsMenu({ pedido, onOpenDrawer }: { pedido: { state: string }, o
 
     return (
         <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setOpen(!open)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
-                <MoreHorizontal size={14} />
+            <button onClick={() => setOpen(!open)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
+                ···
             </button>
             {open && (
                 <div style={{
@@ -598,7 +598,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:42</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
                                             <PrimaryActionButton pedido={{ state: "en_preparacion" }} />
                                             <RowActionsMenu pedido={{ state: "en_preparacion" }} onOpenDrawer={() => { }} />
                                         </div>
@@ -675,7 +675,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:35</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
                                             <PrimaryActionButton pedido={{ state: "reintento" }} />
                                             <RowActionsMenu pedido={{ state: "reintento" }} onOpenDrawer={() => { }} />
                                         </div>
@@ -752,7 +752,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>18:20</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
                                             <PrimaryActionButton pedido={{ state: "nuevo" }} />
                                             <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
                                         </div>
@@ -838,7 +838,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>12:05</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
                                             <PrimaryActionButton pedido={{ state: "enviado" }} />
                                             <RowActionsMenu pedido={{ state: "enviado" }} onOpenDrawer={() => { }} />
                                         </div>
@@ -930,7 +930,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>09:12</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
                                             <PrimaryActionButton pedido={{ state: "fallido" }} />
                                             <RowActionsMenu pedido={{ state: "fallido" }} onOpenDrawer={() => { }} />
                                         </div>
@@ -1017,7 +1017,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>14:15</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
                                             <PrimaryActionButton pedido={{ state: "devolucion" }} />
                                             <RowActionsMenu pedido={{ state: "devolucion" }} onOpenDrawer={() => { }} />
                                         </div>
@@ -1095,7 +1095,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:00</span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "10px 14px 10px 6px", minWidth: "90px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
                                             <PrimaryActionButton pedido={{ state: "entregado" }} />
                                             <RowActionsMenu pedido={{ state: "entregado" }} onOpenDrawer={() => { }} />
                                         </div>
@@ -1141,7 +1141,7 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td data-no-drawer style={{ padding: "8px", textAlign: "right", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "80px" }}>
                                             <PrimaryActionButton pedido={{ state: "nuevo" }} />
                                             <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
                                         </div>

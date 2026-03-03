@@ -92,7 +92,23 @@ export default function ResearchCorePage() {
                     <p className="text-[14px] text-[var(--text-muted)] mb-8 text-center max-w-md leading-relaxed">
                         Añade tu primer producto para comenzar el pipeline central de generación de avatares, ángulos e insights accionables.
                     </p>
-                    <AddProductDialog />
+                    <div className="flex flex-col items-center gap-3">
+                        <AddProductDialog />
+                        <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>o</span>
+                            <button
+                                onClick={() => document.dispatchEvent(new CustomEvent('open-create-product-modal'))}
+                                style={{
+                                    background: "#7c3aed", color: "white", border: "none",
+                                    borderRadius: "10px", padding: "10px 24px",
+                                    fontSize: "13px", fontWeight: 700, cursor: "pointer",
+                                    boxShadow: "0 4px 12px rgba(124,58,237,0.3)"
+                                }}
+                            >
+                                + Crear nuevo producto
+                            </button>
+                        </div>
+                    </div>
                 </div>
             );
         }

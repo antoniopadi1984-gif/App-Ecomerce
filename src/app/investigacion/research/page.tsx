@@ -7,12 +7,11 @@ import { Play, CheckCircle2, Circle, Loader2, ArrowRight, BrainCircuit, ScanSear
 import { AddProductDialog } from '@/components/products/AddProductDialog';
 
 const STEPS = [
-    { id: 'P1', name: 'Product Core Extraction', desc: 'Funcionalidad, mecanismos y features', icon: ScanSearch },
-    { id: 'P2', name: 'Macro Avatar Engine', desc: 'Generación de 20 perfiles arquetipo', icon: UserPlus },
-    { id: 'P3', name: 'Language Bank', desc: 'Extracción de vocabulario taboo y creencias', icon: FileText },
-    { id: 'P4', name: 'Angle Engine', desc: 'Identificación de Ángulos P.A.S.T.', icon: Target },
-    { id: 'P5', name: 'Combo Matrix', desc: '400 combinaciones AV x ANG + Hooks', icon: Share2 },
-    { id: 'P6', name: 'Vector Mapping', desc: 'Estructuras base para cada formato Ad', icon: BrainCircuit },
+    { id: 'P1', name: 'Mass Desire', desc: 'Funcionalidad, mecanismos y features', icon: ScanSearch, model: 'Gemini 2.5 Flash / Deep Research' },
+    { id: 'P2', name: 'Avatares', desc: 'Generación de perfiles arquetipo', icon: UserPlus, model: 'Gemini 2.5 Flash / Deep Research' },
+    { id: 'P2.1', name: 'Language Bank', desc: 'Extracción vocabulario taboo y creencias', icon: FileText, model: 'Gemini 2.5 Flash / Deep Research' },
+    { id: 'P4', name: 'Ángulos', desc: 'Identificación de Ángulos P.A.S.T.', icon: Target, model: 'Claude 3.5 Sonnet' },
+    { id: 'P3', name: 'Copy', desc: 'Master copy generation', icon: BrainCircuit, model: 'Claude 3.5 Sonnet' },
 ];
 
 type ResearchStep = {
@@ -29,6 +28,7 @@ export default function ResearchCorePage() {
     const [runId, setRunId] = useState<string | null>(null);
     const [completedSteps, setCompletedSteps] = useState<string[]>([]);
     const [currentStep, setCurrentStep] = useState<string | null>(null);
+    const [stepError, setStepError] = useState<string | null>(null);
     const [historyRuns, setHistoryRuns] = useState<ResearchStep[][]>([]);
 
     useEffect(() => {
@@ -51,13 +51,21 @@ export default function ResearchCorePage() {
             });
     }, [productId]);
 
-    const startPipeline = async () => {
+    const startPipeline = async (startFromIndex = 0) => {
         if (!activeStoreId || !productId || productId === 'GLOBAL') return;
         setRunning(true);
-        setCompletedSteps([]);
-        const newRunId = `run_${Date.now()}`;
+        setStepError(null);
 
-        for (const step of STEPS) {
+        let newRunId = runId;
+        if (startFromIndex === 0) {
+            setCompletedSteps([]);
+            newRunId = `run_${Date.now()}`;
+            setRunId(newRunId);
+        }
+
+        const remainingSteps = STEPS.slice(startFromIndex);
+
+        for (const step of remainingSteps) {
             setCurrentStep(step.id);
             try {
                 const r = await fetch('/api/research/god-tier', {
@@ -71,9 +79,13 @@ export default function ResearchCorePage() {
                     })
                 });
                 const d = await r.json();
-                if (!d.ok) break;
+                if (!d.ok) {
+                    setStepError(step.id);
+                    break;
+                }
                 setCompletedSteps(prev => [...prev, step.id]);
             } catch {
+                setStepError(step.id);
                 break;
             }
         }
@@ -180,51 +192,116 @@ export default function ResearchCorePage() {
                     </div>
                 </div>
 
-                <button
-                    onClick={startPipeline}
-                    disabled={running}
-                    className="ds-btn bg-[var(--inv)] text-white hover:brightness-110 shadow-[0_4px_14px_rgba(139,92,246,0.39)] px-6"
-                >
-                    {running ? (
-                        <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Procesando...</span>
-                    ) : completedSteps.length === 6 ? (
-                        <span className="flex items-center gap-2"><Play size={14} /> Re-ejecutar (Actualizar Contexto)</span>
-                    ) : (
-                        <span className="flex items-center gap-2"><Play size={14} /> Run Research</span>
-                    )}
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        className="flex items-center gap-2 text-[11px] font-[800] bg-[var(--surface)] border border-[var(--border)] px-4 py-2 rounded-lg text-[var(--text)] hover:bg-[var(--surface2)] transition-colors"
+                        onClick={() => {
+                            const url = window.prompt("Introduce URL de Google Doc o PDF para usar como fuente base:");
+                            if (url) {
+                                // TODO: Call API to update product with source
+                                alert("Fuente vinculada: " + url);
+                            }
+                        }}
+                    >
+                        <FileText size={14} /> Añadir fuente
+                    </button>
+                    <button
+                        onClick={() => startPipeline(0)}
+                        disabled={running}
+                        className="ds-btn bg-[var(--inv)] text-white hover:brightness-110 shadow-[0_4px_14px_rgba(139,92,246,0.39)] px-6 h-9"
+                    >
+                        {running ? (
+                            <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Ejecutando...</span>
+                        ) : completedSteps.length === STEPS.length ? (
+                            <span className="flex items-center gap-2"><Play size={14} /> Re-ejecutar Pipeline</span>
+                        ) : (
+                            <span className="flex items-center gap-2"><Play size={14} /> Run Deep Research</span>
+                        )}
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {STEPS.map((step) => {
+                {STEPS.map((step, index) => {
                     const isCompleted = completedSteps.includes(step.id);
                     const isActive = currentStep === step.id;
+                    const isError = stepError === step.id;
+                    const isBlocked = !isCompleted && !isActive && !isError;
+
                     return (
                         <div key={step.id}
-                            className={`ds-card-padded border-l-4 transition-all duration-300 relative overflow-hidden ${isCompleted ? 'border-l-[var(--s-ok)] bg-[var(--s-ok)]/5' :
-                                isActive ? 'border-l-[var(--inv)] border-t border-r border-b border-[var(--inv)] shadow-[0_4px_20px_rgba(139,92,246,0.15)] scale-[1.02] z-10' :
-                                    'border-l-[var(--border-high)] bg-[var(--surface)] opacity-70'
+                            className={`ds-card-padded border-l-4 transition-all duration-300 relative overflow-hidden flex flex-col ${isError ? 'border-l-[var(--s-ko)] bg-[var(--s-ko)]/5 border-t border-r border-b' :
+                                    isCompleted ? 'border-l-[var(--s-ok)] bg-[var(--s-ok)]/5' :
+                                        isActive ? 'border-l-[var(--inv)] border-t border-r border-b border-[var(--inv)] shadow-[0_4px_20px_rgba(139,92,246,0.15)] scale-[1.02] z-10' :
+                                            'border-l-[var(--border-high)] bg-[var(--surface)] opacity-50 grayscale-[50%]'
                                 }`}
                         >
                             {isActive && <div className="absolute top-0 left-0 w-full h-[2px] bg-[var(--inv)] animate-pulse" />}
                             <div className="flex justify-between items-start mb-2">
-                                <div className={`p-1.5 rounded-md ${isCompleted ? 'bg-[var(--s-ok)]/20 text-[var(--s-ok)]' : isActive ? 'bg-[var(--inv)]/20 text-[var(--inv)]' : 'bg-[var(--surface2)] text-[var(--text-dim)]'}`}>
+                                <div className={`p-1.5 rounded-md ${isError ? 'bg-[var(--s-ko)]/20 text-[var(--s-ko)]' :
+                                        isCompleted ? 'bg-[var(--s-ok)]/20 text-[var(--s-ok)]' :
+                                            isActive ? 'bg-[var(--inv)]/20 text-[var(--inv)]' :
+                                                'bg-[var(--surface2)] text-[var(--text-dim)]'
+                                    }`}>
                                     <step.icon size={16} />
                                 </div>
-                                <div>
-                                    {isCompleted ? <CheckCircle2 size={16} className="text-[var(--s-ok)]" /> : isActive ? <Loader2 size={16} className="text-[var(--inv)] animate-spin" /> : <Circle size={16} className="text-[var(--border-high)]" />}
+                                <div className="flex items-center gap-1.5">
+                                    {isError ? (
+                                        <span className="text-[9px] font-bold text-[var(--s-ko)] tracking-widest uppercase">Failed</span>
+                                    ) : isCompleted ? (
+                                        <span className="text-[9px] font-bold text-[var(--s-ok)] tracking-widest uppercase">Done</span>
+                                    ) : isActive ? (
+                                        <span className="text-[9px] font-bold text-[var(--inv)] tracking-widest uppercase animate-pulse">Running</span>
+                                    ) : (
+                                        <span className="text-[9px] font-bold text-[var(--text-dim)] tracking-widest uppercase">Locked</span>
+                                    )}
                                 </div>
                             </div>
-                            <h3 className={`text-[12px] font-[800] mb-0.5 flex gap-1 items-center ${isActive ? 'text-[var(--inv)]' : 'text-[var(--text)]'}`}>
-                                {step.id} <ArrowRight size={10} className="text-[var(--border-high)]" /> {step.name}
-                            </h3>
-                            <p className="text-[10px] text-[var(--text-muted)] min-h-[30px] leading-snug">{step.desc}</p>
-                            {isCompleted && (
-                                <div className="mt-2 pt-2 border-t border-[var(--s-ok)]/20 flex justify-between items-center text-[9px] font-bold text-[var(--s-ok)]">
-                                    <span>Output inyectado</span>
-                                    <span className="font-mono">JSON OK</span>
-                                </div>
-                            )}
+
+                            <div className="flex-1">
+                                <h3 className={`text-[13px] font-[800] mb-0.5 flex gap-1 items-center ${isActive ? 'text-[var(--inv)]' : isError ? 'text-[var(--s-ko)]' : 'text-[var(--text)]'}`}>
+                                    {step.id} <ArrowRight size={10} className="text-[var(--border-high)]" /> {step.name}
+                                </h3>
+
+                                {isActive ? (
+                                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-[var(--inv)]">
+                                        <Loader2 size={12} className="animate-spin" /> Invocando modelo...
+                                    </div>
+                                ) : (
+                                    <p className="text-[10px] text-[var(--text-muted)] min-h-[20px] leading-snug">{step.desc}</p>
+                                )}
+                            </div>
+
+                            {/* Fotter contextual metadata */}
+                            <div className="mt-3 pt-2 border-t border-[var(--border)] min-h-[28px] flex flex-col justify-end">
+                                {isError && (
+                                    <button
+                                        onClick={() => startPipeline(index)}
+                                        className="w-full py-1.5 rounded-md bg-[var(--s-ko)] text-white text-[10px] font-bold shadow-sm hover:brightness-110 active:scale-95 transition-all"
+                                    >
+                                        Reintentar este paso
+                                    </button>
+                                )}
+
+                                {isCompleted && (
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex justify-between items-center text-[9px]">
+                                            <span className="text-[var(--text-muted)] tracking-wider">MODELO STRATEGY</span>
+                                            <span className="font-mono text-[var(--inv)]">{step.model}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[9px]">
+                                            <span className="text-[var(--text-muted)] tracking-wider">STATUS</span>
+                                            <span className="font-mono text-[var(--s-ok)]">DATA_INJECTED</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {isBlocked && (
+                                    <div className="flex items-center gap-1.5 text-[9px] text-[var(--text-dim)]">
+                                        <Circle size={10} /> Esperando paso anterior
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     );
                 })}

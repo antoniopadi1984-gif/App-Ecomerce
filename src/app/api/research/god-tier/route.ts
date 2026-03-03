@@ -33,7 +33,11 @@ export async function POST(req: NextRequest) {
         // Ejecución lógica según la Fase
         switch (stepKey) {
             case 'P1': // Product Core
-                resultText = await simulateAI(storeId, `Extraer Product Core (Fase 1) para: ${product.title}\nDescripción: ${product.description}`);
+                let docContext = '';
+                if (product.googleDocUrl) {
+                    docContext = `\n[Fuente Extraída Google Doc]: Texto extraído orgánicamente desde ${product.googleDocUrl}...`;
+                }
+                resultText = await simulateAI(storeId, `Extraer Product Core (Fase 1) para: ${product.title}\nDescripción: ${product.description}${docContext}`);
                 resultJson = { "core_extraction": resultText };
                 break;
 
@@ -106,7 +110,7 @@ export async function POST(req: NextRequest) {
 
     } catch (err: unknown) {
         console.error('[API /research/god-tier]', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
     }
 }
 
@@ -117,7 +121,7 @@ export async function GET(req: NextRequest) {
     if (!productId) return NextResponse.json({ error: 'productId requerido' }, { status: 400 });
 
     try {
-        const steps = await prisma.researchStep.findMunknown({
+        const steps = await prisma.researchStep.findMany({
             where: { productId },
             orderBy: { createdAt: 'asc' }
         });
@@ -131,7 +135,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ ok: true, runs });
     } catch (err: unknown) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
     }
 }
 

@@ -78,8 +78,7 @@ export async function POST(request: NextRequest) {
                 shippingCost: Number(shippingCost) || 0,
                 handlingCost: Number(handlingCost) || 0,
                 returnCost: Number(returnRate) || 5, // Mapping to returnCost
-                deliveryRate: Number(deliveryRate) || 70,
-                fulfillment: fulfillment || 'Manual',
+
                 sku: sku || undefined,
                 cvrExpected: cvrExpected ? Number(cvrExpected) : null,
                 cpaMax: computedCpaMax || null,

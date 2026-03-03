@@ -371,10 +371,10 @@ interface RiskFactor {
 
 function getCPRiskLevel(cp: string): { label: string; level: RiskLevel } {
     // Hardcoded high-risk CPs known from returns history; replace with DB query
-    const high = ["18008","18009","18010","29001","28005","28012","08001","08002","08003"];
-    const medium = ["41001","41002","46001","46002","50001","03001","03002"];
-    if (high.some(x => cp.startsWith(x.slice(0,3)))) return { label: "Alto riesgo", level: "high" };
-    if (medium.some(x => cp.startsWith(x.slice(0,3)))) return { label: "Riesgo medio", level: "medium" };
+    const high = ["18008", "18009", "18010", "29001", "28005", "28012", "08001", "08002", "08003"];
+    const medium = ["41001", "41002", "46001", "46002", "50001", "03001", "03002"];
+    if (high.some(x => cp.startsWith(x.slice(0, 3)))) return { label: "Alto riesgo", level: "high" };
+    if (medium.some(x => cp.startsWith(x.slice(0, 3)))) return { label: "Riesgo medio", level: "medium" };
     return { label: "Riesgo bajo", level: "low" };
 }
 
@@ -384,62 +384,86 @@ function calcRiskScore(pedido: Record<string, any>): { score: number; factors: R
 
     // CP zona
     const cpRisk = getCPRiskLevel(pedido?.shipping_zip || "00000");
-    factors.push({ key: "cp", label: `Zona CP ${pedido?.shipping_zip || "—"}`,
+    factors.push({
+        key: "cp", label: `Zona CP ${pedido?.shipping_zip || "—"}`,
         value: cpRisk.label, risk: cpRisk.level,
         points: cpRisk.level === "high" ? 40 : cpRisk.level === "medium" ? 20 : 0,
-        source: "datos propios" });
+        source: "datos propios"
+    });
 
     // Devoluciones previas
     const devs = pedido?.clienteStats?.totalDevoluciones ?? 0;
-    if (devs > 2) factors.push({ key: "devoluciones", label: "Devoluciones previas",
-        value: `${devs} devoluciones`, risk: "high", points: 30, source: "historial" });
-    else if (devs > 0) factors.push({ key: "devoluciones", label: "Devoluciones previas",
-        value: `${devs} devolución`, risk: "medium", points: 10, source: "historial" });
-    else factors.push({ key: "devoluciones", label: "Sin devoluciones previas",
-        value: "OK", risk: "low", points: -10, source: "historial" });
+    if (devs > 2) factors.push({
+        key: "devoluciones", label: "Devoluciones previas",
+        value: `${devs} devoluciones`, risk: "high", points: 30, source: "historial"
+    });
+    else if (devs > 0) factors.push({
+        key: "devoluciones", label: "Devoluciones previas",
+        value: `${devs} devolución`, risk: "medium", points: 10, source: "historial"
+    });
+    else factors.push({
+        key: "devoluciones", label: "Sin devoluciones previas",
+        value: "OK", risk: "low", points: -10, source: "historial"
+    });
 
     // Teléfono válido
     const tel = (pedido?.telefono || "").replace(/\s/g, "");
     const telValid = /^(\+34|0034|34)?[6789]\d{8}$/.test(tel);
-    factors.push({ key: "telefono", label: "Teléfono válido",
+    factors.push({
+        key: "telefono", label: "Teléfono válido",
         value: telValid ? "OK" : "Inválido", risk: telValid ? "low" : "high",
-        points: telValid ? -5 : 25, source: "validación local" });
+        points: telValid ? -5 : 25, source: "validación local"
+    });
 
     // IP vs dirección
     if (pedido?.geoCity && pedido?.shipping_city) {
         const match = pedido.geoCity.toLowerCase() === pedido.shipping_city.toLowerCase();
-        factors.push({ key: "ip_geo", label: "IP coincide con dirección",
+        factors.push({
+            key: "ip_geo", label: "IP coincide con dirección",
             value: match ? "Coincide" : `IP: ${pedido.geoCity}`, risk: match ? "low" : "medium",
-            points: match ? -5 : 15, source: "geolocalización" });
+            points: match ? -5 : 15, source: "geolocalización"
+        });
     }
 
     // VPN/Proxy
-    if (pedido?.isProxy) factors.push({ key: "vpn", label: "VPN/Proxy detectado",
-        value: "⚠️ Detectado", risk: "high", points: 35, source: "ipinfo.io" });
+    if (pedido?.isProxy) factors.push({
+        key: "vpn", label: "VPN/Proxy detectado",
+        value: "⚠️ Detectado", risk: "high", points: 35, source: "ipinfo.io"
+    });
 
     // Nombre completo
     const hasRealName = (pedido?.cliente || "").trim().split(" ").length >= 2;
-    factors.push({ key: "nombre", label: "Nombre completo",
+    factors.push({
+        key: "nombre", label: "Nombre completo",
         value: hasRealName ? "OK" : "Solo un nombre", risk: hasRealName ? "low" : "medium",
-        points: hasRealName ? 0 : 10, source: "validación local" });
+        points: hasRealName ? 0 : 10, source: "validación local"
+    });
 
     // Cliente nuevo vs recurrente
     const totalPedidos = pedido?.clienteStats?.totalPedidos ?? 1;
-    if (totalPedidos === 1) factors.push({ key: "nuevo", label: "Primera compra",
-        value: "Cliente nuevo", risk: "medium", points: 10, source: "historial" });
-    else factors.push({ key: "recurrente", label: "Cliente recurrente",
-        value: `${totalPedidos} pedidos`, risk: "low", points: -15, source: "historial" });
+    if (totalPedidos === 1) factors.push({
+        key: "nuevo", label: "Primera compra",
+        value: "Cliente nuevo", risk: "medium", points: 10, source: "historial"
+    });
+    else factors.push({
+        key: "recurrente", label: "Cliente recurrente",
+        value: `${totalPedidos} pedidos`, risk: "low", points: -15, source: "historial"
+    });
 
     // Método de pago
-    const isCOD = ["COD","Contra reembolso"].includes(pedido?.pago || "");
-    factors.push({ key: "pago", label: "Método de pago",
+    const isCOD = ["COD", "Contra reembolso"].includes(pedido?.pago || "");
+    factors.push({
+        key: "pago", label: "Método de pago",
         value: isCOD ? "COD (mayor riesgo)" : (pedido?.pago || "—"), risk: isCOD ? "medium" : "low",
-        points: isCOD ? 20 : 0, source: "shopify" });
+        points: isCOD ? 20 : 0, source: "shopify"
+    });
 
     // Hora del pedido
     const hour = new Date(pedido?.createdAt || Date.now()).getHours();
-    if (hour >= 2 && hour <= 6) factors.push({ key: "hora", label: "Pedido en madrugada",
-        value: `${hour}:00h`, risk: "medium", points: 10, source: "shopify" });
+    if (hour >= 2 && hour <= 6) factors.push({
+        key: "hora", label: "Pedido en madrugada",
+        value: `${hour}:00h`, risk: "medium", points: 10, source: "shopify"
+    });
 
     const totalPoints = factors.reduce((acc, f) => acc + f.points, 0);
     const score = Math.max(0, Math.min(100, 100 - totalPoints));
@@ -715,7 +739,7 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                                         </div>
                                     </div>
                                 </DrawerSection>
-                    
+
                                 <DrawerSection title="Factores de riesgo">
                                     {factors.map((f, i) => (
                                         <div key={f.key} style={{
@@ -743,68 +767,67 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                                         </div>
                                     ))}
                                 </DrawerSection>
-                    
+
                                 <DrawerSection title="IP y geolocalización">
-                                    <DrawerRow label="IP"        value={pedido?.ipAddress ?? "—"} />
-                                    <DrawerRow label="Ciudad"    value={pedido?.geoCity ?? "—"} />
-                                    <DrawerRow label="País"      value={pedido?.geoCountry ?? "—"} />
-                                    <DrawerRow label="ISP"       value={pedido?.geoISP ?? "—"} />
+                                    <DrawerRow label="IP" value={pedido?.ipAddress ?? "—"} />
+                                    <DrawerRow label="Ciudad" value={pedido?.geoCity ?? "—"} />
+                                    <DrawerRow label="País" value={pedido?.geoCountry ?? "—"} />
+                                    <DrawerRow label="ISP" value={pedido?.geoISP ?? "—"} />
                                     <DrawerRow label="VPN/Proxy" value={pedido?.isProxy ? "⚠️ Detectado" : "No detectado"} />
                                 </DrawerSection>
                             </div>
                         );
-                    })()
-                    )}
+                    })()}
 
                     {activeTab === "origen" && (
-                        <div style={{ animation: "fade-in 0.2s" }}>
-                            <DrawerSection title="Origen del pedido">
-                                <DrawerRow label="Fuente" value={pedido?.utmSource ?? "—"} />
-                                <DrawerRow label="Medio" value={pedido?.utmMedium ?? "—"} />
-                                <DrawerRow label="Campaña" value={pedido?.utmCampaign ?? "—"} />
-                                <DrawerRow label="Contenido" value={pedido?.utmContent ?? "—"} />
-                                <DrawerRow label="Placement" value={pedido?.utmPlacement ?? "—"} />
-                                <DrawerRow label="Ad ID" value={pedido?.metaAdId ?? "—"} />
-                                <DrawerRow label="Adset ID" value={pedido?.metaAdsetId ?? "—"} />
-                                <DrawerRow label="Campaign ID" value={pedido?.metaCampaignId ?? "—"} />
-                            </DrawerSection>
-
-                            {pedido?.metaAdId && metaAd && (
-                                <DrawerSection title="Creativo que generó la venta">
-                                    {metaAd.thumbnail_url && (
-                                        <img src={metaAd.thumbnail_url} alt="Creativo" style={{
-                                            width: "100%", maxHeight: "120px", objectFit: "cover",
-                                            borderRadius: "6px", marginBottom: "6px"
-                                        }} />
-                                    )}
-                                    <DrawerRow label="Nombre ad" value={metaAd.name} />
-                                    <DrawerRow label="Tipo" value={metaAd.creative?.object_type ?? "—"} />
-                                    <DrawerRow label="Estado" value={metaAd.effective_status} />
-                                    <DrawerRow label="Adset" value={metaAd.adset?.name ?? "—"} />
-                                    <DrawerRow label="Campaña" value={metaAd.campaign?.name ?? "—"} />
-                                    <DrawerRow label="CTR" value={metaAd.insights?.ctr ? `${metaAd.insights.ctr}%` : "—"} />
-                                    <DrawerRow label="CPC" value={metaAd.insights?.cpc ? `€${metaAd.insights.cpc}` : "—"} />
-                                    <DrawerRow label="CPM" value={metaAd.insights?.cpm ? `€${metaAd.insights.cpm}` : "—"} />
-                                    <a href={`https://www.facebook.com/ads/manager/account/ads/?selected_ad_ids=${pedido?.metaAdId}`}
-                                        target="_blank" rel="noreferrer"
-                                        style={{ fontSize: "11px", color: "#3b82f6", fontWeight: 600, display: "block", marginTop: "6px" }}>
-                                        Ver en Meta Ads Manager →
-                                    </a>
+                            <div style={{ animation: "fade-in 0.2s" }}>
+                                <DrawerSection title="Origen del pedido">
+                                    <DrawerRow label="Fuente" value={pedido?.utmSource ?? "—"} />
+                                    <DrawerRow label="Medio" value={pedido?.utmMedium ?? "—"} />
+                                    <DrawerRow label="Campaña" value={pedido?.utmCampaign ?? "—"} />
+                                    <DrawerRow label="Contenido" value={pedido?.utmContent ?? "—"} />
+                                    <DrawerRow label="Placement" value={pedido?.utmPlacement ?? "—"} />
+                                    <DrawerRow label="Ad ID" value={pedido?.metaAdId ?? "—"} />
+                                    <DrawerRow label="Adset ID" value={pedido?.metaAdsetId ?? "—"} />
+                                    <DrawerRow label="Campaign ID" value={pedido?.metaCampaignId ?? "—"} />
                                 </DrawerSection>
-                            )}
 
-                            <DrawerSection title="Landing de conversión">
-                                <DrawerRow label="URL" value={
-                                    pedido?.landingUrl
-                                        ? <a href={pedido.landingUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontSize: "11px" }}>
-                                            {pedido.landingUrl.replace("https://", "").substring(0, 40)}...
+                                {pedido?.metaAdId && metaAd && (
+                                    <DrawerSection title="Creativo que generó la venta">
+                                        {metaAd.thumbnail_url && (
+                                            <img src={metaAd.thumbnail_url} alt="Creativo" style={{
+                                                width: "100%", maxHeight: "120px", objectFit: "cover",
+                                                borderRadius: "6px", marginBottom: "6px"
+                                            }} />
+                                        )}
+                                        <DrawerRow label="Nombre ad" value={metaAd.name} />
+                                        <DrawerRow label="Tipo" value={metaAd.creative?.object_type ?? "—"} />
+                                        <DrawerRow label="Estado" value={metaAd.effective_status} />
+                                        <DrawerRow label="Adset" value={metaAd.adset?.name ?? "—"} />
+                                        <DrawerRow label="Campaña" value={metaAd.campaign?.name ?? "—"} />
+                                        <DrawerRow label="CTR" value={metaAd.insights?.ctr ? `${metaAd.insights.ctr}%` : "—"} />
+                                        <DrawerRow label="CPC" value={metaAd.insights?.cpc ? `€${metaAd.insights.cpc}` : "—"} />
+                                        <DrawerRow label="CPM" value={metaAd.insights?.cpm ? `€${metaAd.insights.cpm}` : "—"} />
+                                        <a href={`https://www.facebook.com/ads/manager/account/ads/?selected_ad_ids=${pedido?.metaAdId}`}
+                                            target="_blank" rel="noreferrer"
+                                            style={{ fontSize: "11px", color: "#3b82f6", fontWeight: 600, display: "block", marginTop: "6px" }}>
+                                            Ver en Meta Ads Manager →
                                         </a>
-                                        : "—"
-                                } />
-                                <DrawerRow label="Tipo" value={pedido?.landingType ?? "Advertorial"} />
-                            </DrawerSection>
-                        </div>
-                    )}
+                                    </DrawerSection>
+                                )}
+
+                                <DrawerSection title="Landing de conversión">
+                                    <DrawerRow label="URL" value={
+                                        pedido?.landingUrl
+                                            ? <a href={pedido.landingUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontSize: "11px" }}>
+                                                {pedido.landingUrl.replace("https://", "").substring(0, 40)}...
+                                            </a>
+                                            : "—"
+                                    } />
+                                    <DrawerRow label="Tipo" value={pedido?.landingType ?? "Advertorial"} />
+                                </DrawerSection>
+                            </div>
+                        )}
 
                     {activeTab === "historial" && (
                         <div style={{ animation: "fade-in 0.2s" }}>

@@ -1186,14 +1186,12 @@ export default function PedidosPage() {
     const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);
     const [gestoresLive, setGestoresLive] = useState<Gestor[]>(GESTORES_LIST);
 
-    // Cargar gestores desde la DB — single source of truth
+    // Cargar gestores desde la DB — single source of truth para todos los módulos
     useEffect(() => {
-        const storeId = new URLSearchParams(window.location.search).get("storeId") ?? "";
-        if (!storeId) return; // sin storeId → usa mock hardcodeado
-        fetch(`/api/equipo/gestores?storeId=${storeId}`)
+        fetch("/api/equipo/gestores-activos")
             .then(r => r.json())
             .then(data => { if (data.gestores) setGestoresLive(data.gestores); })
-            .catch(() => { /* fallback silencioso al mock */ });
+            .catch(() => { /* fallback silencioso al mock GESTORES_LIST */ });
     }, []);
 
     const pedidos = [

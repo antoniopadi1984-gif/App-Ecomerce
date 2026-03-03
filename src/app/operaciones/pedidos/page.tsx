@@ -44,6 +44,34 @@ export default function PedidosPage() {
     const { activeStoreId: storeId } = useStore();
     const [activeTab, setActiveTab] = useState('todos');
 
+    const pedidos = [
+        ...Array(42).fill({ state: 'nuevo' }),
+        ...Array(18).fill({ state: 'en_gestion' }),
+        ...Array(85).fill({ state: 'enviado' }),
+        ...Array(10).fill({ state: 'confirmado' }),
+        ...Array(30).fill({ state: 'en_preparacion' }),
+        ...Array(5).fill({ state: 'fallido' }),
+        ...Array(12).fill({ state: 'reintento' }),
+        ...Array(31).fill({ state: 'devolucion' }),
+        ...Array(15).fill({ state: 'entregado' }),
+        ...Array(6).fill({ state: 'cancelado' }),
+    ];
+    const carritosAbandonados = Array(12).fill({ state: 'abandonado' });
+    const borradores = Array(5).fill({ state: 'borrador' });
+
+    const pedidosFiltrados = {
+        "todos": pedidos,
+        "por-gestionar": pedidos.filter(p => ["nuevo", "en_gestion"].includes(p.state)),
+        "en-transito": pedidos.filter(p => ["enviado", "confirmado", "en_preparacion"].includes(p.state)),
+        "incidencias": pedidos.filter(p => ["fallido", "reintento"].includes(p.state)),
+        "devoluciones": pedidos.filter(p => p.state === "devolucion"),
+        "carritos-abandonados": carritosAbandonados,
+        "borradores": borradores,
+        "historial": pedidos.filter(p => ["entregado", "cancelado"].includes(p.state)),
+    }[activeTab as string] ?? pedidos;
+
+
+
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.3s ease-out" }}>
             {/* Header + Actions */}
@@ -91,10 +119,10 @@ export default function PedidosPage() {
             {activeTab === 'por-gestionar' && (
                 <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
                     {[
-                        { label: "Sin gestionar", value: "42", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
-                        { label: "En gestión", value: "18", color: "#eab308", bg: "#fefce8", border: "#fde047" },
-                        { label: "Fallidos", value: "5", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
-                        { label: "Reintentos", value: "12", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" }
+                        { label: "Sin gestionar", value: pedidosFiltrados.filter(p => p.state === 'nuevo').length.toString(), color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
+                        { label: "En gestión", value: pedidosFiltrados.filter(p => p.state === 'en_gestion').length.toString(), color: "#eab308", bg: "#fefce8", border: "#fde047" },
+                        { label: "Fallidos", value: pedidosFiltrados.filter(p => p.state === 'fallido').length.toString(), color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Reintentos", value: pedidosFiltrados.filter(p => p.state === 'reintento').length.toString(), color: "#f97316", bg: "#fff7ed", border: "#fed7aa" }
                     ].map((kpi, i) => (
                         <div key={i} className="ds-card" style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>{kpi.label}</span>
@@ -110,7 +138,7 @@ export default function PedidosPage() {
             {activeTab === 'en-transito' && (
                 <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
                     {[
-                        { label: "En tránsito", value: "85", color: "#0ea5e9", bg: "#f0f9ff", border: "#bae6fd" },
+                        { label: "En tránsito", value: pedidosFiltrados.filter(p => p.state === 'enviado').length.toString(), color: "#0ea5e9", bg: "#f0f9ff", border: "#bae6fd" },
                         { label: "Con retraso", value: "14", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
                         { label: "Entregados hoy", value: "32", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
                         { label: "Tasa entrega 7d", value: "94%", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
@@ -129,7 +157,7 @@ export default function PedidosPage() {
             {activeTab === 'incidencias' && (
                 <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
                     {[
-                        { label: "Incidencias abiertas", value: "24", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Incidencias abiertas", value: pedidosFiltrados.length.toString(), color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
                         { label: "Recuperadas hoy", value: "8", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
                         { label: "Tasa recuperación", value: "65%", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
                         { label: "Pérdida estimada", value: "€340", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" }
@@ -148,7 +176,7 @@ export default function PedidosPage() {
             {activeTab === 'devoluciones' && (
                 <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
                     {[
-                        { label: "Devoluciones activas", value: "31", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" },
+                        { label: "Devoluciones activas", value: pedidosFiltrados.length.toString(), color: "#f97316", bg: "#fff7ed", border: "#fed7aa" },
                         { label: "Importe total", value: "€1,250", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
                         { label: "Procesadas hoy", value: "12", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
                         { label: "Tasa devolución", value: "3.2%", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
@@ -186,8 +214,8 @@ export default function PedidosPage() {
             {activeTab === 'historial' && (
                 <div style={{ display: "flex", gap: "16px", marginBottom: "-8px" }}>
                     {[
-                        { label: "Entregados total", value: "3,450", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
-                        { label: "Cancelados total", value: "214", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
+                        { label: "Entregados total", value: pedidosFiltrados.filter(p => p.state === 'entregado').length.toString(), color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
+                        { label: "Cancelados total", value: pedidosFiltrados.filter(p => p.state === 'cancelado').length.toString(), color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
                         { label: "Tasa éxito", value: "88.5%", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
                         { label: "Facturación total", value: "€148.5K", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" }
                     ].map((kpi, i) => (
@@ -210,7 +238,7 @@ export default function PedidosPage() {
                             {TABS.find(t => t.id === activeTab)?.label}
                         </span>
                         <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "2px 8px", background: "white", borderRadius: "10px", border: "1px solid var(--border)", fontWeight: 600 }}>
-                            {activeTab === 'historial' ? '3,664 pedidos' : activeTab === 'carritos-abandonados' ? '12 carritos' : activeTab === 'borradores' ? '5 borradores' : '254 pedidos'}
+                            {pedidosFiltrados.length} {activeTab === 'carritos-abandonados' ? 'carritos' : activeTab === 'borradores' ? 'borradores' : 'pedidos'}
                         </span>
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
@@ -852,15 +880,7 @@ export default function PedidosPage() {
                                 </tr>
                             )}
 
-                            {/* Empty State message for the rest */}
-                            <tr>
-                                <td colSpan={activeTab === 'carritos-abandonados' ? 13 : activeTab === 'borradores' ? 4 : (activeTab === 'en-transito' ? 18 : (activeTab === 'incidencias' ? 20 : (activeTab === 'devoluciones' ? 20 : 17)))} style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
-                                    <p style={{ fontWeight: 700, fontSize: "14px", color: "var(--text)" }}>Módulo de Pedidos en Desarrollo</p>
-
-                                    <p style={{ fontSize: "12px", marginTop: "6px", maxWidth: "400px", margin: "6px auto 0" }}>El motor de sincronización logística unificará aquí todos los estados de Shopify y tus operadores de fulfillment seleccionados.</p>
-                                </td>
-
-                            </tr>
+                            {/* Rows will dynamically adapt here in the future */}
                         </tbody>
                     </table>
                 </div>

@@ -358,6 +358,94 @@ function CarrierBadge({ type }: { type: string }) {
         </span>
     );
 }
+type RiskLevel = "low" | "medium" | "high";
+
+interface RiskFactor {
+    key: string;
+    label: string;
+    value: string;
+    risk: RiskLevel;
+    points: number;
+    source: string;
+}
+
+function getCPRiskLevel(cp: string): { label: string; level: RiskLevel } {
+    // Hardcoded high-risk CPs known from returns history; replace with DB query
+    const high = ["18008","18009","18010","29001","28005","28012","08001","08002","08003"];
+    const medium = ["41001","41002","46001","46002","50001","03001","03002"];
+    if (high.some(x => cp.startsWith(x.slice(0,3)))) return { label: "Alto riesgo", level: "high" };
+    if (medium.some(x => cp.startsWith(x.slice(0,3)))) return { label: "Riesgo medio", level: "medium" };
+    return { label: "Riesgo bajo", level: "low" };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function calcRiskScore(pedido: Record<string, any>): { score: number; factors: RiskFactor[] } {
+    const factors: RiskFactor[] = [];
+
+    // CP zona
+    const cpRisk = getCPRiskLevel(pedido?.shipping_zip || "00000");
+    factors.push({ key: "cp", label: `Zona CP ${pedido?.shipping_zip || "—"}`,
+        value: cpRisk.label, risk: cpRisk.level,
+        points: cpRisk.level === "high" ? 40 : cpRisk.level === "medium" ? 20 : 0,
+        source: "datos propios" });
+
+    // Devoluciones previas
+    const devs = pedido?.clienteStats?.totalDevoluciones ?? 0;
+    if (devs > 2) factors.push({ key: "devoluciones", label: "Devoluciones previas",
+        value: `${devs} devoluciones`, risk: "high", points: 30, source: "historial" });
+    else if (devs > 0) factors.push({ key: "devoluciones", label: "Devoluciones previas",
+        value: `${devs} devolución`, risk: "medium", points: 10, source: "historial" });
+    else factors.push({ key: "devoluciones", label: "Sin devoluciones previas",
+        value: "OK", risk: "low", points: -10, source: "historial" });
+
+    // Teléfono válido
+    const tel = (pedido?.telefono || "").replace(/\s/g, "");
+    const telValid = /^(\+34|0034|34)?[6789]\d{8}$/.test(tel);
+    factors.push({ key: "telefono", label: "Teléfono válido",
+        value: telValid ? "OK" : "Inválido", risk: telValid ? "low" : "high",
+        points: telValid ? -5 : 25, source: "validación local" });
+
+    // IP vs dirección
+    if (pedido?.geoCity && pedido?.shipping_city) {
+        const match = pedido.geoCity.toLowerCase() === pedido.shipping_city.toLowerCase();
+        factors.push({ key: "ip_geo", label: "IP coincide con dirección",
+            value: match ? "Coincide" : `IP: ${pedido.geoCity}`, risk: match ? "low" : "medium",
+            points: match ? -5 : 15, source: "geolocalización" });
+    }
+
+    // VPN/Proxy
+    if (pedido?.isProxy) factors.push({ key: "vpn", label: "VPN/Proxy detectado",
+        value: "⚠️ Detectado", risk: "high", points: 35, source: "ipinfo.io" });
+
+    // Nombre completo
+    const hasRealName = (pedido?.cliente || "").trim().split(" ").length >= 2;
+    factors.push({ key: "nombre", label: "Nombre completo",
+        value: hasRealName ? "OK" : "Solo un nombre", risk: hasRealName ? "low" : "medium",
+        points: hasRealName ? 0 : 10, source: "validación local" });
+
+    // Cliente nuevo vs recurrente
+    const totalPedidos = pedido?.clienteStats?.totalPedidos ?? 1;
+    if (totalPedidos === 1) factors.push({ key: "nuevo", label: "Primera compra",
+        value: "Cliente nuevo", risk: "medium", points: 10, source: "historial" });
+    else factors.push({ key: "recurrente", label: "Cliente recurrente",
+        value: `${totalPedidos} pedidos`, risk: "low", points: -15, source: "historial" });
+
+    // Método de pago
+    const isCOD = ["COD","Contra reembolso"].includes(pedido?.pago || "");
+    factors.push({ key: "pago", label: "Método de pago",
+        value: isCOD ? "COD (mayor riesgo)" : (pedido?.pago || "—"), risk: isCOD ? "medium" : "low",
+        points: isCOD ? 20 : 0, source: "shopify" });
+
+    // Hora del pedido
+    const hour = new Date(pedido?.createdAt || Date.now()).getHours();
+    if (hour >= 2 && hour <= 6) factors.push({ key: "hora", label: "Pedido en madrugada",
+        value: `${hour}:00h`, risk: "medium", points: 10, source: "shopify" });
+
+    const totalPoints = factors.reduce((acc, f) => acc + f.points, 0);
+    const score = Math.max(0, Math.min(100, 100 - totalPoints));
+    return { score, factors };
+}
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string, any> | null, onClose: () => void, onSelectOrder?: (p: any) => void }) {
@@ -604,69 +692,68 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                         </div>
                     )}
 
-                    {activeTab === "riesgo" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
-
-                            <DrawerSection title="Score de riesgo">
-                                {/* Barra visual de score */}
-                                <div style={{ marginBottom: "12px" }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                                        <span style={{ fontSize: "12px", color: "#64748b" }}>Score</span>
-                                        <span style={{
-                                            fontSize: "16px", fontWeight: 900, color:
-                                                (pedido?.riesgo?.score || 15) >= 80 ? "#16a34a" :
-                                                    (pedido?.riesgo?.score || 15) >= 50 ? "#d97706" : "#ef4444"
-                                        }}>{(pedido?.riesgo?.score || 15)}/100</span>
+                    {activeTab === "riesgo" && (() => {
+                        const { score, factors } = calcRiskScore(pedido);
+                        const scoreColor = score >= 80 ? "#16a34a" : score >= 50 ? "#d97706" : "#ef4444";
+                        return (
+                            <div style={{ animation: "fade-in 0.2s" }}>
+                                <DrawerSection title="Score de riesgo">
+                                    <div style={{ padding: "4px 0 8px" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                                            <span style={{ fontSize: "12px", color: "#64748b" }}>Score calculado</span>
+                                            <span style={{ fontSize: "20px", fontWeight: 900, color: scoreColor }}>{score}/100</span>
+                                        </div>
+                                        <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "999px" }}>
+                                            <div style={{
+                                                height: "6px", borderRadius: "999px", width: `${score}%`,
+                                                background: scoreColor,
+                                                transition: "width 0.5s ease",
+                                            }} />
+                                        </div>
+                                        <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "4px" }}>
+                                            {score >= 80 ? "✅ Bajo riesgo" : score >= 50 ? "⚠️ Riesgo moderado" : "🔴 Alto riesgo — revisar antes de enviar"}
+                                        </div>
                                     </div>
-                                    <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "999px" }}>
-                                        <div style={{
-                                            height: "6px", borderRadius: "999px",
-                                            width: `${(pedido?.riesgo?.score || 15)}%`,
-                                            background: (pedido?.riesgo?.score || 15) >= 80 ? "#16a34a" :
-                                                (pedido?.riesgo?.score || 15) >= 50 ? "#f59e0b" : "#ef4444",
-                                            transition: "width 0.4s ease"
-                                        }} />
-                                    </div>
-                                </div>
-                            </DrawerSection>
-
-                            <DrawerSection title="Factores de riesgo">
-                                {/* Cada factor con su peso */}
-                                {(pedido?.riesgo?.factors || [
-                                    { key: "cp_zona", label: "Zona CP 18008", risk: "high", value: "Alto riesgo" },
-                                    { key: "telefono", label: "Teléfono válido", risk: "low", value: "OK" },
-                                    { key: "historial", label: "Devoluciones previas", risk: "medium", value: "1 devolución" },
-                                    { key: "ip", label: "IP geolocalizada", risk: "low", value: "Madrid, ES" },
-                                    { key: "nombre", label: "Nombre real detectado", risk: "low", value: "OK" },
-                                    { key: "patron_fraude", label: "Patrón de fraude", risk: "low", value: "Sin alertas" }
-                                ]).map((f: { key: string; label: string; risk: string; value: string }) => (
-                                    <div key={f.key} style={{
-                                        display: "flex", justifyContent: "space-between", alignItems: "center",
-                                        padding: "6px 0", borderBottom: "1px solid #f1f5f9"
-                                    }}>
-                                        <span style={{ fontSize: "12px", color: "#0f172a" }}>{f.label}</span>
-                                        <span style={{
-                                            fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px",
-                                            background: f.risk === "high" ? "rgba(239,68,68,0.1)" :
-                                                f.risk === "medium" ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)",
-                                            color: f.risk === "high" ? "#ef4444" :
-                                                f.risk === "medium" ? "#d97706" : "#16a34a"
+                                </DrawerSection>
+                    
+                                <DrawerSection title="Factores de riesgo">
+                                    {factors.map((f, i) => (
+                                        <div key={f.key} style={{
+                                            display: "flex", justifyContent: "space-between", alignItems: "center",
+                                            padding: "3px 0",
+                                            borderBottom: i < factors.length - 1 ? "1px solid #f1f5f9" : "none",
+                                            minHeight: "24px",
                                         }}>
-                                            {f.value}
-                                        </span>
-                                    </div>
-                                ))}
-                            </DrawerSection>
-
-                            <DrawerSection title="IP y geolocalización">
-                                <DrawerRow label="IP" value={pedido?.ipAddress ?? "92.176.43.12"} />
-                                <DrawerRow label="Ciudad" value={pedido?.geoCity ?? "Madrid"} />
-                                <DrawerRow label="País" value={pedido?.geoCountry ?? "ES"} />
-                                <DrawerRow label="ISP" value={pedido?.geoISP ?? "Telefonica de Espana"} />
-                                <DrawerRow label="VPN/Proxy" value={pedido?.isProxy ? "⚠️ Detectado" : "No detectado"} />
-                            </DrawerSection>
-
-                        </div>
+                                            <div style={{ flex: 1 }}>
+                                                <span style={{ fontSize: "12px", color: "#0f172a" }}>{f.label}</span>
+                                                <span style={{ fontSize: "10px", color: "#94a3b8", marginLeft: "5px" }}>{f.source}</span>
+                                            </div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                <span style={{ fontSize: "10px", color: f.points > 0 ? "#ef4444" : f.points < 0 ? "#16a34a" : "#94a3b8", fontWeight: 700 }}>
+                                                    {f.points > 0 ? `+${f.points}` : f.points < 0 ? f.points : "—"}
+                                                </span>
+                                                <span style={{
+                                                    fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px",
+                                                    background: f.risk === "high" ? "rgba(239,68,68,0.1)" : f.risk === "medium" ? "rgba(245,158,11,0.1)" : "rgba(22,163,74,0.1)",
+                                                    color: f.risk === "high" ? "#ef4444" : f.risk === "medium" ? "#d97706" : "#16a34a",
+                                                }}>
+                                                    {f.value}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </DrawerSection>
+                    
+                                <DrawerSection title="IP y geolocalización">
+                                    <DrawerRow label="IP"        value={pedido?.ipAddress ?? "—"} />
+                                    <DrawerRow label="Ciudad"    value={pedido?.geoCity ?? "—"} />
+                                    <DrawerRow label="País"      value={pedido?.geoCountry ?? "—"} />
+                                    <DrawerRow label="ISP"       value={pedido?.geoISP ?? "—"} />
+                                    <DrawerRow label="VPN/Proxy" value={pedido?.isProxy ? "⚠️ Detectado" : "No detectado"} />
+                                </DrawerSection>
+                            </div>
+                        );
+                    })()
                     )}
 
                     {activeTab === "origen" && (

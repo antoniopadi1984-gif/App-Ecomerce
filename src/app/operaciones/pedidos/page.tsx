@@ -359,17 +359,27 @@ function CarrierBadge({ type }: { type: string }) {
     );
 }
 
-// Gestores disponibles — bots + equipo humano
-const GESTORES_LIST = [
-    { id: "bot_cod",     nombre: "Bot COD",     tipo: "bot",    emoji: "🤖" },
-    { id: "bot_general", nombre: "Bot General",  tipo: "bot",    emoji: "🤖" },
-    { id: "maria",       nombre: "María",        tipo: "humano", emoji: "👩" },
-    { id: "carlos",      nombre: "Carlos",       tipo: "humano", emoji: "👨" },
-    { id: "ana",         nombre: "Ana",          tipo: "humano", emoji: "👩" },
-    { id: "soporte",     nombre: "Soporte",      tipo: "humano", emoji: "🏋️" },
-] as const;
+interface Gestor {
+    id: string;
+    nombre: string;       // "María G.", "Bot COD", "Carlos M."
+    tipo: "bot" | "humano";
+    activo: boolean;
+    avatar?: string;      // URL foto si es humano
+    color?: string;       // color identificativo opcional
+    emoji?: string;       // fallback visual si no hay avatar
+}
 
- 
+// Gestores disponibles — bots + equipo humano
+const GESTORES_LIST: Gestor[] = [
+    { id: "bot_cod", nombre: "Bot COD", tipo: "bot", activo: true, emoji: "🤖" },
+    { id: "bot_general", nombre: "Bot General", tipo: "bot", activo: true, emoji: "🤖" },
+    { id: "maria", nombre: "María G.", tipo: "humano", activo: true, emoji: "👩", color: "#7c3aed" },
+    { id: "carlos", nombre: "Carlos M.", tipo: "humano", activo: true, emoji: "👨", color: "#0891b2" },
+    { id: "ana", nombre: "Ana P.", tipo: "humano", activo: true, emoji: "👩", color: "#16a34a" },
+    { id: "soporte", nombre: "Soporte", tipo: "humano", activo: true, emoji: "🏋️", color: "#64748b" },
+];
+
+
 function DropdownOption({ emoji, nombre, tipo, active, onClick }: { emoji: string; nombre: string; tipo: string; active: boolean; onClick: () => void }) {
     return (
         <div onClick={onClick} style={{
@@ -378,8 +388,8 @@ function DropdownOption({ emoji, nombre, tipo, active, onClick }: { emoji: strin
             background: active ? "#eff6ff" : "transparent",
             transition: "background 0.1s",
         }}
-        onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f8fafc"; }}
-        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+            onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f8fafc"; }}
+            onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
         >
             <span style={{ fontSize: "14px" }}>
                 {tipo === "bot" ? "🤖" : tipo === "none" ? "➖" : "👤"}
@@ -435,8 +445,10 @@ function GestorCell({ pedido, onAssign }: { pedido: Record<string, any>; onAssig
                             active={!gestor}
                             onClick={() => { onAssign(pedido.id, null); setOpen(false); }}
                         />
-                        <div style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase",
-                            color: "#94a3b8", padding: "4px 8px 2px", letterSpacing: "0.08em" }}>
+                        <div style={{
+                            fontSize: "9px", fontWeight: 900, textTransform: "uppercase",
+                            color: "#94a3b8", padding: "4px 8px 2px", letterSpacing: "0.08em"
+                        }}>
                             Agentes IA
                         </div>
                         {GESTORES_LIST.filter(g => g.tipo === "bot").map(g => (
@@ -445,8 +457,10 @@ function GestorCell({ pedido, onAssign }: { pedido: Record<string, any>; onAssig
                                 onClick={() => { onAssign(pedido.id, g.id); setOpen(false); }}
                             />
                         ))}
-                        <div style={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase",
-                            color: "#94a3b8", padding: "4px 8px 2px", letterSpacing: "0.08em" }}>
+                        <div style={{
+                            fontSize: "9px", fontWeight: 900, textTransform: "uppercase",
+                            color: "#94a3b8", padding: "4px 8px 2px", letterSpacing: "0.08em"
+                        }}>
                             Equipo
                         </div>
                         {GESTORES_LIST.filter(g => g.tipo === "humano").map(g => (
@@ -461,6 +475,7 @@ function GestorCell({ pedido, onAssign }: { pedido: Record<string, any>; onAssig
         </td>
     );
 }
+
 type RiskLevel = "low" | "medium" | "high";
 
 interface RiskFactor {
@@ -1185,7 +1200,7 @@ export default function PedidosPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [pedidosState, setPedidosState] = useState<Record<string, any>[]>(pedidos);
 
-     
+
     async function assignGestor(pedidoId: string, gestorId: string | null) {
         try {
             await fetch(`/api/pedidos/${pedidoId}/gestor`, {
@@ -1532,7 +1547,7 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.99</span>
                                         <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                     </td>
-                                    <GestorCell pedido={{ id: "mock-1", gestor: {"id":"bot_cod","nombre":"Bot COD","tipo":"bot","emoji":"🤖"} }} onAssign={assignGestor} />
+                                    <GestorCell pedido={{ id: "mock-1", gestor: { "id": "bot_cod", "nombre": "Bot COD", "tipo": "bot", "emoji": "🤖" } }} onAssign={assignGestor} />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <ColumnaRiesgo riesgo={{ status: "green", score: 98 }} />
                                     </td>

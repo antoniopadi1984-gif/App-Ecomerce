@@ -738,6 +738,13 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                                             {score >= 80 ? "✅ Bajo riesgo" : score >= 50 ? "⚠️ Riesgo moderado" : "🔴 Alto riesgo — revisar antes de enviar"}
                                         </div>
                                     </div>
+                                    <DrawerRow label="Confianza del score" value={
+                                        (pedido?.clienteStats?.totalPedidos ?? 1) < 3
+                                            ? "⚠️ Datos insuficientes"
+                                            : (pedido?.clienteStats?.totalPedidos ?? 1) < 10
+                                                ? "📊 Datos parciales"
+                                                : "✅ Alta confianza"
+                                    } />
                                 </DrawerSection>
 
                                 <DrawerSection title="Factores de riesgo">
@@ -780,54 +787,54 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                     })()}
 
                     {activeTab === "origen" && (
-                            <div style={{ animation: "fade-in 0.2s" }}>
-                                <DrawerSection title="Origen del pedido">
-                                    <DrawerRow label="Fuente" value={pedido?.utmSource ?? "—"} />
-                                    <DrawerRow label="Medio" value={pedido?.utmMedium ?? "—"} />
-                                    <DrawerRow label="Campaña" value={pedido?.utmCampaign ?? "—"} />
-                                    <DrawerRow label="Contenido" value={pedido?.utmContent ?? "—"} />
-                                    <DrawerRow label="Placement" value={pedido?.utmPlacement ?? "—"} />
-                                    <DrawerRow label="Ad ID" value={pedido?.metaAdId ?? "—"} />
-                                    <DrawerRow label="Adset ID" value={pedido?.metaAdsetId ?? "—"} />
-                                    <DrawerRow label="Campaign ID" value={pedido?.metaCampaignId ?? "—"} />
-                                </DrawerSection>
+                        <div style={{ animation: "fade-in 0.2s" }}>
+                            <DrawerSection title="Origen del pedido">
+                                <DrawerRow label="Fuente" value={pedido?.utmSource ?? "—"} />
+                                <DrawerRow label="Medio" value={pedido?.utmMedium ?? "—"} />
+                                <DrawerRow label="Campaña" value={pedido?.utmCampaign ?? "—"} />
+                                <DrawerRow label="Contenido" value={pedido?.utmContent ?? "—"} />
+                                <DrawerRow label="Placement" value={pedido?.utmPlacement ?? "—"} />
+                                <DrawerRow label="Ad ID" value={pedido?.metaAdId ?? "—"} />
+                                <DrawerRow label="Adset ID" value={pedido?.metaAdsetId ?? "—"} />
+                                <DrawerRow label="Campaign ID" value={pedido?.metaCampaignId ?? "—"} />
+                            </DrawerSection>
 
-                                {pedido?.metaAdId && metaAd && (
-                                    <DrawerSection title="Creativo que generó la venta">
-                                        {metaAd.thumbnail_url && (
-                                            <img src={metaAd.thumbnail_url} alt="Creativo" style={{
-                                                width: "100%", maxHeight: "120px", objectFit: "cover",
-                                                borderRadius: "6px", marginBottom: "6px"
-                                            }} />
-                                        )}
-                                        <DrawerRow label="Nombre ad" value={metaAd.name} />
-                                        <DrawerRow label="Tipo" value={metaAd.creative?.object_type ?? "—"} />
-                                        <DrawerRow label="Estado" value={metaAd.effective_status} />
-                                        <DrawerRow label="Adset" value={metaAd.adset?.name ?? "—"} />
-                                        <DrawerRow label="Campaña" value={metaAd.campaign?.name ?? "—"} />
-                                        <DrawerRow label="CTR" value={metaAd.insights?.ctr ? `${metaAd.insights.ctr}%` : "—"} />
-                                        <DrawerRow label="CPC" value={metaAd.insights?.cpc ? `€${metaAd.insights.cpc}` : "—"} />
-                                        <DrawerRow label="CPM" value={metaAd.insights?.cpm ? `€${metaAd.insights.cpm}` : "—"} />
-                                        <a href={`https://www.facebook.com/ads/manager/account/ads/?selected_ad_ids=${pedido?.metaAdId}`}
-                                            target="_blank" rel="noreferrer"
-                                            style={{ fontSize: "11px", color: "#3b82f6", fontWeight: 600, display: "block", marginTop: "6px" }}>
-                                            Ver en Meta Ads Manager →
+                            {pedido?.metaAdId && metaAd && (
+                                <DrawerSection title="Creativo que generó la venta">
+                                    {metaAd.thumbnail_url && (
+                                        <img src={metaAd.thumbnail_url} alt="Creativo" style={{
+                                            width: "100%", maxHeight: "120px", objectFit: "cover",
+                                            borderRadius: "6px", marginBottom: "6px"
+                                        }} />
+                                    )}
+                                    <DrawerRow label="Nombre ad" value={metaAd.name} />
+                                    <DrawerRow label="Tipo" value={metaAd.creative?.object_type ?? "—"} />
+                                    <DrawerRow label="Estado" value={metaAd.effective_status} />
+                                    <DrawerRow label="Adset" value={metaAd.adset?.name ?? "—"} />
+                                    <DrawerRow label="Campaña" value={metaAd.campaign?.name ?? "—"} />
+                                    <DrawerRow label="CTR" value={metaAd.insights?.ctr ? `${metaAd.insights.ctr}%` : "—"} />
+                                    <DrawerRow label="CPC" value={metaAd.insights?.cpc ? `€${metaAd.insights.cpc}` : "—"} />
+                                    <DrawerRow label="CPM" value={metaAd.insights?.cpm ? `€${metaAd.insights.cpm}` : "—"} />
+                                    <a href={`https://www.facebook.com/ads/manager/account/ads/?selected_ad_ids=${pedido?.metaAdId}`}
+                                        target="_blank" rel="noreferrer"
+                                        style={{ fontSize: "11px", color: "#3b82f6", fontWeight: 600, display: "block", marginTop: "6px" }}>
+                                        Ver en Meta Ads Manager →
+                                    </a>
+                                </DrawerSection>
+                            )}
+
+                            <DrawerSection title="Landing de conversión">
+                                <DrawerRow label="URL" value={
+                                    pedido?.landingUrl
+                                        ? <a href={pedido.landingUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontSize: "11px" }}>
+                                            {pedido.landingUrl.replace("https://", "").substring(0, 40)}...
                                         </a>
-                                    </DrawerSection>
-                                )}
-
-                                <DrawerSection title="Landing de conversión">
-                                    <DrawerRow label="URL" value={
-                                        pedido?.landingUrl
-                                            ? <a href={pedido.landingUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontSize: "11px" }}>
-                                                {pedido.landingUrl.replace("https://", "").substring(0, 40)}...
-                                            </a>
-                                            : "—"
-                                    } />
-                                    <DrawerRow label="Tipo" value={pedido?.landingType ?? "Advertorial"} />
-                                </DrawerSection>
-                            </div>
-                        )}
+                                        : "—"
+                                } />
+                                <DrawerRow label="Tipo" value={pedido?.landingType ?? "Advertorial"} />
+                            </DrawerSection>
+                        </div>
+                    )}
 
                     {activeTab === "historial" && (
                         <div style={{ animation: "fade-in 0.2s" }}>

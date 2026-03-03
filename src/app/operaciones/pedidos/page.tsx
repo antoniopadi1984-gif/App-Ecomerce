@@ -16,6 +16,35 @@ const TABS = [
 ];
 
 
+
+const FULFILLMENT_BADGES: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    "beeping": { label: "Beeping", color: "#d97706", bg: "rgba(217,119,6,0.12)", border: "rgba(217,119,6,0.3)" },
+    "dropea":  { label: "Dropea",  color: "#1e40af", bg: "rgba(30,64,175,0.1)",   border: "rgba(30,64,175,0.3)" },
+    "shopify": { label: "Shopify", color: "#16a34a", bg: "rgba(22,163,74,0.1)",   border: "rgba(22,163,74,0.3)" },
+    "dropi":   { label: "Dropi",   color: "#ea580c", bg: "rgba(234,88,12,0.1)",   border: "rgba(234,88,12,0.3)" },
+    "manual":  { label: "Manual",  color: "#64748b", bg: "rgba(100,116,139,0.1)", border: "rgba(100,116,139,0.3)" },
+    "none":    { label: "—",       color: "#94a3b8", bg: "transparent",           border: "transparent" }
+};
+
+function FulfillmentBadge({ type }: { type: string }) {
+    const b = FULFILLMENT_BADGES[type] ?? FULFILLMENT_BADGES["none"];
+    return (
+        <span style={{
+            background: b.bg,
+            color: b.color,
+            border: `1px solid ${b.border}`,
+            fontSize: "11px",
+            fontWeight: 700,
+            borderRadius: "6px",
+            padding: "3px 8px",
+            whiteSpace: "nowrap",
+            display: "inline-block",
+        }}>
+            {b.label}
+        </span>
+    );
+}
+
 function getTrackingUrl(carrier: string, trackingNumber: string): string {
     const urls: Record<string, string> = {
         "correos_express": `https://www.correos.es/ss/Satellite/site/aplicacion-oficina_virtual-1349167560549/detalle_app-sidioma=es_ES&numero=${trackingNumber}`,
@@ -615,7 +644,7 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <FulfillmentBadge type="beeping" />
                                         {/** Tracking */}
                                         <a href={getTrackingUrl("GLS", "BP-1234444")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>BP-1234444</a>
                                     </td>
@@ -695,7 +724,7 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fce7f3", border: "1px solid #fbcfe8", color: "#ec4899" }}>Dropea</span>
+                                        <FulfillmentBadge type="dropea" />
                                         <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
                                     </td>
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
@@ -853,7 +882,7 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <FulfillmentBadge type="beeping" />
                                         {/** Tracking */}
                                         <a href={getTrackingUrl("Correos Exp.", "PQ41029312")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>PQ41029312</a>
                                     </td>
@@ -941,7 +970,7 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <FulfillmentBadge type="beeping" />
                                         <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
                                     </td>
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
@@ -1035,7 +1064,7 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <FulfillmentBadge type="beeping" />
                                         {/** Tracking */}
                                         <a href={getTrackingUrl("Correos Exp.", "PQ41029888")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>PQ41029888</a>
                                     </td>
@@ -1124,7 +1153,7 @@ export default function PedidosPage() {
                                         </span>
                                     </td>
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "85px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
+                                        <FulfillmentBadge type="beeping" />
                                         {/** Tracking */}
                                         <a href={getTrackingUrl("GLS", "GLS0012929")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>GLS0012929</a>
                                     </td>

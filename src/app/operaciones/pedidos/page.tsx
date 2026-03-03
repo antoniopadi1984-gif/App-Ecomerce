@@ -1,33 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useStore } from '@/lib/store/store-context';
-import { RefreshCw, Search, Filter, MoreHorizontal, X, MapPin, User, Tag, Clock, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Search, Filter, X, MapPin, User, AlertTriangle } from 'lucide-react';
 import { ORDER_STATES, OrderState } from '@/lib/orderStates';
-
-const ACTIONS_BY_STATE: Record<OrderState, string[]> = {
-    nuevo: ["asignar", "confirmar", "cancelar"],
-    en_gestion: ["confirmar", "cancelar", "notas"],
-    confirmado: ["marcar_enviado", "editar", "cancelar"],
-    en_preparacion: ["marcar_enviado", "cancelar"],
-    enviado: ["ver_tracking", "marcar_entregado", "reportar_incidencia"],
-    entregado: ["ver_detalle", "gestionar_devolucion"],
-    fallido: ["reintentar", "cancelar", "reportar_incidencia"],
-    reintento: ["marcar_enviado", "cancelar"],
-    devolucion: ["procesar_devolucion", "reenviar"],
-    cancelado: ["ver_detalle"],
-};
-
-const ACTIONS_BY_CHECKOUT = [
-    "enviar_whatsapp_recuperacion",  // bot manda mensaje con link checkout
-    "enviar_email_recuperacion",     // email con abandoned_checkout_url
-    "crear_borrador",                // convertir en draft_order
-    "marcar_recuperado",             // tracking manual
-];
-
-const segmentacionUrgencia = (horasDesdeAbandono: number) =>
-    horasDesdeAbandono < 1 ? "alta" :
-        horasDesdeAbandono < 24 ? "media" : "baja";
 
 const TABS = [
     { id: 'todos', label: 'Todos' },
@@ -239,7 +214,6 @@ function OrderDrawer({ pedido, onClose }: { pedido: { ref: string } | null, onCl
 }
 
 export default function PedidosPage() {
-    const { activeStoreId: storeId } = useStore();
     const [activeTab, setActiveTab] = useState('todos');
     const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);
 

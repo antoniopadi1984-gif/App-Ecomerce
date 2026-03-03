@@ -460,10 +460,7 @@ export default function PedidosPage() {
 
                 {/* Custom compact table styles */}
                 <style>{`
-                    .ds-compact-table th {
-                        padding: 8px 8px !important;
-                        white-space: nowrap;
-                    }
+                    
                     .ds-compact-table td {
                         padding: 6px 8px !important;
                         font-size: 12px;
@@ -479,60 +476,60 @@ export default function PedidosPage() {
                                 </th>
                                 {activeTab === 'carritos-abandonados' ? (
                                     <>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>ID</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Cliente</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Teléfono</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Producto</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right" }}>Importe €</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>UTM Source</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>UTM Campaign</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Landing</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Dispositivo</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Abandono Hace</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Estado</th>
-                                        <th style={{ color: "var(--color-text-secondary)", width: "95px", textAlign: "center" }}></th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>ID</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Cliente</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Teléfono</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Producto</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Importe €</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>UTM Source</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>UTM Campaign</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Landing</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Dispositivo</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Abandono Hace</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Estado</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "95px" }}></th>
                                     </>
                                 ) : activeTab === 'borradores' ? (
                                     <>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>ID</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Cliente</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Últ. Actualización</th>
-                                        <th style={{ color: "var(--color-text-secondary)", width: "95px", textAlign: "center" }}></th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>ID</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Cliente</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Últ. Actualización</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "95px" }}></th>
                                     </>
                                 ) : (
                                     <>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "6%" }}>Pedido</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "9%" }}>Estado</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "8%" }}>Fulfillment</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "7%" }}>Transportista</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "11%" }}>Cliente</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "7%" }}>CP / Zona</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "13%" }}>Producto</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right", width: "7%" }}>Importe</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "8%" }}>Gestor</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "7%" }}>Riesgo</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "6%" }}>Pedido</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "9%" }}>Estado</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "8%" }}>Fulfillment</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "7%" }}>Transportista</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "11%" }}>Cliente</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "7%" }}>CP / Zona</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "13%" }}>Producto</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "7%" }}>Importe</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "8%" }}>Gestor</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "7%" }}>Riesgo</th>
 
                                         {activeTab === 'incidencias' && (
                                             <>
-                                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Tipo Incid.</th>
-                                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "center" }}>Intentos</th>
-                                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días Abierta</th>
-                                                <th style={{ color: "#ef4444", fontSize: "10px", textTransform: "uppercase", textAlign: "right" }}>Pérdida Est.</th>
+                                                <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Tipo Incid.</th>
+                                                <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Intentos</th>
+                                                <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Días Abierta</th>
+                                                <th style={{ fontSize: "11px", fontWeight: 700, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Pérdida Est.</th>
                                             </>
                                         )}
 
                                         {activeTab === 'devoluciones' && (
                                             <>
-                                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Motivo Devol.</th>
-                                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right" }}>Importe Devol.</th>
-                                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "center" }}>Estado Devol.</th>
-                                                <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right" }}>Reembolso</th>
+                                                <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Motivo Devol.</th>
+                                                <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Importe Devol.</th>
+                                                <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Estado Devol.</th>
+                                                <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Reembolso</th>
                                             </>
                                         )}
 
-                                        {activeTab === 'en-transito' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días</th>}
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "7%" }}>Entrada</th>
-                                        <th style={{ color: "var(--color-text-secondary)", width: "7%", textAlign: "center" }}></th>
+                                        {activeTab === 'en-transito' && <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0" }}>Días</th>}
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "7%" }}>Entrada</th>
+                                        <th style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", borderBottom: "2px solid #e2e8f0", width: "7%" }}></th>
                                     </>
                                 )}
                             </tr>

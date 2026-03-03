@@ -32,6 +32,31 @@ function getTrackingUrl(carrier: string, trackingNumber: string): string {
     return `https://www.17track.net/es/track#nums=${trackingNumber}`;
 }
 
+function ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green", score: number } }) {
+    return (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <span style={{
+                    width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0,
+                    background: riesgo.status === "red" ? "#ef4444"
+                        : riesgo.status === "yellow" ? "#eab308" : "#22c55e"
+                }} />
+                <span style={{ fontSize: "13px", fontWeight: 800, color: "#0f172a" }}>
+                    {riesgo.score}
+                </span>
+            </div>
+            <span style={{
+                fontSize: "10px", fontWeight: 600,
+                color: riesgo.status === "red" ? "#ef4444"
+                    : riesgo.status === "yellow" ? "#d97706" : "#16a34a"
+            }}>
+                {riesgo.status === "red" ? "Alto riesgo"
+                    : riesgo.status === "yellow" ? "Revisar" : "Sin riesgo"}
+            </span>
+        </div>
+    );
+}
+
 function ColumnaAcciones({ pedido }: { pedido: { state: string } }) {
     const handleEnviar = (p: { state: string }) => console.log("Enviando", p);
     const handleCancelar = (p: { state: string }) => console.log("Cancelando", p);
@@ -559,14 +584,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>🤖 Bot COD</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-
-                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
-                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>98</span>
-                                        </div>
-                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#16a34a", fontWeight: 600 }}>Sin riesgo</span>
-
-                                    </td>
+<ColumnaRiesgo riesgo={{ status: "green", score: 98 }} />
+</td>
 
 
 
@@ -645,14 +664,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-
-                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#eab308" }} />
-                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>65</span>
-                                        </div>
-                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#d97706", fontWeight: 600 }}>Revisar</span>
-
-                                    </td>
+<ColumnaRiesgo riesgo={{ status: "yellow", score: 65 }} />
+</td>
 
 
 
@@ -731,14 +744,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>⚠️ Sin gest.</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-
-                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#ef4444" }} />
-                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>15</span>
-                                        </div>
-                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#ef4444", fontWeight: 600 }}>Alto riesgo</span>
-
-                                    </td>
+<ColumnaRiesgo riesgo={{ status: "red", score: 15 }} />
+</td>
 
 
 
@@ -818,14 +825,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-
-                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
-                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>99</span>
-                                        </div>
-                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#16a34a", fontWeight: 600 }}>Sin riesgo</span>
-
-                                    </td>
+<ColumnaRiesgo riesgo={{ status: "green", score: 99 }} />
+</td>
 
 
 
@@ -912,14 +913,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-
-                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#eab308" }} />
-                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>33</span>
-                                        </div>
-                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#d97706", fontWeight: 600 }}>Revisar</span>
-
-                                    </td>
+<ColumnaRiesgo riesgo={{ status: "yellow", score: 33 }} />
+</td>
 
 
                                     {activeTab === 'incidencias' && (
@@ -1014,14 +1009,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-
-                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
-                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>80</span>
-                                        </div>
-                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#16a34a", fontWeight: 600 }}>Sin riesgo</span>
-
-                                    </td>
+<ColumnaRiesgo riesgo={{ status: "green", score: 80 }} />
+</td>
 
 
                                     {activeTab === 'devoluciones' && (
@@ -1110,14 +1099,8 @@ export default function PedidosPage() {
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
                                     </td>
                                     <td style={{ padding: "10px", minWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-
-                                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
-                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>100</span>
-                                        </div>
-                                        <span style={{ fontSize: "10px", display: "block", marginTop: "3px", color: "#16a34a", fontWeight: 600 }}>Sin riesgo</span>
-
-                                    </td>
+<ColumnaRiesgo riesgo={{ status: "green", score: 100 }} />
+</td>
 
 
 

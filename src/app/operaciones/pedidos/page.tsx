@@ -251,17 +251,18 @@ const DRAWER_TABS = [
 
 function DrawerSection({ title, children }: { title: string, children: React.ReactNode }) {
     return (
-        <div style={{ marginBottom: "14px" }}>
+        <div style={{ marginBottom: "8px" }}>
             <p style={{
                 fontSize: "10px", fontWeight: 900, textTransform: "uppercase",
                 color: "#94a3b8", letterSpacing: "0.08em",
-                margin: "0 0 6px 0",
+                margin: "0 0 3px 0",
+                paddingLeft: "2px",
             }}>
                 {title}
             </p>
             <div style={{
                 background: "#f8fafc", borderRadius: "8px",
-                padding: "6px 10px",
+                padding: "2px 10px",
             }}>
                 {children}
             </div>
@@ -274,9 +275,9 @@ function DrawerRow({ label, value }: { label: string, value: React.ReactNode }) 
         <div style={{
             display: "flex", justifyContent: "space-between",
             alignItems: "center",
-            padding: "4px 0",
+            padding: "3px 0",
             borderBottom: "1px solid #f1f5f9",
-            minHeight: "28px",
+            minHeight: "26px",
         }}>
             <span style={{ fontSize: "12px", color: "#64748b", minWidth: "110px" }}>
                 {label}
@@ -399,7 +400,7 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                 </div>
 
                 {/* Body scrollable content per tab */}
-                <div className="ds-scrollbar" style={{ flex: 1, padding: "10px 16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0", background: "white" }}>
+                <div className="ds-scrollbar" style={{ flex: 1, padding: "8px 14px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0", background: "white" }}>
 
                     {activeTab === "cliente" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>

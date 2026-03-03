@@ -250,6 +250,12 @@ const DRAWER_TABS = [
 
 
 function DrawerSection({ title, children }: { title: string, children: React.ReactNode }) {
+    const items = React.Children.toArray(children);
+    const enhanced = items.map((child, i) =>
+        React.isValidElement(child) && i === items.length - 1
+            ? React.cloneElement(child as React.ReactElement<{ isLast?: boolean }>, { isLast: true })
+            : child
+    );
     return (
         <div style={{ marginBottom: "8px" }}>
             <p style={{
@@ -264,19 +270,19 @@ function DrawerSection({ title, children }: { title: string, children: React.Rea
                 background: "#f8fafc", borderRadius: "8px",
                 padding: "2px 10px",
             }}>
-                {children}
+                {enhanced}
             </div>
         </div>
     );
 }
 
-function DrawerRow({ label, value }: { label: string, value: React.ReactNode }) {
+function DrawerRow({ label, value, isLast }: { label: string, value: React.ReactNode, isLast?: boolean }) {
     return (
         <div style={{
             display: "flex", justifyContent: "space-between",
             alignItems: "center",
             padding: "3px 0",
-            borderBottom: "1px solid #f1f5f9",
+            borderBottom: isLast ? "none" : "1px solid #f1f5f9",
             minHeight: "26px",
         }}>
             <span style={{ fontSize: "12px", color: "#64748b", minWidth: "110px" }}>

@@ -39,25 +39,25 @@ function ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green
             flexDirection: "column",
             alignItems: "flex-start",
             justifyContent: "center",
-            gap: "2px",
+            gap: "3px",
         }}>
             {/* Línea 1: punto + número — siempre juntos */}
-            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span style={{
-                    width: "8px", height: "8px", borderRadius: "50%",
+                    width: "9px", height: "9px", borderRadius: "50%",
                     flexShrink: 0, display: "inline-block",
                     background: riesgo.status === "red" ? "#ef4444"
                         : riesgo.status === "yellow" ? "#eab308" : "#22c55e"
                 }} />
-                <span style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
+                <span style={{ fontSize: "14px", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>
                     {riesgo.score}
                 </span>
             </div>
 
             {/* Línea 2: etiqueta — alineada con el número, no con el punto */}
             <span style={{
-                fontSize: "10px", fontWeight: 600,
-                paddingLeft: "13px",   // mismo ancho que punto(8px) + gap(5px)
+                fontSize: "11px", fontWeight: 600,
+                paddingLeft: "15px",
                 lineHeight: 1,
                 color: riesgo.status === "red" ? "#ef4444"
                     : riesgo.status === "yellow" ? "#d97706" : "#16a34a"

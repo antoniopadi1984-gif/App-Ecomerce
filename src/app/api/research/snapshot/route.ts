@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
             }
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[Snapshot POST] Error:', error);
         return NextResponse.json(
             { success: false, error: error.message },
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
             count: history.length
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[Snapshot GET] Error:', error);
         return NextResponse.json(
             { success: false, error: error.message },
@@ -143,7 +143,7 @@ export async function PUT(req: NextRequest) {
             newVersion: newSnapshot.version
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[Snapshot PUT] Error:', error);
         return NextResponse.json(
             { success: false, error: error.message },

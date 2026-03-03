@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
         // Helper para leer pasos anteriores
         const getStepOutput = async (key: string) => {
-            const step = await (prisma as any).researchStep.findFirst({
+            const step = await prisma.researchStep.findFirst({
                 where: { productId, runId, stepKey: key },
                 orderBy: { createdAt: 'desc' },
             });
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         };
 
         let resultText = '';
-        let resultJson: any = null;
+        let resultJson: Record<string, unknown> | null = null;
 
         // Ejecución lógica según la Fase
         switch (stepKey) {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
                 resultText = await simulateAI(storeId, `Generar 400 combinaciones AV x ANG... Validando hooks no saturados...`);
 
                 // Guardado real en DB (ComboMatrix)
-                await (prisma as any).comboMatrix.create({
+                await prisma.comboMatrix.create({
                     data: {
                         productId,
                         avatarId: 'AV_ALL',
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Save ResearchStep
-        const stepRecord = await (prisma as any).researchStep.upsert({
+        const stepRecord = await prisma.researchStep.upsert({
             where: {
                 productId_runId_stepKey_version: {
                     productId, runId, stepKey, version: 1
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ ok: true, runId, stepRecord });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[API /research/god-tier]', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
@@ -117,20 +117,20 @@ export async function GET(req: NextRequest) {
     if (!productId) return NextResponse.json({ error: 'productId requerido' }, { status: 400 });
 
     try {
-        const steps = await (prisma as any).researchStep.findMany({
+        const steps = await prisma.researchStep.findMunknown({
             where: { productId },
             orderBy: { createdAt: 'asc' }
         });
 
         // Group by runId
-        const runs = steps.reduce((acc: any, step: any) => {
+        const runs = steps.reduce((acc: Record<string, unknown[]>, step: { runId: string }) => {
             if (!acc[step.runId]) acc[step.runId] = [];
             acc[step.runId].push(step);
             return acc;
         }, {});
 
         return NextResponse.json({ ok: true, runs });
-    } catch (err: any) {
+    } catch (err: unknown) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

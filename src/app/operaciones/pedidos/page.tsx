@@ -459,14 +459,6 @@ export default function PedidosPage() {
                 {/* Mock Table */}
 
                 {/* Custom compact table styles */}
-                <style>{`
-                    
-                    .ds-compact-table td {
-                        padding: 6px 8px !important;
-                        font-size: 12px;
-                        white-space: nowrap !important;
-                    }
-                `}</style>
                 <div style={{ overflowX: "auto", flex: 1 }}>
                     <table className="ds-table ds-compact-table" style={{ borderTop: "none", width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
                         <thead>
@@ -539,13 +531,13 @@ export default function PedidosPage() {
                             {/* Example Row - 10045 */}
                             {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "0 0 0 12px" }}>
+                                    <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10045</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
                                             padding: "2px 8px", borderRadius: "20px",
@@ -557,38 +549,38 @@ export default function PedidosPage() {
                                             {ORDER_STATES.en_preparacion.label}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
                                         {/** Tracking */}
                                         <a href={getTrackingUrl("GLS", "BP-1234444")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>BP-1234444</a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Juan Pérez</span>
                                         <a href={`https://wa.me/${"+34 600 000 000"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 000
                                         </a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>28001</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Madrid</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span title="Zapatillas Nike Air Force" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
                                             Zapatillas Nike Air Force
                                         </span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.99</span>
                                         <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>🤖 Bot COD</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
 
                                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                             <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
@@ -601,11 +593,11 @@ export default function PedidosPage() {
 
 
 
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:42</span>
                                     </td>
-                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                    <td data-no-drawer style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                                             <PrimaryActionButton pedido={{ state: "en_preparacion" }} />
                                             <RowActionsMenu pedido={{ state: "en_preparacion" }} onOpenDrawer={() => { }} />
@@ -617,13 +609,13 @@ export default function PedidosPage() {
                             {/* Example Row - 10046 */}
                             {activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "0 0 0 12px" }}>
+                                    <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10046</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
                                             padding: "2px 8px", borderRadius: "20px",
@@ -635,37 +627,37 @@ export default function PedidosPage() {
                                             {ORDER_STATES.reintento.label}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fce7f3", border: "1px solid #fbcfe8", color: "#ec4899" }}>Dropea</span>
                                         <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>María Gómez</span>
                                         <a href={`https://wa.me/${"+34 600 000 001"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 001
                                         </a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>41002</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Sevilla</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span title="Camiseta Básica Blanca" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
                                             Camiseta Básica Blanca
                                         </span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 2</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€29.99</span>
                                         <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>STRIPE</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
 
                                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                             <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#eab308" }} />
@@ -678,11 +670,11 @@ export default function PedidosPage() {
 
 
 
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hoy</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:35</span>
                                     </td>
-                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                    <td data-no-drawer style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                                             <PrimaryActionButton pedido={{ state: "reintento" }} />
                                             <RowActionsMenu pedido={{ state: "reintento" }} onOpenDrawer={() => { }} />
@@ -694,13 +686,13 @@ export default function PedidosPage() {
                             {/* Example Row - 10047 */}
                             {activeTab === 'todos' || activeTab === 'por-gestionar' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "0 0 0 12px" }}>
+                                    <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10047</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
                                             padding: "2px 8px", borderRadius: "20px",
@@ -712,37 +704,37 @@ export default function PedidosPage() {
                                             {ORDER_STATES.nuevo.label}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8" }}>—</span>
                                         <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8" }}>—</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Carlos López</span>
                                         <a href={`https://wa.me/${"+34 600 000 002"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 002
                                         </a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>08001</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Barcelona</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span title="Sudadera Urban Black" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
                                             Sudadera Urban Black
                                         </span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€59.90</span>
                                         <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>⚠️ Sin gest.</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
 
                                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                             <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#ef4444" }} />
@@ -755,11 +747,11 @@ export default function PedidosPage() {
 
 
 
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Ayer</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>18:20</span>
                                     </td>
-                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                    <td data-no-drawer style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                                             <PrimaryActionButton pedido={{ state: "nuevo" }} />
                                             <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />
@@ -771,13 +763,13 @@ export default function PedidosPage() {
                             {/* Example Row - 10048 */}
                             {activeTab === 'todos' || activeTab === 'en-transito' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "0 0 0 12px" }}>
+                                    <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10048</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
                                             padding: "2px 8px", borderRadius: "20px",
@@ -789,38 +781,38 @@ export default function PedidosPage() {
                                             {ORDER_STATES.enviado.label}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
                                         {/** Tracking */}
                                         <a href={getTrackingUrl("Correos Exp.", "PQ41029312")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>PQ41029312</a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#bfdbfe", border: "1px solid #93c5fd", color: "#2563eb" }}>Correos Exp.</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Ana Martínez</span>
                                         <a href={`https://wa.me/${"+34 600 000 003"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 003
                                         </a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>46001</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Valencia</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span title="Auriculares Inalámbricos" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
                                             Auriculares Inalámbricos
                                         </span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€89.00</span>
                                         <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
 
                                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                             <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
@@ -833,7 +825,7 @@ export default function PedidosPage() {
 
 
                                     {activeTab === 'en-transito' && (
-                                        <td>
+                                        <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                             <span style={{ fontSize: "10px", fontWeight: 800, padding: "4px 8px", borderRadius: "6px", background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca" }}>
                                                 8 Días
                                             </span>
@@ -841,11 +833,11 @@ export default function PedidosPage() {
                                     )}
 
 
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 8d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>12:05</span>
                                     </td>
-                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                    <td data-no-drawer style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                                             <PrimaryActionButton pedido={{ state: "enviado" }} />
                                             <RowActionsMenu pedido={{ state: "enviado" }} onOpenDrawer={() => { }} />
@@ -857,13 +849,13 @@ export default function PedidosPage() {
                             {/* Example Row - 10049 */}
                             {activeTab === 'todos' || activeTab === 'incidencias' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "0 0 0 12px" }}>
+                                    <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10049</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
                                             padding: "2px 8px", borderRadius: "20px",
@@ -875,37 +867,37 @@ export default function PedidosPage() {
                                             {ORDER_STATES.fallido.label}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
                                         <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "3px", fontWeight: 600 }}>Sin tracking</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Luis García</span>
                                         <a href={`https://wa.me/${"+34 600 000 004"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 004
                                         </a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>29001</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Málaga</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span title="Chaqueta Invierno XL" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
                                             Chaqueta Invierno XL
                                         </span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€120.00</span>
                                         <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>COD</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
 
                                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                             <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#eab308" }} />
@@ -918,26 +910,26 @@ export default function PedidosPage() {
 
                                     {activeTab === 'incidencias' && (
                                         <>
-                                            <td>
+                                            <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                                 <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#fee2e2", color: "#b91c1c", whiteSpace: "nowrap" }}>
                                                     Dirección Incorrecta
                                                 </span>
                                             </td>
-                                            <td style={{ textAlign: "center", fontWeight: 800, color: "var(--color-text-secondary)" }}>2</td>
-                                            <td>
+                                            <td style={{ textAlign: "center", fontWeight: 800, color: "var(--color-text-secondary)", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>2</td>
+                                            <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                                 <span style={{ fontSize: "10px", fontWeight: 700 }}>4 días</span>
                                             </td>
-                                            <td style={{ fontWeight: 800, textAlign: "right", color: "#ef4444" }}>€15.50</td>
+                                            <td style={{ fontWeight: 800, textAlign: "right", color: "#ef4444", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>€15.50</td>
                                         </>
                                     )}
 
 
 
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 6d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>09:12</span>
                                     </td>
-                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                    <td data-no-drawer style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                                             <PrimaryActionButton pedido={{ state: "fallido" }} />
                                             <RowActionsMenu pedido={{ state: "fallido" }} onOpenDrawer={() => { }} />
@@ -949,13 +941,13 @@ export default function PedidosPage() {
                             {/* Example Row - 10050 */}
                             {activeTab === 'todos' || activeTab === 'devoluciones' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "0 0 0 12px" }}>
+                                    <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10050</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
                                             padding: "2px 8px", borderRadius: "20px",
@@ -967,38 +959,38 @@ export default function PedidosPage() {
                                             {ORDER_STATES.devolucion.label}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
                                         {/** Tracking */}
                                         <a href={getTrackingUrl("Correos Exp.", "PQ41029888")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>PQ41029888</a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#bfdbfe", border: "1px solid #93c5fd", color: "#2563eb" }}>Correos Exp.</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Marta Díaz</span>
                                         <a href={`https://wa.me/${"+34 600 000 005"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 005
                                         </a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>03001</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Alicante</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span title="Bolso Piel Sintética" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
                                             Bolso Piel Sintética
                                         </span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€49.90</span>
                                         <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 María G.</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
 
                                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                             <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
@@ -1011,20 +1003,20 @@ export default function PedidosPage() {
 
                                     {activeTab === 'devoluciones' && (
                                         <>
-                                            <td><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>Cliente Rechaza</span></td>
-                                            <td style={{ fontWeight: 800, textAlign: "right", color: "var(--color-text-primary)" }}>€49.90</td>
-                                            <td style={{ textAlign: "center" }}><span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "12px", background: "#fef3c7", color: "#d97706" }}>En proceso</span></td>
-                                            <td style={{ fontWeight: 800, textAlign: "right", color: "#64748b" }}>-</td>
+                                            <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>Cliente Rechaza</span></td>
+                                            <td style={{ fontWeight: 800, textAlign: "right", color: "var(--color-text-primary)", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>€49.90</td>
+                                            <td style={{ textAlign: "center", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "12px", background: "#fef3c7", color: "#d97706" }}>En proceso</span></td>
+                                            <td style={{ fontWeight: 800, textAlign: "right", color: "#64748b", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>-</td>
                                         </>
                                     )}
 
 
 
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 2d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>14:15</span>
                                     </td>
-                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                    <td data-no-drawer style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                                             <PrimaryActionButton pedido={{ state: "devolucion" }} />
                                             <RowActionsMenu pedido={{ state: "devolucion" }} onOpenDrawer={() => { }} />
@@ -1036,13 +1028,13 @@ export default function PedidosPage() {
                             {/* Example Row - 10041 */}
                             {activeTab === 'todos' || activeTab === 'historial' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "0 0 0 12px" }}>
+                                    <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10041</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{
                                             display: "inline-flex", alignItems: "center", gap: "4px",
                                             padding: "2px 8px", borderRadius: "20px",
@@ -1054,38 +1046,38 @@ export default function PedidosPage() {
                                             {ORDER_STATES.entregado.label}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#ede9fe", border: "1px solid #ddd6fe", color: "#8b5cf6" }}>Beeping</span>
                                         {/** Tracking */}
                                         <a href={getTrackingUrl("GLS", "GLS0012929")} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "10px", color: "#3b82f6", display: "block", marginTop: "3px", textDecoration: "underline", fontWeight: 600 }}>GLS0012929</a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "4px", background: "#fef3c7", border: "1px solid #fde68a", color: "#d97706" }}>GLS</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", display: "block" }}>Javier Nieto</span>
                                         <a href={`https://wa.me/${"+34 600 000 006"}`} target="_blank" onClick={e => e.stopPropagation()} style={{ fontSize: "11px", color: "#25d366", display: "block", textDecoration: "none", fontWeight: 600, marginTop: "2px" }}>
                                             💬 +34 600 000 006
                                         </a>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "block" }}>15001</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>A Coruña</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span title="Monitor Gaming 24&quot;" style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "155px" }}>
                                             Monitor Gaming 24&quot;
                                         </span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>Qty: 1</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block" }}>€199.00</span>
                                         <span style={{ display: "inline-block", marginTop: "4px", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>TARJETA</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>👤 Sistema</span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
 
                                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                             <span style={{ width: "8px", height: "8px", borderRadius: "50%", display: "inline-block", background: "#22c55e" }} />
@@ -1098,11 +1090,11 @@ export default function PedidosPage() {
 
 
 
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", display: "block" }}>Hace 12d</span>
                                         <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "3px" }}>10:00</span>
                                     </td>
-                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                    <td data-no-drawer style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                                             <PrimaryActionButton pedido={{ state: "entregado" }} />
                                             <RowActionsMenu pedido={{ state: "entregado" }} onOpenDrawer={() => { }} />
@@ -1115,40 +1107,40 @@ export default function PedidosPage() {
                             {/* Example Row - CARRITO ABANDONADO */}
                             {activeTab === 'carritos-abandonados' && (
                                 <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
-                                    <td style={{ padding: "0 0 0 12px" }}>
+                                    <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
-                                    <td><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#C-4291</a></td>
-                                    <td>Ana Martínez</td>
-                                    <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>+34 600 000 010</td>
-                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px" }}>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><a href="#" style={{ color: "var(--ops)", fontWeight: 700 }}>#C-4291</a></td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>Ana Martínez</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "11px", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>+34 600 000 010</td>
+                                    <td style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ width: "24px", height: "24px", borderRadius: "4px", background: "#f1f5f9" }} />
                                         <div style={{ display: "flex", flexDirection: "column" }}>
                                             <span style={{ fontWeight: 600, fontSize: "11px", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Pack Cosmética</span>
                                             <span style={{ color: "var(--text-dim)", fontSize: "10px", marginTop: "2px" }}>Qty: 2</span>
                                         </div>
                                     </td>
-                                    <td style={{ fontWeight: 700, margin: "0 auto", textAlign: "right", color: "var(--color-text-primary)" }}>€89.00</td>
-                                    <td><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>ig_story</span></td>
-                                    <td><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>promo_sanvalentin</span></td>
-                                    <td><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>/p/cosmetica-pack</span></td>
-                                    <td>
+                                    <td style={{ fontWeight: 700, margin: "0 auto", textAlign: "right", color: "var(--color-text-primary)", padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>€89.00</td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>ig_story</span></td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>promo_sanvalentin</span></td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}><span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>/p/cosmetica-pack</span></td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                                             <span style={{ fontSize: "12px" }}>📱</span>
                                             <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>iPhone (iOS 17)</span>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "10px", fontWeight: 800, padding: "2px 6px", borderRadius: "12px", background: "#fee2e2", color: "#dc2626" }}>
                                             45 min
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "20px", background: "#fef3c7", color: "#d97706" }}>
                                             Abandonado
                                         </span>
                                     </td>
-                                    <td data-no-drawer style={{ padding: "0 8px" }}>
+                                    <td data-no-drawer style={{ padding: "10px 8px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                                             <PrimaryActionButton pedido={{ state: "nuevo" }} />
                                             <RowActionsMenu pedido={{ state: "nuevo" }} onOpenDrawer={() => { }} />

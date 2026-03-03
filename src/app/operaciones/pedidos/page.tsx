@@ -474,7 +474,7 @@ export default function PedidosPage() {
                     <table className="ds-table ds-compact-table" style={{ borderTop: "none", width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
                         <thead>
                             <tr>
-                                <th style={{ width: "36px", padding: "12px" }}>
+                                <th style={{ width: "3%", padding: "12px" }}>
                                     <input type="checkbox" style={{ borderRadius: "4px", border: "1px solid var(--border-high)" }} />
                                 </th>
                                 {activeTab === 'carritos-abandonados' ? (
@@ -501,16 +501,16 @@ export default function PedidosPage() {
                                     </>
                                 ) : (
                                     <>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "75px" }}>Pedido</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "105px" }}>Estado</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "90px" }}>Fulfillment</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "75px" }}>Transportista</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "135px" }}>Cliente</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "85px" }}>CP / Zona</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "150px" }}>Producto</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right", width: "80px" }}>Importe</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "95px" }}>Gestor</th>
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "85px" }}>Riesgo</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "6%" }}>Pedido</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "9%" }}>Estado</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "8%" }}>Fulfillment</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "7%" }}>Transportista</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "11%" }}>Cliente</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "7%" }}>CP / Zona</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "13%" }}>Producto</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", textAlign: "right", width: "7%" }}>Importe</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "8%" }}>Gestor</th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "7%" }}>Riesgo</th>
 
                                         {activeTab === 'incidencias' && (
                                             <>
@@ -531,8 +531,8 @@ export default function PedidosPage() {
                                         )}
 
                                         {activeTab === 'en-transito' && <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase" }}>Días</th>}
-                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "75px" }}>Entrada</th>
-                                        <th style={{ color: "var(--color-text-secondary)", width: "95px", textAlign: "center" }}></th>
+                                        <th style={{ color: "var(--color-text-secondary)", fontSize: "10px", textTransform: "uppercase", width: "7%" }}>Entrada</th>
+                                        <th style={{ color: "var(--color-text-secondary)", width: "7%", textAlign: "center" }}></th>
                                     </>
                                 )}
                             </tr>

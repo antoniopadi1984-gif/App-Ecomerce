@@ -504,7 +504,19 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10045 */}
                             {activeTab !== 'por-gestionar' && activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
-                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    minHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                onClick={(e) => {
+                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                    setSelectedOrder({ ref: "Example" });
+                                }}
+                                >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
@@ -582,7 +594,19 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10046 */}
                             {activeTab !== 'en-transito' && activeTab !== 'incidencias' && activeTab !== 'devoluciones' && activeTab !== 'historial' && activeTab !== 'carritos-abandonados' && activeTab !== 'borradores' && (
-                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    minHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                onClick={(e) => {
+                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                    setSelectedOrder({ ref: "Example" });
+                                }}
+                                >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
@@ -659,7 +683,19 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10047 */}
                             {activeTab === 'todos' || activeTab === 'por-gestionar' && (
-                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    minHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                onClick={(e) => {
+                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                    setSelectedOrder({ ref: "Example" });
+                                }}
+                                >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
@@ -736,7 +772,19 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10048 */}
                             {activeTab === 'todos' || activeTab === 'en-transito' && (
-                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    minHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                onClick={(e) => {
+                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                    setSelectedOrder({ ref: "Example" });
+                                }}
+                                >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
@@ -822,7 +870,19 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10049 */}
                             {activeTab === 'todos' || activeTab === 'incidencias' && (
-                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    minHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                onClick={(e) => {
+                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                    setSelectedOrder({ ref: "Example" });
+                                }}
+                                >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
@@ -914,7 +974,19 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10050 */}
                             {activeTab === 'todos' || activeTab === 'devoluciones' && (
-                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    minHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                onClick={(e) => {
+                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                    setSelectedOrder({ ref: "Example" });
+                                }}
+                                >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
@@ -1001,7 +1073,19 @@ export default function PedidosPage() {
 
                             {/* Example Row - 10041 */}
                             {activeTab === 'todos' || activeTab === 'historial' && (
-                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    minHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                onClick={(e) => {
+                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                    setSelectedOrder({ ref: "Example" });
+                                }}
+                                >
                                     <td style={{ padding: "10px 6px 10px 14px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>
@@ -1080,7 +1164,19 @@ export default function PedidosPage() {
 
                             {/* Example Row - CARRITO ABANDONADO */}
                             {activeTab === 'carritos-abandonados' && (
-                                <tr onClick={() => setSelectedOrder({ ref: "Example" })} style={{ cursor: "pointer" }} className="hover-target">
+                                <tr style={{
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    minHeight: "52px",
+                                    transition: "background 0.1s",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                onClick={(e) => {
+                                    if ((e.target as HTMLElement).closest('[data-no-drawer]')) return;
+                                    setSelectedOrder({ ref: "Example" });
+                                }}
+                                >
                                     <td style={{ padding: "10px 8px 10px 12px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
                                     </td>

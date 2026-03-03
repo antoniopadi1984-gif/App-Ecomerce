@@ -58,12 +58,12 @@ function ColumnaRiesgo({ riesgo }: { riesgo: { status: "red" | "yellow" | "green
 }
 
 function ColumnaAcciones({ pedido }: { pedido: { state: string } }) {
-    const [menuOpen, setMenuOpen] = React.useState(false);
+
     const handleEnviar = (p: { state: string }) => console.log("Enviando", p);
     const handleCancelar = (p: { state: string }) => console.log("Cancelando", p);
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end", minWidth: "80px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end", justifyContent: "center" }}>
 
             {/* ENVIAR — verde, solo activo si el estado lo permite */}
             <button
@@ -107,19 +107,56 @@ function ColumnaAcciones({ pedido }: { pedido: { state: string } }) {
                 Cancelar
             </button>
 
-            {/* MENÚ OPCIONES */}
-            <button
-                onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-                style={{
-                    background: "none", border: "none", cursor: "pointer",
-                    color: "#94a3b8", fontSize: "14px", padding: "2px 4px",
-                    alignSelf: "flex-end",
-                }}
-            >
-                ···
-            </button>
 
         </div>
+    );
+}
+
+function ColumnaCheckbox() {
+    const [menuOpen, setMenuOpen] = React.useState(false);
+    return (
+        <td data-no-drawer style={{
+            padding: "0 6px 0 14px", verticalAlign: "middle",
+            height: "52px", width: "36px", borderBottom: "1px solid #f1f5f9"
+        }}>
+            <div style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                justifyContent: "center", gap: "4px", height: "100%", position: "relative"
+            }}>
+                <input
+                    type="checkbox"
+                    onClick={e => e.stopPropagation()}
+                    style={{ width: "14px", height: "14px", cursor: "pointer", flexShrink: 0 }}
+                />
+                <button
+                    onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
+                    style={{
+                        background: "none", border: "none", cursor: "pointer",
+                        color: "#94a3b8", fontSize: "13px", padding: "0",
+                        lineHeight: 1, letterSpacing: "0.5px",
+                    }}
+                >
+                    ···
+                </button>
+                {menuOpen && (
+                    <div style={{
+                        position: "absolute", left: "100%", top: "50%", zIndex: 100,
+                        background: "white", border: "1px solid #e2e8f0",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                        borderRadius: "8px", padding: "4px", minWidth: "160px",
+                        display: "flex", flexDirection: "column", gap: "2px",
+                        textAlign: "left", transform: "translateY(-50%)", marginLeft: "8px"
+                    }}>
+                        <button onClick={(e) => { e.stopPropagation(); console.log("Ver detalle") }} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", borderRadius: "4px" }}>
+                            Ver detalles
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); console.log("Cancelar") }} style={{ textAlign: "left", background: "none", border: "none", padding: "8px 12px", fontSize: "12px", cursor: "pointer", color: "#ef4444", borderRadius: "4px" }}>
+                            ✕ Cancelar pedido
+                        </button>
+                    </div>
+                )}
+            </div>
+        </td>
     );
 }
 
@@ -548,9 +585,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <td style={{ padding: "0 6px 0 14px", height: "52px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
-                                    </td>
+                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10045</span>
                                     </td>
@@ -630,9 +665,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <td style={{ padding: "0 6px 0 14px", height: "52px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
-                                    </td>
+                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10046</span>
                                     </td>
@@ -711,9 +744,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <td style={{ padding: "0 6px 0 14px", height: "52px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
-                                    </td>
+                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10047</span>
                                     </td>
@@ -792,9 +823,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <td style={{ padding: "0 6px 0 14px", height: "52px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
-                                    </td>
+                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10048</span>
                                     </td>
@@ -882,9 +911,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <td style={{ padding: "0 6px 0 14px", height: "52px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
-                                    </td>
+                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10049</span>
                                     </td>
@@ -978,9 +1005,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <td style={{ padding: "0 6px 0 14px", height: "52px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
-                                    </td>
+                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10050</span>
                                     </td>
@@ -1069,9 +1094,7 @@ export default function PedidosPage() {
                                         setSelectedOrder({ ref: "Example" });
                                     }}
                                 >
-                                    <td style={{ padding: "0 6px 0 14px", height: "52px", width: "28px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
-                                        <input type="checkbox" style={{ width: "14px", height: "14px", cursor: "pointer" }} />
-                                    </td>
+                                    <ColumnaCheckbox pedido={{ ref: "Example" }} />
                                     <td style={{ padding: "0 10px", height: "52px", minWidth: "70px", maxWidth: "80px", verticalAlign: "middle", borderBottom: "1px solid #f1f5f9", overflow: "hidden" }}>
                                         <span style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", display: "block" }}>#10041</span>
                                     </td>

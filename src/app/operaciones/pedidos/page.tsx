@@ -369,6 +369,30 @@ interface RiskFactor {
     source: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function calcClienteMetrics(pedidos: Record<string, any>[]) {
+    const total = pedidos.length;
+    const entregados = pedidos.filter(p => p.state === "entregado").length;
+    const devueltos = pedidos.filter(p => ["devolucion", "devuelto"].includes(p.state)).length;
+    const incidencias = pedidos.filter(p => p.state === "incidencia").length;
+    const totalGastado = pedidos
+        .filter(p => p.state === "entregado")
+        .reduce((acc, p) => acc + parseFloat(p.importe || "0"), 0);
+    const sorted = [...pedidos].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return {
+        totalPedidos: total,
+        totalGastado: totalGastado.toFixed(2),
+        ticketMedio: entregados > 0 ? (totalGastado / entregados).toFixed(2) : "0.00",
+        tasaEntrega: total > 0 ? ((entregados / total) * 100).toFixed(1) : "0",
+        tasaDevolucion: total > 0 ? ((devueltos / total) * 100).toFixed(1) : "0",
+        tasaIncidencia: total > 0 ? ((incidencias / total) * 100).toFixed(1) : "0",
+        pedidosEntregados: entregados,
+        pedidosDevoluciones: devueltos,
+        ultimoPedido: sorted[0]?.createdAt ?? null,
+        primerPedido: sorted[sorted.length - 1]?.createdAt ?? null,
+    };
+}
+
 function getCPRiskLevel(cp: string): { label: string; level: RiskLevel } {
     // Hardcoded high-risk CPs known from returns history; replace with DB query
     const high = ["18008", "18009", "18010", "29001", "28005", "28012", "08001", "08002", "08003"];
@@ -836,40 +860,58 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                         </div>
                     )}
 
-                    {activeTab === "historial" && (
-                        <div style={{ animation: "fade-in 0.2s" }}>
-                            <p style={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", color: "#94a3b8", margin: "0 0 6px 0" }}>
-                                {pedido?.historialCliente?.length || 2} pedidos anteriores
-                            </p>
-                            {(pedido?.historialCliente || [
-                                { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },
-                                { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" }
-                            ]).map((h: { id: string; ref: string; state: string; producto: string; importe: string; createdAt: string }) => (
-                                <div key={h.id} onClick={(e) => { e.stopPropagation(); if (onSelectOrder) onSelectOrder(h); }} style={{
-                                    padding: "8px 10px", borderRadius: "8px",
-                                    border: "1px solid #e2e8f0", marginBottom: "6px",
-                                    cursor: "pointer", background: "white",
-                                    transition: "background 0.1s",
-                                }}
-                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                                    onMouseLeave={e => e.currentTarget.style.background = "white"}
-                                >
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <span style={{ fontSize: "12px", fontWeight: 700, color: "#3b82f6" }}>#{h.ref}</span>
-                                        <StateBadge state={h.state} />
+                    {activeTab === "historial" && (() => {
+                        const historial = pedido?.historialCliente || [
+                            { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },
+                            { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" },
+                        ];
+                        const m = pedido?.clienteStats ? pedido.clienteStats : calcClienteMetrics(historial);
+                        return (
+                            <div style={{ animation: "fade-in 0.2s" }}>
+                                <DrawerSection title="Métricas del cliente">
+                                    <DrawerRow label="LTV total" value={`€${m.totalGastado}`} />
+                                    <DrawerRow label="Ticket medio" value={`€${m.ticketMedio}`} />
+                                    <DrawerRow label="Tasa entrega" value={`${m.tasaEntrega}%`} />
+                                    <DrawerRow label="Tasa devolución" value={`${m.tasaDevolucion}%`} />
+                                    <DrawerRow label="Tasa incidencia" value={`${m.tasaIncidencia}%`} />
+                                    <DrawerRow label="Pedidos entregados" value={m.pedidosEntregados} />
+                                    <DrawerRow label="Pedidos devueltos" value={m.pedidosDevoluciones} />
+                                    <DrawerRow label="Último pedido" value={formatDate(m.ultimoPedido ?? "")} />
+                                </DrawerSection>
+
+                                <p style={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", color: "#94a3b8", margin: "0 0 6px 0" }}>
+                                    {historial.length} pedidos anteriores
+                                </p>
+                                {(pedido?.historialCliente || [
+                                    { id: "1", ref: "10042", state: "entregado", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-10-05T10:00:00Z" },
+                                    { id: "2", ref: "09821", state: "devolucion", producto: "Zapatillas Deportivas X", importe: "89.99", createdAt: "2023-09-12T14:20:00Z" }
+                                ]).map((h: { id: string; ref: string; state: string; producto: string; importe: string; createdAt: string }) => (
+                                    <div key={h.id} onClick={(e) => { e.stopPropagation(); if (onSelectOrder) onSelectOrder(h); }} style={{
+                                        padding: "8px 10px", borderRadius: "8px",
+                                        border: "1px solid #e2e8f0", marginBottom: "6px",
+                                        cursor: "pointer", background: "white",
+                                        transition: "background 0.1s",
+                                    }}
+                                        onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                        onMouseLeave={e => e.currentTarget.style.background = "white"}
+                                    >
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#3b82f6" }}>#{h.ref}</span>
+                                            <StateBadge state={h.state} />
+                                        </div>
+                                        <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                                            {h.producto} · €{h.importe} · {formatDate(h.createdAt)}
+                                        </div>
                                     </div>
-                                    <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-                                        {h.producto} · €{h.importe} · {formatDate(h.createdAt)}
+                                ))}
+                                {(historial.length === 0) && (
+                                    <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "12px", padding: "24px 0" }}>
+                                        Primera compra del cliente
                                     </div>
-                                </div>
-                            ))}
-                            {(pedido?.historialCliente?.length === 0) && (
-                                <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "12px", padding: "24px 0" }}>
-                                    Primera compra del cliente
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                )}
+                            </div>
+                        );
+                    })()}
                     {activeTab === "comunicaciones" && (
                         <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 175px)", animation: "fade-in 0.2s" }}>
 

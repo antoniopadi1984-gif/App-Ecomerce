@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
             marketLanguage, interfaceLanguage,
             // legacy compat
             category, market, sellingPrice,
+            handlingCost, returnRate, deliveryRate, fulfillment, sku
         } = body;
 
         if (!title) {
@@ -75,6 +76,11 @@ export async function POST(request: NextRequest) {
                 price: pvp,
                 unitCost: Number(unitCost) || 0,
                 shippingCost: Number(shippingCost) || 0,
+                handlingCost: Number(handlingCost) || 0,
+                returnCost: Number(returnRate) || 5, // Mapping to returnCost
+                deliveryRate: Number(deliveryRate) || 70,
+                fulfillment: fulfillment || 'Manual',
+                sku: sku || undefined,
                 cvrExpected: cvrExpected ? Number(cvrExpected) : null,
                 cpaMax: computedCpaMax || null,
                 breakevenCPC: computedCPCBE || null,

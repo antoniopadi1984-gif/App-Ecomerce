@@ -48,7 +48,8 @@ export function useGestores(): { gestores: Gestor[]; refetch: () => void } {
     }, []);
 
     useEffect(() => {
-        // Fetch inmediato al montar
+        // Fetch inmediato al montar (async — no setState síncrono)
+         
         fetchAndSet();
 
         // Polling ligero — sincroniza cambios desde otras pestañas/sesiones

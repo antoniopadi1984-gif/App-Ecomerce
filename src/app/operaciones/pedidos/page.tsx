@@ -70,13 +70,16 @@ function formatTime(_date?: string) {
     return "14:32";
 }
 
-function calcTiempo(from?: string, to?: string): string {
+function calcTiempo(from?: string, to?: string | Date): string {
     if (!from || !to) return "—";
-    const diff = new Date(to).getTime() - new Date(from).getTime();
+    const toDate = to instanceof Date ? to : new Date(to);
+    const diff = toDate.getTime() - new Date(from).getTime();
     if (isNaN(diff) || diff < 0) return "—";
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     if (h === 0) return `${m}min`;
+    const d = Math.floor(h / 24);
+    if (d > 0) return `${d}d ${h % 24}h`;
     return `${h}h ${m}min`;
 }
 
@@ -411,15 +414,36 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                     {activeTab === "cliente" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
                             <DrawerSection title="Datos del cliente">
-                                <DrawerRow label="Nombre" value={pedido?.cliente || "Juan Pérez"} />
-                                <DrawerRow label="Teléfono" value={
+                                <DrawerRow label="Nombre"    value={pedido?.cliente || "Juan Pérez"} />
+                                <DrawerRow label="Teléfono"  value={
                                     <a href={`https://wa.me/${(pedido?.telefono || "+34 600 000 000").replace(/\D/g, "")}`}
                                         target="_blank" rel="noreferrer" style={{ color: "#25d366", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
                                         💬 {pedido?.telefono || "+34 600 000 000"}
                                     </a>
                                 } />
-                                <DrawerRow label="Email" value={pedido?.email ?? "juan.perez@email.com"} />
+                                <DrawerRow label="Email"     value={pedido?.email ?? "juan.perez@email.com"} />
+                                <DrawerRow label="Documento" value={pedido?.dni ?? "—"} />
                             </DrawerSection>
+
+                            {(() => {
+                                const cliente = pedido?.clienteStats || {
+                                    totalGastado: "269.97",
+                                    totalPedidos: 3,
+                                    tasaEntrega: 67,
+                                    totalDevoluciones: 1,
+                                    primerPedido: "2023-09-12T14:20:00Z",
+                                };
+                                return (
+                                    <DrawerSection title="Resumen del cliente">
+                                        <DrawerRow label="Total gastado"   value={`€${cliente.totalGastado}`} />
+                                        <DrawerRow label="Pedidos totales" value={cliente.totalPedidos} />
+                                        <DrawerRow label="Tasa entrega"    value={`${cliente.tasaEntrega}%`} />
+                                        <DrawerRow label="Devoluciones"    value={cliente.totalDevoluciones} />
+                                        <DrawerRow label="Primera compra"  value={formatDate(cliente.primerPedido)} />
+                                        <DrawerRow label="Cliente desde"   value={calcTiempo(cliente.primerPedido, new Date()) + " atrás"} />
+                                    </DrawerSection>
+                                );
+                            })()}
 
                             <DrawerSection title="Dirección de envío">
                                 <DrawerRow label="Dirección" value={pedido?.shipping_address_1 || "Calle Principal 123, Piso 4B"} />
@@ -627,50 +651,50 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                     {activeTab === "comunicaciones" && (
                         <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 175px)", animation: "fade-in 0.2s" }}>
 
-                          {/* Selector de fuente */}
-                          <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexShrink: 0 }}>
-                            {["WhatsApp Business", "WhatsApp API"].map(source => (
-                              <button key={source} onClick={() => setMsgSource(source)} style={{
-                                padding: "4px 12px", fontSize: "11px", fontWeight: 600,
-                                borderRadius: "20px", cursor: "pointer", border: "none",
-                                background: msgSource === source ? "#25d366" : "#f1f5f9",
-                                color: msgSource === source ? "white" : "#64748b",
-                              }}>{source}</button>
-                            ))}
-                          </div>
+                            {/* Selector de fuente */}
+                            <div style={{ display: "flex", gap: "6px", marginBottom: "10px", flexShrink: 0 }}>
+                                {["WhatsApp Business", "WhatsApp API"].map(source => (
+                                    <button key={source} onClick={() => setMsgSource(source)} style={{
+                                        padding: "4px 12px", fontSize: "11px", fontWeight: 600,
+                                        borderRadius: "20px", cursor: "pointer", border: "none",
+                                        background: msgSource === source ? "#25d366" : "#f1f5f9",
+                                        color: msgSource === source ? "white" : "#64748b",
+                                    }}>{source}</button>
+                                ))}
+                            </div>
 
-                          {/* Mensajes — ocupa todo el espacio restante */}
-                          <div className="ds-scrollbar" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
-                            {mensajes.map((msg: { body: string; direction: string; timestamp: string; status: string }, i: number) => (
-                              <div key={i} style={{ display: "flex", justifyContent: msg.direction === "outbound" ? "flex-end" : "flex-start" }}>
-                                <div style={{
-                                  maxWidth: "75%", padding: "7px 10px", borderRadius: "10px",
-                                  fontSize: "12px", lineHeight: 1.4,
-                                  background: msg.direction === "outbound" ? "#dcf8c6" : "#f1f5f9",
-                                }}>
-                                  {msg.body}
-                                  <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px", textAlign: "right" }}>
-                                    {formatTime(msg.timestamp)}
-                                    {msg.direction === "outbound" && <span style={{ marginLeft: "3px" }}>{msg.status === "read" ? "✓✓" : "✓"}</span>}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                            {/* Mensajes — ocupa todo el espacio restante */}
+                            <div className="ds-scrollbar" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+                                {mensajes.map((msg: { body: string; direction: string; timestamp: string; status: string }, i: number) => (
+                                    <div key={i} style={{ display: "flex", justifyContent: msg.direction === "outbound" ? "flex-end" : "flex-start" }}>
+                                        <div style={{
+                                            maxWidth: "75%", padding: "7px 10px", borderRadius: "10px",
+                                            fontSize: "12px", lineHeight: 1.4,
+                                            background: msg.direction === "outbound" ? "#dcf8c6" : "#f1f5f9",
+                                        }}>
+                                            {msg.body}
+                                            <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px", textAlign: "right" }}>
+                                                {formatTime(msg.timestamp)}
+                                                {msg.direction === "outbound" && <span style={{ marginLeft: "3px" }}>{msg.status === "read" ? "✓✓" : "✓"}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
 
-                          {/* Input pegado al fondo */}
-                          <div style={{ display: "flex", gap: "6px", paddingTop: "8px", borderTop: "1px solid #e2e8f0", flexShrink: 0 }}>
-                            <input
-                              value={newMessage} onChange={e => setNewMessage(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
-                              placeholder="Escribe un mensaje..."
-                              style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px", outline: "none" }}
-                            />
-                            <button onClick={sendMessage} style={{
-                              background: "#25d366", color: "white", border: "none",
-                              borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontSize: "12px", fontWeight: 700
-                            }}>Enviar</button>
-                          </div>
+                            {/* Input pegado al fondo */}
+                            <div style={{ display: "flex", gap: "6px", paddingTop: "8px", borderTop: "1px solid #e2e8f0", flexShrink: 0 }}>
+                                <input
+                                    value={newMessage} onChange={e => setNewMessage(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
+                                    placeholder="Escribe un mensaje..."
+                                    style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px", outline: "none" }}
+                                />
+                                <button onClick={sendMessage} style={{
+                                    background: "#25d366", color: "white", border: "none",
+                                    borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontSize: "12px", fontWeight: 700
+                                }}>Enviar</button>
+                            </div>
                         </div>
                     )}
 

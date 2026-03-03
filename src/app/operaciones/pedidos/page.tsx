@@ -277,6 +277,18 @@ function CarrierBadge({ type }: { type: string }) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string, any> | null, onClose: () => void, onSelectOrder?: (p: any) => void }) {
     const [activeTab, setActiveTab] = React.useState("cliente");
+    const [msgSource, setMsgSource] = React.useState("WhatsApp Business");
+    const [newMessage, setNewMessage] = React.useState("");
+
+    const mensajes = pedido?.mensajes || [
+        { "direction": "inbound", "body": "¿Cuándo llega mi pedido?", "timestamp": "2023-10-12T14:30:00Z", "status": "read" },
+        { "direction": "outbound", "body": "Buenas tardes Juan. Hemos enviado tu pedido hoy, debería llegar en 24-48 horas.", "timestamp": "2023-10-12T14:35:00Z", "status": "read" }
+    ];
+
+    const sendMessage = () => {
+        if (!newMessage.trim()) return;
+        setNewMessage("");
+    };
 
     if (!pedido) return null;
     return (
@@ -545,9 +557,88 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
                             </div>
                         </div>
                     )}
+                    {activeTab === "comunicaciones" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fade-in 0.2s" }}>
+                            {/* Panel de conversaciones WhatsApp con el cliente */}
+                            <div className="ds-card" style={{ padding: "16px 20px" }}>
+
+                                {/* Selector de fuente */}
+                                <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                                    {["WhatsApp Business", "WhatsApp API"].map(source => (
+                                        <button key={source} onClick={() => setMsgSource(source)} style={{
+                                            padding: "5px 12px", fontSize: "11px", fontWeight: 600,
+                                            borderRadius: "20px", cursor: "pointer",
+                                            background: msgSource === source ? "#25d366" : "#f1f5f9",
+                                            color: msgSource === source ? "white" : "#64748b",
+                                            border: "none",
+                                        }}>
+                                            {source}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Historial de mensajes */}
+                                <div className="ds-scrollbar" style={{
+                                    height: "320px", overflowY: "auto",
+                                    display: "flex", flexDirection: "column", gap: "8px",
+                                    padding: "4px"
+                                }}>
+                                    {mensajes.map((msg: { body: string; direction: string; timestamp: string; status: string }, i: number) => (
+                                        <div key={i} style={{
+                                            display: "flex", flexShrink: 0,
+                                            justifyContent: msg.direction === "outbound" ? "flex-end" : "flex-start"
+                                        }}>
+                                            <div style={{
+                                                maxWidth: "75%", padding: "8px 12px", borderRadius: "12px",
+                                                fontSize: "13px", lineHeight: 1.4,
+                                                background: msg.direction === "outbound" ? "#dcf8c6" : "#f1f5f9",
+                                                color: "#0f172a",
+                                            }}>
+                                                {msg.body}
+                                                <div style={{ fontSize: "10px", color: msg.direction === "outbound" ? "#5e8c4e" : "#94a3b8", marginTop: "4px", textAlign: msg.direction === "outbound" ? "right" : "left" }}>
+                                                    {formatTime(msg.timestamp)}
+                                                    {msg.direction === "outbound" && (
+                                                        <span style={{ marginLeft: "4px" }}>
+                                                            {msg.status === "read" ? "✓✓" : msg.status === "delivered" ? "✓✓" : "✓"}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Input para enviar mensaje rápido */}
+                                <div style={{
+                                    display: "flex", gap: "8px", marginTop: "12px",
+                                    borderTop: "1px solid #e2e8f0", paddingTop: "12px"
+                                }}>
+                                    <input
+                                        value={newMessage}
+                                        onChange={e => setNewMessage(e.target.value)}
+                                        placeholder="Escribe un mensaje..."
+                                        style={{
+                                            flex: 1, padding: "8px 12px", borderRadius: "8px",
+                                            border: "1px solid #e2e8f0", fontSize: "12px", outline: "none"
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') sendMessage();
+                                        }}
+                                    />
+                                    <button onClick={sendMessage} style={{
+                                        background: "#25d366", color: "white", border: "none",
+                                        borderRadius: "8px", padding: "8px 14px", cursor: "pointer",
+                                        fontSize: "12px", fontWeight: 700
+                                    }}>
+                                        Enviar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Failsafe for unfinished content tabs */}
-                    {!["cliente", "timeline", "riesgo", "origen", "historial"].includes(activeTab) && (
+                    {!["cliente", "timeline", "riesgo", "origen", "historial", "comunicaciones"].includes(activeTab) && (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 20px", flexDirection: "column", gap: "12px", textAlign: "center", opacity: 0.5, animation: "fade-in 0.2s" }}>
                             <span style={{ fontSize: "48px" }}>🚧</span>
                             <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#334155" }}>Tab en desarrollo</h3>

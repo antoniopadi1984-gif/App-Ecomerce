@@ -118,6 +118,42 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        // Background: pre-fill Research Steps if docExtracted is provided
+        if (body.docExtracted) {
+            try {
+                const ext = JSON.parse(body.docExtracted);
+                const runId = `run_doc_${Date.now()}`;
+
+                const stepsToCreate = [];
+                if (ext.surfaceDesires && ext.surfaceDesires.length > 0) {
+                    stepsToCreate.push({ productId: newProduct.id, runId, stepKey: 'P1', outputJson: JSON.stringify(ext.surfaceDesires), status: '✅ Pre-cargado desde documento' });
+                }
+                if (ext.avatares && ext.avatares.length > 0) {
+                    stepsToCreate.push({ productId: newProduct.id, runId, stepKey: 'P2', outputJson: JSON.stringify(ext.avatares), status: '✅ Pre-cargado desde documento' });
+                }
+                if (ext.languageBank && Object.keys(ext.languageBank).length > 0) {
+                    stepsToCreate.push({ productId: newProduct.id, runId, stepKey: 'P2.1', outputJson: JSON.stringify(ext.languageBank), status: '✅ Pre-cargado desde documento' });
+                }
+                if (ext.angulos && ext.angulos.length > 0) {
+                    stepsToCreate.push({ productId: newProduct.id, runId, stepKey: 'P4', outputJson: JSON.stringify(ext.angulos), status: '✅ Pre-cargado desde documento' });
+                }
+
+                for (const st of stepsToCreate) {
+                    await prisma.researchStep.create({
+                        data: {
+                            productId: st.productId,
+                            runId: st.runId,
+                            stepKey: st.stepKey,
+                            version: 1,
+                            outputJson: st.outputJson,
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('[API] Error pre-filling research steps:', e);
+            }
+        }
+
         // Background: trigger Drive organize (fire & forget)
         fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/drive/organize`, {
             method: 'POST',

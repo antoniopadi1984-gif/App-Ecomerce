@@ -113,6 +113,14 @@ export function AddProductDialog() {
     const [foreplayUrl, setForeplayUrl] = useState('');
     const [adLibraryUrls, setAdLibraryUrls] = useState<string[]>(['']);
 
+    // ── Google Doc Import ───────────────────────────────────
+    const [importing, setImporting] = useState(false);
+    const [imported, setImported] = useState(false);
+    const [importedCount, setImportedCount] = useState(0);
+    const [missingFields, setMissingFields] = useState<string[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [docExtracted, setDocExtracted] = useState<any>(null);
+
     // ── Dynamic lists ───────────────────────────────────────
     const [competitors, setCompetitors] = useState<CompetitorEntry[]>([
         { name: '', url: '', urlAmazon: '', urlMetaLibrary: '', urlTikTokLibrary: '', country: 'ES', price: '', analyzing: false, done: false }
@@ -198,6 +206,59 @@ export function AddProductDialog() {
         finally { setGenDesc(false); }
     };
 
+    // ── Import Google Doc ────────────────────────────────────
+    const triggerImport = async (url: string) => {
+        if (!url || !url.includes('docs.google.com')) return;
+        setImporting(true);
+        setImported(false);
+        try {
+            const res = await fetch('/api/research/extract-doc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, storeId: activeStoreId })
+            });
+            const { data, success } = await res.json();
+            if (success && data) {
+                setDocExtracted(data);
+                let count = 0;
+                const missing: string[] = [];
+
+                if (data.nombre) { setTitle(data.nombre); count++; } else missing.push('Nombre');
+                if (data.categoria) { setFamily(data.categoria); count++; } else missing.push('Categoría');
+                if (data.pais) { setCountry(data.pais); count++; } else missing.push('País');
+
+                if (data.precioVenta) { setPvp(String(data.precioVenta)); count++; } else missing.push('PVP');
+                if (data.costeProducto) { setUnitCost(String(data.costeProducto)); count++; } else missing.push('Coste Unitario');
+                if (data.costeEnvio) { setShippingCost(String(data.costeEnvio)); count++; } else missing.push('Coste Envío');
+                if (data.costeManipulacion) { setHandlingCost(String(data.costeManipulacion)); count++; }
+                if (data.tasaEntregaEsperada) { setDeliveryRate(String(data.tasaEntregaEsperada)); count++; }
+                if (data.tasaConversionEsperada) { setCvr(String(data.tasaConversionEsperada)); count++; }
+
+                if (data.competidores && Array.isArray(data.competidores)) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    setCompetitors(data.competidores.map((c: any) => ({
+                        name: c.nombre || '', url: c.urlWeb || '', urlAmazon: c.urlAmazon || '',
+                        urlMetaLibrary: '', urlTikTokLibrary: '', country: data.pais || 'ES',
+                        price: c.precioVenta ? String(c.precioVenta) : '', analyzing: false, done: false
+                    })));
+                    count++;
+                }
+
+                if (!data.avatares?.length) missing.push('Avatares');
+                if (!data.angulos?.length) missing.push('Ángulos');
+
+                setImportedCount(count);
+                setMissingFields(missing);
+                setImported(true);
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Error al importar Doc');
+        } finally {
+            setImporting(false);
+        }
+    };
+
     // ── Analyze competitor ───────────────────────────────────
     const analyzeCompetitor = async (idx: number) => {
         const comp = competitors[idx];
@@ -255,6 +316,7 @@ export function AddProductDialog() {
                 description,
                 imageUrl,
                 googleDocUrl,
+                docExtracted: docExtracted ? JSON.stringify(docExtracted) : null,
                 foreplayBoardUrl: foreplayUrl,
                 adLibraryUrls: JSON.stringify(adLibraryUrls.filter(u => u.trim())),
                 amazonLinks: JSON.stringify(amazonLinks.map(a => a.url).filter(u => u.trim())),
@@ -532,8 +594,30 @@ export function AddProductDialog() {
                                         <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mb-2">
                                             Pega la URL de tu Google Doc. Nuestro pipeline extraerá el contenido automáticamente y enriquecerá tu Avatar / Angle Builder con tus notas sin indexarlas a la IA global.
                                         </p>
-                                        <Input value={googleDocUrl} onChange={e => setGoogleDocUrl(e.target.value)}
-                                            placeholder="https://docs.google.com/document/d/..." className="h-10 text-[11px] border-[var(--mando)]/30 focus-visible:ring-[var(--mando)]/20" />
+                                        <div className="relative">
+                                            <Input value={googleDocUrl} onChange={e => setGoogleDocUrl(e.target.value)} onBlur={() => googleDocUrl && triggerImport(googleDocUrl)}
+                                                placeholder="https://docs.google.com/document/d/..." className="h-10 text-[11px] border-[var(--mando)]/30 focus-visible:ring-[var(--mando)]/20 pr-32" />
+                                            {importing && (
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-[var(--inv)] font-bold flex items-center gap-1">
+                                                    <Loader2 className="w-3 h-3 animate-spin" /> Extrayendo...
+                                                </span>
+                                            )}
+                                            {imported && !importing && (
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-[var(--s-ok)] font-bold flex items-center gap-1">
+                                                    ✓ {importedCount} campos
+                                                </span>
+                                            )}
+                                        </div>
+                                        {imported && docExtracted && (
+                                            <div className="text-[10px] text-[var(--text-dim)] mt-2 p-2 bg-[var(--s-ok)]/5 border border-[var(--s-ok)]/20 rounded-lg leading-relaxed">
+                                                <span className="text-[var(--s-ok)] font-bold">Resumen extraído:</span> Identidad · Financiero · {docExtracted.avatares?.length || 0} avatares · {docExtracted.angulos?.length || 0} ángulos · {docExtracted.languageBank ? "Language bank" : ""} · {docExtracted.mecanismos?.length || 0} mecanismos.
+                                                {missingFields.length > 0 && (
+                                                    <div className="text-[var(--s-ko)] mt-1">
+                                                        ⚠️ Faltan: {missingFields.join(", ")}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2 mt-6">

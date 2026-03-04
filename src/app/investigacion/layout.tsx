@@ -6,9 +6,12 @@ import { Microscope } from 'lucide-react';
 import { AgentCompanion } from '@/components/layout/agent-companion';
 import { useProduct } from '@/context/ProductContext';
 
+import { AddProductDialog } from '@/components/products/AddProductDialog';
+
 export default function InvestigacionLayout({ children }: { children: React.ReactNode }) {
     const { activeStoreId } = useStore();
     const { productId } = useProduct();
+    const [showCreateModal, setShowCreateModal] = React.useState(false);
 
     const contextForAgent = `Investigación (Research Lab). Tienda: ${activeStoreId}. Producto: ${productId}`;
 
@@ -42,14 +45,18 @@ export default function InvestigacionLayout({ children }: { children: React.Reac
                             ↑ Pulsa el selector &quot;Producto&quot; arriba
                         </div>
                         <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                            <span style={{ fontSize: "11px", color: "#94a3b8", letterSpacing: "0.05em" }}>O BIEN</span>
                             <button
-                                onClick={() => document.dispatchEvent(new CustomEvent('open-create-product-modal'))}
+                                onClick={() => setShowCreateModal(true)}
                                 style={{
-                                    background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-                                    color: "white", border: "none", borderRadius: "12px",
-                                    padding: "12px 32px", fontSize: "14px", fontWeight: 700,
-                                    cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.35)",
+                                    marginTop: "12px",
+                                    padding: "7px 18px",
+                                    fontSize: "12px",
+                                    fontWeight: 700,
+                                    color: "white",
+                                    background: "#7c3aed",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    cursor: "pointer",
                                     letterSpacing: "0.02em"
                                 }}
                             >
@@ -65,6 +72,8 @@ export default function InvestigacionLayout({ children }: { children: React.Reac
             )}
 
             <AgentCompanion pageContext={contextForAgent} agentRole="research-lab" />
+
+            {showCreateModal && <AddProductDialog showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} />}
         </div>
     );
 }

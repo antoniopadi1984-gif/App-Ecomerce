@@ -138,77 +138,79 @@ export default function ResearchCorePage() {
                             </div>
                         </div>
                     </div>
-                    <AddProductDialog showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} />
+                    {showCreateModal && <AddProductDialog showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} />}
                 </>
             );
         }
 
         return (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 className="text-[16px] font-[900] text-[var(--text)] flex items-center gap-2">
-                            <Target size={18} className="text-[var(--inv)]" />
-                            Directorio de Investigación
-                        </h2>
-                        <p className="text-[11px] text-[var(--text-muted)] mt-1">Selecciona un producto para ver o ejecutar su Pipeline Canónico.</p>
+            <>
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 className="text-[16px] font-[900] text-[var(--text)] flex items-center gap-2">
+                                <Target size={18} className="text-[var(--inv)]" />
+                                Directorio de Investigación
+                            </h2>
+                            <p className="text-[11px] text-[var(--text-muted)] mt-1">Selecciona un producto para ver o ejecutar su Pipeline Canónico.</p>
+                        </div>
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            style={{
+                                marginTop: "12px",
+                                padding: "7px 18px",
+                                fontSize: "12px",
+                                fontWeight: 700,
+                                color: "white",
+                                background: "#7c3aed",
+                                border: "none",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                                letterSpacing: "0.02em"
+                            }}
+                        >
+                            + Crear nuevo producto
+                        </button>
                     </div>
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        style={{
-                            marginTop: "12px",
-                            padding: "7px 18px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            color: "white",
-                            background: "#7c3aed",
-                            border: "none",
-                            borderRadius: "8px",
-                            cursor: "pointer",
-                            letterSpacing: "0.02em"
-                        }}
-                    >
-                        + Crear nuevo producto
-                    </button>
-                    <AddProductDialog showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} />
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {allProducts.map(p => (
-                        <div key={p.id}
-                            onClick={() => setProductId(p.id)}
-                            className="ds-card-padded cursor-pointer hover:border-[var(--inv)] hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)] transition-all group flex flex-col h-full bg-[var(--surface)]">
-                            <div className="flex items-start gap-3 mb-3">
-                                {p.imageUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={p.imageUrl} alt={p.title} className="w-12 h-12 rounded-lg object-cover border border-[var(--border)]" />
-                                ) : (
-                                    <div className="w-12 h-12 rounded-lg bg-[var(--surface2)] border border-[var(--border)] flex items-center justify-center text-[20px]">
-                                        📦
-                                    </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-[13px] font-[800] text-[var(--text)] truncate group-hover:text-[var(--inv)] transition-colors">{p.title}</h3>
-                                    <p className="text-[10px] text-[var(--text-dim)] truncate mt-0.5">{p.productFamily || 'Sin familia'}</p>
-                                    <div className="mt-1.5 flex gap-1">
-                                        <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[var(--text)]/5 text-[var(--text-muted)] border border-[var(--border)]">
-                                            {p.status}
-                                        </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {allProducts.map(p => (
+                            <div key={p.id}
+                                onClick={() => setProductId(p.id)}
+                                className="ds-card-padded cursor-pointer hover:border-[var(--inv)] hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)] transition-all group flex flex-col h-full bg-[var(--surface)]">
+                                <div className="flex items-start gap-3 mb-3">
+                                    {p.imageUrl ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={p.imageUrl} alt={p.title} className="w-12 h-12 rounded-lg object-cover border border-[var(--border)]" />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-lg bg-[var(--surface2)] border border-[var(--border)] flex items-center justify-center text-[20px]">
+                                            📦
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-[13px] font-[800] text-[var(--text)] truncate group-hover:text-[var(--inv)] transition-colors">{p.title}</h3>
+                                        <p className="text-[10px] text-[var(--text-dim)] truncate mt-0.5">{p.productFamily || 'Sin familia'}</p>
+                                        <div className="mt-1.5 flex gap-1">
+                                            <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[var(--text)]/5 text-[var(--text-muted)] border border-[var(--border)]">
+                                                {p.status}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
+                                <p className="text-[11px] text-[var(--text-muted)] line-clamp-2 leading-relaxed flex-1">
+                                    {p.description || 'Sin descripción...'}
+                                </p>
+                                <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center justify-between">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-[var(--inv)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                        Ver Pipeline <ArrowRight size={10} />
+                                    </span>
+                                </div>
                             </div>
-                            <p className="text-[11px] text-[var(--text-muted)] line-clamp-2 leading-relaxed flex-1">
-                                {p.description || 'Sin descripción...'}
-                            </p>
-                            <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center justify-between">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--inv)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                                    Ver Pipeline <ArrowRight size={10} />
-                                </span>
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
+                {showCreateModal && <AddProductDialog showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} />}
+            </>
         );
     }
 

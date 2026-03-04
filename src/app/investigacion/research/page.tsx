@@ -106,32 +106,35 @@ export default function ResearchCorePage() {
     if (!productId || productId === 'GLOBAL') {
         if (allProducts.length === 0) {
             return (
-                <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in zoom-in-95 duration-500">
-                    <div style={{ fontSize: "64px", marginBottom: "24px", animation: "bounce 2s infinite" }}>🔬</div>
-                    <h2 className="text-[24px] font-[900] text-[var(--text)] mb-3 text-center">
-                        Sin productos en investigación
-                    </h2>
-                    <p className="text-[14px] text-[var(--text-muted)] mb-8 text-center max-w-md leading-relaxed">
-                        Añade tu primer producto para comenzar el pipeline central de generación de avatares, ángulos e insights accionables.
-                    </p>
-                    <div className="flex flex-col items-center gap-3">
-                        <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                            <span style={{ fontSize: "11px", color: "#94a3b8", letterSpacing: "0.05em" }}>O BIEN</span>
-                            <button
-                                onClick={() => document.dispatchEvent(new CustomEvent('open-create-product-modal'))}
-                                style={{
-                                    background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-                                    color: "white", border: "none", borderRadius: "8px",
-                                    padding: "8px 20px", fontSize: "13px", fontWeight: 700,
-                                    cursor: "pointer", boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
-                                    letterSpacing: "0.02em"
-                                }}
-                            >
-                                + Crear nuevo producto
-                            </button>
+                <>
+                    <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in zoom-in-95 duration-500">
+                        <div style={{ fontSize: "64px", marginBottom: "24px", animation: "bounce 2s infinite" }}>🔬</div>
+                        <h2 className="text-[24px] font-[900] text-[var(--text)] mb-3 text-center">
+                            Sin productos en investigación
+                        </h2>
+                        <p className="text-[14px] text-[var(--text-muted)] mb-8 text-center max-w-md leading-relaxed">
+                            Añade tu primer producto para comenzar el pipeline central de generación de avatares, ángulos e insights accionables.
+                        </p>
+                        <div className="flex flex-col items-center gap-3">
+                            <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                                <span style={{ fontSize: "11px", color: "#94a3b8", letterSpacing: "0.05em" }}>O BIEN</span>
+                                <button
+                                    onClick={() => document.dispatchEvent(new CustomEvent('open-create-product-modal'))}
+                                    style={{
+                                        background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                                        color: "white", border: "none", borderRadius: "8px",
+                                        padding: "8px 20px", fontSize: "13px", fontWeight: 700,
+                                        cursor: "pointer", boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
+                                        letterSpacing: "0.02em"
+                                    }}
+                                >
+                                    + Crear nuevo producto
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                    <AddProductDialog />
+                </>
             );
         }
 

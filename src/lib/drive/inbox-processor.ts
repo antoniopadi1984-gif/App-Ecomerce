@@ -100,6 +100,7 @@ export class InboxProcessor {
                         data: {
                             category: 'manual_review',
                             organized: false, // Remains false
+                            // @ts-ignore: Prisma type issue locally
                             metadata: JSON.stringify(analysis.metadata)
                         }
                     });
@@ -121,6 +122,7 @@ export class InboxProcessor {
                         drivePath: analysis.recommendedPath,
                         organized: true,
                         category: analysis.metadata.tipoContenido || 'creative_asset',
+                        // @ts-ignore: Prisma type issue locally
                         metadata: JSON.stringify(analysis.metadata)
                     }
                 });

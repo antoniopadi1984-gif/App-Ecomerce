@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     } catch (error: unknown) {
         console.error('[Snapshot POST] Error:', error);
         return NextResponse.json(
-            { success: false, error: error.message },
+            { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }
         );
     }
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
     } catch (error: unknown) {
         console.error('[Snapshot GET] Error:', error);
         return NextResponse.json(
-            { success: false, error: error.message },
+            { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }
         );
     }
@@ -146,7 +146,7 @@ export async function PUT(req: NextRequest) {
     } catch (error: unknown) {
         console.error('[Snapshot PUT] Error:', error);
         return NextResponse.json(
-            { success: false, error: error.message },
+            { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }
         );
     }

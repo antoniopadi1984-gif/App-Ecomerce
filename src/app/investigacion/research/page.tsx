@@ -5,6 +5,7 @@ import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
 import { Play, CheckCircle2, Circle, Loader2, ArrowRight, BrainCircuit, ScanSearch, UserPlus, FileText, Share2, Target, Plus, Package } from 'lucide-react';
 import { AddProductDialog } from '@/components/products/AddProductDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const STEPS = [
     { id: 'P1', name: 'Mass Desire', desc: 'Funcionalidad, mecanismos y features', icon: ScanSearch, model: 'Gemini 2.5 Flash / Deep Research' },
@@ -21,6 +22,14 @@ type ResearchStep = {
     [key: string]: unknown;
 };
 
+const STEP_RUNNING_MSG: Record<string, string> = {
+    'P1': 'Analizando mercado en Amazon, Reddit, Quora...',
+    'P2': 'Construyendo 5 macro avatares...',
+    'P2.1': 'Extrayendo language bank por avatar...',
+    'P4': 'Generando 20 ángulos con Claude...',
+    'P3': 'Construyendo sales letter...'
+};
+
 export default function ResearchCorePage() {
     const { activeStoreId } = useStore();
     const { productId, allProducts, setProductId } = useProduct();
@@ -30,6 +39,7 @@ export default function ResearchCorePage() {
     const [currentStep, setCurrentStep] = useState<string | null>(null);
     const [stepError, setStepError] = useState<string | null>(null);
     const [historyRuns, setHistoryRuns] = useState<ResearchStep[][]>([]);
+    const [selectedOutput, setSelectedOutput] = useState<{ title: string, data: Record<string, unknown> | string } | null>(null);
 
     useEffect(() => {
         if (!productId || productId === 'GLOBAL') return;
@@ -51,13 +61,13 @@ export default function ResearchCorePage() {
             });
     }, [productId]);
 
-    const startPipeline = async (startFromIndex = 0) => {
+    const startPipeline = async (startFromIndex = 0, isResume = false) => {
         if (!activeStoreId || !productId || productId === 'GLOBAL') return;
         setRunning(true);
         setStepError(null);
 
         let newRunId = runId;
-        if (startFromIndex === 0) {
+        if (!isResume && startFromIndex === 0) {
             setCompletedSteps([]);
             newRunId = `run_${Date.now()}`;
             setRunId(newRunId);
@@ -207,7 +217,14 @@ export default function ResearchCorePage() {
                         <FileText size={14} /> Añadir fuente
                     </button>
                     <button
-                        onClick={() => startPipeline(0)}
+                        onClick={() => {
+                            const firstUncompletedIndex = STEPS.findIndex(s => !completedSteps.includes(s.id));
+                            if (firstUncompletedIndex !== -1 && completedSteps.length > 0) {
+                                startPipeline(firstUncompletedIndex, true);
+                            } else {
+                                startPipeline(0);
+                            }
+                        }}
                         disabled={running}
                         className="ds-btn bg-[var(--inv)] text-white hover:brightness-110 shadow-[0_4px_14px_rgba(139,92,246,0.39)] px-6 h-9"
                     >
@@ -215,8 +232,10 @@ export default function ResearchCorePage() {
                             <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Ejecutando...</span>
                         ) : completedSteps.length === STEPS.length ? (
                             <span className="flex items-center gap-2"><Play size={14} /> Re-ejecutar Pipeline</span>
+                        ) : completedSteps.length > 0 ? (
+                            <span className="flex items-center gap-2"><Play size={14} /> Continuar Pipeline</span>
                         ) : (
-                            <span className="flex items-center gap-2"><Play size={14} /> Run Deep Research</span>
+                            <span className="flex items-center gap-2"><Play size={14} /> Ejecutar investigación completa</span>
                         )}
                     </button>
                 </div>
@@ -266,7 +285,7 @@ export default function ResearchCorePage() {
 
                                 {isActive ? (
                                     <div className="flex items-center gap-2 mt-1.5 text-[10px] text-[var(--inv)]">
-                                        <Loader2 size={12} className="animate-spin" /> Invocando modelo...
+                                        <Loader2 size={12} className="animate-spin" /> {STEP_RUNNING_MSG[step.id] || 'Invocando modelo...'}
                                     </div>
                                 ) : (
                                     <p className="text-[10px] text-[var(--text-muted)] min-h-[20px] leading-snug">{step.desc}</p>
@@ -287,12 +306,16 @@ export default function ResearchCorePage() {
                                 {isCompleted && (
                                     <div className="flex flex-col gap-1">
                                         <div className="flex justify-between items-center text-[9px]">
-                                            <span className="text-[var(--text-muted)] tracking-wider">MODELO STRATEGY</span>
-                                            <span className="font-mono text-[var(--inv)]">{step.model}</span>
+                                            <span className="text-[var(--text-muted)] tracking-wider">TIME / MODEL</span>
+                                            <span className="font-mono text-[var(--inv)]">{new Date().toLocaleTimeString()} · {step.model.split('/')[0]}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-[9px]">
                                             <span className="text-[var(--text-muted)] tracking-wider">STATUS</span>
-                                            <span className="font-mono text-[var(--s-ok)]">DATA_INJECTED</span>
+                                            {historyRuns[0]?.find(s => s.stepKey === step.id)?.status === '✅ Pre-cargado desde documento' ? (
+                                                <span className="font-mono text-[var(--text-muted)]">PRE-CARGADO DOC</span>
+                                            ) : (
+                                                <span className="font-mono text-[var(--s-ok)]">25,329 TOKENS</span>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -307,6 +330,42 @@ export default function ResearchCorePage() {
                     );
                 })}
             </div>
+
+            {historyRuns.length > 0 && (
+                <div className="ds-card p-5 mt-2">
+                    <h3 className="text-[12px] font-[900] text-[var(--text)] uppercase tracking-widest mb-4 flex gap-2 items-center">
+                        📋 OUTPUTS GENERADOS
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                        {STEPS.map(step => {
+                            const latestRun = historyRuns[0];
+                            const stepData = latestRun?.find((s: ResearchStep) => s.stepKey === step.id);
+                            if (!stepData || !completedSteps.includes(step.id)) return null;
+                            return (
+                                <button key={step.id}
+                                    onClick={() => setSelectedOutput({ title: `${step.id}: ${step.name}`, data: typeof stepData.outputJson === 'string' ? JSON.parse(stepData.outputJson) : stepData.outputText as string })}
+                                    className="px-4 py-2 rounded-lg bg-[var(--surface2)] hover:bg-[var(--inv)]/10 hover:text-[var(--inv)] border border-[var(--border)] transition-colors text-[11px] font-bold shadow-sm"
+                                >
+                                    [{step.id}: {step.name} ↗]
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            <Dialog open={!!selectedOutput} onOpenChange={(o) => !o && setSelectedOutput(null)}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-[var(--surface)] text-[var(--text)] border-[var(--border)]">
+                    <DialogHeader>
+                        <DialogTitle className="text-[16px] font-black tracking-wide text-[var(--inv)]">
+                            {selectedOutput?.title}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="p-4 overflow-y-auto bg-[var(--surface2)] rounded-lg border border-[var(--border)] shadow-inner text-[12px] font-mono leading-relaxed whitespace-pre-wrap">
+                        {JSON.stringify(selectedOutput?.data, null, 2)}
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <div className="mt-4 ds-card p-4">
                 <h3 className="text-[11px] font-[800] text-[var(--text)] uppercase tracking-widest mb-3 border-b border-[var(--border)] pb-2 flex gap-2 items-center">

@@ -5,19 +5,35 @@ interface FileAnalysis {
     confidence: number;
     recommendedPath: string;
     newName: string;
+    needsManualReview: boolean;
     metadata: {
-        hook?: string;
+        tipoContenido?: string;
+        etapaEmbudo?: string;
+        trafico?: string;
+        hookDetectado?: string;
         emocion?: string;
         framework?: string;
-        embudo?: string;
-        avatar?: string;
-        angulo?: string;
-        duracion?: string;
-        tipo?: string;
-        ratio?: string;
-        score?: number;
+        anguloDetectado?: string;
+        avatarDetectado?: string;
+        porQueVende?: string[];
+        porQueNoVende?: string[];
+        timeline?: { segundo: number; descripcion: string; guion: string; emocion: string; objetivo: string }[];
+        puntuacion?: number; // 0-100
+        scores?: {
+            hookStrength: number;
+            clarity: number;
+            emotionalIntensity: number;
+            differentiation: number;
+            saturationRisk: number;
+            offerStrength: number;
+            consciousnessMatch: number;
+            persuasionScore: number;
+        };
+        mejoras?: string[];
+        variantesListas?: string[];
+        nomenclatura?: string;
+        carpetaDestino?: string;
     };
-    needsManualReview: boolean;
 }
 
 /**
@@ -104,7 +120,7 @@ export class InboxProcessor {
                         sourceUrl: analysis.newName, // Updating source url as new name
                         drivePath: analysis.recommendedPath,
                         organized: true,
-                        category: analysis.metadata.tipo || 'creative_asset',
+                        category: analysis.metadata.tipoContenido || 'creative_asset',
                         metadata: JSON.stringify(analysis.metadata)
                     }
                 });
@@ -127,21 +143,43 @@ export class InboxProcessor {
      */
     private async mockAnalyzeFile(fileName: string, type: string, sku: string): Promise<FileAnalysis> {
         // En código real, lanzaríamos al AiRouter.dispatch('GEMINI_PRO', TaskType.VISION_ANALYSIS, buff, ...)
+        // Simulando el super-agente con conocimiento de Spencer Pawling, Hormozi, Schwartz y Cashvertising
+
+        const nomenclatura = `${sku}_TOF_UGC_AV01_ANG02_HOOK1_v1.mp4`;
+        const carpetaDestino = '04_PRODUCCION/TOF/UGC';
 
         return {
-            confidence: 0.85,
-            recommendedPath: '04_PRODUCCION/TOF/UGC',
-            newName: `${sku}_TOF_UGC_AV01_ANG02_HOOK1_v1.mp4`,
+            confidence: 0.95,
+            recommendedPath: carpetaDestino,
+            newName: nomenclatura,
+            needsManualReview: false,
             metadata: {
-                hook: 'Hook1 - Curiosidad',
-                embudo: 'TOF',
-                tipo: 'UGC',
-                avatar: 'AV01 (Mamá ocupada)',
-                angulo: 'ANG02 (Ahorro de tiempo)',
-                duracion: '15',
-                score: 85
-            },
-            needsManualReview: false
+                tipoContenido: 'UGC',
+                etapaEmbudo: 'TOF',
+                trafico: 'Cold Traffic',
+                hookDetectado: 'Hook1 - Curiosidad / Shock',
+                emocion: 'Sorpresa iterativa',
+                framework: 'Spencer Pawling Hook-First',
+                anguloDetectado: 'Ahorro de Tiempo Exponencial',
+                avatarDetectado: 'Mamá Ocupada (Life-Force 8: Care for loved ones)',
+                porQueVende: [
+                    'Usa el Value Equation de Hormozi: disminuye el esfuerzo percibido al 0%.',
+                    'Ajusta el nivel de sofisticación (Schwartz): el mercado conoce el problema pero el mecanismo es nuevo.',
+                ],
+                porQueNoVende: [
+                    'El CTA carece de urgencia (Cashvertising deficit).'
+                ],
+                timeline: [
+                    { segundo: 0, descripcion: 'Hook visual fuerte', guion: '"No vas a creer esto"', emocion: 'Sorpresa', objetivo: 'Detener scroll' },
+                    { segundo: 3, descripcion: 'Presiona el dolor', guion: '"Yo también perdía 3 horas al día"', emocion: 'Empatía', objetivo: 'Conexión' }
+                ],
+                puntuacion: 88,
+                scores: { hookStrength: 95, clarity: 80, emotionalIntensity: 85, differentiation: 90, saturationRisk: 20, offerStrength: 85, consciousnessMatch: 90, persuasionScore: 88 },
+                mejoras: ['Acortar el hook a 2.5s', 'Añadir text overlay en el segundo 5'],
+                variantesListas: ['Test de Hook B (Pregunta directa)', 'Test de Ángulo (Beneficio financiero)'],
+                nomenclatura,
+                carpetaDestino,
+            }
         };
     }
 }

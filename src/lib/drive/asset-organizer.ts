@@ -272,8 +272,8 @@ export class AssetOrganizer {
                     where: { productId, status: 'READY' },
                     orderBy: { createdAt: 'desc' }
                 });
-                if (latestResearch) {
-                    const data = JSON.parse(latestResearch.results);
+                if (latestResearch && latestResearch.results) {
+                    const data = JSON.parse(latestResearch.results as string);
                     researchContext = `CONOCIMIENTO ESTRATÉGICO:\nÁngulos: ${JSON.stringify(data.marketing_angles || {})}`;
                 }
             } catch (e) {

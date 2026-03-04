@@ -36,8 +36,7 @@ export async function POST(req: Request) {
                 assetType: 'landing',
                 sourceUrl: cloneData.url,
                 organized: true,
-                // @ts-expect-error Prisma type mismatch
-                    metadata: JSON.stringify({
+                metadata: JSON.stringify({
                     stylesLength: cloneData.styles?.length || 0,
                     copyLength: cloneData.copy?.paragraphs?.length || 0,
                     h1: cloneData.copy?.h1 || '',

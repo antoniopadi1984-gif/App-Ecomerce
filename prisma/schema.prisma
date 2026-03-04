@@ -1802,6 +1802,7 @@ model DriveAsset {
   subcategory String?
   concept     Int?
   organized   Boolean  @default(false)
+  metadata    Json?
   createdAt   DateTime @default(now())
   createdBy   String?
   product     Product  @relation(fields: [productId], references: [id])

@@ -36,8 +36,8 @@ export async function POST(req: Request) {
                     drivePath: '00_INBOX/SPY',
                     assetType: asset.type,
                     sourceUrl: asset.videoUrl || asset.imageUrl || '',
-                    organized: false,
-                    // @ts-expect-error Prisma type mismatch
+                    organized: true,
+                    // @ts-ignore: Prisma type issue locally
                     metadata: JSON.stringify({
                         source,
                         competitorId,

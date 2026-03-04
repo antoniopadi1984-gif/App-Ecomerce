@@ -5,53 +5,70 @@ import { useProduct } from '@/context/ProductContext';
 import { useStore } from '@/lib/store/store-context';
 import { toast } from 'sonner';
 
-// Auxiliary components
-function SectionTitle({ children }: { children: React.ReactNode }) {
-    return <p style={{
-        fontSize: "10px", fontWeight: 900, color: "#94a3b8",
-        textTransform: "uppercase", letterSpacing: "0.08em",
-        margin: "0 0 10px"
-    }}>{children}</p>;
+// ── UI Components ──────────────────────────────────────────────
+
+function Label({ children }: { children: React.ReactNode }) {
+    return (
+        <p style={{
+            fontSize: "10px", fontWeight: 900, color: "#94a3b8",
+            textTransform: "uppercase", letterSpacing: "0.08em",
+            margin: "12px 0 8px 0"
+        }}>
+            {children}
+        </p>
+    );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function Field({ label, value, onChange, type = "text", options, fullWidth }: any) {
+function Input({ label, value, onChange, type = "text", placeholder }: any) {
     return (
-        <div style={{ gridColumn: fullWidth ? "1 / -1" : undefined, marginBottom: "4px" }}>
+        <div>
             <label style={{
                 fontSize: "10px", fontWeight: 700, color: "#64748b",
-                textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "4px"
+                textTransform: "uppercase", letterSpacing: "0.05em",
+                display: "block", marginBottom: "4px"
             }}>
                 {label}
             </label>
-            {type === "select" ? (
-                <select value={value} onChange={e => onChange(e.target.value)} style={{
+            <input type={type} value={value} onChange={e => onChange(e.target.value)}
+                placeholder={placeholder}
+                style={{
                     width: "100%", padding: "7px 10px", borderRadius: "7px",
                     border: "1px solid #e2e8f0", fontSize: "12px", outline: "none",
-                    background: "white"
-                }}>
-                    {options?.map((o: string) => <option key={o} value={o}>{o}</option>)}
-                </select>
-            ) : (
-                <input type={type} value={value} onChange={e => onChange(e.target.value)}
-                    style={{
-                        width: "100%", padding: "7px 10px", borderRadius: "7px",
-                        border: "1px solid #e2e8f0", fontSize: "12px", outline: "none",
-                        boxSizing: "border-box"
-                    }}
-                />
-            )}
+                    boxSizing: "border-box", background: "white"
+                }}
+            />
         </div>
     );
 }
 
-function MetricBox({ label, value, color }: { label: string, value: string, color: string }) {
+function Select({ label, value, onChange, options }: any) {
     return (
-        <div style={{ textAlign: "center", padding: "8px 4px" }}>
-            <div style={{ fontSize: "15px", fontWeight: 900, color }}>{value}</div>
+        <div>
+            <label style={{
+                fontSize: "10px", fontWeight: 700, color: "#64748b",
+                textTransform: "uppercase", letterSpacing: "0.05em",
+                display: "block", marginBottom: "4px"
+            }}>
+                {label}
+            </label>
+            <select value={value} onChange={e => onChange(e.target.value)} style={{
+                width: "100%", padding: "7px 10px", borderRadius: "7px",
+                border: "1px solid #e2e8f0", fontSize: "12px", outline: "none",
+                background: "white"
+            }}>
+                {options?.map((o: string) => <option key={o} value={o}>{o}</option>)}
+            </select>
+        </div>
+    );
+}
+
+function Metric({ label, value, color }: { label: string, value: string, color: string }) {
+    return (
+        <div style={{ textAlign: "center", padding: "4px 2px" }}>
+            <div style={{ fontSize: "13px", fontWeight: 900, color }}>{value}</div>
             <div style={{
                 fontSize: "9px", fontWeight: 700, color: "#94a3b8",
-                textTransform: "uppercase", letterSpacing: "0.06em", marginTop: "2px"
+                textTransform: "uppercase", letterSpacing: "0.04em", marginTop: "2px"
             }}>
                 {label}
             </div>
@@ -59,18 +76,47 @@ function MetricBox({ label, value, color }: { label: string, value: string, colo
     );
 }
 
-// Main component
+function UrlInput({ label, value, onChange, onSaved, savedMsg }: any) {
+    return (
+        <div>
+            <label style={{
+                fontSize: "10px", fontWeight: 700, color: "#64748b",
+                textTransform: "uppercase", letterSpacing: "0.05em",
+                display: "block", marginBottom: "4px"
+            }}>
+                {label}
+            </label>
+            <div style={{ position: "relative" }}>
+                <input value={value} onChange={e => onChange(e.target.value)}
+                    style={{
+                        width: "100%", padding: "7px 10px", borderRadius: "7px",
+                        border: "1px solid #e2e8f0", fontSize: "12px", outline: "none",
+                        boxSizing: "border-box", background: "white"
+                    }}
+                />
+                {onSaved && (
+                    <span style={{
+                        position: "absolute", right: "8px", top: "7px",
+                        fontSize: "10px", color: "#16a34a", fontWeight: 700
+                    }}>
+                        {savedMsg || "Añadida"}
+                    </span>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ── Main Component ──────────────────────────────────────────────
 export function AddProductDialog({ showCreateModal, setShowCreateModal }: { showCreateModal: boolean, setShowCreateModal: (v: boolean) => void }) {
     const { refreshAllProducts, setProductId } = useProduct();
     const { activeStoreId } = useStore();
-    const [step, setStep] = useState(1);
     const [importing, setImporting] = useState(false);
     const [imported, setImported] = useState(false);
-    const [importedFields, setImportedFields] = useState<string[]>([]);
+    const [importedCount, setImportedCount] = useState(0);
     const [creating, setCreating] = useState(false);
-    const imageInputRef = useRef<HTMLInputElement>(null);
+    const imageRef = useRef<HTMLInputElement>(null);
 
-    // Datos del formulario
     const [form, setForm] = useState({
         // IDENTIDAD
         nombre: "", sku: "", categoria: "salud", pais: "ES", imagen: null as File | null, imageUrl: "",
@@ -81,15 +127,11 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
         fulfillment: "beeping",
         tasaEntrega: 70, tasaConversion: 2,
         // COMPETIDORES
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        competidores: [] as any[],
-        landingsIds: [] as string[]
+        competidores: [] as any[]
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateForm = (key: string, value: any) => setForm(f => ({ ...f, [key]: value }));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateCompetidor = (i: number, key: string, value: any) => {
+    const updateComp = (i: number, key: string, value: any) => {
         const next = [...form.competidores];
         next[i][key] = value;
         updateForm("competidores", next);
@@ -108,9 +150,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
         const { precioVenta, costeProducto, costeEnvio, costeManipulacion, costeDevolucion, tasaEntrega, tasaConversion } = form;
         const costeTotal = costeProducto + costeEnvio + costeManipulacion;
         const margenBruto = precioVenta - costeTotal;
-        const tasaDevolucion = costeDevolucion > 0 ? costeDevolucion : 5; // Fallback a 5%? O usar el coste de devolución per se? 
-        // El input se llama costeDevolucion, pero formula dice: costeReal = costeTotal + (tasaDevolucion / 100 * costeDevolucion)
-        // La voy a tratar como "Tasa de Devolución %"
+        const tasaDevolucion = costeDevolucion > 0 ? costeDevolucion : 5;
         const costeReal = costeTotal + (tasaDevolucion / 100 * costeTotal);
         const beneficioNeto = (tasaEntrega / 100 * precioVenta) - costeReal;
         const roasBR = beneficioNeto > 0 ? precioVenta / beneficioNeto : 0;
@@ -119,7 +159,8 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
         return { margenBruto, costeReal, beneficioNeto, roasBR, cpaMax, cpcMax };
     }, [form]);
 
-    const handleGoogleDocImport = async (url: string) => {
+    const handleGoogleDocImport = async () => {
+        const url = form.googleDocUrl;
         if (!url || !url.includes('docs.google.com')) return;
         setImporting(true);
         setImported(false);
@@ -132,18 +173,18 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
             const { data, success } = await res.json();
             if (success && data) {
                 const newForm = { ...form };
-                const fieldsFilled: string[] = [];
-                if (data.nombre) { newForm.nombre = data.nombre; fieldsFilled.push('Nombre'); }
-                if (data.categoria) { newForm.categoria = data.categoria; fieldsFilled.push('Categoría'); }
-                if (data.pais) { newForm.pais = data.pais; fieldsFilled.push('País'); }
-                if (data.precioVenta) { newForm.precioVenta = data.precioVenta; fieldsFilled.push('PVP'); }
-                if (data.costeProducto) { newForm.costeProducto = data.costeProducto; fieldsFilled.push('Coste'); }
-                if (data.costeEnvio) { newForm.costeEnvio = data.costeEnvio; fieldsFilled.push('Envío'); }
-                if (data.tasaEntregaEsperada) { newForm.tasaEntrega = data.tasaEntregaEsperada; fieldsFilled.push('Entrega'); }
-                if (data.tasaConversionEsperada) { newForm.tasaConversion = data.tasaConversionEsperada; fieldsFilled.push('CVR'); }
+                let count = 0;
+                if (data.nombre) { newForm.nombre = data.nombre; count++; }
+                if (data.categoria) { newForm.categoria = data.categoria; count++; }
+                if (data.pais) { newForm.pais = data.pais; count++; }
+                if (data.precioVenta) { newForm.precioVenta = data.precioVenta; count++; }
+                if (data.costeProducto) { newForm.costeProducto = data.costeProducto; count++; }
+                if (data.costeEnvio) { newForm.costeEnvio = data.costeEnvio; count++; }
+                if (data.tasaEntregaEsperada) { newForm.tasaEntrega = data.tasaEntregaEsperada; count++; }
+                if (data.tasaConversionEsperada) { newForm.tasaConversion = data.tasaConversionEsperada; count++; }
 
                 setForm(newForm);
-                setImportedFields(fieldsFilled);
+                setImportedCount(count);
                 setImported(true);
             }
         } catch {
@@ -153,26 +194,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
         }
     };
 
-    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        updateForm("imagen", file);
-        const fd = new FormData();
-        fd.append('file', file);
-        try {
-            const res = await fetch('/api/upload', { method: 'POST', body: fd });
-            const d = await res.json();
-            if (d.success) { updateForm("imageUrl", d.url); toast.success('Imagen subida'); }
-        } catch { toast.error('Error de conexión'); }
-    };
-
-    const handleImageDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files?.[0];
-        if (file) {
-            updateForm("imagen", file);
-        }
-    };
+    const onClose = () => setShowCreateModal(false);
 
     const handleCrearProducto = async () => {
         setCreating(true);
@@ -211,13 +233,19 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
             await refreshAllProducts();
             setProductId(data.product.id);
 
-            setShowCreateModal(false);
+            onClose();
             setCreating(false);
         } catch (e) {
             setCreating(false);
             toast.error("Error al crear el producto");
         }
     };
+
+    const labelStyle = {
+        fontSize: "10px", fontWeight: 700, color: "#64748b",
+        textTransform: "uppercase", letterSpacing: "0.05em",
+        display: "block", marginBottom: "4px"
+    } as const;
 
     if (!showCreateModal) return null;
 
@@ -228,250 +256,229 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
             display: "flex", alignItems: "center", justifyContent: "center"
         }}>
             <div style={{
-                background: "white", borderRadius: "16px",
-                width: "600px", maxHeight: "90vh",
+                background: "white", borderRadius: "14px",
+                width: "680px", maxHeight: "88vh",
                 display: "flex", flexDirection: "column",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
+                boxShadow: "0 20px 60px rgba(0,0,0,0.18)"
             }}>
 
-                {/* HEADER FIJO */}
+                {/* HEADER — compacto */}
                 <div style={{
-                    padding: "20px 24px 16px",
-                    borderBottom: "1px solid #f1f5f9",
+                    padding: "14px 20px", borderBottom: "1px solid #f1f5f9",
                     display: "flex", justifyContent: "space-between", alignItems: "center",
                     flexShrink: 0
                 }}>
                     <div>
-                        <h2 style={{ fontSize: "16px", fontWeight: 900, color: "#0f172a", margin: 0 }}>
+                        <h2 style={{ fontSize: "15px", fontWeight: 900, color: "#0f172a", margin: 0 }}>
                             Nuevo producto
                         </h2>
-                        <p style={{ fontSize: "11px", color: "#94a3b8", margin: "2px 0 0" }}>
-                            Paso {step} de 2
+                        <p style={{ fontSize: "10px", color: "#94a3b8", margin: "1px 0 0" }}>
+                            Rellena los datos o importa desde Google Doc
                         </p>
                     </div>
-                    <button onClick={() => setShowCreateModal(false)} style={{
-                        background: "none", border: "none", fontSize: "18px",
-                        color: "#94a3b8", cursor: "pointer", padding: "4px"
+                    <button onClick={onClose} style={{
+                        background: "#f1f5f9", border: "none", borderRadius: "6px",
+                        width: "28px", height: "28px", cursor: "pointer",
+                        color: "#64748b", fontSize: "14px", fontWeight: 700
                     }}>✕</button>
                 </div>
 
-                {/* PROGRESS BAR */}
-                <div style={{ height: "3px", background: "#f1f5f9", flexShrink: 0 }}>
-                    <div style={{
-                        height: "100%", background: "#7c3aed",
-                        width: step === 1 ? "50%" : "100%",
-                        transition: "width 0.3s ease"
-                    }} />
-                </div>
-
                 {/* BODY — scroll */}
-                <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1 }}>
-                    {step === 1 && (
-                        <>
-                            {/* GOOGLE DOC */}
-                            <div style={{
-                                padding: "12px 14px", background: "#faf5ff",
-                                border: "1px solid #e9d5ff", borderRadius: "10px", marginBottom: "20px"
-                            }}>
-                                <p style={{
-                                    fontSize: "11px", fontWeight: 700, color: "#7c3aed",
-                                    margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.05em"
-                                }}>
-                                    ⚡ Importar desde Google Doc
-                                </p>
-                                <div style={{ display: "flex", gap: "8px" }}>
-                                    <input
-                                        placeholder="Pega URL del Google Doc con research previo..."
-                                        value={form.googleDocUrl}
-                                        onChange={e => updateForm("googleDocUrl", e.target.value)}
-                                        onBlur={() => form.googleDocUrl && handleGoogleDocImport(form.googleDocUrl)}
-                                        style={{
-                                            flex: 1, padding: "7px 10px", borderRadius: "7px",
-                                            border: "1px solid #e9d5ff", fontSize: "12px", outline: "none"
-                                        }}
-                                    />
-                                    {importing && <span style={{ fontSize: "11px", color: "#7c3aed", alignSelf: "center" }}>🔄</span>}
-                                </div>
-                                {imported && (
-                                    <p style={{ fontSize: "11px", color: "#16a34a", margin: "6px 0 0" }}>
-                                        ✅ Rellenados automáticamente: {importedFields.join(", ")}
-                                    </p>
-                                )}
+                <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1 }}>
+
+                    {/* ── GOOGLE DOC ── */}
+                    <div style={{
+                        padding: "10px 12px", background: "#faf5ff",
+                        border: "1px solid #e9d5ff", borderRadius: "8px", marginBottom: "14px"
+                    }}>
+                        <p style={{
+                            fontSize: "10px", fontWeight: 800, color: "#7c3aed",
+                            margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em"
+                        }}>
+                            ⚡ Importar desde Google Doc — rellena todo automáticamente
+                        </p>
+                        <div style={{ position: "relative" }}>
+                            <input
+                                placeholder="Pega URL del Google Doc..."
+                                value={form.googleDocUrl}
+                                onChange={e => updateForm("googleDocUrl", e.target.value)}
+                                onBlur={() => form.googleDocUrl && handleGoogleDocImport()}
+                                style={{
+                                    width: "100%", padding: "7px 10px", borderRadius: "7px",
+                                    border: "1px solid #e9d5ff", fontSize: "12px",
+                                    outline: "none", boxSizing: "border-box", background: "white"
+                                }}
+                            />
+                            {importing && (
+                                <span style={{
+                                    position: "absolute", right: "10px", top: "7px",
+                                    fontSize: "11px", color: "#7c3aed"
+                                }}>🔄 Extrayendo...</span>
+                            )}
+                        </div>
+                        {imported && (
+                            <p style={{ fontSize: "10px", color: "#16a34a", margin: "5px 0 0", fontWeight: 600 }}>
+                                ✅ {importedCount} campos rellenados automáticamente
+                            </p>
+                        )}
+                    </div>
+
+                    {/* ── IDENTIDAD + FINANCIERO en grid 3 col ── */}
+                    <Label>Identidad</Label>
+                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+                        <Input label="Nombre *" value={form.nombre}
+                            onChange={(v: string) => {
+                                updateForm("nombre", v)
+                                updateForm("sku", "PROD_" + v.toUpperCase().replace(/\s+/g, "_") + "_01")
+                            }} />
+                        <Input label="SKU" value={form.sku} onChange={(v: string) => updateForm("sku", v)} />
+                        <Select label="País" value={form.pais} onChange={(v: string) => updateForm("pais", v)}
+                            options={["ES", "MX", "CO", "UK", "US", "LATAM"]} />
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+                        <Select label="Categoría" value={form.categoria} onChange={(v: string) => updateForm("categoria", v)}
+                            options={["salud", "belleza", "hogar", "fitness", "nutrición", "otro"]} />
+                        <Select label="Fulfillment" value={form.fulfillment} onChange={(v: string) => updateForm("fulfillment", v)}
+                            options={["beeping", "dropea", "dropi", "manual"]} />
+                    </div>
+
+                    {/* Imagen + URLs en 3 col */}
+                    <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", gap: "8px", marginBottom: "14px", alignItems: "start" }}>
+                        {/* Imagen compacta */}
+                        <div>
+                            <p style={labelStyle}>Imagen</p>
+                            <div
+                                onClick={() => imageRef.current?.click()}
+                                style={{
+                                    width: "80px", height: "80px", border: "2px dashed #e2e8f0",
+                                    borderRadius: "8px", display: "flex", alignItems: "center",
+                                    justifyContent: "center", cursor: "pointer", background: "#f8fafc",
+                                    overflow: "hidden"
+                                }}
+                            >
+                                {form.imagen
+                                    ? <img src={URL.createObjectURL(form.imagen)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Product Preview" />
+                                    : <span style={{ fontSize: "20px" }}>📷</span>
+                                }
+                            </div>
+                            <input ref={imageRef} type="file" accept="image/*"
+                                style={{ display: "none" }} onChange={e => e.target.files && updateForm("imagen", e.target.files[0])} />
+                        </div>
+                        <Input label="URL producto / competidor" value={form.urlProducto}
+                            onChange={(v: string) => updateForm("urlProducto", v)} />
+                        <Input label="URL Amazon similar" value={form.urlAmazon}
+                            onChange={(v: string) => updateForm("urlAmazon", v)} />
+                    </div>
+
+                    {/* ── FINANCIERO ── */}
+                    <Label>Financiero</Label>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "8px" }}>
+                        <Input label="Precio venta €" type="number" value={form.precioVenta} onChange={(v: string) => updateForm("precioVenta", +v)} />
+                        <Input label="Coste producto €" type="number" value={form.costeProducto} onChange={(v: string) => updateForm("costeProducto", +v)} />
+                        <Input label="Coste envío €" type="number" value={form.costeEnvio} onChange={(v: string) => updateForm("costeEnvio", +v)} />
+                        <Input label="Coste manip. €" type="number" value={form.costeManipulacion} onChange={(v: string) => updateForm("costeManipulacion", +v)} />
+                        <Input label="Coste devol. €" type="number" value={form.costeDevolucion} onChange={(v: string) => updateForm("costeDevolucion", +v)} />
+                        <Input label="Tasa entrega %" type="number" value={form.tasaEntrega} onChange={(v: string) => updateForm("tasaEntrega", +v)} placeholder="70" />
+                        <Input label="Tasa convers. %" type="number" value={form.tasaConversion} onChange={(v: string) => updateForm("tasaConversion", +v)} placeholder="2" />
+                    </div>
+
+                    {/* Métricas calculadas — fila compacta */}
+                    <div style={{
+                        display: "grid", gridTemplateColumns: "repeat(6, 1fr)",
+                        gap: "6px", padding: "10px 12px",
+                        background: "#f8fafc", borderRadius: "8px",
+                        border: "1px solid #e2e8f0", marginBottom: "14px"
+                    }}>
+                        <Metric label="ROAS BR" value={metricas.roasBR.toFixed(1) + "x"}
+                            color={metricas.roasBR < 2 ? "#ef4444" : metricas.roasBR < 3 ? "#f59e0b" : "#16a34a"} />
+                        <Metric label="CPA Máx" value={"€" + metricas.cpaMax.toFixed(0)} color="#3b82f6" />
+                        <Metric label="CPC Máx" value={"€" + metricas.cpcMax.toFixed(2)} color="#8b5cf6" />
+                        <Metric label="Margen" value={"€" + metricas.margenBruto.toFixed(0)} color="#64748b" />
+                        <Metric label="Benef. neto" value={"€" + metricas.beneficioNeto.toFixed(0)} color="#64748b" />
+                        <Metric label="Coste real" value={"€" + metricas.costeReal.toFixed(0)} color="#64748b" />
+                    </div>
+
+                    {/* ── COMPETIDORES ── */}
+                    <Label>Competidores</Label>
+
+                    {form.competidores.map((comp, i) => (
+                        <div key={i} style={{
+                            padding: "10px 12px", border: "1px solid #e2e8f0",
+                            borderRadius: "8px", marginBottom: "8px", position: "relative",
+                            background: "#fafafa"
+                        }}>
+                            <button onClick={() => removeCompetidor(i)} style={{
+                                position: "absolute", top: "8px", right: "8px",
+                                background: "none", border: "none", color: "#cbd5e1",
+                                cursor: "pointer", fontSize: "13px", lineHeight: 1
+                            }}>✕</button>
+
+                            {/* Fila 1: nombre + precio */}
+                            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "8px", marginBottom: "6px" }}>
+                                <Input label="Nombre" value={comp.nombre} onChange={(v: string) => updateComp(i, "nombre", v)} />
+                                <Input label="Precio €" type="number" value={comp.precioVenta} onChange={(v: string) => updateComp(i, "precioVenta", +v)} />
                             </div>
 
-                            {/* IDENTIDAD */}
-                            <SectionTitle>Identidad</SectionTitle>
-
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                                <Field label="Nombre *" value={form.nombre}
-                                    onChange={(v: string) => { updateForm("nombre", v); updateForm("sku", "PROD_" + v.toUpperCase().replace(/\s/g, "_") + "_01"); }} />
-                                <Field label="SKU" value={form.sku} onChange={(v: string) => updateForm("sku", v)} />
-                                <Field label="Categoría" type="select"
-                                    options={["salud", "belleza", "hogar", "fitness", "nutrición", "otro"]}
-                                    value={form.categoria} onChange={(v: string) => updateForm("categoria", v)} />
-                                <Field label="País" type="select"
-                                    options={["ES", "MX", "CO", "UK", "US", "LATAM"]}
-                                    value={form.pais} onChange={(v: string) => updateForm("pais", v)} />
+                            {/* Fila 2: URLs con feedback */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "6px" }}>
+                                <UrlInput label="URL web" value={comp.urlWeb}
+                                    onChange={(v: string) => updateComp(i, "urlWeb", v)}
+                                    onSaved={comp.urlWeb?.length > 5} />
+                                <UrlInput label="URL Amazon" value={comp.urlAmazon}
+                                    onChange={(v: string) => updateComp(i, "urlAmazon", v)}
+                                    onSaved={comp.urlAmazon?.length > 5} />
                             </div>
 
-                            <Field label="URL producto / competidor" value={form.urlProducto}
-                                onChange={(v: string) => updateForm("urlProducto", v)} fullWidth />
-                            <Field label="URL Amazon similar" value={form.urlAmazon}
-                                onChange={(v: string) => updateForm("urlAmazon", v)} fullWidth />
-
-                            {/* Imagen upload */}
-                            <div style={{ marginTop: "10px", marginBottom: "20px" }}>
-                                <label style={{
-                                    fontSize: "11px", fontWeight: 700, color: "#64748b",
-                                    textTransform: "uppercase", letterSpacing: "0.05em"
-                                }}>
-                                    Imagen del producto
-                                </label>
-                                <div
-                                    onDrop={handleImageDrop}
-                                    onDragOver={e => e.preventDefault()}
-                                    style={{
-                                        marginTop: "6px", border: "2px dashed #e2e8f0",
-                                        borderRadius: "10px", padding: "20px", textAlign: "center",
-                                        cursor: "pointer", background: "#f8fafc"
-                                    }}
-                                    onClick={() => imageInputRef.current?.click()}
-                                >
-                                    {form.imagen
-                                        ? <img src={URL.createObjectURL(form.imagen)} alt="Preview" style={{ height: "60px", objectFit: "contain", margin: "0 auto" }} />
-                                        : <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
-                                            Arrastra imagen o haz click
-                                        </p>
-                                    }
-                                </div>
-                                <input ref={imageInputRef} type="file" accept="image/*"
-                                    style={{ display: "none" }} onChange={handleImageSelect} />
+                            {/* Fila 3: bibliotecas de anuncios con feedback especial */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                                <UrlInput label="Meta Ads Library" value={comp.urlMetaLibrary}
+                                    onChange={(v: string) => updateComp(i, "urlMetaLibrary", v)}
+                                    onSaved={comp.urlMetaLibrary?.length > 5}
+                                    savedMsg="✅ Se importarán anuncios" />
+                                <UrlInput label="TikTok Ads Library" value={comp.urlTikTokLibrary}
+                                    onChange={(v: string) => updateComp(i, "urlTikTokLibrary", v)}
+                                    onSaved={comp.urlTikTokLibrary?.length > 5}
+                                    savedMsg="✅ Se importarán anuncios" />
                             </div>
+                        </div>
+                    ))}
 
-                            {/* FINANCIERO */}
-                            <SectionTitle>Financiero</SectionTitle>
-
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                                <Field label="Precio venta € *" type="number" value={form.precioVenta}
-                                    onChange={(v: string) => updateForm("precioVenta", parseFloat(v) || 0)} />
-                                <Field label="Coste producto €" type="number" value={form.costeProducto}
-                                    onChange={(v: string) => updateForm("costeProducto", parseFloat(v) || 0)} />
-                                <Field label="Coste envío €" type="number" value={form.costeEnvio}
-                                    onChange={(v: string) => updateForm("costeEnvio", parseFloat(v) || 0)} />
-                                <Field label="Coste manipulación €" type="number" value={form.costeManipulacion}
-                                    onChange={(v: string) => updateForm("costeManipulacion", parseFloat(v) || 0)} />
-                                <Field label="Coste devolución €" type="number" value={form.costeDevolucion}
-                                    onChange={(v: string) => updateForm("costeDevolucion", parseFloat(v) || 0)} />
-                                <Field label="Fulfillment" type="select"
-                                    options={["beeping", "dropea", "dropi", "manual"]}
-                                    value={form.fulfillment} onChange={(v: string) => updateForm("fulfillment", v)} />
-                                <Field label="Tasa entrega % (def. 70)" type="number" value={form.tasaEntrega}
-                                    onChange={(v: string) => updateForm("tasaEntrega", parseFloat(v) || 70)} />
-                                <Field label="Tasa conversión % (def. 2)" type="number" value={form.tasaConversion}
-                                    onChange={(v: string) => updateForm("tasaConversion", parseFloat(v) || 2)} />
-                            </div>
-
-                            {/* MÉTRICAS EN TIEMPO REAL */}
-                            <div style={{
-                                display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
-                                gap: "8px", marginTop: "14px",
-                                padding: "12px", background: "#f8fafc",
-                                borderRadius: "10px", border: "1px solid #e2e8f0"
-                            }}>
-                                <MetricBox label="ROAS BR" value={metricas.roasBR.toFixed(2) + "x"}
-                                    color={metricas.roasBR < 2 ? "#ef4444" : metricas.roasBR < 3 ? "#f59e0b" : "#16a34a"} />
-                                <MetricBox label="CPA Máx" value={"€" + metricas.cpaMax.toFixed(2)} color="#3b82f6" />
-                                <MetricBox label="CPC Máx" value={"€" + metricas.cpcMax.toFixed(2)} color="#8b5cf6" />
-                                <MetricBox label="Margen bruto" value={"€" + metricas.margenBruto.toFixed(2)} color="#64748b" />
-                                <MetricBox label="Beneficio neto" value={"€" + metricas.beneficioNeto.toFixed(2)} color="#64748b" />
-                                <MetricBox label="Coste real/ud" value={"€" + metricas.costeReal.toFixed(2)} color="#64748b" />
-                            </div>
-                        </>
-                    )}
-
-                    {step === 2 && (
-                        <>
-                            {/* COMPETIDORES */}
-                            <SectionTitle>Competidores</SectionTitle>
-
-                            {form.competidores.map((comp, i) => (
-                                <div key={i} style={{
-                                    padding: "12px", border: "1px solid #e2e8f0",
-                                    borderRadius: "10px", marginBottom: "10px", position: "relative"
-                                }}>
-                                    <button onClick={() => removeCompetidor(i)} style={{
-                                        position: "absolute", top: "8px", right: "8px",
-                                        background: "none", border: "none", color: "#94a3b8",
-                                        cursor: "pointer", fontSize: "14px"
-                                    }}>✕</button>
-
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                                        <Field label="Nombre" value={comp.nombre}
-                                            onChange={(v: string) => updateCompetidor(i, "nombre", v)} />
-                                        <Field label="Precio venta €" type="number" value={comp.precioVenta}
-                                            onChange={(v: string) => updateCompetidor(i, "precioVenta", parseFloat(v) || 0)} />
-                                        <Field label="URL web" value={comp.urlWeb}
-                                            onChange={(v: string) => updateCompetidor(i, "urlWeb", v)} />
-                                        <Field label="URL Amazon" value={comp.urlAmazon}
-                                            onChange={(v: string) => updateCompetidor(i, "urlAmazon", v)} />
-                                        <Field label="Meta Ads Library URL" value={comp.urlMetaLibrary}
-                                            onChange={(v: string) => updateCompetidor(i, "urlMetaLibrary", v)} />
-                                        <Field label="TikTok Ads Library URL" value={comp.urlTikTokLibrary}
-                                            onChange={(v: string) => updateCompetidor(i, "urlTikTokLibrary", v)} />
-                                    </div>
-                                </div>
-                            ))}
-
-                            <button onClick={addCompetidor} style={{
-                                width: "100%", padding: "8px", borderRadius: "8px",
-                                border: "1px dashed #c4b5fd", background: "#faf5ff",
-                                color: "#7c3aed", fontSize: "12px", fontWeight: 700,
-                                cursor: "pointer", marginBottom: "20px"
-                            }}>
-                                + Añadir competidor
-                            </button>
-
-                            {/* LANDINGS EXISTENTES */}
-                            <SectionTitle>Landings existentes (opcional)</SectionTitle>
-                            <div style={{
-                                padding: "16px", border: "1px dashed #e2e8f0",
-                                borderRadius: "10px", background: "#f8fafc", textAlign: "center"
-                            }}>
-                                <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>Podrás asignar landings después</p>
-                            </div>
-                        </>
-                    )}
+                    <button onClick={addCompetidor} style={{
+                        width: "100%", padding: "7px", borderRadius: "7px",
+                        border: "1px dashed #c4b5fd", background: "#faf5ff",
+                        color: "#7c3aed", fontSize: "12px", fontWeight: 700,
+                        cursor: "pointer", marginBottom: "6px"
+                    }}>
+                        + Añadir competidor
+                    </button>
                 </div>
 
-                {/* FOOTER FIJO */}
+                {/* FOOTER */}
                 <div style={{
-                    padding: "16px 24px",
-                    borderTop: "1px solid #f1f5f9",
-                    display: "flex", justifyContent: "space-between",
+                    padding: "12px 20px", borderTop: "1px solid #f1f5f9",
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
                     flexShrink: 0
                 }}>
-                    <button
-                        onClick={() => step === 1 ? setShowCreateModal(false) : setStep(1)}
-                        style={{
-                            padding: "8px 20px", borderRadius: "8px",
-                            border: "1px solid #e2e8f0", background: "white",
-                            color: "#64748b", fontSize: "13px", fontWeight: 600, cursor: "pointer"
-                        }}
-                    >
-                        {step === 1 ? "Cancelar" : "← Atrás"}
+                    <button onClick={onClose} style={{
+                        padding: "7px 16px", borderRadius: "7px",
+                        border: "1px solid #e2e8f0", background: "white",
+                        color: "#64748b", fontSize: "12px", fontWeight: 600, cursor: "pointer"
+                    }}>
+                        Cancelar
                     </button>
-
                     <button
-                        onClick={() => step === 1 ? setStep(2) : handleCrearProducto()}
-                        disabled={!form.nombre || !form.precioVenta || creating}
+                        onClick={handleCrearProducto}
+                        disabled={!form.nombre || creating}
                         style={{
-                            padding: "8px 24px", borderRadius: "8px", border: "none",
-                            background: form.nombre && form.precioVenta ? "#7c3aed" : "#e2e8f0",
-                            color: form.nombre && form.precioVenta ? "white" : "#94a3b8",
-                            fontSize: "13px", fontWeight: 700, cursor: form.nombre && form.precioVenta ? "pointer" : "not-allowed"
+                            padding: "7px 22px", borderRadius: "7px", border: "none",
+                            background: form.nombre ? "#7c3aed" : "#e2e8f0",
+                            color: form.nombre ? "white" : "#94a3b8",
+                            fontSize: "13px", fontWeight: 700,
+                            cursor: form.nombre ? "pointer" : "not-allowed"
                         }}
                     >
-                        {step === 1 ? "Siguiente →" : creating ? "Creando..." : "Crear producto"}
+                        {creating ? "Creando..." : "Crear producto →"}
                     </button>
                 </div>
             </div>

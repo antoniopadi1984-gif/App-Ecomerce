@@ -112,7 +112,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
         precioVenta: 0, costeProducto: 0, costeEnvio: 0,
         costeManipulacion: 0, costeDevolucion: 0,
         fulfillment: "beeping",
-        tasaEntrega: 70, tasaConversion: 2,
+        tasaEntrega: 70, tasaEnvio: 95, tasaConversion: 2,
         // COMPETIDORES
         competidores: [] as any[]
     });
@@ -134,15 +134,35 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
 
     // Métricas calculadas en tiempo real
     const metricas = useMemo(() => {
-        const { precioVenta, costeProducto, costeEnvio, costeManipulacion, costeDevolucion, tasaEntrega, tasaConversion } = form;
-        const costeTotal = costeProducto + costeEnvio + costeManipulacion;
-        const margenBruto = precioVenta - costeTotal;
-        const tasaDevolucion = costeDevolucion > 0 ? costeDevolucion : 5;
-        const costeReal = costeTotal + (tasaDevolucion / 100 * costeTotal);
-        const beneficioNeto = (tasaEntrega / 100 * precioVenta) - costeReal;
-        const roasBR = beneficioNeto > 0 ? precioVenta / beneficioNeto : 0;
+        const PV = form.precioVenta;
+        const CP = form.costeProducto;
+        const CE = form.costeEnvio;
+        const CM = form.costeManipulacion;
+        const CD = form.costeDevolucion;   // %, coste devolución sobre coste total
+        const TE = form.tasaEntrega / 100; // % pedidos ENTREGADOS sobre los enviados
+        const TEn = form.tasaEnvio / 100;   // % pedidos ENVIADOS sobre los generados
+        const TC = form.tasaConversion / 100;
+
+        // Coste base del pedido
+        const costeTotal = CP + CE + CM;
+        // Coste devolución esperado (% sobre coste total, mín 5%)
+        const tasaCD = CD > 0 ? CD : 5;
+        // Coste real por pedido generado (incluye devoluciones proporcionales)
+        const costeReal = costeTotal * (1 + tasaCD / 100);
+        // Margen bruto sobre el precio de venta (sin considerar tasas)
+        const margenBruto = PV - costeTotal;
+        // Ingreso neto esperado por pedido generado:
+        //   de cada 100 pedidos generados, TEn son enviados y TE*TEn llegan al cliente
+        const ingresoPedido = PV * TE * TEn;
+        // Beneficio neto por pedido generado (contra coste real)
+        const beneficioNeto = ingresoPedido - costeReal;
+        // ROAS de breakeven
+        const roasBR = beneficioNeto > 0 ? PV / beneficioNeto : 0;
+        // CPA máximo que podemos pagar para no perder dinero
         const cpaMax = beneficioNeto > 0 ? beneficioNeto : 0;
-        const cpcMax = (tasaConversion / 100) * cpaMax;
+        // CPC máximo (asumiendo TC de conversión del landing)
+        const cpcMax = TC * cpaMax;
+
         return { margenBruto, costeReal, beneficioNeto, roasBR, cpaMax, cpcMax };
     }, [form]);
 
@@ -368,8 +388,9 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                         <Input label="Coste producto €" type="number" value={form.costeProducto || ""} onChange={(v: string) => updateForm("costeProducto", +v)} placeholder="0.00" />
                         <Input label="Coste envío €" type="number" value={form.costeEnvio || ""} onChange={(v: string) => updateForm("costeEnvio", +v)} placeholder="0.00" />
                         <Input label="Coste manip. €" type="number" value={form.costeManipulacion || ""} onChange={(v: string) => updateForm("costeManipulacion", +v)} placeholder="0.00" />
-                        <Input label="Coste devol. €" type="number" value={form.costeDevolucion || ""} onChange={(v: string) => updateForm("costeDevolucion", +v)} placeholder="0.00" />
+                        <Input label="Coste devol. %" type="number" value={form.costeDevolucion || ""} onChange={(v: string) => updateForm("costeDevolucion", +v)} placeholder="0.00" />
                         <Input label="Tasa entrega %" type="number" value={form.tasaEntrega || ""} onChange={(v: string) => updateForm("tasaEntrega", +v)} placeholder="70" />
+                        <Input label="Tasa envío %" type="number" value={form.tasaEnvio || ""} onChange={(v: string) => updateForm("tasaEnvio", +v)} placeholder="95" />
                         <Input label="Tasa convers. %" type="number" value={form.tasaConversion || ""} onChange={(v: string) => updateForm("tasaConversion", +v)} placeholder="2" />
                     </div>
 

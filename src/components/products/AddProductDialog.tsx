@@ -24,7 +24,7 @@ function Input({ label, value, onChange, type = "text", placeholder }: any) {
             <input type={type} value={value ?? ""} onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
                 style={{
-                    width: "100%", padding: "6px 10px", borderRadius: "6px",
+                    width: "100%", padding: "5px 9px", borderRadius: "6px",
                     border: "1px solid #e2e8f0", fontSize: "12px",
                     outline: "none", boxSizing: "border-box"
                 }} />
@@ -37,7 +37,7 @@ function Select({ label, value, onChange, options }: any) {
         <div>
             <p style={labelStyle}>{label}</p>
             <select value={value} onChange={e => onChange(e.target.value)} style={{
-                width: "100%", padding: "6px 10px", borderRadius: "6px",
+                width: "100%", padding: "5px 9px", borderRadius: "6px",
                 border: "1px solid #e2e8f0", fontSize: "12px",
                 outline: "none", background: "white", boxSizing: "border-box"
             }}>
@@ -70,7 +70,7 @@ function UrlInput({ label, value, onChange, onSaved, savedMsg }: any) {
                     value={value || ""}
                     onChange={e => onChange(e.target.value)}
                     style={{
-                        width: "100%", padding: "6px 10px",
+                        width: "100%", padding: "5px 9px",
                         paddingRight: onSaved ? "28px" : "10px",
                         borderRadius: "6px", fontSize: "11px",
                         border: onSaved ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
@@ -276,7 +276,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                     {/* ── GOOGLE DOC ── */}
                     <div style={{
                         padding: "10px 12px", background: "#faf5ff",
-                        border: "1px solid #e9d5ff", borderRadius: "8px", marginBottom: "14px"
+                        border: "1px solid #e9d5ff", borderRadius: "8px", marginBottom: "10px"
                     }}>
                         <p style={{
                             fontSize: "10px", fontWeight: 800, color: "#7c3aed",
@@ -291,7 +291,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                                 onChange={e => updateForm("googleDocUrl", e.target.value)}
                                 onBlur={() => form.googleDocUrl && handleGoogleDocImport()}
                                 style={{
-                                    width: "100%", padding: "7px 10px", borderRadius: "7px",
+                                    width: "100%", padding: "5px 9px", borderRadius: "7px",
                                     border: "1px solid #e9d5ff", fontSize: "12px",
                                     outline: "none", boxSizing: "border-box", background: "white"
                                 }}
@@ -312,7 +312,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
 
                     {/* ── IDENTIDAD + FINANCIERO en grid 3 col ── */}
                     <Label>Identidad</Label>
-                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "6px", marginBottom: "6px" }}>
                         <Input label="Nombre *" value={form.nombre}
                             onChange={(v: string) => {
                                 updateForm("nombre", v)
@@ -323,7 +323,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                             options={["ES", "MX", "CO", "UK", "US", "LATAM"]} />
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
                         <Select label="Categoría" value={form.categoria} onChange={(v: string) => updateForm("categoria", v)}
                             options={["salud", "belleza", "hogar", "fitness", "nutrición", "otro"]} />
                         <Select label="Fulfillment" value={form.fulfillment} onChange={(v: string) => updateForm("fulfillment", v)}
@@ -331,7 +331,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                     </div>
 
                     {/* Imagen + URLs en 3 col */}
-                    <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", gap: "8px", marginBottom: "14px", alignItems: "start" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", gap: "6px", marginBottom: "10px", alignItems: "start" }}>
                         {/* Imagen compacta */}
                         <div>
                             <p style={labelStyle}>Imagen</p>
@@ -360,7 +360,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
 
                     {/* ── FINANCIERO ── */}
                     <Label>Financiero</Label>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "8px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "6px" }}>
                         <Input label="Precio venta €" type="number" value={form.precioVenta} onChange={(v: string) => updateForm("precioVenta", +v)} />
                         <Input label="Coste producto €" type="number" value={form.costeProducto} onChange={(v: string) => updateForm("costeProducto", +v)} />
                         <Input label="Coste envío €" type="number" value={form.costeEnvio} onChange={(v: string) => updateForm("costeEnvio", +v)} />
@@ -373,9 +373,9 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                     {/* Métricas calculadas — fila compacta */}
                     <div style={{
                         display: "grid", gridTemplateColumns: "repeat(6, 1fr)",
-                        gap: "6px", padding: "10px 12px",
+                        gap: "6px", padding: "8px 10px",
                         background: "#f8fafc", borderRadius: "8px",
-                        border: "1px solid #e2e8f0", marginBottom: "14px"
+                        border: "1px solid #e2e8f0", marginBottom: "10px"
                     }}>
                         <Metric label="ROAS BR" value={metricas.roasBR.toFixed(1) + "x"}
                             color={metricas.roasBR < 2 ? "#ef4444" : metricas.roasBR < 3 ? "#f59e0b" : "#16a34a"} />
@@ -391,8 +391,8 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
 
                     {form.competidores.map((comp, i) => (
                         <div key={i} style={{
-                            padding: "10px 12px", border: "1px solid #e2e8f0",
-                            borderRadius: "8px", marginBottom: "8px", position: "relative",
+                            padding: "8px 10px", border: "1px solid #e2e8f0",
+                            borderRadius: "8px", marginBottom: "6px", position: "relative",
                             background: "#fafafa"
                         }}>
                             <button onClick={() => removeCompetidor(i)} style={{
@@ -402,13 +402,13 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                             }}>✕</button>
 
                             {/* Fila 1: nombre + precio */}
-                            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "8px", marginBottom: "6px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "6px", marginBottom: "6px" }}>
                                 <Input label="Nombre" value={comp.nombre} onChange={(v: string) => updateComp(i, "nombre", v)} />
                                 <Input label="Precio €" type="number" value={comp.precioVenta} onChange={(v: string) => updateComp(i, "precioVenta", +v)} />
                             </div>
 
                             {/* Fila 2: URLs con feedback */}
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "6px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
                                 <UrlInput label="URL web" value={comp.urlWeb}
                                     onChange={(v: string) => updateComp(i, "urlWeb", v)}
                                     onSaved={comp.urlWeb?.length > 5} />
@@ -418,7 +418,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                             </div>
 
                             {/* Fila 3: bibliotecas de anuncios con feedback especial */}
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
                                 <UrlInput label="Meta Ads Library" value={comp.urlMetaLibrary}
                                     onChange={(v: string) => updateComp(i, "urlMetaLibrary", v)}
                                     onSaved={comp.urlMetaLibrary?.length > 5}

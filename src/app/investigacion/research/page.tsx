@@ -118,14 +118,18 @@ export default function ResearchCorePage() {
                         </p>
                         <div className="flex flex-col items-center gap-3">
                             <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                                <span style={{ fontSize: "11px", color: "#94a3b8", letterSpacing: "0.05em" }}>O BIEN</span>
                                 <button
                                     onClick={() => setShowCreateModal(true)}
                                     style={{
-                                        background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-                                        color: "white", border: "none", borderRadius: "8px",
-                                        padding: "8px 20px", fontSize: "13px", fontWeight: 700,
-                                        cursor: "pointer", boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
+                                        marginTop: "12px",
+                                        padding: "7px 18px",
+                                        fontSize: "12px",
+                                        fontWeight: 700,
+                                        color: "white",
+                                        background: "#7c3aed",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        cursor: "pointer",
                                         letterSpacing: "0.02em"
                                     }}
                                 >
@@ -152,10 +156,15 @@ export default function ResearchCorePage() {
                     <button
                         onClick={() => setShowCreateModal(true)}
                         style={{
-                            background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-                            color: "white", border: "none", borderRadius: "8px",
-                            padding: "8px 20px", fontSize: "13px", fontWeight: 700,
-                            cursor: "pointer", boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
+                            marginTop: "12px",
+                            padding: "7px 18px",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            color: "white",
+                            background: "#7c3aed",
+                            border: "none",
+                            borderRadius: "8px",
+                            cursor: "pointer",
                             letterSpacing: "0.02em"
                         }}
                     >

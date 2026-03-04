@@ -333,14 +333,14 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                     </div>
 
                     {/* Imagen + URLs en 3 col */}
-                    <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", gap: "6px", marginBottom: "10px", alignItems: "start" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "72px 1fr 1fr", gap: "6px", marginBottom: "10px", alignItems: "center" }}>
                         {/* Imagen compacta */}
                         <div>
                             <p style={labelStyle}>Imagen</p>
                             <div
                                 onClick={() => imageRef.current?.click()}
                                 style={{
-                                    width: "80px", height: "80px", border: "2px dashed #e2e8f0",
+                                    width: "72px", height: "72px", border: "2px dashed #e2e8f0",
                                     borderRadius: "8px", display: "flex", alignItems: "center",
                                     justifyContent: "center", cursor: "pointer", background: "#f8fafc",
                                     overflow: "hidden"

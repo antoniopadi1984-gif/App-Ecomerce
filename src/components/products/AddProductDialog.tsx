@@ -435,10 +435,10 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                     ))}
 
                     <button onClick={addCompetidor} style={{
-                        width: "100%", padding: "7px", borderRadius: "7px",
-                        border: "1px dashed #c4b5fd", background: "#faf5ff",
-                        color: "#7c3aed", fontSize: "12px", fontWeight: 700,
-                        cursor: "pointer", marginBottom: "6px"
+                        width: "100%", padding: "6px", borderRadius: "6px",
+                        border: "1px dashed #c4b5fd", background: "transparent",
+                        color: "#7c3aed", fontSize: "11px", fontWeight: 700,
+                        cursor: "pointer", marginTop: "4px"
                     }}>
                         + Añadir competidor
                     </button>
@@ -446,17 +446,27 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
 
                 {/* FOOTER */}
                 <div style={{
-                    padding: "12px 20px", borderTop: "1px solid #f1f5f9",
+                    padding: "10px 20px", borderTop: "1px solid #f1f5f9",
                     display: "flex", justifyContent: "space-between", alignItems: "center",
                     flexShrink: 0
                 }}>
-                    <button onClick={onClose} style={{
-                        padding: "7px 16px", borderRadius: "7px",
-                        border: "1px solid #e2e8f0", background: "white",
-                        color: "#64748b", fontSize: "12px", fontWeight: 600, cursor: "pointer"
-                    }}>
-                        Cancelar
-                    </button>
+                    {/* Izquierda: cancelar + hint */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <button onClick={onClose} style={{
+                            padding: "7px 16px", borderRadius: "7px",
+                            border: "1px solid #e2e8f0", background: "white",
+                            color: "#64748b", fontSize: "12px", fontWeight: 600, cursor: "pointer"
+                        }}>
+                            Cancelar
+                        </button>
+                        {!form.nombre && (
+                            <span style={{ fontSize: "10px", color: "#f59e0b", fontWeight: 600 }}>
+                                * Nombre obligatorio
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Derecha: botón crear */}
                     <button
                         onClick={handleCrearProducto}
                         disabled={!form.nombre || creating}
@@ -464,11 +474,12 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                             padding: "7px 22px", borderRadius: "7px", border: "none",
                             background: form.nombre ? "#7c3aed" : "#e2e8f0",
                             color: form.nombre ? "white" : "#94a3b8",
-                            fontSize: "13px", fontWeight: 700,
-                            cursor: form.nombre ? "pointer" : "not-allowed"
+                            fontSize: "12px", fontWeight: 700,
+                            cursor: form.nombre ? "pointer" : "not-allowed",
+                            transition: "all 0.2s ease"
                         }}
                     >
-                        {creating ? "Creando..." : "Crear producto →"}
+                        {creating ? "⏳ Creando..." : "Crear producto →"}
                     </button>
                 </div>
             </div>

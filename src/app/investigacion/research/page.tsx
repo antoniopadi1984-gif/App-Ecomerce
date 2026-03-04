@@ -40,6 +40,7 @@ export default function ResearchCorePage() {
     const [stepError, setStepError] = useState<string | null>(null);
     const [historyRuns, setHistoryRuns] = useState<ResearchStep[][]>([]);
     const [selectedOutput, setSelectedOutput] = useState<{ title: string, data: Record<string, unknown> | string } | null>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     useEffect(() => {
         if (!productId || productId === 'GLOBAL') return;
@@ -119,7 +120,7 @@ export default function ResearchCorePage() {
                             <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
                                 <span style={{ fontSize: "11px", color: "#94a3b8", letterSpacing: "0.05em" }}>O BIEN</span>
                                 <button
-                                    onClick={() => document.dispatchEvent(new CustomEvent('open-create-product-modal'))}
+                                    onClick={() => setShowCreateModal(true)}
                                     style={{
                                         background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
                                         color: "white", border: "none", borderRadius: "8px",
@@ -133,7 +134,7 @@ export default function ResearchCorePage() {
                             </div>
                         </div>
                     </div>
-                    <AddProductDialog />
+                    <AddProductDialog showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} />
                 </>
             );
         }
@@ -148,7 +149,19 @@ export default function ResearchCorePage() {
                         </h2>
                         <p className="text-[11px] text-[var(--text-muted)] mt-1">Selecciona un producto para ver o ejecutar su Pipeline Canónico.</p>
                     </div>
-                    <AddProductDialog />
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        style={{
+                            background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                            color: "white", border: "none", borderRadius: "8px",
+                            padding: "8px 20px", fontSize: "13px", fontWeight: 700,
+                            cursor: "pointer", boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
+                            letterSpacing: "0.02em"
+                        }}
+                    >
+                        + Crear nuevo producto
+                    </button>
+                    <AddProductDialog showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

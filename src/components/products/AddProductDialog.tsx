@@ -260,7 +260,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                             Nuevo producto
                         </h2>
                         <p style={{ fontSize: "10px", color: "#94a3b8", margin: "1px 0 0" }}>
-                            Rellena los datos o importa desde Google Doc
+                            Empieza por Google Doc si tienes research previo — rellena todo solo
                         </p>
                     </div>
                     <button onClick={onClose} style={{
@@ -275,7 +275,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
 
                     {/* ── GOOGLE DOC ── */}
                     <div style={{
-                        padding: "10px 12px", background: "#faf5ff",
+                        padding: "8px 10px", background: "#faf5ff",
                         border: "1px solid #e9d5ff", borderRadius: "8px", marginBottom: "10px"
                     }}>
                         <p style={{
@@ -284,7 +284,8 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                         }}>
                             ⚡ Importar desde Google Doc — rellena todo automáticamente
                         </p>
-                        <div style={{ position: "relative" }}>
+                        <div style={{ position: "relative", display: "flex", gap: "6px", alignItems: "center" }}>
+                            <span style={{ fontSize: "14px" }}>🔗</span>
                             <input
                                 placeholder="Pega URL del Google Doc..."
                                 value={form.googleDocUrl}
@@ -298,7 +299,8 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                             />
                             {importing && (
                                 <span style={{
-                                    position: "absolute", right: "10px", top: "7px",
+                                    position: "absolute", right: "10px", top: "50%",
+                                    transform: "translateY(-50%)",
                                     fontSize: "11px", color: "#7c3aed"
                                 }}>🔄 Extrayendo...</span>
                             )}

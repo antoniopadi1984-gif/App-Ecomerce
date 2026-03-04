@@ -7,36 +7,27 @@ import { toast } from 'sonner';
 
 // ── UI Components ──────────────────────────────────────────────
 
+const labelStyle = {
+    fontSize: "9px", fontWeight: 800, color: "#94a3b8",
+    textTransform: "uppercase" as const, letterSpacing: "0.07em",
+    margin: "0 0 3px"
+}
+
 function Label({ children }: { children: React.ReactNode }) {
-    return (
-        <p style={{
-            fontSize: "10px", fontWeight: 900, color: "#94a3b8",
-            textTransform: "uppercase", letterSpacing: "0.08em",
-            margin: "12px 0 8px 0"
-        }}>
-            {children}
-        </p>
-    );
+    return <p style={{ ...labelStyle, color: "#64748b", marginBottom: "8px" }}>{children}</p>;
 }
 
 function Input({ label, value, onChange, type = "text", placeholder }: any) {
     return (
         <div>
-            <label style={{
-                fontSize: "10px", fontWeight: 700, color: "#64748b",
-                textTransform: "uppercase", letterSpacing: "0.05em",
-                display: "block", marginBottom: "4px"
-            }}>
-                {label}
-            </label>
-            <input type={type} value={value} onChange={e => onChange(e.target.value)}
+            <p style={labelStyle}>{label}</p>
+            <input type={type} value={value ?? ""} onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
                 style={{
-                    width: "100%", padding: "7px 10px", borderRadius: "7px",
-                    border: "1px solid #e2e8f0", fontSize: "12px", outline: "none",
-                    boxSizing: "border-box", background: "white"
-                }}
-            />
+                    width: "100%", padding: "6px 10px", borderRadius: "6px",
+                    border: "1px solid #e2e8f0", fontSize: "12px",
+                    outline: "none", boxSizing: "border-box"
+                }} />
         </div>
     );
 }
@@ -44,17 +35,11 @@ function Input({ label, value, onChange, type = "text", placeholder }: any) {
 function Select({ label, value, onChange, options }: any) {
     return (
         <div>
-            <label style={{
-                fontSize: "10px", fontWeight: 700, color: "#64748b",
-                textTransform: "uppercase", letterSpacing: "0.05em",
-                display: "block", marginBottom: "4px"
-            }}>
-                {label}
-            </label>
+            <p style={labelStyle}>{label}</p>
             <select value={value} onChange={e => onChange(e.target.value)} style={{
-                width: "100%", padding: "7px 10px", borderRadius: "7px",
-                border: "1px solid #e2e8f0", fontSize: "12px", outline: "none",
-                background: "white"
+                width: "100%", padding: "6px 10px", borderRadius: "6px",
+                border: "1px solid #e2e8f0", fontSize: "12px",
+                outline: "none", background: "white", boxSizing: "border-box"
             }}>
                 {options?.map((o: string) => <option key={o} value={o}>{o}</option>)}
             </select>
@@ -64,11 +49,11 @@ function Select({ label, value, onChange, options }: any) {
 
 function Metric({ label, value, color }: { label: string, value: string, color: string }) {
     return (
-        <div style={{ textAlign: "center", padding: "4px 2px" }}>
+        <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "13px", fontWeight: 900, color }}>{value}</div>
             <div style={{
-                fontSize: "9px", fontWeight: 700, color: "#94a3b8",
-                textTransform: "uppercase", letterSpacing: "0.04em", marginTop: "2px"
+                fontSize: "8px", fontWeight: 700, color: "#94a3b8",
+                textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "1px"
             }}>
                 {label}
             </div>
@@ -79,30 +64,32 @@ function Metric({ label, value, color }: { label: string, value: string, color: 
 function UrlInput({ label, value, onChange, onSaved, savedMsg }: any) {
     return (
         <div>
-            <label style={{
-                fontSize: "10px", fontWeight: 700, color: "#64748b",
-                textTransform: "uppercase", letterSpacing: "0.05em",
-                display: "block", marginBottom: "4px"
-            }}>
-                {label}
-            </label>
+            <p style={labelStyle}>{label}</p>
             <div style={{ position: "relative" }}>
-                <input value={value} onChange={e => onChange(e.target.value)}
+                <input
+                    value={value || ""}
+                    onChange={e => onChange(e.target.value)}
                     style={{
-                        width: "100%", padding: "7px 10px", borderRadius: "7px",
-                        border: "1px solid #e2e8f0", fontSize: "12px", outline: "none",
-                        boxSizing: "border-box", background: "white"
+                        width: "100%", padding: "6px 10px",
+                        paddingRight: onSaved ? "28px" : "10px",
+                        borderRadius: "6px", fontSize: "11px",
+                        border: onSaved ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
+                        background: onSaved ? "#f0fdf4" : "white",
+                        outline: "none", boxSizing: "border-box"
                     }}
                 />
                 {onSaved && (
                     <span style={{
-                        position: "absolute", right: "8px", top: "7px",
-                        fontSize: "10px", color: "#16a34a", fontWeight: 700
-                    }}>
-                        {savedMsg || "Añadida"}
-                    </span>
+                        position: "absolute", right: "8px", top: "50%",
+                        transform: "translateY(-50%)", fontSize: "11px"
+                    }}>✅</span>
                 )}
             </div>
+            {onSaved && savedMsg && (
+                <p style={{ fontSize: "9px", color: "#16a34a", margin: "2px 0 0", fontWeight: 600 }}>
+                    {savedMsg}
+                </p>
+            )}
         </div>
     );
 }

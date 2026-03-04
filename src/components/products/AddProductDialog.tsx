@@ -128,30 +128,33 @@ export function AddProductDialog() {
     const [amazonLinks, setAmazonLinks] = useState<AmazonEntry[]>([{ url: '' }]);
     const [ownLandings, setOwnLandings] = useState<LandingEntry[]>([{ url: '' }]);
 
-    // ── Live breakeven ──────────────────────────────────────
     const pvpNum = parseFloat(pvp) || 0;
-    const handleNum = parseFloat(handlingCost) || 0;
-    const returnNum = parseFloat(returnRate) || 0;
     const productNum = parseFloat(unitCost) || 0;
     const shippingNum = parseFloat(shippingCost) || 0;
+    const handleNum = parseFloat(handlingCost) || 0;
+    const returnRateNum = parseFloat(returnRate) || 0;
+    const deliveryRateNum = parseFloat(deliveryRate) || 70;
+    const cvrNum = parseFloat(cvr) || NICHE_CVR[niche] || 2.0;
 
-    // costeReal = costeProducto + costeEnvio + costeManipulacion + (% devolucion basado en coste producto/envio)
-    const costeReal = productNum + shippingNum + handleNum + ((productNum + shippingNum) * (returnNum / 100));
+    const be = React.useMemo(() => {
+        const costeTotal = productNum + shippingNum + handleNum;
+        const margenBrutoNum = pvpNum - costeTotal;
+        const costeReal = costeTotal + (returnRateNum / 100 * (productNum + shippingNum));
+        const beneficioNeto = (deliveryRateNum / 100 * pvpNum) - costeReal;
 
-    const deliveryNum = parseFloat(deliveryRate) || 70;
+        const roasBR = beneficioNeto > 0 ? pvpNum / beneficioNeto : 0;
+        const cpaMax = beneficioNeto > 0 ? beneficioNeto : 0;
+        const cpcMax = (cvrNum / 100) * cpaMax;
 
-    // beneficioNeto = (tasaEntrega/100 * precioVenta) - costeReal
-    const beneficioNeto = (deliveryNum / 100 * pvpNum) - costeReal;
-    const margenBrutoNum = pvpNum - productNum - shippingNum - handleNum;
-
-    const cvrNum = parseFloat(cvr) || 0;
-    const cvrTarget = cvrNum || NICHE_CVR[niche] || 2.0;
-    const be = pvpNum > 0 ? {
-        margin: margenBrutoNum,
-        roasBE: beneficioNeto > 0 ? pvpNum / beneficioNeto : 0,
-        cpaMax: beneficioNeto > 0 ? beneficioNeto : 0,
-        cpcBE: beneficioNeto > 0 ? beneficioNeto * (cvrTarget / 100) : 0
-    } : null;
+        return pvpNum > 0 ? {
+            margenBrutoNum,
+            costeReal,
+            beneficioNeto,
+            roasBE: roasBR,
+            cpaMax: cpaMax,
+            cpcBE: cpcMax
+        } : null;
+    }, [pvpNum, productNum, shippingNum, handleNum, returnRateNum, deliveryRateNum, cvrNum, niche]);
 
     // ── Image upload ─────────────────────────────────────────
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -516,13 +519,13 @@ export function AddProductDialog() {
                                             </div>
                                             <div className="flex items-center gap-2 justify-between px-2 pt-2 border-t border-[var(--border)]">
                                                 <div className="text-[10px] text-[var(--text-dim)] uppercase font-black">
-                                                    Margen Bruto: <span className="text-[var(--text)]">€{margenBrutoNum.toFixed(2)}</span>
+                                                    Margen Bruto: <span className="text-[var(--text)]">€{be.margenBrutoNum.toFixed(2)}</span>
                                                 </div>
                                                 <div className="text-[10px] text-[var(--text-dim)] uppercase font-black">
-                                                    Neto (CPA Máx): <span className="text-[var(--text)]">€{beneficioNeto.toFixed(2)}</span>
+                                                    Neto (CPA Máx): <span className="text-[var(--text)]">€{be.beneficioNeto.toFixed(2)}</span>
                                                 </div>
                                                 <div className="text-[10px] text-[var(--text-dim)] uppercase font-black">
-                                                    Coste Real: <span className="text-[var(--text)]">€{costeReal.toFixed(2)}</span>
+                                                    Coste Real: <span className="text-[var(--text)]">€{be.costeReal.toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </div>

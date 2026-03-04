@@ -388,7 +388,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                         <Input label="Coste producto €" type="number" value={form.costeProducto || ""} onChange={(v: string) => updateForm("costeProducto", +v)} placeholder="0.00" />
                         <Input label="Coste envío €" type="number" value={form.costeEnvio || ""} onChange={(v: string) => updateForm("costeEnvio", +v)} placeholder="0.00" />
                         <Input label="Coste manip. €" type="number" value={form.costeManipulacion || ""} onChange={(v: string) => updateForm("costeManipulacion", +v)} placeholder="0.00" />
-                        <Input label="Coste devol. %" type="number" value={form.costeDevolucion || ""} onChange={(v: string) => updateForm("costeDevolucion", +v)} placeholder="0.00" />
+                        <Input label="Coste devol. €" type="number" value={form.costeDevolucion || ""} onChange={(v: string) => updateForm("costeDevolucion", +v)} placeholder="0.00" />
                         <Input label="Tasa entrega %" type="number" value={form.tasaEntrega || ""} onChange={(v: string) => updateForm("tasaEntrega", +v)} placeholder="70" />
                         <Input label="Tasa envío %" type="number" value={form.tasaEnvio || ""} onChange={(v: string) => updateForm("tasaEnvio", +v)} placeholder="95" />
                         <Input label="Tasa convers. %" type="number" value={form.tasaConversion || ""} onChange={(v: string) => updateForm("tasaConversion", +v)} placeholder="2" />

@@ -65,6 +65,14 @@ function Section({ icon, title, children, accent = 'var(--inv)' }: { icon: React
     );
 }
 
+function SectionTitle({ children }: { children: React.ReactNode }) {
+    return <p style={{
+        fontSize: "10px", fontWeight: 900, color: "#94a3b8",
+        textTransform: "uppercase", letterSpacing: "0.08em",
+        margin: "0 0 10px"
+    }}>{children}</p>;
+}
+
 // ── Metric tile ───────────────────────────────────────────────
 function Tile({ label, value, color = 'var(--text)', note }: { label: string; value: string; color?: string; note?: string }) {
     return (
@@ -342,21 +350,15 @@ export function AddProductDialog() {
 
             toast.success('Producto creado. Iniciando Research Pipeline...');
             await refreshAllProducts();
+            // 2. Select in context (already done effectively with setProductId)
             setProductId(data.product.id);
             setOpen(false);
             resetForm();
 
-            // Auto-launch god tier pipeline in background
-            fetch('/api/research/god-tier', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    storeId: activeStoreId,
-                    productId: data.product.id,
-                    runId: `run_${Date.now()}`,
-                    stepKey: 'P1'
-                })
-            }).catch(() => { /* silent */ });
+            // 3. Background process (does NOT block user)
+            // - The /api/products route handled generating the god tier pipeline / importing ads
+            // - It created the initial drive structure and SPY folders
+            // - P1 etc is fully precargado.
 
         } catch (err) {
             if (err instanceof Error) toast.error(err.message);

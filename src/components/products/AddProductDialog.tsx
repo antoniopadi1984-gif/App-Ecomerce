@@ -138,32 +138,32 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
         const CP = form.costeProducto;
         const CE = form.costeEnvio;
         const CM = form.costeManipulacion;
-        const CD = form.costeDevolucion;   // %, coste devolución sobre coste total
-        const TE = form.tasaEntrega / 100; // % pedidos ENTREGADOS sobre los enviados
-        const TEn = form.tasaEnvio / 100;   // % pedidos ENVIADOS sobre los generados
+        const CD = form.costeDevolucion;    // % tasa coste devolución
+        const TE = form.tasaEntrega / 100;  // % pedidos ENTREGADOS sobre enviados
+        const TEn = form.tasaEnvio / 100;    // % pedidos ENVIADOS sobre generados
         const TC = form.tasaConversion / 100;
 
-        // Coste base del pedido
-        const costeTotal = CP + CE + CM;
-        // Coste devolución esperado (% sobre coste total, mín 5%)
-        const tasaCD = CD > 0 ? CD : 5;
-        // Coste real por pedido generado (incluye devoluciones proporcionales)
-        const costeReal = costeTotal * (1 + tasaCD / 100);
-        // Margen bruto sobre el precio de venta (sin considerar tasas)
-        const margenBruto = PV - costeTotal;
-        // Ingreso neto esperado por pedido generado:
-        //   de cada 100 pedidos generados, TEn son enviados y TE*TEn llegan al cliente
-        const ingresoPedido = PV * TE * TEn;
-        // Beneficio neto por pedido generado (contra coste real)
-        const beneficioNeto = ingresoPedido - costeReal;
-        // ROAS de breakeven
-        const roasBR = beneficioNeto > 0 ? PV / beneficioNeto : 0;
-        // CPA máximo que podemos pagar para no perder dinero
-        const cpaMax = beneficioNeto > 0 ? beneficioNeto : 0;
-        // CPC máximo (asumiendo TC de conversión del landing)
+        // Margen real (interno): descuenta costes y devolución proporcional
+        //   CD * (1 - TE) = coste devolución esperado (pedidos no entregados)
+        const margen = PV - CP - CE - CM - (CD * (1 - TE));
+
+        // ROAS Breakeven: mínimo ROAS para no perder dinero
+        const gasto = PV - margen;  // coste total efectivo por conversión
+        const roasBR = gasto > 0 ? PV / gasto : 0;
+
+        // CPA máximo (margen disponible para adquisición)
+        const cpaMax = margen > 0 ? margen : 0;
+
+        // CPC máximo (CPA × tasa de conversión del landing)
         const cpcMax = TC * cpaMax;
 
-        return { margenBruto, costeReal, beneficioNeto, roasBR, cpaMax, cpcMax };
+        // Coste real por pedido generado (incluye envio * TEn)
+        const costeReal = CP + CE * TEn + CM + (CD * (1 - TE));
+
+        // Beneficio neto por pedido generado
+        const beneficioNeto = PV * TE * TEn - costeReal;
+
+        return { margen, costeReal, beneficioNeto, roasBR, cpaMax, cpcMax };
     }, [form]);
 
     const handleGoogleDocImport = async () => {
@@ -398,15 +398,15 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                     <div style={{
                         display: "grid", gridTemplateColumns: "repeat(6, 1fr)",
                         gap: "6px", padding: "8px 10px",
-                        background: metricas.roasBR >= 3 ? "#f0fdf4" : metricas.roasBR >= 2 ? "#fffbeb" : metricas.roasBR > 0 ? "#fef2f2" : "#f8fafc",
+                        background: metricas.roasBR > 2.5 ? "#f0fdf4" : metricas.roasBR >= 1.5 ? "#fffbeb" : metricas.roasBR > 0 ? "#fef2f2" : "#f8fafc",
                         borderRadius: "8px",
                         border: "1px solid #e2e8f0", marginBottom: "10px"
                     }}>
                         <Metric label="ROAS BR" value={metricas.roasBR.toFixed(1) + "x"}
-                            color={metricas.roasBR < 2 ? "#ef4444" : metricas.roasBR < 3 ? "#f59e0b" : "#16a34a"} borderRight />
+                            color={metricas.roasBR < 1.5 ? "#ef4444" : metricas.roasBR < 2.5 ? "#f59e0b" : "#16a34a"} borderRight />
                         <Metric label="CPA Máx" value={"€" + metricas.cpaMax.toFixed(0)} color="#3b82f6" borderRight />
                         <Metric label="CPC Máx" value={"€" + metricas.cpcMax.toFixed(2)} color="#8b5cf6" borderRight />
-                        <Metric label="Margen" value={"€" + metricas.margenBruto.toFixed(0)} color="#64748b" borderRight />
+                        <Metric label="Margen" value={"€" + metricas.margen.toFixed(0)} color="#64748b" borderRight />
                         <Metric label="Benef. neto" value={"€" + metricas.beneficioNeto.toFixed(0)} color="#64748b" borderRight />
                         <Metric label="Coste real" value={"€" + metricas.costeReal.toFixed(0)} color="#64748b" />
                     </div>

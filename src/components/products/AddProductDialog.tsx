@@ -246,7 +246,8 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                 background: "white", borderRadius: "14px",
                 width: "680px", maxHeight: "88vh",
                 display: "flex", flexDirection: "column",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.18)"
+                boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+                animation: "modalIn 0.18s ease"
             }}>
 
                 {/* HEADER — compacto */}

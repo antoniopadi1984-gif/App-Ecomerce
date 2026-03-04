@@ -151,11 +151,11 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
         const gasto = PV - margen;  // coste total efectivo por conversión
         const roasBR = gasto > 0 ? PV / gasto : 0;
 
-        // CPA máximo (margen disponible para adquisición)
-        const cpaMax = margen > 0 ? margen : 0;
+        // CPA máximo por pedido GENERADO (ajustado por tasas de envío y entrega)
+        const cpaMax = margen * TEn * TE;
 
         // CPC máximo (CPA × tasa de conversión del landing)
-        const cpcMax = TC * cpaMax;
+        const cpcMax = cpaMax * TC;
 
         // Coste real por pedido generado (incluye envio * TEn)
         const costeReal = CP + CE * TEn + CM + (CD * (1 - TE));

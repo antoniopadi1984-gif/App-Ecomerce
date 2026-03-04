@@ -47,9 +47,9 @@ function Select({ label, value, onChange, options }: any) {
     );
 }
 
-function Metric({ label, value, color }: { label: string, value: string, color: string }) {
+function Metric({ label, value, color, borderRight }: { label: string, value: string, color: string, borderRight?: boolean }) {
     return (
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: "center", borderRight: borderRight ? "1px solid #e2e8f0" : "none" }}>
             <div style={{ fontSize: "13px", fontWeight: 900, color }}>{value}</div>
             <div style={{
                 fontSize: "8px", fontWeight: 700, color: "#94a3b8",
@@ -363,28 +363,29 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                     {/* ── FINANCIERO ── */}
                     <Label>Financiero</Label>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "6px" }}>
-                        <Input label="Precio venta €" type="number" value={form.precioVenta} onChange={(v: string) => updateForm("precioVenta", +v)} />
-                        <Input label="Coste producto €" type="number" value={form.costeProducto} onChange={(v: string) => updateForm("costeProducto", +v)} />
-                        <Input label="Coste envío €" type="number" value={form.costeEnvio} onChange={(v: string) => updateForm("costeEnvio", +v)} />
-                        <Input label="Coste manip. €" type="number" value={form.costeManipulacion} onChange={(v: string) => updateForm("costeManipulacion", +v)} />
-                        <Input label="Coste devol. €" type="number" value={form.costeDevolucion} onChange={(v: string) => updateForm("costeDevolucion", +v)} />
-                        <Input label="Tasa entrega %" type="number" value={form.tasaEntrega} onChange={(v: string) => updateForm("tasaEntrega", +v)} placeholder="70" />
-                        <Input label="Tasa convers. %" type="number" value={form.tasaConversion} onChange={(v: string) => updateForm("tasaConversion", +v)} placeholder="2" />
+                        <Input label="Precio venta €" type="number" value={form.precioVenta || ""} onChange={(v: string) => updateForm("precioVenta", +v)} placeholder="0.00" />
+                        <Input label="Coste producto €" type="number" value={form.costeProducto || ""} onChange={(v: string) => updateForm("costeProducto", +v)} placeholder="0.00" />
+                        <Input label="Coste envío €" type="number" value={form.costeEnvio || ""} onChange={(v: string) => updateForm("costeEnvio", +v)} placeholder="0.00" />
+                        <Input label="Coste manip. €" type="number" value={form.costeManipulacion || ""} onChange={(v: string) => updateForm("costeManipulacion", +v)} placeholder="0.00" />
+                        <Input label="Coste devol. €" type="number" value={form.costeDevolucion || ""} onChange={(v: string) => updateForm("costeDevolucion", +v)} placeholder="0.00" />
+                        <Input label="Tasa entrega %" type="number" value={form.tasaEntrega || ""} onChange={(v: string) => updateForm("tasaEntrega", +v)} placeholder="70" />
+                        <Input label="Tasa convers. %" type="number" value={form.tasaConversion || ""} onChange={(v: string) => updateForm("tasaConversion", +v)} placeholder="2" />
                     </div>
 
                     {/* Métricas calculadas — fila compacta */}
                     <div style={{
                         display: "grid", gridTemplateColumns: "repeat(6, 1fr)",
                         gap: "6px", padding: "8px 10px",
-                        background: "#f8fafc", borderRadius: "8px",
+                        background: metricas.roasBR >= 3 ? "#f0fdf4" : metricas.roasBR >= 2 ? "#fffbeb" : metricas.roasBR > 0 ? "#fef2f2" : "#f8fafc",
+                        borderRadius: "8px",
                         border: "1px solid #e2e8f0", marginBottom: "10px"
                     }}>
                         <Metric label="ROAS BR" value={metricas.roasBR.toFixed(1) + "x"}
-                            color={metricas.roasBR < 2 ? "#ef4444" : metricas.roasBR < 3 ? "#f59e0b" : "#16a34a"} />
-                        <Metric label="CPA Máx" value={"€" + metricas.cpaMax.toFixed(0)} color="#3b82f6" />
-                        <Metric label="CPC Máx" value={"€" + metricas.cpcMax.toFixed(2)} color="#8b5cf6" />
-                        <Metric label="Margen" value={"€" + metricas.margenBruto.toFixed(0)} color="#64748b" />
-                        <Metric label="Benef. neto" value={"€" + metricas.beneficioNeto.toFixed(0)} color="#64748b" />
+                            color={metricas.roasBR < 2 ? "#ef4444" : metricas.roasBR < 3 ? "#f59e0b" : "#16a34a"} borderRight />
+                        <Metric label="CPA Máx" value={"€" + metricas.cpaMax.toFixed(0)} color="#3b82f6" borderRight />
+                        <Metric label="CPC Máx" value={"€" + metricas.cpcMax.toFixed(2)} color="#8b5cf6" borderRight />
+                        <Metric label="Margen" value={"€" + metricas.margenBruto.toFixed(0)} color="#64748b" borderRight />
+                        <Metric label="Benef. neto" value={"€" + metricas.beneficioNeto.toFixed(0)} color="#64748b" borderRight />
                         <Metric label="Coste real" value={"€" + metricas.costeReal.toFixed(0)} color="#64748b" />
                     </div>
 

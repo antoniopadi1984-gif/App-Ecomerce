@@ -33,6 +33,16 @@ import { useStore } from "@/lib/store/store-context";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 
+interface ShopifyProductItem {
+    id: string;
+    title: string;
+    handle: string;
+    image: string | null;
+    variants: { price: string }[];
+    status: string;
+    ecomBoomId: string | null;
+}
+
 export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; isExpanded?: boolean }) {
     const { product, allProducts, productId, setProductId } = useProduct();
     const { activeStoreId, activeStore, stores, setActiveStoreId } = useStore();
@@ -41,15 +51,44 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
     const router = useRouter();
     const [scrolled, setScrolled] = useState(false);
 
+    // ── Shopify products state ──────────────────────────────────
+    const [shopifyProducts, setShopifyProducts] = useState<ShopifyProductItem[]>([]);
+    const [shopifyConnected, setShopifyConnected] = useState(false);
+    const [shopifyLoading, setShopifyLoading] = useState(false);
+
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const filteredProducts = allProducts.filter(p =>
-        p.title?.toLowerCase().includes(search.toLowerCase())
-    );
+    // Load Shopify products whenever active store changes
+    useEffect(() => {
+        if (!activeStoreId) return;
+        setShopifyLoading(true);
+        setShopifyProducts([]);
+        fetch(`/api/shopify/products?storeId=${activeStoreId}`)
+            .then(r => r.json())
+            .then(data => {
+                setShopifyConnected(data.connected ?? false);
+                setShopifyProducts(data.products ?? []);
+            })
+            .catch(() => setShopifyConnected(false))
+            .finally(() => setShopifyLoading(false));
+    }, [activeStoreId]);
+
+    // Merge lists: Shopify products enriched with ecomBoom link awareness
+    // If Shopify is connected, use that list as primary; then fall back to EcomBoom-only products.
+    const ecomBoomIds = new Set(allProducts.map(p => p.id));
+
+    const filteredProducts = shopifyConnected
+        ? shopifyProducts.filter(p =>
+            p.title?.toLowerCase().includes(search.toLowerCase())
+        )
+        : allProducts.filter(p =>
+            p.title?.toLowerCase().includes(search.toLowerCase())
+        );
+
 
     return (
         <header
@@ -193,35 +232,98 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
 
                                 <DropdownMenuSeparator className="bg-slate-100 my-2" />
 
-                                {filteredProducts.map((p) => (
-                                    <DropdownMenuItem
-                                        key={p.id}
-                                        onClick={() => setProductId(p.id)}
-                                        className={cn(
-                                            "flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all mb-1",
-                                            productId === p.id ? "bg-rose-50 border border-rose-100" : "hover:bg-slate-50 border border-transparent"
-                                        )}
-                                    >
-                                        <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                                            {p.imageUrl ? (
-                                                <Image
-                                                    src={p.imageUrl}
-                                                    alt={p.title || "Product"}
-                                                    width={32}
-                                                    height={32}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <Package className="w-3.5 h-3.5 text-slate-300" />
+                                {/* ── Shopify-connected store: enhanced list ── */}
+                                {shopifyConnected ? (
+                                    shopifyLoading ? (
+                                        <div className="flex items-center justify-center py-6 text-slate-400">
+                                            <span className="text-[11px]">Cargando productos...</span>
+                                        </div>
+                                    ) : filteredProducts.length === 0 ? (
+                                        <div className="flex items-center justify-center py-6 text-slate-400">
+                                            <span className="text-[11px]">Sin productos en Shopify</span>
+                                        </div>
+                                    ) : (
+                                        (filteredProducts as ShopifyProductItem[]).map((p) => {
+                                            const activeId = p.ecomBoomId || p.id;
+                                            const isActive = productId === activeId;
+                                            return (
+                                                <DropdownMenuItem
+                                                    key={p.id}
+                                                    onClick={() => setProductId(p.ecomBoomId || p.id)}
+                                                    className={cn(
+                                                        "flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-all mb-1",
+                                                        isActive ? "bg-violet-50 border border-violet-100" : "hover:bg-slate-50 border border-transparent"
+                                                    )}
+                                                >
+                                                    {/* Thumbnail */}
+                                                    <div className="w-7 h-7 rounded-md bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                                        {p.image ? (
+                                                            <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <Package className="w-3 h-3 text-slate-300" />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Info */}
+                                                    <div className="flex flex-col min-w-0 flex-1">
+                                                        <span className="text-[11px] font-bold truncate text-slate-900">{p.title}</span>
+                                                        <span className="text-[9px] text-slate-400 font-medium">
+                                                            €{p.variants[0]?.price || "—"}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Badge */}
+                                                    {p.ecomBoomId ? (
+                                                        <span style={{
+                                                            fontSize: "9px", fontWeight: 700, padding: "2px 6px",
+                                                            borderRadius: "10px", background: "#ede9fe", color: "#7c3aed",
+                                                            flexShrink: 0, whiteSpace: "nowrap"
+                                                        }}>Research ✓</span>
+                                                    ) : (
+                                                        <span style={{
+                                                            fontSize: "9px", fontWeight: 700, padding: "2px 6px",
+                                                            borderRadius: "10px", background: "#f1f5f9", color: "#94a3b8",
+                                                            flexShrink: 0, whiteSpace: "nowrap"
+                                                        }}>Sin research</span>
+                                                    )}
+
+                                                    {isActive && <Check className="w-3 h-3 ml-1 text-violet-500 shrink-0" />}
+                                                </DropdownMenuItem>
+                                            );
+                                        })
+                                    )
+                                ) : (
+                                    /* ── Fallback: EcomBoom-only products ── */
+                                    (filteredProducts as typeof allProducts).map((p) => (
+                                        <DropdownMenuItem
+                                            key={p.id}
+                                            onClick={() => setProductId(p.id)}
+                                            className={cn(
+                                                "flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all mb-1",
+                                                productId === p.id ? "bg-rose-50 border border-rose-100" : "hover:bg-slate-50 border border-transparent"
                                             )}
-                                        </div>
-                                        <div className="flex flex-col min-w-0 flex-1">
-                                            <span className="text-[11px] font-bold truncate text-slate-900">{p.title}</span>
-                                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-tighter">{p.status}</span>
-                                        </div>
-                                        {productId === p.id && <Check className="w-3 h-3 ml-auto text-primary" />}
-                                    </DropdownMenuItem>
-                                ))}
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                                {p.imageUrl ? (
+                                                    <Image
+                                                        src={p.imageUrl}
+                                                        alt={p.title || "Product"}
+                                                        width={32}
+                                                        height={32}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <Package className="w-3.5 h-3.5 text-slate-300" />
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col min-w-0 flex-1">
+                                                <span className="text-[11px] font-bold truncate text-slate-900">{p.title}</span>
+                                                <span className="text-[9px] text-slate-400 font-medium uppercase tracking-tighter">{p.status}</span>
+                                            </div>
+                                            {productId === p.id && <Check className="w-3 h-3 ml-auto text-primary" />}
+                                        </DropdownMenuItem>
+                                    ))
+                                )}
                             </ScrollArea>
                         </DropdownMenuContent>
                     </DropdownMenu>

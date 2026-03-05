@@ -374,6 +374,71 @@ function KpiCard({ label, value, color = '#0f9e6b', sub }: any) {
     );
 }
 
+// ─── Tab Health Semáforo ──────────────────────────────────────────────────────
+
+function getTabHealth(activeTab: string, totals: any): 'green' | 'yellow' | 'red' | 'gray' {
+    if (activeTab === 'contabilidad') {
+        const margen = totals.ingresosNetos > 0
+            ? (totals.beneficioNeto / totals.ingresosNetos) * 100 : null;
+        if (margen === null) return 'gray';
+        if (margen >= 15) return 'green';
+        if (margen >= 5) return 'yellow';
+        return 'red';
+    }
+    if (activeTab === 'gastos') {
+        const pct = totals.ingresosNetos > 0
+            ? (totals.totalFijos / totals.ingresosNetos) * 100 : null;
+        if (pct === null) return 'gray';
+        if (pct <= 20) return 'green';
+        if (pct <= 35) return 'yellow';
+        return 'red';
+    }
+    if (activeTab === 'apis') {
+        const total = totals.totalApis || 0;
+        if (total === 0) return 'gray';
+        if (total < 200) return 'green';
+        if (total < 500) return 'yellow';
+        return 'red';
+    }
+    if (activeTab === 'proyecciones') {
+        const cumpl = totals.pedidosObj > 0
+            ? (totals.pedidosReal / totals.pedidosObj) * 100 : null;
+        if (cumpl === null) return 'gray';
+        if (cumpl >= 90) return 'green';
+        if (cumpl >= 70) return 'yellow';
+        return 'red';
+    }
+    return 'gray';
+}
+
+function TabHealthDot({ health }: { health: 'green' | 'yellow' | 'red' | 'gray' }) {
+    const colors = {
+        green: { dot: '#22c55e', bg: 'rgba(34,197,94,0.08)', label: 'Saludable' },
+        yellow: { dot: '#eab308', bg: 'rgba(234,179,8,0.08)', label: 'Atención' },
+        red: { dot: '#ef4444', bg: 'rgba(239,68,68,0.08)', label: 'Crítico' },
+        gray: { dot: '#94a3b8', bg: 'rgba(148,163,184,0.08)', label: 'Sin datos' },
+    };
+    const c = colors[health];
+    return (
+        <div style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            background: c.bg, borderRadius: '6px',
+            padding: '4px 10px', border: `1px solid ${c.dot}44`
+        }}>
+            <div style={{
+                width: '7px', height: '7px', borderRadius: '50%',
+                background: c.dot,
+                boxShadow: health !== 'gray' ? `0 0 6px ${c.dot}` : 'none',
+                animation: health === 'red' ? 'pulse 1.5s infinite' : 'none'
+            }} />
+            <span style={{
+                fontSize: '9px', fontWeight: 800, color: c.dot,
+                textTransform: 'uppercase', letterSpacing: '0.06em'
+            }}>{c.label}</span>
+        </div>
+    );
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function FinanzasPage() {
@@ -450,20 +515,23 @@ export default function FinanzasPage() {
                     </div>
                 </div>
 
-                {/* Period toggle — mismo estilo que CRM Forense */}
-                <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '8px', padding: '2px', gap: '2px', height: 'fit-content' }}>
-                    {(['daily', 'weekly', 'monthly', 'annual'] as ViewMode[]).map(mode => (
-                        <button key={mode} onClick={() => setViewMode(mode)} style={{
-                            padding: '4px 14px', fontSize: '11px', fontWeight: 700,
-                            borderRadius: '6px', border: 'none', cursor: 'pointer',
-                            background: viewMode === mode ? 'white' : 'transparent',
-                            color: viewMode === mode ? '#1e293b' : 'var(--text-muted)',
-                            boxShadow: viewMode === mode ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                            transition: 'all 0.15s'
-                        }}>
-                            {mode === 'daily' ? 'Diario' : mode === 'weekly' ? 'Semanal' : mode === 'monthly' ? 'Mensual' : 'Anual'}
-                        </button>
-                    ))}
+                {/* Period toggle + semaforo */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <TabHealthDot health={getTabHealth(activeTab, tableTotals)} />
+                    <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '8px', padding: '2px', gap: '2px', height: 'fit-content' }}>
+                        {(['daily', 'weekly', 'monthly', 'annual'] as ViewMode[]).map(mode => (
+                            <button key={mode} onClick={() => setViewMode(mode)} style={{
+                                padding: '4px 14px', fontSize: '11px', fontWeight: 700,
+                                borderRadius: '6px', border: 'none', cursor: 'pointer',
+                                background: viewMode === mode ? 'white' : 'transparent',
+                                color: viewMode === mode ? '#1e293b' : 'var(--text-muted)',
+                                boxShadow: viewMode === mode ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                transition: 'all 0.15s'
+                            }}>
+                                {mode === 'daily' ? 'Diario' : mode === 'weekly' ? 'Semanal' : mode === 'monthly' ? 'Mensual' : 'Anual'}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 

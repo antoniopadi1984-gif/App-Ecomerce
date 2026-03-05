@@ -349,16 +349,27 @@ function useColumns(activeTab: string, viewMode: ViewMode): FinCol[] {
 
 // ─── KPI Cards ────────────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, color = '#0f9e6b', sub }: { label: string; value: string; color?: string; sub?: string }) {
+function KpiCard({ label, value, color = '#0f9e6b', sub }: any) {
     return (
         <div style={{
-            background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px',
-            padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '3px',
-            borderTop: `3px solid ${color}`
+            background: 'white',
+            border: '1px solid #e2e8f0',
+            borderLeft: `3px solid ${color}`,
+            borderRadius: '8px',
+            padding: '7px 12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1px',
         }}>
-            <p style={{ fontSize: '9px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{label}</p>
-            <p style={{ fontSize: '20px', fontWeight: 900, color: '#1e293b', margin: 0, letterSpacing: '-1px', fontFamily: 'var(--mono)' }}>{value}</p>
-            {sub && <p style={{ fontSize: '9px', color: '#64748b', margin: 0 }}>{sub}</p>}
+            <p style={{
+                fontSize: '8px', fontWeight: 800, color: '#94a3b8',
+                textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0
+            }}>{label}</p>
+            <p style={{
+                fontSize: '15px', fontWeight: 900, color: '#1e293b',
+                margin: 0, letterSpacing: '-0.5px', fontFamily: 'var(--mono)'
+            }}>{value}</p>
+            {sub && <p style={{ fontSize: '8px', color: '#94a3b8', margin: 0 }}>{sub}</p>}
         </div>
     );
 }
@@ -418,6 +429,7 @@ export default function FinanzasPage() {
     const kpiMargen = kpiIngresos > 0 ? (kpiBeneficio / kpiIngresos) * 100 : 0;
     const kpiRoas = tableTotals.roasReal || (tableTotals.gastoAdsReal > 0 ? kpiIngresos / tableTotals.gastoAdsReal : 0);
     const kpiAds = tableTotals.gastosAds || tableTotals.gastoAdsReal || 0;
+    const kpiIvaNeto = tableTotals.ivaNeto || 0;
 
     const monthName = MONTHS[selectedMonth - 1];
 
@@ -469,17 +481,15 @@ export default function FinanzasPage() {
             ) : (
                 <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
 
-                    {/* ── KPI Cards x6 ── */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
-                        <KpiCard label="Ingresos Brutos" value={fmt(kpiIngresos, 'EUR')} color="#0f9e6b" sub={monthName} />
-                        <KpiCard label="Beneficio Neto" value={fmt(kpiBeneficio, 'EUR')}
-                            color={kpiBeneficio > 0 ? '#0f9e6b' : '#ef4444'} sub="después de gastos" />
-                        <KpiCard label="Margen Neto" value={fmt(kpiMargen, '%')}
-                            color={kpiMargen >= 25 ? '#0f9e6b' : kpiMargen >= 15 ? '#eab308' : '#ef4444'} sub="sobre ingresos netos" />
-                        <KpiCard label="Gastos Totales" value={fmt(kpiGastos, 'EUR')} color="#f59e0b" sub="todos los costes" />
-                        <KpiCard label="Inversión Ads" value={fmt(kpiAds, 'EUR')} color="#7c3aed" sub="campañas activas" />
-                        <KpiCard label="ROAS Periodo" value={kpiRoas > 0 ? kpiRoas.toFixed(2) + 'x' : '—'}
-                            color={kpiRoas >= 2.5 ? '#0f9e6b' : kpiRoas >= 1.5 ? '#eab308' : '#ef4444'} sub="ingresos / ads" />
+                    {/* ── KPI Cards x7 ── */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '4px' }}>
+                        <KpiCard label="Ingresos Brutos" value={fmt(kpiIngresos, 'EUR')} color="#0f9e6b" />
+                        <KpiCard label="Beneficio Neto" value={fmt(kpiBeneficio, 'EUR')} color={kpiBeneficio > 0 ? '#0f9e6b' : '#ef4444'} />
+                        <KpiCard label="Margen Neto" value={fmt(kpiMargen, '%')} color={kpiMargen >= 25 ? '#0f9e6b' : kpiMargen >= 15 ? '#eab308' : '#ef4444'} />
+                        <KpiCard label="Gastos Totales" value={fmt(kpiGastos, 'EUR')} color="#f59e0b" />
+                        <KpiCard label="Inversión Ads" value={fmt(kpiAds, 'EUR')} color="#7c3aed" />
+                        <KpiCard label="ROAS Periodo" value={kpiRoas > 0 ? kpiRoas.toFixed(2) + 'x' : '—'} color={kpiRoas >= 2.5 ? '#0f9e6b' : kpiRoas >= 1.5 ? '#eab308' : '#ef4444'} />
+                        <KpiCard label="IVA Neto" value={fmt(kpiIvaNeto, 'EUR')} color={kpiIvaNeto > 0 ? '#ef4444' : '#0f9e6b'} sub={kpiIvaNeto > 0 ? 'a pagar' : 'a favor'} />
                     </div>
 
                     {/* ── Header tabla con selector Mes + Año ── */}

@@ -1,3 +1,6 @@
-'use client';
-import ConstructionPlaceholder from '@/components/operations/ConstructionPlaceholder';
-export default function FinanzasPage() { return <ConstructionPlaceholder title="Finanzas" />; }
+// Redirect permanente al módulo Finanzas independiente
+import { redirect } from 'next/navigation';
+
+export default function FinanzasRedirectPage() {
+    redirect('/finanzas');
+}

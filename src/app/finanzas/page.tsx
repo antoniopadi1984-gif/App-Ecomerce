@@ -261,6 +261,7 @@ function useColumns(activeTab: string, viewMode: ViewMode): FinCol[] {
                 },
                 {
                     key: 'beneficioNeto', label: 'Benef. Neto €', type: 'calc', unit: 'EUR',
+                    thresholds: [0.01, 0],
                     calcFn: t => (t.ingresosNetos || 0) - ((t.cogs || 0) + (t.gastosFijos || 0) + (t.gastosAds || 0) + (t.gastosApis || 0) + (t.gastosLogistica || 0))
                 },
                 {
@@ -271,6 +272,26 @@ function useColumns(activeTab: string, viewMode: ViewMode): FinCol[] {
                     key: 'margenNeto', label: 'Margen Neto %', type: 'calc', unit: '%', thresholds: [25, 15],
                     calcFn: t => t.ingresosNetos > 0 ? (t.beneficioNeto / t.ingresosNetos) * 100 : 0
                 },
+                {
+                    key: 'pctProfit', label: 'Profit %', type: 'calc', unit: '%', thresholds: [15, 5],
+                    calcFn: t => t.ingresosNetos > 0 ? (t.beneficioNeto / t.ingresosNetos) * 100 : 0
+                },
+                {
+                    key: 'roasReal', label: 'ROAS Real', type: 'calc', unit: 'x', thresholds: [2.5, 1.5],
+                    calcFn: t => t.gastosAds > 0 ? t.ingresosNetos / t.gastosAds : 0
+                },
+                {
+                    key: 'cpaReal', label: 'CPA Real €', type: 'avg', unit: 'EUR',
+                    thresholds: [15, 25], lowerIsBetter: true
+                },
+                {
+                    key: 'roiReal', label: 'ROI %', type: 'calc', unit: '%', thresholds: [30, 10],
+                    calcFn: t => t.gastosAds > 0 ? ((t.ingresosNetos - t.gastosAds) / t.gastosAds) * 100 : 0
+                },
+                { key: 'tasaEnvioReal', label: 'Tasa Envío %', type: 'avg', unit: '%', thresholds: [90, 75] },
+                { key: 'tasaEntregaReal', label: 'Tasa Entrega %', type: 'avg', unit: '%', thresholds: [70, 55] },
+                { key: 'tasaRecuperacion', label: 'Tasa Recup. %', type: 'avg', unit: '%', thresholds: [50, 25] },
+                { key: 'cvr', label: 'CVR %', type: 'avg', unit: '%', thresholds: [3, 1.5] },
                 { key: 'ivaSoportado', label: 'IVA Soportado €', type: 'sum', unit: 'EUR' },
                 { key: 'ivaRepercutido', label: 'IVA Repercutido €', type: 'sum', unit: 'EUR' },
                 {
@@ -355,12 +376,15 @@ function useColumns(activeTab: string, viewMode: ViewMode): FinCol[] {
                     calcFn: t => (t.ingresosReal || 0) - (t.ingresosObj || 0)
                 },
                 { key: 'beneficioObj', label: 'Benef. Obj. €', type: 'avg', unit: 'EUR' },
-                { key: 'beneficioReal', label: 'Benef. Real €', type: 'sum', unit: 'EUR' },
+                {
+                    key: 'beneficioReal', label: 'Benef. Real €', type: 'sum', unit: 'EUR',
+                    thresholds: [0.01, 0]
+                },
                 { key: 'gastoAdsObj', label: 'Ads Obj. €', type: 'avg', unit: 'EUR' },
                 { key: 'gastoAdsReal', label: 'Ads Real €', type: 'sum', unit: 'EUR' },
-                { key: 'roasObj', label: 'ROAS Obj.', type: 'avg', unit: 'x' },
+                { key: 'roasObj', label: 'ROAS Obj.', type: 'avg', unit: 'x', thresholds: [2.5, 1.5] },
                 {
-                    key: 'roasReal', label: 'ROAS Real', type: 'calc', unit: 'x',
+                    key: 'roasReal', label: 'ROAS Real', type: 'calc', unit: 'x', thresholds: [2.5, 1.5],
                     calcFn: t => t.gastoAdsReal > 0 ? t.ingresosReal / t.gastoAdsReal : 0
                 },
             ];

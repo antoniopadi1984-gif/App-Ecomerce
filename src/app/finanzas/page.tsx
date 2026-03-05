@@ -355,21 +355,25 @@ function KpiCard({ label, value, color = '#0f9e6b', sub }: any) {
             background: 'white',
             border: '1px solid #e2e8f0',
             borderLeft: `3px solid ${color}`,
-            borderRadius: '8px',
-            padding: '7px 12px',
+            borderRadius: '6px',
+            padding: '4px 8px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '1px',
+            gap: '0px',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
         }}>
             <p style={{
-                fontSize: '8px', fontWeight: 800, color: '#94a3b8',
-                textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0
+                fontSize: '7px', fontWeight: 800, color: '#475569',
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+                margin: 0, lineHeight: 1.2
             }}>{label}</p>
             <p style={{
-                fontSize: '15px', fontWeight: 900, color: '#1e293b',
-                margin: 0, letterSpacing: '-0.5px', fontFamily: 'var(--mono)'
+                fontSize: '13px', fontWeight: 900, color: '#0f172a',
+                margin: 0, lineHeight: 1.2,
+                letterSpacing: '-0.5px', fontFamily: 'var(--mono)'
             }}>{value}</p>
-            {sub && <p style={{ fontSize: '8px', color: '#94a3b8', margin: 0 }}>{sub}</p>}
+            {sub && <p style={{ fontSize: '7px', color: '#475569', margin: 0, lineHeight: 1.2 }}>{sub}</p>}
         </div>
     );
 }
@@ -594,7 +598,7 @@ export default function FinanzasPage() {
                 <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
 
                     {/* ── KPI Cards x7 ── */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '4px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', marginBottom: '4px' }}>
                         <KpiCard label="Ingresos Brutos" value={fmt(kpiIngresos, 'EUR')} color="#0f9e6b" />
                         <KpiCard label="Beneficio Neto" value={fmt(kpiBeneficio, 'EUR')} color={kpiBeneficio > 0 ? '#0f9e6b' : '#ef4444'} />
                         <KpiCard label="Margen Neto" value={fmt(kpiMargen, '%')} color={kpiMargen >= 25 ? '#0f9e6b' : kpiMargen >= 15 ? '#eab308' : '#ef4444'} />

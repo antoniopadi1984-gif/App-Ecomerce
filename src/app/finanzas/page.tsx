@@ -589,12 +589,24 @@ export default function FinanzasPage() {
     const kpiAds = tableTotals.gastosAds || tableTotals.gastoAdsReal || 0;
     const kpiIvaNeto = tableTotals.ivaNeto || 0;
 
-    // ── Agente IA ────────────────────────────────────────────────────────────
-    // ── Alert config (stub — expandible a modal de configuración)
-    const openAlertConfig = (kpiKey: string) => {
-        console.info('[Finanzas] Configurar alerta para:', kpiKey);
-        // TODO: abrir modal de configuración de umbral de alerta
+    // ── Alert config modal ────────────────────────────────────────────────────
+    const [alertConfig, setAlertConfig] = useState<{
+        key: string; green: number; yellow: number;
+    } | null>(null);
+
+    const ALERT_DEFAULTS: Record<string, { green: number; yellow: number }> = {
+        margen: { green: 25, yellow: 15 },
+        roas: { green: 2.5, yellow: 1.5 },
+        beneficio: { green: 0, yellow: -500 },
+        gastos: { green: 0, yellow: 0 },
+        ads: { green: 0, yellow: 0 },
+        ingresos: { green: 0, yellow: 0 },
+        iva: { green: 0, yellow: 0 },
     };
+
+    function openAlertConfig(key: string) {
+        setAlertConfig({ key, ...(ALERT_DEFAULTS[key] ?? { green: 0, yellow: 0 }) });
+    }
 
     const [agentOpen, setAgentOpen] = useState(false);
     const [agentTab, setAgentTab] = useState<'finanzas' | 'global'>('finanzas');
@@ -879,6 +891,72 @@ export default function FinanzasPage() {
                                 opacity: agentLoading || !agentInput.trim() ? 0.5 : 1
                             }}
                         >→</button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Mini modal configura alerta ── */}
+            {alertConfig && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)',
+                    zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setAlertConfig(null)}>
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                            background: 'white', borderRadius: '12px', padding: '20px',
+                            width: '280px', boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
+                        }}
+                    >
+                        <p style={{ fontSize: '12px', fontWeight: 900, marginBottom: '12px', color: '#0f172a', textTransform: 'capitalize' }}>
+                            Configurar alerta — {alertConfig.key}
+                        </p>
+
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#475569', display: 'block' }}>
+                            🟢 Umbral verde (bueno si ≥)
+                        </label>
+                        <input
+                            type="number"
+                            value={alertConfig.green}
+                            onChange={e => setAlertConfig(p => p ? { ...p, green: Number(e.target.value) } : p)}
+                            style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '10px', marginTop: '3px', fontSize: '12px', boxSizing: 'border-box' }}
+                        />
+
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#475569', display: 'block' }}>
+                            🟡 Umbral amarillo (atención si ≥)
+                        </label>
+                        <input
+                            type="number"
+                            value={alertConfig.yellow}
+                            onChange={e => setAlertConfig(p => p ? { ...p, yellow: Number(e.target.value) } : p)}
+                            style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '14px', marginTop: '3px', fontSize: '12px', boxSizing: 'border-box' }}
+                        />
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                onClick={() => {
+                                    fetch('/api/finanzas/alert-config', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ storeId: activeStoreId, ...alertConfig })
+                                    }).catch(console.error);
+                                    setAlertConfig(null);
+                                }}
+                                style={{
+                                    flex: 1, padding: '8px', borderRadius: '8px',
+                                    background: '#0f9e6b', color: 'white', border: 'none',
+                                    fontSize: '11px', fontWeight: 700, cursor: 'pointer'
+                                }}
+                            >Guardar</button>
+                            <button
+                                onClick={() => setAlertConfig(null)}
+                                style={{
+                                    padding: '8px 12px', borderRadius: '8px',
+                                    background: '#f1f5f9', border: 'none',
+                                    fontSize: '11px', cursor: 'pointer', color: '#475569'
+                                }}
+                            >Cancelar</button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -58,6 +58,22 @@ function semaforo(value: number, thresholds?: number[], lowerIsBetter?: boolean)
     return { color, background: bg, fontWeight: 700 };
 }
 
+function getCellStyle(col: FinCol, value: number): React.CSSProperties {
+    if (!col.thresholds || value === undefined || value === null || isNaN(value)) return {};
+    const [good, warn] = col.thresholds;
+    let color: string, bg: string;
+    if (col.lowerIsBetter) {
+        if (value <= good) { color = '#16a34a'; bg = 'rgba(34,197,94,0.07)'; }
+        else if (value <= warn) { color = '#d97706'; bg = 'rgba(234,179,8,0.07)'; }
+        else { color = '#dc2626'; bg = 'rgba(239,68,68,0.07)'; }
+    } else {
+        if (value >= good) { color = '#16a34a'; bg = 'rgba(34,197,94,0.07)'; }
+        else if (value >= warn) { color = '#d97706'; bg = 'rgba(234,179,8,0.07)'; }
+        else { color = '#dc2626'; bg = 'rgba(239,68,68,0.07)'; }
+    }
+    return { color, background: bg, fontWeight: 700 };
+}
+
 function generatePeriodRows(mode: ViewMode, month: number, year: number) {
     if (mode === 'daily') {
         const days = new Date(year, month, 0).getDate();
@@ -167,16 +183,23 @@ function FinTable({ rows, columns, totals }: { rows: any[]; columns: FinCol[]; t
                                 <td
                                     key={col.key}
                                     style={{
-                                        padding: '5px 8px', fontSize: '12px',
-                                        whiteSpace: 'nowrap', textAlign: 'center',
+                                        padding: '4px 6px',
+                                        fontSize: '11px',
+                                        whiteSpace: 'nowrap',
+                                        textAlign: col.key === 'label' ? 'left' : 'right',
                                         ...(col.key === 'label' ? {
                                             position: 'sticky', left: 0,
-                                            background: row.isToday ? 'rgba(15,158,107,0.04)' : (i % 2 === 0 ? 'white' : '#fafbff'),
-                                            fontWeight: 800, color: '#1e293b', zIndex: 5
+                                            background: row.isToday
+                                                ? 'rgba(15,158,107,0.04)'
+                                                : (i % 2 === 0 ? 'white' : '#fafbff'),
+                                            fontWeight: 800, color: '#0f172a', zIndex: 5,
                                         } : {}),
-                                        ...((col.type === 'calc' || col.type === 'avg') && col.thresholds
-                                            ? semaforo(row[col.key], col.thresholds, col.lowerIsBetter)
-                                            : {})
+                                        ...(col.thresholds && row[col.key] !== undefined && row[col.key] !== null
+                                            ? getCellStyle(col, row[col.key])
+                                            : {}),
+                                        ...(['profitNeto', 'profitBruto', 'pctProfit', 'roasReal'].includes(col.key) && row[col.key]
+                                            ? { fontWeight: 900 }
+                                            : {}),
                                     }}
                                 >
                                     {col.key === 'label' ? row.label : fmt(row[col.key], col.unit)}

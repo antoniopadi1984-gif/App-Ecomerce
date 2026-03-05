@@ -417,31 +417,51 @@ function useColumns(activeTab: string, viewMode: ViewMode): FinCol[] {
 
 // ─── KPI Cards ────────────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, color = '#0f9e6b', sub }: any) {
+function KpiCard({
+    label, value, color = '#0f9e6b', sub, onEditAlert
+}: {
+    label: string; value: string; color?: string;
+    sub?: string; onEditAlert?: () => void;
+}) {
     return (
         <div style={{
             background: 'white',
             border: '1px solid #e2e8f0',
             borderLeft: `3px solid ${color}`,
-            borderRadius: '6px',
-            padding: '4px 8px',
+            borderRadius: '8px',
+            padding: '6px 10px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0px',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
+            gap: '1px',
+            position: 'relative',
+            flex: '1 1 0',
+            minWidth: 0,
         }}>
+            {onEditAlert && (
+                <button
+                    onClick={onEditAlert}
+                    title="Configurar alerta"
+                    style={{
+                        position: 'absolute', top: '4px', right: '4px',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: '#cbd5e1', padding: '1px',
+                        fontSize: '9px', lineHeight: 1,
+                    }}
+                >✏</button>
+            )}
             <p style={{
-                fontSize: '7px', fontWeight: 800, color: '#475569',
+                fontSize: '8px', fontWeight: 800, color: '#334155',
                 textTransform: 'uppercase', letterSpacing: '0.06em',
-                margin: 0, lineHeight: 1.2
+                margin: 0, lineHeight: 1.2, paddingRight: '12px',
             }}>{label}</p>
             <p style={{
-                fontSize: '13px', fontWeight: 900, color: '#0f172a',
-                margin: 0, lineHeight: 1.2,
-                letterSpacing: '-0.5px', fontFamily: 'var(--mono)'
+                fontSize: '18px', fontWeight: 900, color: '#0f172a',
+                margin: 0, lineHeight: 1.1,
+                letterSpacing: '-0.5px', fontFamily: 'var(--mono)',
             }}>{value}</p>
-            {sub && <p style={{ fontSize: '7px', color: '#475569', margin: 0, lineHeight: 1.2 }}>{sub}</p>}
+            {sub && (
+                <p style={{ fontSize: '8px', color: '#475569', margin: 0, lineHeight: 1.2 }}>{sub}</p>
+            )}
         </div>
     );
 }
@@ -570,6 +590,12 @@ export default function FinanzasPage() {
     const kpiIvaNeto = tableTotals.ivaNeto || 0;
 
     // ── Agente IA ────────────────────────────────────────────────────────────
+    // ── Alert config (stub — expandible a modal de configuración)
+    const openAlertConfig = (kpiKey: string) => {
+        console.info('[Finanzas] Configurar alerta para:', kpiKey);
+        // TODO: abrir modal de configuración de umbral de alerta
+    };
+
     const [agentOpen, setAgentOpen] = useState(false);
     const [agentTab, setAgentTab] = useState<'finanzas' | 'global'>('finanzas');
     const [agentMessages, setAgentMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
@@ -671,14 +697,27 @@ export default function FinanzasPage() {
                 <div className="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
 
                     {/* ── KPI Cards x7 ── */}
-                    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', marginBottom: '4px' }}>
-                        <KpiCard label="Ingresos Brutos" value={fmt(kpiIngresos, 'EUR')} color="#0f9e6b" />
-                        <KpiCard label="Beneficio Neto" value={fmt(kpiBeneficio, 'EUR')} color={kpiBeneficio > 0 ? '#0f9e6b' : '#ef4444'} />
-                        <KpiCard label="Margen Neto" value={fmt(kpiMargen, '%')} color={kpiMargen >= 25 ? '#0f9e6b' : kpiMargen >= 15 ? '#eab308' : '#ef4444'} />
-                        <KpiCard label="Gastos Totales" value={fmt(kpiGastos, 'EUR')} color="#f59e0b" />
-                        <KpiCard label="Inversión Ads" value={fmt(kpiAds, 'EUR')} color="#7c3aed" />
-                        <KpiCard label="ROAS Periodo" value={kpiRoas > 0 ? kpiRoas.toFixed(2) + 'x' : '—'} color={kpiRoas >= 2.5 ? '#0f9e6b' : kpiRoas >= 1.5 ? '#eab308' : '#ef4444'} />
-                        <KpiCard label="IVA Neto" value={fmt(kpiIvaNeto, 'EUR')} color={kpiIvaNeto > 0 ? '#ef4444' : '#0f9e6b'} sub={kpiIvaNeto > 0 ? 'a pagar' : 'a favor'} />
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '6px' }}>
+                        <KpiCard label="Ingresos Brutos" value={fmt(kpiIngresos, 'EUR')} color="#0f9e6b"
+                            onEditAlert={() => openAlertConfig('ingresos')} />
+                        <KpiCard label="Beneficio Neto" value={fmt(kpiBeneficio, 'EUR')}
+                            color={kpiBeneficio > 0 ? '#0f9e6b' : '#ef4444'}
+                            onEditAlert={() => openAlertConfig('beneficio')} />
+                        <KpiCard label="Margen Neto" value={fmt(kpiMargen, '%')}
+                            color={kpiMargen >= 25 ? '#0f9e6b' : kpiMargen >= 15 ? '#eab308' : '#ef4444'}
+                            onEditAlert={() => openAlertConfig('margen')} />
+                        <KpiCard label="Gastos Totales" value={fmt(kpiGastos, 'EUR')} color="#f59e0b"
+                            onEditAlert={() => openAlertConfig('gastos')} />
+                        <KpiCard label="Inversión Ads" value={fmt(kpiAds, 'EUR')} color="#7c3aed"
+                            onEditAlert={() => openAlertConfig('ads')} />
+                        <KpiCard label="ROAS Periodo"
+                            value={kpiRoas > 0 ? kpiRoas.toFixed(2) + 'x' : '—'}
+                            color={kpiRoas >= 2.5 ? '#0f9e6b' : kpiRoas >= 1.5 ? '#eab308' : '#ef4444'}
+                            onEditAlert={() => openAlertConfig('roas')} />
+                        <KpiCard label="IVA Neto" value={fmt(kpiIvaNeto, 'EUR')}
+                            color={kpiIvaNeto > 0 ? '#ef4444' : '#0f9e6b'}
+                            sub={kpiIvaNeto > 0 ? 'a pagar' : 'a favor'}
+                            onEditAlert={() => openAlertConfig('iva')} />
                     </div>
 
                     {/* ── Header tabla con selector Mes + Año ── */}

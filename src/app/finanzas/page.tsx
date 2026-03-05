@@ -581,6 +581,7 @@ export default function FinanzasPage() {
 
     // ── Agente IA ────────────────────────────────────────────────────────────
     const [agentOpen, setAgentOpen] = useState(false);
+    const [agentTab, setAgentTab] = useState<'finanzas' | 'global'>('finanzas');
     const [agentMessages, setAgentMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
     const [agentInput, setAgentInput] = useState('');
     const [agentLoading, setAgentLoading] = useState(false);
@@ -609,7 +610,10 @@ export default function FinanzasPage() {
         setAgentMessages(messages);
         setAgentInput('');
         try {
-            const res = await fetch('/api/agents/finanzas-chat', {
+            const endpoint = agentTab === 'finanzas'
+                ? '/api/agents/finanzas-chat'
+                : '/api/agents/global-chat';
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ storeId: activeStoreId, messages, context: agentContext }),
@@ -755,30 +759,45 @@ export default function FinanzasPage() {
                     boxShadow: '-4px 0 24px rgba(0,0,0,0.08)',
                     zIndex: 100, display: 'flex', flexDirection: 'column',
                 }}>
-                    {/* Header */}
+                    {/* Header con tabs internos */}
                     <div style={{
                         padding: '14px 16px', borderBottom: '1px solid #e2e8f0',
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        display: 'flex', flexDirection: 'column', gap: '8px'
                     }}>
-                        <div>
-                            <p style={{ fontSize: '12px', fontWeight: 900, margin: 0, color: '#1e293b' }}>Agente Finanzas</p>
-                            <p style={{ fontSize: '9px', color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>
-                                {MONTHS[selectedMonth - 1]} {selectedYear} · {TABS.find(t => t.id === activeTab)?.label}
-                            </p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <p style={{ fontSize: '12px', fontWeight: 900, margin: 0, color: '#0f172a' }}>Agente IA</p>
+                            <button onClick={() => setAgentOpen(false)}
+                                style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '16px' }}>✕</button>
                         </div>
-                        <button onClick={() => setAgentOpen(false)}
-                            style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '16px', color: '#94a3b8' }}>✕</button>
+                        {/* Tabs del agente */}
+                        <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '6px', padding: '2px', gap: '2px' }}>
+                            {[
+                                { id: 'finanzas', label: '💰 Finanzas' },
+                                { id: 'global', label: '🧠 Jefe Global' },
+                            ].map(t => (
+                                <button
+                                    key={t.id}
+                                    onClick={() => { setAgentTab(t.id as 'finanzas' | 'global'); setAgentMessages([]); }}
+                                    style={{
+                                        flex: 1, padding: '5px 8px', fontSize: '10px', fontWeight: 700,
+                                        borderRadius: '4px', border: 'none', cursor: 'pointer',
+                                        background: agentTab === t.id ? 'white' : 'transparent',
+                                        color: agentTab === t.id ? '#0f172a' : '#64748b',
+                                        boxShadow: agentTab === t.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                        transition: 'all 0.15s',
+                                    }}
+                                >{t.label}</button>
+                            ))}
+                        </div>
+                        {/* Contexto activo */}
+                        <div style={{ fontSize: '9px', color: '#475569', padding: '0 2px' }}>
+                            {agentTab === 'finanzas'
+                                ? `Margen ${fmt(kpiMargen, '%')} · ROAS ${kpiRoas > 0 ? kpiRoas.toFixed(2) + 'x' : '—'} · Profit ${fmt(kpiBeneficio, 'EUR')}`
+                                : `Tienda: ${activeStoreId} · Todos los módulos`
+                            }
+                        </div>
                     </div>
 
-                    {/* Contexto visible */}
-                    <div style={{
-                        padding: '8px 14px', background: '#f8fafc',
-                        borderBottom: '1px solid #e2e8f0', fontSize: '9px', color: '#64748b'
-                    }}>
-                        <span style={{ fontWeight: 700 }}>CONTEXTO ACTIVO: </span>
-                        Margen {fmt(kpiMargen, '%')} · ROAS {kpiRoas > 0 ? kpiRoas.toFixed(2) + 'x' : '—'} ·
-                        Profit {fmt(kpiBeneficio, 'EUR')} · Salud: {getTabHealth(activeTab, tableTotals).toUpperCase()}
-                    </div>
 
                     {/* Mensajes */}
                     <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -836,20 +855,22 @@ export default function FinanzasPage() {
                 </div>
             )}
 
-            {/* Botón flotante abrir/cerrar agente */}
+            {/* Botón flotante — overlay sobre el botón morado de AgentCompanion */}
             <button
                 onClick={() => setAgentOpen(o => !o)}
                 style={{
-                    position: 'fixed', bottom: '20px', right: '80px',
-                    width: '44px', height: '44px', borderRadius: '50%',
-                    background: agentOpen ? '#1e293b' : '#0f9e6b',
+                    position: 'fixed', bottom: '24px', right: '24px',
+                    width: '48px', height: '48px', borderRadius: '50%',
+                    background: agentOpen
+                        ? 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
+                        : 'linear-gradient(135deg, #0f9e6b 0%, #059669 100%)',
                     border: 'none', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 99,
+                    boxShadow: '0 4px 20px rgba(15,158,107,0.4)', zIndex: 51,
                     transition: 'all 0.2s'
                 }}
             >
-                <span style={{ fontSize: '18px' }}>{agentOpen ? '✕' : '🤖'}</span>
+                <span style={{ fontSize: '20px' }}>{agentOpen ? '✕' : '✨'}</span>
             </button>
 
         </div>

@@ -113,15 +113,14 @@ function ColHeader({ line1, line2, colKey, sortKey, sortDir, onSort }: any) {
         <th
             onClick={() => onSort(colKey)}
             style={{
-                padding: '4px 4px',
+                padding: '3px 4px',
                 fontSize: '8px', fontWeight: 900,
                 textTransform: 'uppercase', letterSpacing: '0.04em',
-                color: isActive ? '#0f9e6b' : 'var(--color-text-secondary)',
-                textAlign: 'center', lineHeight: 1.2,
-                cursor: 'pointer', userSelect: 'none',
+                color: isActive ? '#0f9e6b' : '#475569',
+                textAlign: 'center', lineHeight: 1.1,
+                cursor: 'pointer',
                 whiteSpace: 'normal', wordBreak: 'break-word',
-                minWidth: colKey === 'label' ? '36px' : '52px',
-                maxWidth: colKey === 'label' ? '44px' : '72px',
+                width: colKey === 'label' ? '32px' : '58px',
                 verticalAlign: 'bottom',
                 borderBottom: isActive ? '2px solid #0f9e6b' : '2px solid #e2e8f0',
                 ...(colKey === 'label' ? { position: 'sticky', left: 0, background: 'white', zIndex: 11 } : {})
@@ -129,9 +128,9 @@ function ColHeader({ line1, line2, colKey, sortKey, sortDir, onSort }: any) {
         >
             <span style={{ display: 'block' }}>{line1}</span>
             {line2 && <span style={{ display: 'block' }}>{line2}</span>}
-            <span style={{ display: 'block', fontSize: '7px', marginTop: '1px', minHeight: '8px' }}>
-                {isActive ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-            </span>
+            {isActive && (
+                <span style={{ fontSize: '7px' }}>{sortDir === 'asc' ? '↑' : '↓'}</span>
+            )}
         </th>
     );
 }
@@ -152,7 +151,7 @@ function FinTable({ rows, columns, totals }: { rows: any[]; columns: FinCol[]; t
 
     return (
         <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <table style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '1200px', fontSize: '11px' }}>
+            <table style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '1400px', fontSize: '11px' }}>
                 <thead>
                     <tr style={{ position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
                         {columns.map(col => {
@@ -183,10 +182,11 @@ function FinTable({ rows, columns, totals }: { rows: any[]; columns: FinCol[]; t
                                 <td
                                     key={col.key}
                                     style={{
-                                        padding: '4px 6px',
+                                        padding: '3px 5px',
                                         fontSize: '11px',
                                         whiteSpace: 'nowrap',
                                         textAlign: col.key === 'label' ? 'left' : 'right',
+                                        width: col.key === 'label' ? '32px' : '58px',
                                         ...(col.key === 'label' ? {
                                             position: 'sticky', left: 0,
                                             background: row.isToday

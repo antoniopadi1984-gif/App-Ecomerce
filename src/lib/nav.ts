@@ -29,7 +29,7 @@ export const navigation = [
         href: '/operaciones/pedidos',
         children: [
             { label: 'Pedidos', emoji: '📦', href: '/operaciones/pedidos' },
-            { label: 'Finanzas', emoji: '💰', href: '/operaciones/finanzas' },
+            { label: 'Finanzas', emoji: '💰', href: '/finanzas' },
             { label: 'Comunicaciones', emoji: '💬', href: '/operaciones/comunicaciones' },
             { label: 'Automatizaciones', emoji: '🤖', href: '/operaciones/automatizaciones' },
             { label: 'Agentes IA', emoji: '🧠', href: '/operaciones/agentes' },

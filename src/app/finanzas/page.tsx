@@ -292,11 +292,32 @@ function useColumns(activeTab: string, viewMode: ViewMode): FinCol[] {
                 { key: 'tasaEntregaReal', label: 'Tasa Entrega %', type: 'avg', unit: '%', thresholds: [70, 55] },
                 { key: 'tasaRecuperacion', label: 'Tasa Recup. %', type: 'avg', unit: '%', thresholds: [50, 25] },
                 { key: 'cvr', label: 'CVR %', type: 'avg', unit: '%', thresholds: [3, 1.5] },
+                { key: 'tasaEntregaConfig', label: 'T.Entrega Config %', type: 'avg', unit: '%', thresholds: [70, 55] },
+                {
+                    key: 'facturacionEntregados', label: 'Fact. Entregados €', type: 'calc', unit: 'EUR',
+                    calcFn: t => (t.pedidosEntregados || 0) * ((t.ingresos || 0) / (t.pedidosConfirmados || 1))
+                },
+                { key: 'facturacionCOD', label: 'Fact. COD €', type: 'sum', unit: 'EUR' },
+                { key: 'facturacionTarjeta', label: 'Fact. Tarjeta €', type: 'sum', unit: 'EUR' },
+                {
+                    key: 'pctCOD', label: '% COD', type: 'calc', unit: '%',
+                    calcFn: t => t.ingresos > 0 ? (t.facturacionCOD / t.ingresos) * 100 : 0
+                },
+                {
+                    key: 'pctTarjeta', label: '% Tarjeta', type: 'calc', unit: '%',
+                    calcFn: t => t.ingresos > 0 ? (t.facturacionTarjeta / t.ingresos) * 100 : 0
+                },
                 { key: 'ivaSoportado', label: 'IVA Soportado €', type: 'sum', unit: 'EUR' },
                 { key: 'ivaRepercutido', label: 'IVA Repercutido €', type: 'sum', unit: 'EUR' },
                 {
                     key: 'ivaNeto', label: 'IVA Neto €', type: 'calc', unit: 'EUR',
                     calcFn: t => (t.ivaRepercutido || 0) - (t.ivaSoportado || 0)
+                },
+                { key: 'margenObjetivo', label: 'Margen Obj. %', type: 'avg', unit: '%' },
+                {
+                    key: 'gapMargen', label: 'Gap Margen %', type: 'calc', unit: '%',
+                    thresholds: [0, -5],
+                    calcFn: t => (t.margenNeto || 0) - (t.margenObjetivo || 0)
                 },
             ];
         }

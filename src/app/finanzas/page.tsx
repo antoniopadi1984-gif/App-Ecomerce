@@ -415,6 +415,38 @@ function getTabHealth(activeTab: string, totals: any): 'green' | 'yellow' | 'red
     return 'gray';
 }
 
+// ─── Data Source Status ────────────────────────────────────────────────────────────
+
+function DataSourceStatus({ storeId }: { storeId: string | null }) {
+    const sources = [
+        { key: 'shopify', label: 'Shopify', connected: !!storeId },
+        { key: 'meta', label: 'Meta', connected: false },
+        { key: 'ga4', label: 'GA4', connected: false },
+    ];
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {sources.map(s => (
+                <div key={s.key} style={{
+                    display: 'flex', alignItems: 'center', gap: '3px',
+                    padding: '2px 7px', borderRadius: '4px',
+                    background: s.connected ? 'rgba(34,197,94,0.08)' : 'rgba(148,163,184,0.08)',
+                    border: `1px solid ${s.connected ? '#22c55e33' : '#cbd5e133'}`,
+                }}>
+                    <div style={{
+                        width: '5px', height: '5px', borderRadius: '50%',
+                        background: s.connected ? '#22c55e' : '#cbd5e1',
+                    }} />
+                    <span style={{
+                        fontSize: '8px', fontWeight: 700,
+                        color: s.connected ? '#16a34a' : '#94a3b8',
+                        textTransform: 'uppercase'
+                    }}>{s.label}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 function TabHealthDot({ health }: { health: 'green' | 'yellow' | 'red' | 'gray' }) {
     const colors = {
         green: { dot: '#22c55e', bg: 'rgba(34,197,94,0.08)', label: 'Saludable' },
@@ -563,8 +595,9 @@ export default function FinanzasPage() {
                     </div>
                 </div>
 
-                {/* Period toggle + semaforo */}
+                {/* Period toggle + semaforo + fuentes */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <DataSourceStatus storeId={activeStoreId} />
                     <TabHealthDot health={getTabHealth(activeTab, tableTotals)} />
                     <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '8px', padding: '2px', gap: '2px', height: 'fit-content' }}>
                         {(['daily', 'weekly', 'monthly', 'annual'] as ViewMode[]).map(mode => (

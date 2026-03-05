@@ -496,6 +496,50 @@ export default function FinanzasPage() {
     const kpiAds = tableTotals.gastosAds || tableTotals.gastoAdsReal || 0;
     const kpiIvaNeto = tableTotals.ivaNeto || 0;
 
+    // ── Agente IA ────────────────────────────────────────────────────────────
+    const [agentOpen, setAgentOpen] = useState(false);
+    const [agentMessages, setAgentMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+    const [agentInput, setAgentInput] = useState('');
+    const [agentLoading, setAgentLoading] = useState(false);
+
+    const agentContext = useMemo(() => ({
+        modulo: 'finanzas',
+        tab: activeTab,
+        periodo: `${MONTHS[selectedMonth - 1]} ${selectedYear}`,
+        tienda: activeStoreId,
+        kpis: {
+            ingresosBrutos: kpiIngresos,
+            beneficioNeto: kpiBeneficio,
+            margenNeto: kpiMargen,
+            gastosTotal: kpiGastos,
+            inversionAds: kpiAds,
+            roasReal: kpiRoas,
+            ivaNeto: kpiIvaNeto,
+        },
+        totalesPeriodo: tableTotals,
+        saludTab: getTabHealth(activeTab, tableTotals),
+    }), [activeTab, selectedMonth, selectedYear, tableTotals, kpiIngresos, kpiBeneficio, kpiMargen, kpiGastos, kpiAds, kpiRoas, kpiIvaNeto, activeStoreId]);
+
+    async function sendToAgent(userMessage: string) {
+        setAgentLoading(true);
+        const messages = [...agentMessages, { role: 'user' as const, content: userMessage }];
+        setAgentMessages(messages);
+        setAgentInput('');
+        try {
+            const res = await fetch('/api/agents/finanzas-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ storeId: activeStoreId, messages, context: agentContext }),
+            });
+            const data = await res.json();
+            setAgentMessages(prev => [...prev, { role: 'assistant', content: data.reply || 'Sin respuesta.' }]);
+        } catch {
+            setAgentMessages(prev => [...prev, { role: 'assistant', content: 'Error al conectar con el agente.' }]);
+        } finally {
+            setAgentLoading(false);
+        }
+    }
+
     const monthName = MONTHS[selectedMonth - 1];
 
     return (
@@ -618,6 +662,112 @@ export default function FinanzasPage() {
 
                 </div>
             )}
+
+            {/* ── AGENTE IA: Drawer lateral derecho ── */}
+            {agentOpen && (
+                <div style={{
+                    position: 'fixed', right: 0, top: 0, bottom: 0, width: '360px',
+                    background: 'white', borderLeft: '1px solid #e2e8f0',
+                    boxShadow: '-4px 0 24px rgba(0,0,0,0.08)',
+                    zIndex: 100, display: 'flex', flexDirection: 'column',
+                }}>
+                    {/* Header */}
+                    <div style={{
+                        padding: '14px 16px', borderBottom: '1px solid #e2e8f0',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                    }}>
+                        <div>
+                            <p style={{ fontSize: '12px', fontWeight: 900, margin: 0, color: '#1e293b' }}>Agente Finanzas</p>
+                            <p style={{ fontSize: '9px', color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>
+                                {MONTHS[selectedMonth - 1]} {selectedYear} · {TABS.find(t => t.id === activeTab)?.label}
+                            </p>
+                        </div>
+                        <button onClick={() => setAgentOpen(false)}
+                            style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '16px', color: '#94a3b8' }}>✕</button>
+                    </div>
+
+                    {/* Contexto visible */}
+                    <div style={{
+                        padding: '8px 14px', background: '#f8fafc',
+                        borderBottom: '1px solid #e2e8f0', fontSize: '9px', color: '#64748b'
+                    }}>
+                        <span style={{ fontWeight: 700 }}>CONTEXTO ACTIVO: </span>
+                        Margen {fmt(kpiMargen, '%')} · ROAS {kpiRoas > 0 ? kpiRoas.toFixed(2) + 'x' : '—'} ·
+                        Profit {fmt(kpiBeneficio, 'EUR')} · Salud: {getTabHealth(activeTab, tableTotals).toUpperCase()}
+                    </div>
+
+                    {/* Mensajes */}
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {agentMessages.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '11px' }}>
+                                <p style={{ fontWeight: 700, marginBottom: '8px' }}>Agente listo</p>
+                                <p>Pregúntame sobre tus finanzas, márgenes, costes o qué mejorar.</p>
+                                {['¿Cómo está el margen este mes?', '¿Qué gastos puedo reducir?', 'Analiza el ROAS actual'].map(s => (
+                                    <button key={s} onClick={() => sendToAgent(s)} style={{
+                                        display: 'block', width: '100%', marginTop: '6px',
+                                        padding: '7px 10px', borderRadius: '8px',
+                                        border: '1px solid #e2e8f0', background: 'white',
+                                        fontSize: '10px', cursor: 'pointer', textAlign: 'left', color: '#475569'
+                                    }}>{s}</button>
+                                ))}
+                            </div>
+                        )}
+                        {agentMessages.map((msg, i) => (
+                            <div key={i} style={{
+                                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                                maxWidth: '85%',
+                                background: msg.role === 'user' ? '#0f9e6b' : '#f1f5f9',
+                                color: msg.role === 'user' ? 'white' : '#1e293b',
+                                borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+                                padding: '8px 12px', fontSize: '11px', lineHeight: 1.5,
+                            }}>{msg.content}</div>
+                        ))}
+                        {agentLoading && (
+                            <div style={{ alignSelf: 'flex-start', background: '#f1f5f9', borderRadius: '12px', padding: '8px 12px', fontSize: '11px', color: '#94a3b8' }}>
+                                Analizando datos...
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Input */}
+                    <div style={{ padding: '12px 14px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '8px' }}>
+                        <input
+                            value={agentInput}
+                            onChange={e => setAgentInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && agentInput.trim() && sendToAgent(agentInput.trim())}
+                            placeholder="Pregunta sobre tus finanzas..."
+                            style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '11px', outline: 'none' }}
+                        />
+                        <button
+                            onClick={() => agentInput.trim() && sendToAgent(agentInput.trim())}
+                            disabled={agentLoading || !agentInput.trim()}
+                            style={{
+                                background: '#0f9e6b', color: 'white', border: 'none',
+                                borderRadius: '8px', padding: '8px 14px',
+                                fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                                opacity: agentLoading || !agentInput.trim() ? 0.5 : 1
+                            }}
+                        >→</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Botón flotante abrir/cerrar agente */}
+            <button
+                onClick={() => setAgentOpen(o => !o)}
+                style={{
+                    position: 'fixed', bottom: '20px', right: '80px',
+                    width: '44px', height: '44px', borderRadius: '50%',
+                    background: agentOpen ? '#1e293b' : '#0f9e6b',
+                    border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 99,
+                    transition: 'all 0.2s'
+                }}
+            >
+                <span style={{ fontSize: '18px' }}>{agentOpen ? '✕' : '🤖'}</span>
+            </button>
+
         </div>
     );
 }

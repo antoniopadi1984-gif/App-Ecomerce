@@ -1022,3 +1022,21 @@ table thead th {
     opacity: 0.4;
   }
 }
+
+/* Regla: nunca texto gris claro sobre fondo blanco */
+/* Mínimo para texto secundario: slate-600 */
+/* Mínimo para texto de valor: slate-900 */
+.text-muted-safe {
+  color: #475569 !important;
+}
+
+/* slate-600 */
+.text-value {
+  color: #0f172a !important;
+}
+
+/* slate-950 */
+
+.agent-input::placeholder {
+  color: #94a3b8;
+}

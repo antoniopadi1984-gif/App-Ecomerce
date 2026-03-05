@@ -807,7 +807,7 @@ export default function FinanzasPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <p style={{ fontSize: '12px', fontWeight: 900, margin: 0, color: '#0f172a' }}>Agente IA</p>
                             <button onClick={() => setAgentOpen(false)}
-                                style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '16px' }}>✕</button>
+                                style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#475569', fontSize: '16px' }}>✕</button>
                         </div>
                         {/* Tabs del agente */}
                         <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '6px', padding: '2px', gap: '2px' }}>
@@ -822,7 +822,7 @@ export default function FinanzasPage() {
                                         flex: 1, padding: '5px 8px', fontSize: '10px', fontWeight: 700,
                                         borderRadius: '4px', border: 'none', cursor: 'pointer',
                                         background: agentTab === t.id ? 'white' : 'transparent',
-                                        color: agentTab === t.id ? '#0f172a' : '#64748b',
+                                        color: agentTab === t.id ? '#0f172a' : '#475569',
                                         boxShadow: agentTab === t.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                                         transition: 'all 0.15s',
                                     }}
@@ -830,7 +830,7 @@ export default function FinanzasPage() {
                             ))}
                         </div>
                         {/* Contexto activo */}
-                        <div style={{ fontSize: '9px', color: '#475569', padding: '0 2px' }}>
+                        <div style={{ fontSize: '9px', color: '#334155', padding: '0 2px' }}>
                             {agentTab === 'finanzas'
                                 ? `Margen ${fmt(kpiMargen, '%')} · ROAS ${kpiRoas > 0 ? kpiRoas.toFixed(2) + 'x' : '—'} · Profit ${fmt(kpiBeneficio, 'EUR')}`
                                 : `Tienda: ${activeStoreId} · Todos los módulos`
@@ -842,15 +842,15 @@ export default function FinanzasPage() {
                     {/* Mensajes */}
                     <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {agentMessages.length === 0 && (
-                            <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '11px' }}>
-                                <p style={{ fontWeight: 700, marginBottom: '8px' }}>Agente listo</p>
-                                <p>Pregúntame sobre tus finanzas, márgenes, costes o qué mejorar.</p>
+                            <div style={{ textAlign: 'center', padding: '20px', color: '#475569', fontSize: '11px' }}>
+                                <p style={{ fontWeight: 700, marginBottom: '8px', color: '#0f172a' }}>Agente listo</p>
+                                <p style={{ color: '#475569', fontSize: '11px' }}>Pregúntame sobre tus finanzas, márgenes, costes o qué mejorar.</p>
                                 {['¿Cómo está el margen este mes?', '¿Qué gastos puedo reducir?', 'Analiza el ROAS actual'].map(s => (
                                     <button key={s} onClick={() => sendToAgent(s)} style={{
                                         display: 'block', width: '100%', marginTop: '6px',
                                         padding: '7px 10px', borderRadius: '8px',
                                         border: '1px solid #e2e8f0', background: 'white',
-                                        fontSize: '10px', cursor: 'pointer', textAlign: 'left', color: '#475569'
+                                        fontSize: '10px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', color: '#334155'
                                     }}>{s}</button>
                                 ))}
                             </div>
@@ -860,13 +860,13 @@ export default function FinanzasPage() {
                                 alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
                                 maxWidth: '85%',
                                 background: msg.role === 'user' ? '#0f9e6b' : '#f1f5f9',
-                                color: msg.role === 'user' ? 'white' : '#1e293b',
+                                color: msg.role === 'user' ? 'white' : '#0f172a',
                                 borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
                                 padding: '8px 12px', fontSize: '11px', lineHeight: 1.5,
                             }}>{msg.content}</div>
                         ))}
                         {agentLoading && (
-                            <div style={{ alignSelf: 'flex-start', background: '#f1f5f9', borderRadius: '12px', padding: '8px 12px', fontSize: '11px', color: '#94a3b8' }}>
+                            <div style={{ alignSelf: 'flex-start', background: '#f1f5f9', borderRadius: '12px', padding: '8px 12px', fontSize: '11px', color: '#475569' }}>
                                 Analizando datos...
                             </div>
                         )}
@@ -879,7 +879,8 @@ export default function FinanzasPage() {
                             onChange={e => setAgentInput(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && agentInput.trim() && sendToAgent(agentInput.trim())}
                             placeholder="Pregunta sobre tus finanzas..."
-                            style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '11px', outline: 'none' }}
+                            className="agent-input"
+                            style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '11px', outline: 'none', color: '#0f172a' }}
                         />
                         <button
                             onClick={() => agentInput.trim() && sendToAgent(agentInput.trim())}

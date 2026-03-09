@@ -6,79 +6,70 @@ import { langInstruction } from '@/lib/translation';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { productId, storeId, struct, framework, angle, sections, marketLang = 'ES' } = body;
+        const { productId, storeId, type, mode, linkedCreative, includeGift, sections, marketLang = 'ES' } = body;
 
-        if (!productId || !sections?.length) {
-            return NextResponse.json({ ok: false, error: 'productId and sections required' }, { status: 400 });
+        if (!productId) {
+            return NextResponse.json({ ok: false, error: 'productId is required' }, { status: 400 });
         }
 
-        // Load product context
-        const product = await (prisma as any).product.findUnique({
+        // 1. Context Acquisition
+        const product = await prisma.product.findUnique({
             where: { id: productId },
-            select: { title: true, niche: true, description: true, pvpEstimated: true }
+            include: { store: true }
         });
 
-        // Load the latest research
-        const research = await (prisma as any).researchStep.findFirst({
+        // Load research (Core Research Step P1)
+        const research = await prisma.researchStep.findFirst({
             where: { productId, stepKey: 'P1' },
-            select: { outputText: true },
             orderBy: { createdAt: 'desc' }
         });
 
+        // 2. Prepare AI Prompt
+        const prompt = `
+            Eres un Director Creativo & Copywriter Experto en CRO (Conversion Rate Optimization).
+            
+            PRODUCTO: ${product?.title}
+            OBJECTIVO: Crear una Landing Page de tipo "${type}" enfocada en conversión directa.
+            MODO: ${mode}
+            
+            RESEARCH CORE:
+            ${(research?.outputText || '').slice(0, 2000)}
+            
+            CONFIGURACIÓN:
+            - Vincular Creativo: ${linkedCreative ? `SÍ (Hook Activo: ${linkedCreative})` : 'NO'}
+            - Incluir Regalo: ${includeGift ? 'SÍ' : 'NO'}
+            
+            TAREA:
+            Genera el copy completo para las siguientes secciones: ${sections.join(', ')}.
+            
+            REGLAS CRÍTICAS:
+            1. MESSAGE MATCH: Si hay un creativo vinculado, el H1 de la landing DEBE ser idéntico al hook del creativo.
+            2. PSICOLOGÍA: Usa frameworks de respuesta directa (PAS o AIDA).
+            3. ESTRUCTURA: Responde con un objeto JSON donde cada llave es el ID de la sección y el valor es el copy generado.
+            
+            Responde ÚNICAMENTE en JSON con este formato:
+            {
+                "sections": [
+                    { "name": "HERO", "content": "..." },
+                    { "name": "PROBLEM", "content": "..." },
+                    ...
+                ]
+            }
+        `;
+
+        // 3. AI Dispatch (Using standard Gemini for now, could use AiRouter)
         const { GoogleGenerativeAI } = await import('@google/generative-ai');
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-        const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-2.0-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' }); // Using 1.5 Pro as per env availability or config
 
-        const langNote = langInstruction(marketLang);
-        const frameworkNotes: Record<string, string> = {
-            CASHVERTISING: 'Usa las 8 Life Force Drives de Cashvertising. Tono directo, emocional, urgente. Múltiples call-to-action.',
-            BREAKTHROUGH: 'Usa el framework de Breakthrough Advertising. Conecta con el estado de awareness del avatar. Construye deseo progresivamente.',
-            HORMOZI: 'Usa la Value Equation de Hormozi. Maximiza el sueño, minimiza esfuerzo y tiempo. Oferta irresistible.',
-        };
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim().replace(/```json\n?|\n?```/g, '');
+        const parsed = JSON.parse(text);
 
-        const generatedSections = await Promise.all(
-            sections.map(async (sectionName: string) => {
-                const prompt = `Eres un copywriter de élite especializado en ecommerce de alto rendimiento.
+        return NextResponse.json({ ok: true, sections: parsed.sections });
 
-Producto: ${product?.title ?? ''}
-Nicho: ${product?.niche ?? ''}
-PVP: ${product?.pvpEstimated ?? ''}€
-Descripción: ${product?.description ?? ''}
-Ángulo/Vector: ${angle || 'Mecanismo único del producto'}
-Estructura: ${struct}
-Framework: ${frameworkNotes[framework] ?? framework}
-Research disponible: ${(research?.outputText ?? '').slice(0, 1000)}
-
-Genera la sección: **${sectionName}**
-
-${frameworkNotes[framework]}
-
-Genera:
-1. content: el copy completo de la sección (persuasivo, en idioma del mercado)
-2. liquid: el código Liquid/HTML básico para Shopify (sencillo, funcional)
-
-Responde con JSON:
-{"content": "...", "liquid": "<section>...</section>"}
-${langNote}`;
-
-                try {
-                    const result = await model.generateContent(prompt);
-                    const text = result.response.text().trim().replace(/```json\n?|\n?```/g, '');
-                    const parsed = JSON.parse(text);
-                    return {
-                        name: sectionName,
-                        content: parsed.content ?? '',
-                        liquid: parsed.liquid ?? '',
-                        lang: marketLang,
-                    };
-                } catch {
-                    return { name: sectionName, content: `[Error generando ${sectionName}]`, lang: marketLang };
-                }
-            })
-        );
-
-        return NextResponse.json({ ok: true, sections: generatedSections });
     } catch (e: any) {
+        console.error('[LandingBuilder] Error:', e);
         return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
     }
 }

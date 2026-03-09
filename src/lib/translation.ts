@@ -70,7 +70,7 @@ export async function translateToEs(
             process.env.GEMINI_API_KEY || process.env.VERTEX_AI_API_KEY || ''
         );
         const model = genAI.getGenerativeModel({
-            model: process.env.GEMINI_MODEL_FAST || 'gemini-2.0-flash',
+            model: process.env.GEMINI_MODEL_FAST || 'gemini-3-flash-preview',
         });
 
         const contextHint = context ? ` Este es contenido de tipo: ${context}.` : '';

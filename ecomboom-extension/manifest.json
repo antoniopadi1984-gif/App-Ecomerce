@@ -1,23 +1,36 @@
 {
     "manifest_version": 3,
-    "name": "EcomBoom Spy",
+    "name": "EcomBoom Intelligence",
     "version": "1.0",
+    "description": "Capture, analyze and replicate competitor creatives with one click.",
     "permissions": [
         "activeTab",
-        "storage",
         "scripting",
-        "downloads"
+        "storage",
+        "downloads",
+        "contextMenus",
+        "notifications",
+        "identity",
+        "offscreen",
+        "tabs"
     ],
     "host_permissions": [
-        "https://www.facebook.com/*",
-        "https://library.tiktok.com/*",
-        "https://*/*"
+        "<all_urls>"
     ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
+    },
     "action": {
-        "default_popup": "popup/popup.html"
+        "default_popup": "popup/popup.html",
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "48": "icons/icon48.png",
+            "128": "icons/icon128.png"
+        }
     },
     "background": {
-        "service_worker": "background/service-worker.js"
+        "service_worker": "background/service-worker.js",
+        "type": "module"
     },
     "content_scripts": [
         {
@@ -25,15 +38,46 @@
                 "https://www.facebook.com/ads/library/*"
             ],
             "js": [
-                "content/meta-extractor.js"
-            ]
+                "content-scripts/meta-library.js"
+            ],
+            "run_at": "document_idle"
         },
         {
             "matches": [
-                "https://library.tiktok.com/*"
+                "https://www.tiktok.com/*"
             ],
             "js": [
-                "content/tiktok-extractor.js"
+                "content-scripts/tiktok-scraper.js"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "matches": [
+                "https://www.youtube.com/*"
+            ],
+            "js": [
+                "content-scripts/youtube-scraper.js"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content-scripts/universal-scraper.js",
+                "content-scripts/landing-cloner.js"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "icons/*.png"
+            ],
+            "matches": [
+                "<all_urls>"
             ]
         }
     ]

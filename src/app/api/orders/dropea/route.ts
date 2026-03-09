@@ -1,24 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { DropeaClient } from '@/lib/dropea';
+import { getConnectionSecret } from '@/lib/server/connections';
+import { syncDropeaOrders } from '@/lib/handlers/dropea-sync';
 
-/**
- * Placeholder endpoint para listar pedidos de Dropea.
- * Pendiente de documentación de la API oficial.
- */
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
     try {
-        return NextResponse.json({ success: true, message: 'Endpoint de Dropea preparado (esperando doc oficial)' });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: 'Error al conectar con Dropea' }, { status: 500 });
+        const body = await req.json();
+        const { storeId, syncDays } = body;
+
+        if (!storeId) {
+            return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
+        }
+
+        const result = await syncDropeaOrders(storeId, syncDays || 30);
+        return NextResponse.json(result);
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
 
-/**
- * Placeholder endpoint para actualizar pedidos de Dropea.
- */
-export async function PUT(req: NextRequest) {
+export async function GET(req: NextRequest) {
+    const { searchParams } = new URL(req.url);
+    const storeId = searchParams.get('storeId');
+
+    if (!storeId) {
+        return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
+    }
+
+    const apiKey = await getConnectionSecret(storeId, "DROPEA");
+    if (!apiKey) return NextResponse.json({ error: "Dropea no configurado" }, { status: 400 });
+
+    const client = new DropeaClient(apiKey);
+
     try {
-        return NextResponse.json({ success: true, message: 'Acciones de Dropea preparadas (esperando doc oficial)' });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: 'Error al ejecutar acción en Dropea' }, { status: 500 });
+        const data = await client.getOrders({
+            page: parseInt(searchParams.get('page') || '1'),
+            per_page: parseInt(searchParams.get('per_page') || '50')
+        });
+        return NextResponse.json({ success: true, orders: data.data || data });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

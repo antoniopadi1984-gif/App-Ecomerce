@@ -82,3 +82,58 @@ export async function calculateOrderProfit(orderId: string): Promise<ProfitBreak
         status: isReal ? 'REAL' : 'ESTIMATED'
     };
 }
+
+/**
+ * 10.4 Fórmulas Financieras — CANÓNICAS
+ */
+export const FinanceFormulas = {
+    /**
+     * costeReal = unitCost + shippingCost + returnCost * expectedReturnRate + handlingCost + codFee
+     */
+    calculateCosteReal: (params: {
+        unitCost: number,
+        shippingCost: number,
+        returnCost: number,
+        returnRate: number,
+        handlingCost: number,
+        codFee: number
+    }) => {
+        return params.unitCost + params.shippingCost + (params.returnCost * params.returnRate) + params.handlingCost + params.codFee;
+    },
+
+    /**
+     * beneficioNeto = (pvp * deliveryRate) - costeReal * deliveryRate
+     */
+    calculateBeneficioNeto: (pvp: number, deliveryRate: number, costeReal: number) => {
+        return (pvp * deliveryRate) - (costeReal * deliveryRate);
+    },
+
+    /**
+     * ROAS_BR = pvp / (pvp - beneficioNeto)
+     */
+    calculateROAS_BR: (pvp: number, benefit: number) => {
+        const cost = pvp - benefit;
+        return cost > 0 ? pvp / cost : 0;
+    },
+
+    /**
+     * CPA_Max = beneficioNeto / deliveryRate
+     */
+    calculateCPAMax: (benefit: number, deliveryRate: number) => {
+        return deliveryRate > 0 ? benefit / deliveryRate : 0;
+    },
+
+    /**
+     * CPC_Max = CPA_Max * CVR_esperado
+     */
+    calculateCPCMax: (cpaMax: number, expectedCVR: number) => {
+        return cpaMax * expectedCVR;
+    },
+
+    /**
+     * margen% = (beneficioNeto / pvp) * 100
+     */
+    calculateMarginPercent: (benefit: number, pvp: number) => {
+        return pvp > 0 ? (benefit / pvp) * 100 : 0;
+    }
+};

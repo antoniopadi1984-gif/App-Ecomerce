@@ -15,7 +15,13 @@ export enum TaskType {
     SCRIPTS_ADVANCED = "SCRIPTS_ADVANCED",
     CRO_AUDIT = "CRO_AUDIT",
     RESEARCH_FORENSIC = "RESEARCH_FORENSIC",
-    VIDEO_DISSECTION = "VIDEO_DISSECTION"
+    VIDEO_DISSECTION = "VIDEO_DISSECTION",
+    DIRECTOR_STRATEGY = "DIRECTOR_STRATEGY",
+    CREATIVE_CONCEPTS = "CREATIVE_CONCEPTS",
+    ASSETS_CURATOR = "ASSETS_CURATOR",
+    COMPETITOR_SPY = "COMPETITOR_SPY",
+    PERFORMANCE_ADS = "PERFORMANCE_ADS",
+    MEDIA_CLEANING = "MEDIA_CLEANING"
 }
 
 export interface TextOptions {
@@ -30,8 +36,32 @@ export interface TextOptions {
 export interface VisionOptions {
     model: string;
     prompt: string;
-    images: string[]; // Base64 or URLs
+    images?: string[]; // Base64 or URLs
+    video?: string;   // Base64
+    videoMimeType?: string;
     temperature?: number;
+}
+
+export interface ImageOptions {
+    model: string;
+    prompt: string;
+    aspectRatio?: "16:9" | "9:16" | "1:1";
+    negativePrompt?: string;
+    numImages?: number;
+}
+
+export interface VideoOptions {
+    model: string;
+    prompt: string;
+    duration?: string; // e.g. "10s"
+    aspectRatio?: "16:9" | "9:16" | "1:1";
+    fps?: number;
+}
+
+export interface MusicOptions {
+    model: string;
+    prompt: string;
+    duration?: number; // seconds
 }
 
 export interface AIResponse {
@@ -51,5 +81,7 @@ export interface AIProvider {
     getModels(): Promise<string[]>;
     invokeText(options: TextOptions): Promise<AIResponse>;
     invokeVision(options: VisionOptions): Promise<AIResponse>;
-    // invokeImage/invokeVideo can be added as needed or throws 501
+    invokeImage(options: ImageOptions): Promise<AIResponse>;
+    invokeVideo(options: VideoOptions): Promise<AIResponse>;
+    invokeMusic(options: MusicOptions): Promise<AIResponse>;
 }

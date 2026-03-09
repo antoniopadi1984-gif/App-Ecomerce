@@ -3,7 +3,6 @@
 import React from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { Microscope } from 'lucide-react';
-import { AgentCompanion } from '@/components/layout/agent-companion';
 import { useProduct } from '@/context/ProductContext';
 
 import { AddProductDialog } from '@/components/products/AddProductDialog';
@@ -71,7 +70,6 @@ export default function InvestigacionLayout({ children }: { children: React.Reac
                 </div>
             )}
 
-            <AgentCompanion pageContext={contextForAgent} agentRole="research-lab" />
 
             {showCreateModal && <AddProductDialog showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} />}
         </div>

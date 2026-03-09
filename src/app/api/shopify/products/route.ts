@@ -1,106 +1,113 @@
-/**
- * GET /api/shopify/products?storeId=X
- *
- * Fetches products from the Shopify store linked to storeId,
- * and enriches each with an ecomBoomId if there's a matching
- * EcomBoom product (linked via shopifyId field or handle).
- *
- * Returns a simplified list ready for the topbar selector.
- */
-
-export const dynamic = "force-dynamic";
-
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { ShopifyClient } from "@/lib/shopify";
-
-export interface ShopifyProductItem {
-    id: string;           // Shopify product ID (string)
-    title: string;
-    handle: string;
-    image: string | null; // First image src or null
-    variants: { price: string }[];
-    status: string;
-    ecomBoomId: string | null; // EcomBoom product ID if linked
-}
+import { NextRequest, NextResponse } from 'next/server';
+import { ShopifyClient } from '@/lib/shopify';
+import { getConnectionSecret, getConnectionMeta } from '@/lib/server/connections';
+import { syncProductsToDb } from '@/lib/handlers/shopify-sync';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const storeId = searchParams.get("storeId");
-
-    if (!storeId) {
-        return NextResponse.json({ error: "storeId requerido" }, { status: 400 });
-    }
-
     try {
-        // 1. Get the Shopify connection for this store
-        //    Pattern used by rest of app: provider="shopify", domain in extraConfig, token in apiKey/accessToken
-        const shopifyConn = await prisma.connection.findFirst({
-            where: {
-                storeId,
-                provider: "shopify",
-                isActive: true,
-            },
-            select: {
-                extraConfig: true, // Shopify domain (myshopify.com URL)
-                apiKey: true,      // Access token (legacy field used across app)
-                accessToken: true, // Fallback
-            },
-        });
+        const { searchParams } = new URL(req.url);
+        const storeId = searchParams.get('storeId') || req.headers.get('X-Store-Id');
 
-        if (!shopifyConn?.extraConfig || !(shopifyConn.apiKey || shopifyConn.accessToken)) {
-            // Store not connected to Shopify — return empty list gracefully
-            return NextResponse.json({ products: [], connected: false });
+        if (!storeId) {
+            return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
         }
 
-        const shopifyDomain = shopifyConn.extraConfig;
-        const shopifyToken = shopifyConn.apiKey || shopifyConn.accessToken!;
+        const secret = await getConnectionSecret(storeId, 'SHOPIFY');
+        const meta = await getConnectionMeta(storeId, 'SHOPIFY');
 
-        // 2. Fetch products from Shopify
-        const client = new ShopifyClient(shopifyDomain, shopifyToken);
-        const shopifyData = await client.getProducts();
-        const rawProducts: any[] = shopifyData?.products || [];
+        if (!secret) return NextResponse.json({ connected: false, products: [] });
 
-        // 3. Get all EcomBoom products for this store to cross-reference
+        let shop = meta?.extraConfig?.SHOPIFY_SHOP_DOMAIN || meta?.extraConfig?.Tienda;
+        if (!shop) {
+            const store = await (prisma as any).store.findUnique({ where: { id: storeId } });
+            shop = store?.domain;
+        }
+
+        if (!shop) return NextResponse.json({ connected: false, products: [] });
+
+        const client = new ShopifyClient(shop, secret);
+        const data: any = await client.getProductsDetailed(50); // Fetch first 50 for the selector
+
+        // Get info about synced products in EcomBoom
         const ecomProducts = await prisma.product.findMany({
             where: { storeId },
-            select: { id: true, handle: true, shopifyId: true },
+            select: { id: true, sku: true }
         });
+        const skuToId = new Map(ecomProducts.map(p => [p.sku, p.id]));
 
-        const handleMap = new Map(
-            ecomProducts.filter((p) => p.handle).map((p) => [p.handle!, p.id])
-        );
-        const shopifyIdMap = new Map(
-            ecomProducts
-                .filter((p) => p.shopifyId)
-                .map((p) => [String(p.shopifyId), p.id])
-        );
+        const products = (data.products || []).map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            handle: p.handle,
+            image: p.featuredImage?.url || null,
+            variants: p.variants || [],
+            status: p.status,
+            ecomBoomId: skuToId.get(p.variants?.[0]?.sku) || null
+        }));
 
-        // 4. Build enriched list
-        const products: ShopifyProductItem[] = rawProducts.map((p: any) => {
-            const shopifyId = String(p.id);
-            const ecomBoomId =
-                shopifyIdMap.get(shopifyId) ||
-                handleMap.get(p.handle) ||
-                null;
-
-            return {
-                id: shopifyId,
-                title: p.title,
-                handle: p.handle,
-                image: p.images?.[0]?.src || null,
-                variants: (p.variants || []).map((v: any) => ({ price: v.price })),
-                status: p.status,
-                ecomBoomId,
-            };
+        return NextResponse.json({
+            success: true,
+            connected: true,
+            products
         });
+    } catch (e: any) {
+        console.error("🛑 [Shopify Products GET Error]", e);
+        return NextResponse.json({ error: e.message, connected: false }, { status: 500 });
+    }
+}
 
-        return NextResponse.json({ products, connected: true });
-    } catch (error: any) {
-        console.error("[API /shopify/products] Error:", error);
-        return NextResponse.json(
-            { error: "Error al cargar productos de Shopify", detail: error.message },
-            { status: 500 }
-        );
+export async function POST(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { storeId } = body;
+
+        if (!storeId) {
+            return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
+        }
+
+        const secret = await getConnectionSecret(storeId, 'SHOPIFY');
+        const meta = await getConnectionMeta(storeId, 'SHOPIFY');
+
+        let shop = meta?.extraConfig?.SHOPIFY_SHOP_DOMAIN || meta?.extraConfig?.Tienda;
+
+        if (!shop) {
+            const store = await (prisma as any).store.findUnique({ where: { id: storeId } });
+            shop = store?.domain;
+        }
+
+        if (!secret || !shop) {
+            return NextResponse.json({ error: "Shopify connection or domain not found" }, { status: 400 });
+        }
+
+        const client = new ShopifyClient(shop, secret);
+        let allProducts: any[] = [];
+        let cursor: string | undefined = undefined;
+        let hasMore = true;
+        let pagesCount = 0;
+
+        while (hasMore && pagesCount < 20) {
+            const data: any = await client.getProductsDetailed(50, cursor);
+
+            if (data.products && data.products.length > 0) {
+                allProducts = allProducts.concat(data.products);
+            }
+
+            cursor = data.pageInfo.endCursor;
+            hasMore = data.pageInfo.hasNextPage;
+            pagesCount++;
+        }
+
+        const synced = await syncProductsToDb(storeId, allProducts);
+
+        return NextResponse.json({
+            success: true,
+            synced,
+            total: allProducts.length,
+            pages: pagesCount
+        });
+    } catch (e: any) {
+        console.error("🛑 [Shopify Products Sync API Error]", e);
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

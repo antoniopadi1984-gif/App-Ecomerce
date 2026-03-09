@@ -108,7 +108,7 @@ export class InboxProcessor {
                     continue; // Skip moving
                 }
 
-                // Step 3 & 4: Renombrar y mover (Spencer Pawlin Style)
+                // Step 3 & 4: Renombrar y mover (IA Pro Style)
                 console.log(`[InboxProcessor] Moviendo a: ${analysis.recommendedPath}/${analysis.newName}`);
 
                 // Real Drive API call to move and rename would go here:
@@ -145,7 +145,7 @@ export class InboxProcessor {
      */
     private async mockAnalyzeFile(fileName: string, type: string, sku: string): Promise<FileAnalysis> {
         // En código real, lanzaríamos al AiRouter.dispatch('GEMINI_PRO', TaskType.VISION_ANALYSIS, buff, ...)
-        // Simulando el super-agente con conocimiento de Spencer Pawling, Hormozi, Schwartz y Cashvertising
+        // Simulando el super-agente con conocimiento de IA Prog, Hormozi, Schwartz y Cashvertising
 
         const nomenclatura = `${sku}_TOF_UGC_AV01_ANG02_HOOK1_v1.mp4`;
         const carpetaDestino = '04_PRODUCCION/TOF/UGC';
@@ -161,7 +161,7 @@ export class InboxProcessor {
                 trafico: 'Cold Traffic',
                 hookDetectado: 'Hook1 - Curiosidad / Shock',
                 emocion: 'Sorpresa iterativa',
-                framework: 'Spencer Pawling Hook-First',
+                framework: 'IA Prog Hook-First',
                 anguloDetectado: 'Ahorro de Tiempo Exponencial',
                 avatarDetectado: 'Mamá Ocupada (Life-Force 8: Care for loved ones)',
                 porQueVende: [

@@ -3,7 +3,6 @@
 import React from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { LayoutDashboard } from 'lucide-react';
-import { AgentCompanion } from '@/components/layout/agent-companion';
 
 export default function MandoLayout({ children }: { children: React.ReactNode }) {
     const { activeStoreId } = useStore();
@@ -35,8 +34,6 @@ export default function MandoLayout({ children }: { children: React.ReactNode })
                     {children}
                 </div>
             )}
-
-            <AgentCompanion pageContext={contextForAgent} agentRole="mando" />
         </div>
     );
 }

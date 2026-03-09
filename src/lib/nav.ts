@@ -18,7 +18,7 @@ export const navigation = [
         color: '#0EA5E9',
         colorMuted: 'rgba(14,165,233,0.12)',
         href: '/crm-forense',
-        children: [] // tabs internos, no submenús sidebar
+        children: []
     },
     {
         id: 'operaciones',
@@ -59,28 +59,27 @@ export const navigation = [
         emoji: '🎨',
         color: '#F59E0B',
         colorMuted: 'rgba(245,158,11,0.12)',
-        href: '/creativo/video-lab',
+        href: '/centro-creativo/estudio',
         children: [
-            { label: 'Video Lab', emoji: '🎥', href: '/creativo/video-lab' },
-            { label: 'Static Ads', emoji: '🖼️', href: '/creativo/static-ads' },
-            { label: 'Landing Builder', emoji: '🏗️', href: '/creativo/landing-builder' },
-            { label: 'Avatares IA', emoji: '🤖', href: '/creativo/avatares' },
-            { label: 'Biblioteca', emoji: '📚', href: '/creativo/biblioteca' },
+            { label: 'Laboratorio IA', emoji: '🎬', href: '/centro-creativo/estudio' },
+            { label: 'Diseño y Conversión', emoji: '🎯', href: '/centro-creativo/diseno' },
+            { label: 'Avatares y Voces', emoji: '🤖', href: '/centro-creativo/avatares' },
+            { label: 'Biblioteca IA', emoji: '📚', href: '/centro-creativo/biblioteca' },
+            { label: 'Rendimiento Creativo', emoji: '📈', href: '/centro-creativo/rendimiento' },
         ]
     },
     {
         id: 'marketing',
-        label: 'Marketing',
+        label: 'Marketing & Ads',
         emoji: '📡',
         color: '#EF4444',
         colorMuted: 'rgba(239,68,68,0.12)',
-        href: '/marketing/facebook-ads',
+        href: '/marketing/ads',
         children: [
-            { label: 'Facebook Ads', emoji: '📘', href: '/marketing/facebook-ads' },
-            { label: 'Performance', emoji: '📈', href: '/marketing/performance' },
+            { label: 'Ads & Rendimiento', emoji: '📊', href: '/marketing/ads' },
             { label: 'Moderación', emoji: '🛡️', href: '/marketing/moderacion' },
-            { label: 'Ad Spy', emoji: '👁️', href: '/marketing/ad-spy' },
+            { label: 'Ad Spy (Extensión)', emoji: '👁️', href: '/marketing/ad-spy' },
             { label: 'MVP Wizard', emoji: '🚀', href: '/marketing/mvp-wizard' },
         ]
     },
-]
+];

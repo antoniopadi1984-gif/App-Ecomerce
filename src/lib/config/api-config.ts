@@ -9,20 +9,20 @@ export const API_CONFIG = {
     // ============================================
     vertexAI: {
         projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',
-        location: process.env.GOOGLE_CLOUD_LOCATION || 'eu',
+        location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
         apiKey: process.env.VERTEX_AI_API_KEY || '',
 
         models: {
             // Gemini - Text Generation
             gemini: {
-                production: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-2.0-flash-exp',
-                fast: process.env.GEMINI_MODEL_FAST || 'gemini-2.0-flash-exp',
+                production: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-3.1-pro-preview',
+                fast: process.env.GEMINI_MODEL_FAST || 'gemini-3-flash-preview',
                 endpoint: 'v1'
             },
 
-            // Imagen 3 - Image Generation
+            // Image Generation
             imagen: {
-                model: process.env.IMAGEN_MODEL || 'imagen-3.0-generate-001',
+                model: process.env.IMAGEN_MODEL || 'gemini-3.1-flash-image',
                 endpoint: 'v1'
             }
         },
@@ -57,7 +57,7 @@ export const API_CONFIG = {
     elevenLabs: {
         apiKey: process.env.ELEVENLABS_API_KEY || '',
         endpoint: 'https://api.elevenlabs.io/v1',
-        model: process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2',
+        model: process.env.ELEVENLABS_MODEL || 'eleven_v3',
 
         voices: {
             male: process.env.ELEVENLABS_VOICE_MALE || 'pNInz6obpgDQGcFmaJgB',

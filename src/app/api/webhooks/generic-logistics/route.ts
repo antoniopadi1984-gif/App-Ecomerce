@@ -23,14 +23,15 @@ export async function POST(req: NextRequest) {
 
         if (!externalId) return NextResponse.json({ success: false, message: "No ID found" });
 
-        // Search by ShopifyId (if mapped) or matching external implementation if we stored it
-        // For now, assuming they send back the Shopify Order ID or we search by matching tracking
-        const order = await prisma.order.findFirst({
+        // Search by shopifyId, orderNumber or trackingCode
+        const order = await (prisma as any).order.findFirst({
             where: {
                 OR: [
                     { shopifyId: externalId.toString() },
-                    { trackingCode: payload.tracking_number }
-                ]
+                    { orderNumber: externalId.toString() },
+                    { trackingCode: payload.tracking_number || payload.tracking_code }
+                ],
+                logisticsProvider: provider
             }
         });
 
@@ -40,12 +41,14 @@ export async function POST(req: NextRequest) {
         if (provider === 'DROPEA') mappedStatus = DropeaClient.mapStatus(statusRaw);
         if (provider === 'DROPPI') mappedStatus = DroppiClient.mapStatus(statusRaw);
 
-        await prisma.order.update({
+        await (prisma as any).order.update({
             where: { id: order.id },
             data: {
-                logisticsStatus: mappedStatus,
-                ...(payload.tracking_number ? { trackingCode: payload.tracking_number } : {}),
+                logisticsStatus: statusRaw, // Keep raw for reference
+                status: mappedStatus,
+                ...(payload.tracking_number || payload.tracking_code ? { trackingCode: payload.tracking_number || payload.tracking_code } : {}),
                 ...(payload.tracking_url ? { trackingUrl: payload.tracking_url } : {}),
+                ...(payload.carrier || payload.courier ? { carrier: payload.carrier || payload.courier } : {}),
                 ...(mappedStatus === 'DELIVERED' ? { deliveredAt: new Date() } : {}),
                 ...(mappedStatus === 'RETURNED' ? { returnedAt: new Date() } : {})
             }
@@ -53,10 +56,9 @@ export async function POST(req: NextRequest) {
 
         await recordOrderEvent({
             orderId: order.id,
-            source: provider as "DROPPI", // Type assertion is safe due to check above
-            type: 'WEBHOOK_UPDATE',
-            externalEventId: `hook-${Date.now()}`,
-            description: `Actualización ${provider}: ${mappedStatus}`,
+            source: provider as any,
+            type: 'LOGISTICS_UPDATE',
+            description: `Actualización ${provider}: ${mappedStatus} (${statusRaw})`,
             payload: payload
         });
 

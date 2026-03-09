@@ -1,214 +1,280 @@
+const API_VERSION = '2026-01';
+
 export class ShopifyClient {
-    private shop: string;
-    private accessToken: string;
+  private shop: string;
+  private accessToken: string;
 
-    constructor(shop: string, accessToken: string) {
-        this.shop = shop.includes(".myshopify.com") ? shop : `${shop}.myshopify.com`;
-        this.accessToken = accessToken;
+  constructor(shop: string, accessToken: string) {
+    this.shop = shop.includes(".myshopify.com") ? shop : `${shop}.myshopify.com`;
+    this.accessToken = accessToken;
+  }
+
+  /**
+   * GraphQL Request (Primary for 2026-01)
+   */
+  async graphql(query: string, variables: any = {}) {
+    const response = await fetch(`https://${this.shop}/admin/api/${API_VERSION}/graphql.json`, {
+      method: "POST",
+      headers: {
+        "X-Shopify-Access-Token": this.accessToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Shopify GraphQL Error: ${error}`);
     }
 
-    private async fetchShopify(endpoint: string, options: RequestInit = {}) {
-        const response = await fetch(`https://${this.shop}/admin/api/2024-01/${endpoint}`, {
-            ...options,
-            headers: {
-                "X-Shopify-Access-Token": this.accessToken,
-                "Content-Type": "application/json",
-                ...options.headers,
-            },
-        });
+    const data = await response.json();
+    if (data.errors) {
+      console.error('🛑 [Shopify GraphQL Errors]', data.errors);
+      throw new Error(`Shopify GraphQL Error: ${JSON.stringify(data.errors)}`);
+    }
+    return data.data;
+  }
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`Shopify API Error: ${JSON.stringify(error)}`);
-        }
+  /**
+   * REST Request (Only for webhooks/legacy tasks)
+   */
+  async rest(endpoint: string, options: RequestInit = {}) {
+    const response = await fetch(`https://${this.shop}/admin/api/${API_VERSION}/${endpoint}`, {
+      ...options,
+      headers: {
+        "X-Shopify-Access-Token": this.accessToken,
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
 
-        return response.json();
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Shopify REST Error: ${JSON.stringify(error)}`);
     }
 
-    async getOrders(limit = 250, pageInfo?: string) {
-        let endpoint = `orders.json?status=any&limit=${limit}`;
-        if (pageInfo) {
-            // Shopify pagination uses page_info exclusively if present
-            endpoint = `orders.json?limit=${limit}&page_info=${pageInfo}`;
-        }
+    return response.json();
+  }
 
-        const response = await fetch(`https://${this.shop}/admin/api/2024-01/${endpoint}`, {
-            headers: {
-                "X-Shopify-Access-Token": this.accessToken,
-                "Content-Type": "application/json",
-            },
-        });
+  // ─── PRODUCT & CATALOG ─────────────────────────────────────
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`Shopify API Error: ${JSON.stringify(error)}`);
-        }
-
-        const data = await response.json();
-        const linkHeader = response.headers.get("Link");
-
-        return {
-            orders: data.orders,
-            nextPage: this.extractNextPageToken(linkHeader)
-        };
-    }
-
-    async getAllAbandonedCheckouts(onBatch?: (checkouts: any[]) => void) {
-        let pageInfo = null;
-        let allCheckouts: any[] = [];
-
-        do {
-            let endpoint = pageInfo
-                ? `abandoned_checkouts.json?limit=250&page_info=${pageInfo}`
-                : `abandoned_checkouts.json?limit=250`;
-
-            const response = await fetch(`https://${this.shop}/admin/api/2024-01/${endpoint}`, {
-                headers: {
-                    "X-Shopify-Access-Token": this.accessToken,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) break;
-
-            const data = await response.json();
-            const checkouts = data.checkouts || [];
-            if (onBatch) await onBatch(checkouts);
-            allCheckouts = [...allCheckouts, ...checkouts];
-
-            const linkHeader = response.headers.get("Link");
-            pageInfo = this.extractNextPageToken(linkHeader);
-        } while (pageInfo);
-
-        return allCheckouts;
-    }
-
-    async getAllDraftOrders(onBatch?: (drafts: any[]) => void) {
-        let pageInfo = null;
-        let allDrafts: any[] = [];
-
-        do {
-            let endpoint = pageInfo
-                ? `draft_orders.json?limit=250&page_info=${pageInfo}`
-                : `draft_orders.json?limit=250`;
-
-            const response = await fetch(`https://${this.shop}/admin/api/2024-01/${endpoint}`, {
-                headers: {
-                    "X-Shopify-Access-Token": this.accessToken,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) break;
-
-            const data = await response.json();
-            const drafts = data.draft_orders || [];
-            if (onBatch) await onBatch(drafts);
-            allDrafts = [...allDrafts, ...drafts];
-
-            const linkHeader = response.headers.get("Link");
-            pageInfo = this.extractNextPageToken(linkHeader);
-        } while (pageInfo);
-
-        return allDrafts;
-    }
-
-    private extractNextPageToken(linkHeader: string | null) {
-        if (!linkHeader) return null;
-        const nextLink = linkHeader.split(",").find(l => l.includes('rel="next"'));
-        if (!nextLink) return null;
-        const urlMatch = nextLink.match(/<(.*)>/);
-        if (!urlMatch) return null;
-        const url = new URL(urlMatch[1]);
-        return url.searchParams.get("page_info");
-    }
-
-    async getAllOrders(onBatch?: (orders: any[]) => void, options: { minDate?: string, maxDate?: string } = {}) {
-        let pageInfo = null;
-        let allOrders: any[] = [];
-
-        do {
-            let endpoint = "";
-            if (pageInfo) {
-                endpoint = `orders.json?limit=250&page_info=${pageInfo}`;
-            } else {
-                endpoint = `orders.json?status=any&limit=250`;
-                if (options.minDate) endpoint += `&created_at_min=${options.minDate}`;
-                if (options.maxDate) endpoint += `&created_at_max=${options.maxDate}`;
+  /**
+   * EXTRAER PRODUCTO DESDE URL (URL-to-Everything)
+   */
+  async getProductByHandle(handle: string) {
+    const query = `
+          query GetProduct($handle: String!) {
+            productByHandle(handle: $handle) {
+              id
+              title
+              description
+              descriptionHtml
+              priceRangeV2 { minVariantPrice { amount currencyCode } }
+              images(first: 10) { nodes { url altText width height } }
+              variants(first: 20) {
+                nodes { id title price { amount } inventoryQuantity }
+              }
+              metafields(first: 10, namespace: "custom") {
+                nodes { key value type }
+              }
             }
+          }
+        `;
+    return this.graphql(query, { handle });
+  }
 
-            const response = await fetch(`https://${this.shop}/admin/api/2024-01/${endpoint}`, {
-                headers: {
-                    "X-Shopify-Access-Token": this.accessToken,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) {
-                const err = await response.text();
-                console.error(`Shopify Fetch Error (${endpoint}):`, err);
-                break;
+  /**
+   * LEER CATÁLOGO DE PRODUCTOS (selector de tienda)
+   */
+  async getCatalog(first: number = 50, after?: string) {
+    const query = `
+          query GetProducts($first: Int!, $after: String) {
+            products(first: $first, after: $after) {
+              nodes { id title handle status images(first: 1) { nodes { url } } }
+              pageInfo { hasNextPage endCursor }
             }
+          }
+        `;
+    return this.graphql(query, { first, after });
+  }
 
-            const data = await response.json();
-            const orders = data.orders || [];
+  /**
+   * STOCK REAL (Urgencia legítima)
+   */
+  async getInventory(variantId: string) {
+    const query = `
+          query GetVariantInventory($variantId: ID!) {
+            productVariant(id: $variantId) {
+                inventoryQuantity
+                inventoryItem { tracked }
+            }
+          }
+        `;
+    return this.graphql(query, { variantId });
+  }
 
-            if (onBatch) await onBatch(orders);
-            allOrders = [...allOrders, ...orders];
+  // ─── LANDINGS ──────────────────────────────────────────────
 
-            const linkHeader = response.headers.get("Link");
-            pageInfo = this.extractNextPageToken(linkHeader);
+  /**
+   * PUBLICAR LANDING EN SHOPIFY
+   */
+  async createPageInShopify(title: string, html: string, published: boolean = false) {
+    const query = `
+          mutation CreatePage($page: PageCreateInput!) {
+            pageCreate(page: $page) {
+              page { id handle title }
+              userErrors { field message }
+            }
+          }
+        `;
+    const variables = {
+      page: {
+        title,
+        bodyHtml: html,
+        published
+      }
+    };
+    return this.graphql(query, variables);
+  }
 
-            // Safety break for huge stores if needed, or logging
-            if (pageInfo) console.log(`[Shopify Sync] Next Page Token found, continuing...`);
+  // ─── WEBHOOKS & OPS ────────────────────────────────────────
 
-        } while (pageInfo);
+  /**
+   * SETUP WEBHOOKS (Oct 2024 Legacy REST persists for Webhooks)
+   */
+  async setupWebhooks(baseUrl: string) {
+    const topics = [
+      'orders/create',
+      'orders/updated',
+      'checkouts/create'
+    ];
 
-        return allOrders;
+    const results = [];
+    for (const topic of topics) {
+      const res = await this.rest('webhooks.json', {
+        method: "POST",
+        body: JSON.stringify({
+          webhook: {
+            topic,
+            address: `${baseUrl}/api/webhooks/shopify/${topic.replace('/', '_')}`,
+            format: "json",
+          },
+        }),
+      });
+      results.push(res);
     }
+    return results;
+  }
 
-    async getOrderDetails(orderId: string) {
-        return this.fetchShopify(`orders/${orderId}.json`);
-    }
+  async getOrderDetails(orderId: string) {
+    return this.rest(`orders/${orderId}.json`);
+  }
 
-    async getProducts() {
-        return this.fetchShopify("products.json");
-    }
+  async cancelOrder(orderId: string, reason: string = "customer") {
+    return this.rest(`orders/${orderId}/cancel.json`, {
+      method: "POST",
+      body: JSON.stringify({
+        reason: reason,
+        note: "Anulado desde el Centro de Operaciones"
+      }),
+    });
+  }
 
-    async cancelOrder(orderId: string, reason: string = "customer") {
-        return this.fetchShopify(`orders/${orderId}/cancel.json`, {
-            method: "POST",
-            body: JSON.stringify({
-                reason: reason,
-                note: "Anulado desde EcomBoom Control"
-            }),
-        });
-    }
-
-    async createWebhook(topic: string, address: string) {
-        return this.fetchShopify("webhooks.json", {
-            method: "POST",
-            body: JSON.stringify({
-                webhook: {
-                    topic,
-                    address,
-                    format: "json",
-                },
-            }),
-        });
-    }
-
-    async createPage(title: string, bodyHtml: string, handle: string, published: boolean = false) {
-        return this.fetchShopify("pages.json", {
-            method: "POST",
-            body: JSON.stringify({
-                page: {
-                    title,
-                    body_html: bodyHtml,
-                    handle,
-                    published
+  /**
+   * SYNC HISTÓRICO COMPLETO (GraphQL)
+   */
+  async getOrdersHistorical(options: { from?: string; cursor?: string; status?: string } = {}) {
+    const query = `
+          query GetHistoricalOrders($first: Int!, $after: String, $query: String) {
+            orders(first: $first, after: $after, query: $query) {
+              nodes {
+                id
+                name
+                createdAt
+                updatedAt
+                displayFulfillmentStatus
+                displayFinancialStatus
+                totalPriceSet { shopMoney { amount } }
+                customer { firstName lastName email phone }
+                shippingAddress { address1 address2 city province zip country }
+                tags
+                note
+                customAttributes { key value }
+                lineItems(first: 20) {
+                    nodes {
+                        title
+                        quantity
+                        variant { id sku price }
+                    }
                 }
-            })
-        });
-    }
+                fulfillments(first: 5) {
+                    trackingInfo { number url company }
+                }
+              }
+              pageInfo { hasNextPage endCursor }
+            }
+          }
+        `;
+
+    const filter = [];
+    if (options.from) filter.push(`created_at:>=${options.from}`);
+    if (options.status) filter.push(`status:${options.status}`);
+
+    const variables = {
+      first: 50,
+      after: options.cursor,
+      query: filter.length > 0 ? filter.join(' AND ') : undefined
+    };
+
+    const data = await this.graphql(query, variables);
+    return {
+      orders: data.orders.nodes,
+      pageInfo: data.orders.pageInfo
+    };
+  }
+
+  /**
+   * CATÁLOGO PRODUCTOS DETALLADO
+   */
+  async getProductsDetailed(first: number = 50, after?: string) {
+    const query = `
+          query GetDetailedProducts($first: Int!, $after: String) {
+            products(first: $first, after: $after) {
+              nodes {
+                id
+                title
+                handle
+                status
+                productType
+                vendor
+                tags
+                createdAt
+                updatedAt
+                images(first: 1) { nodes { url } }
+                variants(first: 20) {
+                  nodes {
+                    id
+                    sku
+                    price
+                    inventoryQuantity
+                  }
+                }
+              }
+              pageInfo { hasNextPage endCursor }
+            }
+          }
+        `;
+    const data = await this.graphql(query, { first, after });
+    return {
+      products: data.products.nodes,
+      pageInfo: data.products.pageInfo
+    };
+  }
+
+  /**
+   * REST GET PRODUCTS (For legacy sync patterns)
+   */
+  async getProducts() {
+    return this.rest('products.json');
+  }
 }

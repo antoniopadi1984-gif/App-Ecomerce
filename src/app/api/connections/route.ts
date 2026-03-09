@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStoreConnections, getStoreConnectionsWithSecrets } from "@/lib/server/connections";
+import { getStoreConnections, saveConnectionSecret } from "@/lib/server/connections";
 import { prisma } from "@/lib/prisma";
+import { encryptSecret, decryptSecret } from "@/lib/server/crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -119,5 +120,64 @@ export async function GET(request: NextRequest) {
     } catch (error: any) {
         console.error("[API CONNECTIONS FATAL]", error);
         return NextResponse.json({ error: "Server Hang/Error" }, { status: 500 });
+    }
+}
+
+/**
+ * POST /api/connections
+ * Crea o actualiza una conexión.
+ */
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { storeId, provider, secret, extraConfig } = body;
+
+        if (!storeId || !provider || !secret) {
+            return NextResponse.json({ error: "Missing storeId, provider or secret" }, { status: 400 });
+        }
+
+        const conn = await saveConnectionSecret({
+            storeId,
+            provider: provider.toUpperCase(),
+            secret,
+            extraConfig
+        });
+
+        return NextResponse.json({
+            success: true,
+            connection: {
+                id: conn.id,
+                provider: conn.provider,
+                isActive: conn.isActive
+            }
+        });
+    } catch (error: any) {
+        console.error("[POST /api/connections] Error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
+/**
+ * DELETE /api/connections
+ * Desactiva una conexión (isActive=false).
+ */
+export async function DELETE(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get("id");
+
+        if (!id) {
+            return NextResponse.json({ error: "Missing connection id" }, { status: 400 });
+        }
+
+        await prisma.connection.update({
+            where: { id },
+            data: { isActive: false }
+        });
+
+        return NextResponse.json({ success: true, message: "Conexión desactivada" });
+    } catch (error: any) {
+        console.error("[DELETE /api/connections] Error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

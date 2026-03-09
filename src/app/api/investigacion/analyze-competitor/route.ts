@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         try {
             const { GoogleGenerativeAI } = await import('@google/generative-ai');
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.VERTEX_AI_API_KEY || '');
-            const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL_FAST || 'gemini-2.0-flash' });
+            const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL_FAST || 'gemini-3-flash-preview' });
 
             const prompt = `Analiza esta landing page de un competidor de ecommerce y extrae:
 1. headline: titular principal de la página

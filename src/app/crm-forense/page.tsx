@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { Users, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { AgentCompanion } from '@/components/layout/agent-companion';
 import { ViewMode, getWeeklySummary, getQuarterlySummary, DayData, WeekSummary, QuarterSummary, generateRows, MonthData } from '@/lib/crmPeriods';
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
@@ -1175,9 +1174,6 @@ export default function CrmForensePage() {
 
                 </div>
             )}
-
-            {/* Agente Compañante Inyectado, pide perfil crm-forense si existiese */}
-            <AgentCompanion pageContext={contextForAgent} agentRole="crm-forense" />
         </div>
     );
 }

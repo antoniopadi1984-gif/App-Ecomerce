@@ -8,6 +8,7 @@ import { AgentRole } from "../agents/agent-registry";
 const TASK_TO_AGENT: Record<string, AgentRole> = {
     [TaskType.RESEARCH_DEEP]: 'research-lab',
     [TaskType.RESEARCH_FAST]: 'general',
+    [TaskType.VISION_PRODUCT]: 'research-lab',
     [TaskType.COPY_LONGFORM]: 'copywriter-elite',
     [TaskType.COPY_SHORT]: 'copywriter-elite',
     [TaskType.SCRIPT_VIDEO]: 'script-generator',
@@ -39,6 +40,9 @@ export class AiRouter {
         prompt: string,
         options: {
             images?: string[],
+            video?: string,
+            videoMimeType?: string,
+            model?: string,
             systemPrompt?: string,
             jsonSchema?: any,
             context?: string,
@@ -74,6 +78,9 @@ export class AiRouter {
                 role: agentRole,
                 prompt: prompt,
                 images: options.images,
+                video: options.video,
+                videoMimeType: options.videoMimeType,
+                model: options.model,
                 context: options.context || options.systemPrompt, // Legacy bridge
                 taskDescription: taskKey as string,
                 jsonSchema: !!options.jsonSchema,

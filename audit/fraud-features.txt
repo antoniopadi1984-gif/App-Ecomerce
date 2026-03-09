@@ -1,1 +1,0 @@
-src/lib/research/dry-run.ts:        const risks = ["estafa", "no funciona", "timo", "efectos secundarios", "peligroso", "denuncia", "fraude", "mentira"];

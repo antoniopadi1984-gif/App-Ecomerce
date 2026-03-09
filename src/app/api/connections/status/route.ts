@@ -5,15 +5,25 @@ import { hasActiveConnection } from "@/lib/server/connections";
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const storeId = searchParams.get("storeId");
-    const service = searchParams.get("service");
 
-    if (!storeId || !service) {
-        return NextResponse.json({ error: "Missing required params" }, { status: 400 });
+    if (!storeId) {
+        return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
     }
 
+    const providers = [
+        'BEEPING', 'DROPEA', 'DROPI', 'SHOPIFY', 'META',
+        'GOOGLE_CLOUD', 'ELEVENLABS', 'GEMINI', 'REPLICATE'
+    ];
+
     try {
-        const isConnected = await hasActiveConnection(storeId, service);
-        return NextResponse.json({ isConnected });
+        const results: Record<string, string> = {};
+
+        await Promise.all(providers.map(async (p) => {
+            const isConnected = await hasActiveConnection(storeId, p);
+            results[p] = isConnected ? "connected" : "missing";
+        }));
+
+        return NextResponse.json(results);
     } catch (error) {
         console.error("Connection Status API Error:", error);
         return NextResponse.json({ error: "Internal Error" }, { status: 500 });

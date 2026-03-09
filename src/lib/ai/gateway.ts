@@ -10,8 +10,9 @@
  */
 
 import { ReplicateProvider } from "./providers/replicate";
+import { GeminiProvider } from "./providers/gemini";
 import { REPLICATE_MODELS, DEFAULT_MODELS, Modality } from "./replicate-models";
-import { TaskType } from "./providers/interfaces";
+import { TaskType, AIResponse } from "./providers/interfaces";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -48,7 +49,7 @@ export interface ClassifyResult {
 
 export interface GatewayResponse {
     text: string;
-    provider: "REPLICATE";
+    provider: "REPLICATE" | "GEMINI";
     model: string;
     usage?: {
         inputTokens: number;
@@ -81,9 +82,11 @@ const VIDEO_KEYWORDS = [
 
 class AIGateway {
     private replicate: ReplicateProvider;
+    private gemini: GeminiProvider;
 
     constructor() {
         this.replicate = new ReplicateProvider();
+        this.gemini = new GeminiProvider();
     }
 
     /**
@@ -112,8 +115,27 @@ class AIGateway {
      */
     async runText(options: RunTextOptions): Promise<GatewayResponse> {
         const model = options.modelHint || DEFAULT_MODELS.TEXT;
+        const isGeminiModel = model.startsWith("gemini") || model.startsWith("imagegeneration") || model.startsWith("veo") || model.startsWith("lyria");
 
-        console.log(`[AIGateway] runText → ${model}`);
+        console.log(`[AIGateway] runText → ${model} (${isGeminiModel ? 'GEMINI' : 'REPLICATE'})`);
+
+        if (isGeminiModel) {
+            const result = await this.gemini.invokeText({
+                model,
+                prompt: options.prompt,
+                systemPrompt: options.systemPrompt,
+                temperature: options.temperature,
+                maxTokens: options.maxTokens,
+            });
+
+            return {
+                text: result.text,
+                provider: "GEMINI",
+                model,
+                usage: result.usage,
+                raw: result.raw,
+            };
+        }
 
         const result = await this.replicate.invokeText({
             model,

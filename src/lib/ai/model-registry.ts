@@ -3,7 +3,7 @@
  * Single source of truth for (type, tier) => model mapping.
  */
 
-export type CreativeType = 'STATIC_AD' | 'IMAGE_TO_VIDEO' | 'AVATAR_LIPSYNC' | 'COPYWRITING' | 'LIP_SYNC' | 'VIDEO_TRANSLATION' | 'WATERMARK_REMOVAL' | 'CLONING_FAMOUS' | 'AVATAR_PORTRAIT';
+export type CreativeType = 'STATIC_AD' | 'IMAGE_TO_VIDEO' | 'AVATAR_LIPSYNC' | 'COPYWRITING' | 'LIP_SYNC' | 'VIDEO_TRANSLATION' | 'WATERMARK_REMOVAL' | 'CLONING_FAMOUS' | 'AVATAR_PORTRAIT' | 'MUSIC_GEN' | 'SOUND_EFFECTS' | 'TRANSCRIPTION';
 export type CreativeTier = 'cheap' | 'balanced' | 'premium';
 
 export interface ModelRef {
@@ -16,13 +16,13 @@ export interface ModelRef {
 export const MODEL_REGISTRY: Record<CreativeType, Record<CreativeTier, ModelRef>> = {
     STATIC_AD: {
         cheap: { mode: 'model', ref: 'black-forest-labs/flux-schnell', estimatedCost: 0.01 },
-        balanced: { mode: 'model', ref: 'black-forest-labs/flux-dev', estimatedCost: 0.03 },
-        premium: { mode: 'model', ref: 'black-forest-labs/flux-pro', estimatedCost: 0.05 }
+        balanced: { mode: 'model', ref: 'google/gemini-3.1-flash-image', estimatedCost: 0.03 },
+        premium: { mode: 'model', ref: 'google/gemini-3.1-flash-image', estimatedCost: 0.05 }
     },
     IMAGE_TO_VIDEO: {
         cheap: { mode: 'model', ref: 'kwaivgi/kling-v1.6-standard', estimatedCost: 0.10 },
-        balanced: { mode: 'model', ref: 'luma/ray-flash-2-720p', estimatedCost: 0.25 },
-        premium: { mode: 'model', ref: 'google/veo-2', estimatedCost: 0.50 }
+        balanced: { mode: 'model', ref: 'google/veo-3.1', estimatedCost: 0.30 },
+        premium: { mode: 'model', ref: 'google/veo-3.1', estimatedCost: 0.50 }
     },
     AVATAR_LIPSYNC: {
         cheap: { mode: 'model', ref: 'fofr/live-portrait', version: '89629de4f370173b28ccf588d19540a7c349cf3cc9a1935b22cd45f9b2b55a11', estimatedCost: 0.05 },
@@ -50,14 +50,29 @@ export const MODEL_REGISTRY: Record<CreativeType, Record<CreativeTier, ModelRef>
         premium: { mode: 'model', ref: 'black-forest-labs/flux-pro', estimatedCost: 0.50 }
     },
     COPYWRITING: {
-        cheap: { mode: 'model', ref: 'meta/meta-llama-3-8b-instruct', estimatedCost: 0.01 },
-        balanced: { mode: 'model', ref: 'meta/meta-llama-3-70b-instruct', estimatedCost: 0.05 },
-        premium: { mode: 'model', ref: 'meta/meta-llama-3.1-405b-instruct', estimatedCost: 0.15 }
+        cheap: { mode: 'model', ref: 'google/gemini-3.1-flash-lite-preview', estimatedCost: 0.005 },
+        balanced: { mode: 'model', ref: 'google/gemini-3.1-flash-lite-preview', estimatedCost: 0.01 },
+        premium: { mode: 'model', ref: 'google/gemini-3.1-pro-preview', estimatedCost: 0.10 }
     },
     AVATAR_PORTRAIT: {
         cheap: { mode: 'model', ref: 'black-forest-labs/flux-schnell', estimatedCost: 0.01 },
-        balanced: { mode: 'model', ref: 'black-forest-labs/flux-dev', estimatedCost: 0.03 },
-        premium: { mode: 'model', ref: 'black-forest-labs/flux-1.1-pro', estimatedCost: 0.08 }
+        balanced: { mode: 'model', ref: 'google/gemini-3.1-flash-image', estimatedCost: 0.03 },
+        premium: { mode: 'model', ref: 'google/gemini-3.1-flash-image', estimatedCost: 0.08 }
+    },
+    MUSIC_GEN: {
+        cheap: { mode: 'model', ref: 'google/lyria-002', estimatedCost: 0.05 },
+        balanced: { mode: 'model', ref: 'google/lyria-002', estimatedCost: 0.10 },
+        premium: { mode: 'model', ref: 'elevenlabs/music', estimatedCost: 0.30 }
+    },
+    SOUND_EFFECTS: {
+        cheap: { mode: 'model', ref: 'elevenlabs/sound-generation', estimatedCost: 0.05 },
+        balanced: { mode: 'model', ref: 'elevenlabs/sound-generation', estimatedCost: 0.05 },
+        premium: { mode: 'model', ref: 'elevenlabs/sound-generation', estimatedCost: 0.10 }
+    },
+    TRANSCRIPTION: {
+        cheap: { mode: 'model', ref: 'openai/whisper', estimatedCost: 0.01 },
+        balanced: { mode: 'model', ref: 'elevenlabs/scribe-v2', estimatedCost: 0.05 },
+        premium: { mode: 'model', ref: 'elevenlabs/scribe-v2', estimatedCost: 0.10 }
     }
 };
 

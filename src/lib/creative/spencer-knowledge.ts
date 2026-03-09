@@ -69,28 +69,39 @@ export const NOMENCLATURE = {
 } as const;
 
 /**
- * Generar nomenclatura automática para un creativo
+ * Generar nomenclatura automática para un creativo siguiendo el estándar PEC
  */
 export function generateNomenclature(params: {
-    brand: string;
-    angle: string;
-    hook: string;
-    variant: string;
-    editor?: string;
-    type: 'VIDEO' | 'STATIC';
+    type: 'VID' | 'IMG' | 'HOOK' | 'SCRIPT' | 'LP' | 'AV';
+    conceptNum: number;
+    subType: string; // TIPO for Hook/LP, FRAMEWORK for Script, FASE for Video, ANGULO for Image, ESTILO for Avatar
+    numOrHook?: string;
+    formato?: string;
+    variant?: string;
+    id?: string;
 }): string {
-    const date = new Date();
-    const yy = String(date.getFullYear()).slice(-2);
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    const dateStr = `${yy}${mm}${dd}`;
+    const conc = `CONC${String(params.conceptNum).padStart(2, '0')}`;
+    const clean = (s: string) => s.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '').slice(0, 15);
+    const sub = clean(params.subType);
+    const v = params.variant ? clean(params.variant) : 'A';
+    const f = params.formato ? clean(params.formato) : '9X16';
 
-    const clean = (s: string) => s.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '').slice(0, 20);
-
-    if (params.type === 'VIDEO') {
-        return `${dateStr}_${clean(params.brand)}_${clean(params.angle)}_${clean(params.hook)}_${clean(params.variant)}${params.editor ? '_' + clean(params.editor) : ''}`;
+    switch (params.type) {
+        case 'HOOK':
+            return `HOOK_${conc}_${sub}_${params.numOrHook || '01'}.txt`;
+        case 'SCRIPT':
+            return `SCRIPT_${conc}_${sub}_${params.numOrHook || '01'}.txt`;
+        case 'VID':
+            return `VID_${conc}_${sub}_${clean(params.numOrHook || 'HOOK')}_${f}_${v}.mp4`;
+        case 'IMG':
+            return `IMG_${conc}_${sub}_${f}_${v}.jpg`;
+        case 'LP':
+            return `LP_${conc}_${sub}_${v}.html`;
+        case 'AV':
+            return `AV_${params.id || 'ID'}_${sub}_${f}.mp4`;
+        default:
+            return `${conc}_GENERIC_${Date.now()}`;
     }
-    return `${dateStr}_${clean(params.brand)}_${clean(params.angle)}_${clean(params.hook)}_${clean(params.variant)}`;
 }
 
 /**
@@ -185,7 +196,7 @@ export const AUDIENCE_AWARENESS_MATRIX: Record<AudienceType, {
 export const SPENCER_CORE_KNOWLEDGE = `
 === SPENCER PAWLIN METHODOLOGY ===
 
-Eres un agente del Centro Creativo que opera bajo la metodología Spencer Pawlin.
+Eres un agente del Centro Creativo que opera bajo la metodología IA Pro.
 Todo creativo que generes debe seguir estas reglas estrictas:
 
 ## PRINCIPIO CENTRAL

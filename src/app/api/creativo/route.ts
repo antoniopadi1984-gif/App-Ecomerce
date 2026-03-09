@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
         if (action === 'PROCESS_VIDEO') {
             const { filesCount, concept, funnel } = payload;
             // Simulador de procesamiento masivo en cola.
-            // Spencer nomenclature: [PROD]_[CONCEPT]_[ANGLE]_[AVATAR]_[FUNNEL]_[V01]
+            // IA nomenclature: [PROD]_[CONCEPT]_[ANGLE]_[AVATAR]_[FUNNEL]_[V01]
             const outputs = [];
             for (let i = 0; i < filesCount; i++) {
                 outputs.push(`PROD_${concept || 'GEN'}_ANGLE_AVATAR_${funnel || 'TOF'}_V${String(i + 1).padStart(2, '0')}`);

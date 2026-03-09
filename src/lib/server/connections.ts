@@ -63,7 +63,7 @@ export async function getConnectionSecret(storeId: string, provider: string): Pr
         where: { storeId, provider: targetProvider }
     });
 
-    const isolatedProviders = ['BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
+    const isolatedProviders = ['SHOPIFY', 'META', 'BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
     const isIsolated = isolatedProviders.includes(targetProvider);
 
     // FALLBACK TO GLOBAL/MAIN STORE if not found for the specific store
@@ -111,7 +111,7 @@ export async function getConnectionMeta(storeId: string, provider: string) {
         }
     });
 
-    const isolatedProviders = ['BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
+    const isolatedProviders = ['SHOPIFY', 'META', 'BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
     const isIsolated = isolatedProviders.includes(provider.toUpperCase());
 
     if (!meta && storeId !== 'store-main' && !isIsolated) {
@@ -205,13 +205,21 @@ export async function hasActiveConnection(storeId: string, provider: string): Pr
 
     const targetProvider = canonicalProvider(provider);
 
+    const isolatedProviders = ['BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
+    const isIsolated = isolatedProviders.includes(targetProvider);
+
+    const where: any = { provider: targetProvider };
+    if (storeId === 'store-main' || isIsolated) {
+        where.storeId = storeId;
+    } else {
+        where.OR = [
+            { storeId },
+            { storeId: 'store-main' }
+        ];
+    }
+
     const conn = await (prisma as any).connection.findFirst({
-        where: {
-            OR: [
-                { storeId, provider: targetProvider },
-                { storeId: 'store-main', provider: targetProvider }
-            ]
-        },
+        where,
         select: { isActive: true, secretEnc: true, apiKey: true, accessToken: true }
     });
 

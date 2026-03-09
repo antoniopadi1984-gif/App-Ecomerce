@@ -20,7 +20,7 @@ export const SPENCER_PAWLIN_METHODOLOGY = {
     },
     MEDIA_BUYING: {
         TESTING_PHASE: {
-            NAME: "Creative Testing (Spencer Style)",
+            NAME: "Creative Testing (IA Style)",
             PROCESO: [
                 "Testeo masivo de HOOKS (los primeros 3 seg son el 80% del éxito)",
                 "Testeo de VISUALES (la miniatura y el b-roll inicial)",

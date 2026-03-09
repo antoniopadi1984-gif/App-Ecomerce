@@ -9,7 +9,7 @@
  * 2. TRANSCRIBED  → Whisper transcription
  * 3. ANALYZED     → Gemini: funnel stage, type, hook, avatar, angle, scoring
  * 4. SPLIT        → FFmpeg scene detect → clips separados
- * 5. ORGANIZED    → nomenclatura Spencer + guardar en Drive
+ * 5. ORGANIZED    → nomenclatura IA + guardar en Drive
  * 6. DONE
  */
 import { NextRequest, NextResponse } from 'next/server';
@@ -161,7 +161,7 @@ async function processVideoBackground(
         try {
             const { GoogleGenerativeAI } = await import('@google/generative-ai');
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-            const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL_FAST || 'gemini-2.0-flash' });
+            const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL_FAST || 'gemini-3-flash-preview' });
 
             const prompt = `Analiza esta transcripción de vídeo publicitario y extrae:
 1. funnelStage: TOF (frío, awareness) | MOF (tibio, consideración) | BOF (caliente, compra) | RT-CART | RT-VIEW | RT-BUYER

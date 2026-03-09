@@ -1,309 +1,416 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import {
-    FolderOpen, FileVideo, FileText, Image, File, ChevronRight,
-    ChevronDown, RefreshCw, UploadCloud, Search, Filter,
-    Play, ExternalLink, Grid, List, Tag, Zap
+    FolderOpen, FileVideo, FileText, Image as ImageIcon, File, ChevronRight,
+    ChevronLeft, ChevronDown, RefreshCw, UploadCloud, Search, Filter,
+    Play, ExternalLink, Grid, List as ListIcon, Tag, Zap,
+    Trophy, Sparkles, TrendingUp, AlertTriangle, MoreHorizontal,
+    Layers, Clock, BarChart3, Info, X, Download, Share2, Trash2,
+    CheckCircle2, Copy, Check, DownloadCloud, Eye, Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useProduct } from '@/context/ProductContext';
 
-interface DriveItem {
-    id: string;
-    name: string;
-    mimeType: string;
-    size?: number;
-    path: string;
-    thumbnailUrl?: string;
-    children?: DriveItem[];
-    isFolder?: boolean;
-}
-
-const FUNNEL_STRUCTURE = [
-    { key: '00_RESEARCH', label: 'Research', emoji: '🧠', color: '#8B5CF6' },
-    { key: '01_SPY', label: 'Spy / Competencia', emoji: '🔍', color: '#F59E0B' },
-    { key: '02_CONCEPTS', label: 'Conceptos Spencer', emoji: '🎬', color: '#10B981' },
-    { key: '03_LANDINGS', label: 'Landings', emoji: '🌐', color: '#3B82F6' },
-    { key: '04_ASSETS', label: 'Assets (Imágenes, Tema)', emoji: '🗂', color: '#6B7280' },
-];
-
-const FUNNEL_STAGES = ['TOF', 'MOF', 'BOF', 'RT-CART', 'RT-VIEW', 'RT-BUYER'];
-const VERDICT_COLORS: Record<string, string> = {
-    WINNER: 'var(--s-ok)', LOSER: 'var(--s-ko)',
-    TESTING: 'var(--s-wa)', PAUSED: 'var(--text-dim)',
-};
-const FUNNEL_COLORS: Record<string, string> = {
-    TOF: '#8B5CF6', MOF: '#3B82F6', BOF: '#10B981', 'RT-CART': '#F59E0B', 'RT-VIEW': '#F59E0B', 'RT-BUYER': '#10B981'
-};
-
-function FileIcon({ mimeType }: { mimeType: string }) {
-    if (mimeType.includes('video')) return <FileVideo className="w-4 h-4 text-[var(--cre)]" />;
-    if (mimeType.includes('image')) return <Image className="w-4 h-4 text-[var(--mkt)]" />;
-    if (mimeType.includes('text') || mimeType.includes('json')) return <FileText className="w-4 h-4 text-[var(--inv)]" />;
-    return <File className="w-4 h-4 text-[var(--text-dim)]" />;
-}
-
-function FolderRow({
-    label, emoji, color, productId, storeId, folderKey
-}: {
-    label: string; emoji: string; color: string;
-    productId: string; storeId: string; folderKey: string;
-}) {
-    const [open, setOpen] = useState(false);
-    const [files, setFiles] = useState<DriveItem[]>([]);
-    const [loading, setLoading] = useState(false);
-
-    const loadFiles = async () => {
-        if (files.length > 0 || loading) return;
-        setLoading(true);
-        try {
-            const res = await fetch(
-                `/api/drive/list?productId=${productId}&subPath=${folderKey}`,
-                { headers: { 'X-Store-Id': storeId } }
-            );
-            const data = await res.json();
-            setFiles(data.files ?? []);
-        } catch { setFiles([]); }
-        finally { setLoading(false); }
-    };
-
-    const toggle = () => {
-        setOpen(p => !p);
-        if (!open) loadFiles();
-    };
-
-    return (
-        <div>
-            <button onClick={toggle}
-                className="w-full flex items-center gap-2 p-2.5 rounded-xl hover:bg-[var(--surface2)] transition-colors text-left group">
-                <span className="text-base">{emoji}</span>
-                <span className="text-[11px] font-black text-[var(--text)]">{label}</span>
-                <span className="ml-auto flex items-center gap-1">
-                    {loading && <RefreshCw className="w-3 h-3 animate-spin text-[var(--text-dim)]" />}
-                    {open ? <ChevronDown className="w-3.5 h-3.5 text-[var(--text-dim)]" /> :
-                        <ChevronRight className="w-3.5 h-3.5 text-[var(--text-dim)]" />}
-                </span>
-            </button>
-
-            {open && (
-                <div className="ml-6 mt-1 space-y-1 border-l border-[var(--border)] pl-3 mb-2">
-                    {files.length === 0 && !loading ? (
-                        <p className="text-[9px] text-[var(--text-dim)] py-2">Carpeta vacía</p>
-                    ) : files.map(f => (
-                        <div key={f.id}
-                            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[var(--surface2)] group">
-                            {f.isFolder ?
-                                <FolderOpen className="w-4 h-4 text-[var(--s-warn)]" /> :
-                                <FileIcon mimeType={f.mimeType} />
-                            }
-                            <span className="text-[10px] font-mono text-[var(--text)] truncate flex-1">{f.name}</span>
-                            {f.mimeType?.includes('video') && (
-                                <button className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-[var(--inv)]/10 transition-all">
-                                    <Play className="w-3 h-3 text-[var(--inv)]" />
-                                </button>
-                            )}
-                            <a href={`https://drive.google.com/file/d/${f.id}/view`} target="_blank" rel="noopener noreferrer"
-                                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-[var(--surface2)] transition-all">
-                                <ExternalLink className="w-3 h-3 text-[var(--text-dim)]" />
-                            </a>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
+// --- MAIN COMPONENT ---
 
 export function BibliotecaTab({ storeId, productId }: { storeId: string; productId: string }) {
     const [assets, setAssets] = useState<any[]>([]);
-    const [viewMode, setViewMode] = useState<'folder' | 'grid' | 'list'>('folder');
-    const [filterStage, setFilterStage] = useState('');
-    const [filterVerdict, setFilterVerdict] = useState('');
-    const [search, setSearch] = useState('');
-    const [loading, setLoading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [loading, setLoading] = useState(true);
+    const [processingInbox, setProcessingInbox] = useState(false);
 
-    useEffect(() => {
+    const fetchAssets = async () => {
         if (!productId || productId === 'GLOBAL') return;
         setLoading(true);
-        fetch(`/api/creatives?productId=${productId}`, { headers: { 'X-Store-Id': storeId } })
-            .then(r => r.json())
-            .then(d => setAssets(d.assets ?? []))
-            .catch(() => { })
-            .finally(() => setLoading(false));
+        try {
+            const res = await fetch(`/api/centro-creativo/biblioteca?productId=${productId}&storeId=${storeId}`);
+            const data = await res.json();
+            if (data.artifacts) {
+                setAssets(data.artifacts);
+            }
+        } catch (e) {
+            toast.error('Error cargando biblioteca');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchAssets();
     }, [productId, storeId]);
 
-    const filtered = assets.filter(a => {
-        if (filterStage && a.funnelStage !== filterStage) return false;
-        if (filterVerdict && a.verdict !== filterVerdict) return false;
-        if (search && !a.name.toLowerCase().includes(search.toLowerCase())) return false;
-        return true;
+    const handleProcessInbox = async () => {
+        setProcessingInbox(true);
+        try {
+            const res = await fetch('/api/centro-creativo/inbox/process', {
+                method: 'POST',
+                body: JSON.stringify({ productId, storeId }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success(`Procesados ${data.processed.length} archivos`);
+                fetchAssets();
+            } else {
+                toast.error(data.error || 'Error procesando Inbox');
+            }
+        } catch (e) {
+            toast.error('Error de red al procesar Inbox');
+        } finally {
+            setProcessingInbox(false);
+        }
+    };
+
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [search, setSearch] = useState('');
+    const [previewAssetIndex, setPreviewAssetIndex] = useState<number | null>(null);
+    const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([]);
+    const [showIntelligence, setShowIntelligence] = useState(true);
+
+    const [filters, setFilters] = useState({
+        phase: 'Todos',
+        format: 'Todos',
+        status: 'Todos',
+        framework: 'Todos',
+        hookType: 'Todos',
+        minScore: 0
     });
 
-    const uploadToPath = async (files: FileList, subPath: string) => {
-        toast.info(`Subiendo ${files.length} archivo(s) a ${subPath}…`);
-        const fd = new FormData();
-        Array.from(files).forEach(f => fd.append('files', f));
-        fd.append('productId', productId);
-        fd.append('subPath', subPath);
-        try {
-            const res = await fetch('/api/drive/upload', {
-                method: 'POST', body: fd, headers: { 'X-Store-Id': storeId }
-            });
-            const d = await res.json();
-            if (d.ok) toast.success(`${files.length} archivo(s) subidos a Drive`);
-        } catch { toast.error('Error al subir'); }
+    const filtered = useMemo(() => {
+        return assets.filter(a => {
+            if (search && !a.nomenclatura?.toLowerCase().includes(search.toLowerCase())) return false;
+            if (filters.phase !== 'Todos' && a.funnelStage !== filters.phase) return false;
+            if (filters.format !== 'Todos' && a.format !== filters.format) return false;
+            if (filters.status !== 'Todos' && a.metaStatus !== filters.status) return false;
+            if (filters.framework !== 'Todos' && a.framework !== filters.framework) return false;
+            if (filters.hookType !== 'Todos' && a.hookType !== filters.hookType) return false;
+            if (a.score < filters.minScore) return false;
+            return true;
+        });
+    }, [assets, search, filters]);
+
+    const hasRealData = assets.some(a => a.meta_ad_id);
+
+    const toggleSelection = (id: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        setSelectedAssetIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
     };
 
     if (!productId || productId === 'GLOBAL') {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-                <FolderOpen className="w-12 h-12 text-[var(--text-dim)] opacity-30 mb-3" />
-                <p className="text-[12px] font-bold text-[var(--text-muted)]">Selecciona un producto para ver la Biblioteca</p>
-                <p className="text-[10px] text-[var(--text-dim)] mt-1">El contenido se organiza por producto</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-xl border border-dashed border-[var(--border)]">
+                <FolderOpen className="w-10 h-10 text-[var(--border)] mb-3" />
+                <p className="text-[11px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest">Selecciona un producto</p>
+                <p className="text-[10px] text-[var(--text-tertiary)] opacity-60 mt-1 uppercase tracking-widest font-medium">Biblioteca de Creativos Finales</p>
             </div>
         );
     }
 
     return (
-        <div className="flex gap-4 min-h-[600px]">
-            {/* Left: Folder structure */}
-            <div className="w-56 shrink-0 bg-[var(--surface)] border border-[var(--border)] rounded-xl p-3 space-y-1">
-                <div className="flex items-center justify-between mb-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Drive / Producto</p>
-                    <button onClick={() => fileInputRef.current?.click()}
-                        className="p-1 rounded hover:bg-[var(--surface2)] transition-colors">
-                        <UploadCloud className="w-3.5 h-3.5 text-[var(--text-dim)]" />
-                    </button>
-                    <input ref={fileInputRef} type="file" multiple className="hidden"
-                        onChange={e => e.target.files && uploadToPath(e.target.files, '04_ASSETS/imagenes')} />
+        <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-20">
+
+            {/* PANEL DE INTELIGENCIA (Light Version) */}
+            {hasRealData && showIntelligence && (
+                <div className="bg-white rounded-xl p-5 border border-[var(--border)] shadow-sm relative overflow-hidden group">
+                    <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-[var(--cre-bg)] text-[var(--cre)] flex items-center justify-center border border-[var(--cre)]/10">
+                                <TrendingUp size={16} />
+                            </div>
+                            <div>
+                                <h3 className="text-[var(--text-primary)] text-xs font-bold uppercase tracking-widest">Intelligence Panel</h3>
+                                <p className="text-[var(--text-tertiary)] text-[9px] font-medium uppercase tracking-tight">Análisis de rendimiento real</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setShowIntelligence(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all">
+                            <X size={14} />
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-4">
+                        <InsightCard label="Top ROAS Week" value="3.8x" icon={Trophy} sub="PURE-MECH01-V1" />
+                        <InsightCard label="Best HK CTR" value="3.2%" icon={Zap} sub="Miedo" />
+                        <InsightCard label="Best CPA" value="€3.45" icon={Target} sub="Fase: FRIO" />
+                        <InsightCard label="Framework" value="64%" icon={Layers} sub="Hormozi (W50%)" />
+                        <InsightCard label="Fatigue Risk" value="2" icon={AlertTriangle} sub="Próximos 7 días" danger />
+                    </div>
                 </div>
-                {FUNNEL_STRUCTURE.map(({ key, ...rest }) => (
-                    <FolderRow key={key} {...rest} productId={productId} storeId={storeId} folderKey={key} />
-                ))}
+            )}
+
+            {/* HEADER & FILTERS */}
+            <div className="bg-white p-5 rounded-xl border border-[var(--border)] shadow-sm space-y-5 shrink-0">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 px-1">
+                        <div className="w-7 h-7 rounded bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-[var(--text-tertiary)]">
+                            <Grid size={14} />
+                        </div>
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--text-primary)]">Biblioteca Central</h2>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleProcessInbox}
+                            disabled={processingInbox}
+                            className="h-8 px-4 rounded-lg bg-[var(--cre)] text-white text-[10px] font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+                        >
+                            <RefreshCw size={12} className={cn(processingInbox && "animate-spin")} />
+                            {processingInbox ? 'Procesando...' : 'Procesar Inbox'}
+                        </button>
+                        <div className="flex bg-[var(--bg)] rounded-lg p-0.5 border border-[var(--border)]">
+                            <button onClick={() => setViewMode('grid')} className={cn("p-1.5 rounded transition-all", viewMode === 'grid' ? "bg-white text-[var(--cre)] shadow-sm" : "text-[var(--text-tertiary)]")}>
+                                <Grid size={14} />
+                            </button>
+                            <button onClick={() => setViewMode('list')} className={cn("p-1.5 rounded transition-all", viewMode === 'list' ? "bg-white text-[var(--cre)] shadow-sm" : "text-[var(--text-tertiary)]")}>
+                                <ListIcon size={14} />
+                            </button>
+                        </div>
+                        <div className="h-8 px-3 bg-[var(--bg)] rounded-lg border border-[var(--border)] flex items-center gap-2">
+                            <Search size={12} className="text-[var(--text-tertiary)]" />
+                            <input
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Buscar ID..."
+                                className="bg-transparent border-none text-[10px] font-bold text-[var(--text-primary)] outline-none w-32 uppercase"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setSelectedAssetIds(assets.map(a => a.id))}
+                            className="h-8 px-4 rounded-lg bg-[var(--text-primary)] text-white text-[10px] font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm"
+                        >
+                            Select All
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex items-end gap-5 pt-4 border-t border-[var(--border)]">
+                    <FilterSelect label="Fase" value={filters.phase} options={['Todos', 'COLD', 'WARM', 'HOT', 'RETARGETING']} onChange={(v: string) => setFilters({ ...filters, phase: v })} />
+                    <FilterSelect label="Formato" value={filters.format} options={['Todos', '9:16', '4:5', '1:1']} onChange={(v: string) => setFilters({ ...filters, format: v })} />
+                    <FilterSelect label="Estado Meta" value={filters.status} options={['Todos', 'NOT_PUBLISHED', 'ACTIVE', 'PAUSED', 'FATIGUED']} onChange={(v: string) => setFilters({ ...filters, status: v })} />
+                    <FilterSelect label="Framework" value={filters.framework} options={['Todos', 'PAS', 'AIDA', 'Hormozi', 'DTC']} onChange={(v: string) => setFilters({ ...filters, framework: v })} />
+
+                    <div className="ml-auto w-32">
+                        <p className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase mb-1">Min Score ({filters.minScore})</p>
+                        <input
+                            type="range" min="0" max="100" value={filters.minScore}
+                            onChange={e => setFilters({ ...filters, minScore: parseInt(e.target.value) })}
+                            className="w-full h-1 bg-[var(--bg)] rounded-lg accent-[var(--cre)]"
+                        />
+                    </div>
+                </div>
             </div>
 
-            {/* Right: Asset grid */}
-            <div className="flex-1 flex flex-col gap-3">
-                {/* Toolbar */}
-                <div className="flex items-center gap-2 flex-wrap">
-                    <div className="relative flex-1 min-w-[160px]">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-dim)]" />
-                        <input value={search} onChange={e => setSearch(e.target.value)}
-                            placeholder="Buscar por nombre…"
-                            className="w-full h-8 pl-8 pr-3 text-[11px] bg-[var(--surface)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--cre)]/40" />
-                    </div>
-                    <select value={filterStage} onChange={e => setFilterStage(e.target.value)}
-                        className="h-8 text-[10px] border border-[var(--border)] rounded-lg px-2 bg-[var(--surface)] font-bold">
-                        <option value="">Todas las fases</option>
-                        {FUNNEL_STAGES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <select value={filterVerdict} onChange={e => setFilterVerdict(e.target.value)}
-                        className="h-8 text-[10px] border border-[var(--border)] rounded-lg px-2 bg-[var(--surface)] font-bold">
-                        <option value="">Todos los estados</option>
-                        {['WINNER', 'TESTING', 'LOSER', 'PAUSED'].map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                    <div className="flex items-center border border-[var(--border)] rounded-lg overflow-hidden">
-                        {(['folder', 'grid', 'list'] as const).map(m => (
-                            <button key={m} onClick={() => setViewMode(m)}
-                                className={cn('p-1.5 transition-colors', viewMode === m ? 'bg-[var(--cre)]/15 text-[var(--cre)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)]')}>
-                                {m === 'grid' ? <Grid className="w-3.5 h-3.5" /> : m === 'list' ? <List className="w-3.5 h-3.5" /> : <FolderOpen className="w-3.5 h-3.5" />}
-                            </button>
-                        ))}
-                    </div>
+            {/* ASSETS AREA */}
+            <div className="bg-white rounded-xl border border-[var(--border)] shadow-sm flex flex-col relative overflow-hidden">
+                <div className="p-4">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-3">
+                            <RefreshCw className="w-8 h-8 text-[var(--cre)] animate-spin" />
+                            <p className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest">Sincronizando con Drive...</p>
+                        </div>
+                    ) : filtered.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <FileVideo className="w-10 h-10 text-[var(--border)] mb-3" />
+                            <p className="text-[11px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest">No hay archivos procesadores</p>
+                            <p className="text-[10px] text-[var(--text-tertiary)] opacity-60 mt-1 uppercase tracking-widest font-medium">Usa "Procesar Inbox" para organizar tus capturas</p>
+                        </div>
+                    ) : viewMode === 'grid' ? (
+                        <div className="grid grid-cols-5 gap-4">
+                            {filtered.map((asset) => (
+                                <AssetGridCard
+                                    key={asset.id}
+                                    asset={asset}
+                                    selected={selectedAssetIds.includes(asset.id)}
+                                    onSelect={(e: any) => toggleSelection(asset.id, e)}
+                                    onPlay={() => setPreviewAssetIndex(assets.indexOf(asset))}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-1">
+                            {filtered.map(asset => (
+                                <AssetListRow
+                                    key={asset.id}
+                                    asset={asset}
+                                    selected={selectedAssetIds.includes(asset.id)}
+                                    onSelect={(e: any) => toggleSelection(asset.id, e)}
+                                    onPlay={() => setPreviewAssetIndex(assets.indexOf(asset))}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                {/* Bulk actions */}
-                {selected.size > 0 && (
-                    <div className="flex items-center gap-2 p-2 bg-[var(--inv)]/8 rounded-xl border border-[var(--inv)]/20">
-                        <span className="text-[10px] font-black text-[var(--inv)]">{selected.size} seleccionados</span>
-                        <button className="text-[9px] font-black uppercase tracking-wide px-2 py-1 bg-[var(--inv)] text-white rounded-lg">
-                            Generar variantes
-                        </button>
-                        <button className="text-[9px] font-black uppercase tracking-wide px-2 py-1 bg-[var(--surface2)] border border-[var(--border)] rounded-lg">
-                            Cambiar fase
-                        </button>
-                        <button onClick={() => setSelected(new Set())}
-                            className="ml-auto text-[9px] text-[var(--text-dim)] hover:text-[var(--text)]">Deseleccionar</button>
+                {/* BULK ACTIONS (Simplified) */}
+                {selectedAssetIds.length > 0 && (
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[var(--text-primary)] rounded-xl px-6 py-3 shadow-md flex items-center gap-6 z-50 animate-in slide-in-from-bottom-4">
+                        <div className="text-white font-bold text-[10px] uppercase tracking-widest border-r border-white/10 pr-6">
+                            <span className="text-[var(--cre)]">{selectedAssetIds.length}</span> Seleccionados
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="h-7 px-3 rounded-lg bg-[var(--cre)] text-white text-[9px] font-bold uppercase flex items-center gap-1.5 hover:opacity-90 transition-all shadow-sm">
+                                <Share2 size={12} /> Send Meta
+                            </button>
+                            <button className="h-7 px-3 rounded-lg bg-white/10 text-white text-[9px] font-bold uppercase flex items-center gap-1.5 hover:bg-white/20 transition-all">
+                                <Download size={12} /> ZIP
+                            </button>
+                            <button className="h-7 px-3 rounded-lg bg-[var(--s-ko)] text-white text-[9px] font-bold uppercase flex items-center gap-1.5 hover:opacity-90 transition-all shadow-sm">
+                                <Trash2 size={12} /> Borrar
+                            </button>
+                        </div>
+                        <button onClick={() => setSelectedAssetIds([])} className="text-white/60 hover:text-white transition-all text-[9px] font-bold uppercase underline">Limpiar</button>
                     </div>
                 )}
+            </div>
 
-                {/* Assets */}
-                {loading ? (
-                    <div className="flex items-center justify-center py-16">
-                        <RefreshCw className="w-6 h-6 animate-spin text-[var(--text-dim)]" />
+            {/* MODAL */}
+            {previewAssetIndex !== null && (
+                <AssetModal
+                    asset={assets[previewAssetIndex]}
+                    onClose={() => setPreviewAssetIndex(null)}
+                />
+            )}
+        </div>
+    );
+}
+
+function InsightCard({ label, value, icon: Icon, sub, danger }: any) {
+    return (
+        <div className="p-3 bg-[var(--bg)]/30 border border-[var(--border)] rounded-xl group hover:border-[var(--cre)]/20 transition-all">
+            <div className="flex items-center gap-1.5 mb-2">
+                <Icon size={12} className={danger ? "text-rose-500" : "text-[var(--cre)]"} />
+                <span className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{label}</span>
+            </div>
+            <div className="space-y-0.5">
+                <p className={cn("text-lg font-bold uppercase", danger ? "text-rose-500" : "text-[var(--text-primary)]")}>{value}</p>
+                <p className="text-[9px] font-medium text-[var(--text-tertiary)] uppercase tracking-tight truncate">{sub}</p>
+            </div>
+        </div>
+    );
+}
+
+function FilterSelect({ label, value, options, onChange }: any) {
+    return (
+        <div className="flex flex-col gap-1">
+            <span className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest pl-1">{label}</span>
+            <select
+                value={value} onChange={e => onChange(e.target.value)}
+                className="h-8 px-2 bg-white border border-[var(--border)] rounded-lg text-[10px] font-bold uppercase outline-none focus:border-[var(--cre)]/40 appearance-none cursor-pointer"
+            >
+                {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
+            </select>
+        </div>
+    );
+}
+
+function AssetGridCard({ asset, selected, onSelect, onPlay }: any) {
+    return (
+        <div className={cn(
+            "group bg-white rounded-xl border overflow-hidden transition-all flex flex-col relative",
+            selected ? "border-[var(--cre)] shadow-md" : "border-[var(--border)] hover:border-[var(--cre)]/30"
+        )}>
+            <div className="aspect-[9/16] bg-black relative cursor-pointer overflow-hidden" onClick={onPlay}>
+                <img src={asset.thumbnailUrl} className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-all duration-500" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/20">
+                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20"><Play size={20} fill="white" /></div>
+                </div>
+                <button onClick={onSelect} className={cn("absolute top-3 right-3 w-5 h-5 rounded border border-white/40 flex items-center justify-center transition-all", selected ? "bg-[var(--cre)] border-transparent" : "bg-black/20")}>
+                    {selected && <Check size={14} className="text-white" />}
+                </button>
+                <div className="absolute top-3 left-3 flex flex-col gap-1">
+                    <span className="px-2 py-0.5 bg-white text-[var(--text-primary)] text-[8px] font-bold rounded shadow-sm border border-[var(--border)] uppercase">{asset.funnelStage}</span>
+                    {asset.metaStatus && <span className="px-2 py-0.5 bg-[var(--cre)] text-white text-[8px] font-bold rounded shadow-sm uppercase">{asset.metaStatus}</span>}
+                </div>
+                <div className="absolute bottom-3 left-3">
+                    <div className="bg-white/90 px-2 py-1 rounded border border-white/20 shadow-sm">
+                        <span className="text-[10px] font-bold text-[var(--text-primary)]">{asset.score}%</span>
                     </div>
-                ) : filtered.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <FileVideo className="w-10 h-10 text-[var(--text-dim)] opacity-30 mb-2" />
-                        <p className="text-[11px] text-[var(--text-muted)] font-bold">Sin creativos todavía</p>
-                        <p className="text-[10px] text-[var(--text-dim)] mt-1">Sube vídeos en el Video Lab para que aparezcan aquí</p>
+                </div>
+            </div>
+            <div className="p-2.5 space-y-1.5">
+                <h4 className="text-[10px] font-bold text-[var(--text-primary)] uppercase truncate">{asset.nomenclatura}</h4>
+                <div className="flex items-center justify-between text-[8px] font-bold uppercase text-[var(--text-tertiary)]">
+                    <span>{asset.framework}</span>
+                    <span className="text-[var(--cre)]">{asset.hookType}</span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function AssetListRow({ asset, selected, onSelect, onPlay }: any) {
+    return (
+        <div className={cn(
+            "flex items-center gap-4 px-4 py-2 bg-white border rounded-lg transition-all group",
+            selected ? "border-[var(--cre)] shadow-sm bg-[var(--cre-bg)]/20" : "border-transparent hover:bg-[var(--bg)]"
+        )}>
+            <button onClick={onSelect} className={cn("w-4 h-4 rounded border flex items-center justify-center transition-all", selected ? "bg-[var(--cre)] border-transparent" : "border-[var(--border)]")}>
+                {selected && <Check size={10} className="text-white" />}
+            </button>
+            <button onClick={onPlay} className="w-8 h-8 rounded-lg bg-[var(--text-primary)] flex items-center justify-center text-white"><Play size={14} fill="white" /></button>
+            <div className="flex-1 truncate">
+                <p className="text-[10px] font-bold text-[var(--text-primary)] uppercase truncate">{asset.nomenclatura}</p>
+                <p className="text-[8px] font-medium text-[var(--text-tertiary)] uppercase">{asset.id}</p>
+            </div>
+            <div className="w-16 text-center text-[9px] font-bold text-gray-400 uppercase">{asset.funnelStage}</div>
+            <div className="w-16 text-center text-[10px] font-bold text-[var(--inv)]">{(asset.revenue / asset.spend).toFixed(1)}x ROAS</div>
+            <div className="w-12 text-center text-[10px] font-bold text-[var(--text-primary)]">{asset.score}%</div>
+            <button className="p-1 hover:text-[var(--cre)] text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 transition-all"><MoreHorizontal size={14} /></button>
+        </div>
+    );
+}
+
+function AssetModal({ asset, onClose }: any) {
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
+            <div className="relative w-full max-w-5xl bg-white rounded-xl shadow-lg overflow-hidden flex border border-white/20 animate-in zoom-in-95 h-full max-h-[600px]">
+                <div className="flex-[3] bg-black relative flex items-center justify-center h-full">
+                    <video src={asset.videoUrl} className="w-full h-full object-contain" controls autoPlay />
+                    <button onClick={onClose} className="absolute top-4 left-4 w-8 h-8 rounded-lg bg-black/40 text-white flex items-center justify-center hover:bg-black/60"><X size={16} /></button>
+                </div>
+                <div className="flex-[2] p-8 flex flex-col h-full bg-white divide-y divide-[var(--border)]">
+                    <div className="pb-6 space-y-2">
+                        <div className="flex items-center gap-2">
+                            <span className="px-1.5 py-0.5 bg-[var(--s-ok)]/10 text-[var(--s-ok)] text-[8px] font-bold uppercase rounded border border-[var(--s-ok)]/10">{asset.funnelStage}</span>
+                            <span className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-wide">{asset.date}</span>
+                        </div>
+                        <h4 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-tight leading-normal">{asset.nomenclatura}</h4>
                     </div>
-                ) : (
-                    <div className={cn(
-                        'grid gap-3',
-                        viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'
-                    )}>
-                        {filtered.map(asset => (
-                            <div key={asset.id}
-                                onClick={() => setSelected(prev => {
-                                    const n = new Set(prev);
-                                    n.has(asset.id) ? n.delete(asset.id) : n.add(asset.id);
-                                    return n;
-                                })}
-                                className={cn(
-                                    'bg-[var(--surface)] border rounded-xl overflow-hidden cursor-pointer transition-all hover:border-[var(--cre)]/40',
-                                    selected.has(asset.id) ? 'border-[var(--inv)] ring-1 ring-[var(--inv)]/20' : 'border-[var(--border)]'
-                                )}>
-                                {/* Thumbnail */}
-                                {viewMode === 'grid' && (
-                                    <div className="relative h-24 bg-[var(--surface2)]">
-                                        {asset.thumbnailUrl ?
-                                            <img src={asset.thumbnailUrl} alt={asset.name} className="w-full h-full object-cover" /> :
-                                            <div className="h-full flex items-center justify-center">
-                                                <FileVideo className="w-8 h-8 text-[var(--text-dim)] opacity-40" />
-                                            </div>
-                                        }
-                                        {asset.funnelStage && (
-                                            <span className="absolute top-1 left-1 text-[8px] font-black px-1.5 py-0.5 rounded-full text-white"
-                                                style={{ backgroundColor: FUNNEL_COLORS[asset.funnelStage] ?? '#6B7280' }}>
-                                                {asset.funnelStage}
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
-                                <div className={cn('p-2.5', viewMode === 'list' && 'flex items-center gap-3')}>
-                                    {viewMode === 'list' && <FileIcon mimeType="video/mp4" />}
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-mono font-bold text-[var(--text)] truncate">
-                                            {asset.nomenclatura ?? asset.name}
-                                        </p>
-                                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                            {asset.conceptCode && (
-                                                <span className="text-[8px] font-black text-[var(--cre)] bg-[var(--cre)]/10 px-1.5 py-0.5 rounded-full">
-                                                    {asset.conceptCode}
-                                                </span>
-                                            )}
-                                            {asset.verdict && (
-                                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full"
-                                                    style={{ color: VERDICT_COLORS[asset.verdict], backgroundColor: `${VERDICT_COLORS[asset.verdict]}15` }}>
-                                                    {asset.verdict}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {asset.ctr && (
-                                            <div className="flex gap-2 mt-1">
-                                                <span className="text-[8px] text-[var(--text-dim)]">CTR: <b className="text-[var(--text)]">{asset.ctr}%</b></span>
-                                                {asset.revenue > 0 && <span className="text-[8px] text-[var(--text-dim)]">ROAS: <b className="text-[var(--s-ok)]">{(asset.revenue / asset.spend).toFixed(1)}×</b></span>}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+
+                    <div className="py-6 grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-[var(--bg)]/40 rounded-lg border border-[var(--border)]">
+                            <p className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase mb-1">ROAS REAL</p>
+                            <p className="text-lg font-bold text-[var(--inv)]">{(asset.revenue / asset.spend).toFixed(1)}x</p>
+                        </div>
+                        <div className="p-3 bg-[var(--bg)]/40 rounded-lg border border-[var(--border)]">
+                            <p className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase mb-1">CTR</p>
+                            <p className="text-lg font-bold text-[var(--text-primary)]">{asset.ctr}%</p>
+                        </div>
+                        <div className="p-3 bg-[var(--bg)]/40 rounded-lg border border-[var(--border)]">
+                            <p className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase mb-1">SCORE IA</p>
+                            <p className="text-lg font-bold text-[var(--cre)]">{asset.score}%</p>
+                        </div>
+                        <div className="p-3 bg-[var(--bg)]/40 rounded-lg border border-[var(--border)]">
+                            <p className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase mb-1">HOOK RATE</p>
+                            <p className="text-lg font-bold text-[var(--text-primary)]">{asset.metrics?.hookRate}%</p>
+                        </div>
                     </div>
-                )}
+
+                    <div className="pt-6 mt-auto space-y-4">
+                        <div className="grid grid-cols-2 gap-2">
+                            <button className="h-9 rounded-lg bg-[var(--cre)] text-white text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm"><Sparkles size={14} /> VARIACIÓN</button>
+                            <button className="h-9 rounded-lg border border-[var(--border)] text-[var(--text-primary)] text-[10px] font-bold uppercase flex items-center justify-center gap-2"><Copy size={14} /> CLONAR</button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button className="h-8 rounded-lg border border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--s-ok)] hover:bg-[var(--s-ok)]/5 hover:border-[var(--s-ok)]/20 transition-all flex flex-col items-center justify-center gap-0.5 shadow-sm"><Check size={12} /><span className="text-[7px] font-bold uppercase">Aprobar</span></button>
+                            <button className="h-8 rounded-lg border border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--cre)] hover:bg-[var(--cre-bg)]/30 hover:border-[var(--cre)]/20 transition-all flex flex-col items-center justify-center gap-0.5 shadow-sm"><Download size={12} /><span className="text-[7px] font-bold uppercase">Bajada</span></button>
+                            <button className="h-8 rounded-lg border border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--s-ko)] hover:bg-[var(--s-ko)]/5 hover:border-[var(--s-ko)]/20 transition-all flex flex-col items-center justify-center gap-0.5 shadow-sm"><Trash2 size={12} /><span className="text-[7px] font-bold uppercase">Borrar</span></button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useProduct } from '@/context/ProductContext';
 import { useStore } from '@/lib/store/store-context';
 import { toast } from 'sonner';
@@ -97,7 +97,7 @@ function UrlInput({ label, value, onChange, onSaved, savedMsg }: any) {
 // ── Main Component ──────────────────────────────────────────────
 export function AddProductDialog({ showCreateModal, setShowCreateModal }: { showCreateModal: boolean, setShowCreateModal: (v: boolean) => void }) {
     const { refreshAllProducts, setProductId } = useProduct();
-    const { activeStoreId } = useStore();
+    const { activeStoreId, activeStore } = useStore();
     const [importing, setImporting] = useState(false);
     const [imported, setImported] = useState(false);
     const [importedCount, setImportedCount] = useState(0);
@@ -106,7 +106,9 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
 
     const [form, setForm] = useState({
         // IDENTIDAD
-        nombre: "", sku: "", categoria: "salud", pais: "ES", imagen: null as File | null, imageUrl: "",
+        nombre: "", sku: "", categoria: "salud", pais: "ES",
+        idioma: "ES", moneda: activeStore?.currency || "EUR",
+        imagen: null as File | null, imageUrl: "",
         urlProducto: "", urlAmazon: "", googleDocUrl: "",
         // FINANCIERO
         precioVenta: 0, costeProducto: 0, costeEnvio: 0,
@@ -116,6 +118,12 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
         // COMPETIDORES
         competidores: [] as any[]
     });
+
+    useEffect(() => {
+        if (activeStore?.currency) {
+            setForm(prev => ({ ...prev, moneda: activeStore.currency }));
+        }
+    }, [activeStore?.currency]);
 
     const updateForm = (key: string, value: any) => setForm(f => ({ ...f, [key]: value }));
     const updateComp = (i: number, key: string, value: any) => {
@@ -184,6 +192,8 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                 if (data.nombre) { newForm.nombre = data.nombre; count++; }
                 if (data.categoria) { newForm.categoria = data.categoria; count++; }
                 if (data.pais) { newForm.pais = data.pais; count++; }
+                if (data.idioma) { newForm.idioma = data.idioma; count++; }
+                if (data.moneda) { newForm.moneda = data.moneda; count++; }
                 if (data.precioVenta) { newForm.precioVenta = data.precioVenta; count++; }
                 if (data.costeProducto) { newForm.costeProducto = data.costeProducto; count++; }
                 if (data.costeEnvio) { newForm.costeEnvio = data.costeEnvio; count++; }
@@ -210,6 +220,8 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                 title: form.nombre,
                 sku: form.sku || ('PROD_' + form.nombre.toUpperCase().replace(/\s/g, "_") + "_01"),
                 country: form.pais,
+                marketLanguage: form.idioma,
+                currency: form.moneda,
                 niche: form.categoria,
                 pvpEstimated: form.precioVenta,
                 price: form.precioVenta,
@@ -346,9 +358,16 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                             options={["ES", "MX", "CO", "UK", "US", "LATAM"]} />
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "6px" }}>
                         <Select label="Categoría" value={form.categoria} onChange={(v: string) => updateForm("categoria", v)}
                             options={["salud", "belleza", "hogar", "fitness", "nutrición", "otro"]} />
+                        <Select label="Idioma" value={form.idioma} onChange={(v: string) => updateForm("idioma", v)}
+                            options={["ES", "EN", "FR", "IT", "DE", "PT"]} />
+                        <Select label="Moneda" value={form.moneda} onChange={(v: string) => updateForm("moneda", v)}
+                            options={["EUR", "USD", "MXN", "COP", "GBP"]} />
+                    </div>
+
+                    <div style={{ marginBottom: "6px" }}>
                         <Select label="Fulfillment" value={form.fulfillment} onChange={(v: string) => updateForm("fulfillment", v)}
                             options={["beeping", "dropea", "dropi", "manual"]} />
                     </div>
@@ -384,11 +403,11 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                     {/* ── FINANCIERO ── */}
                     <Label>Financiero</Label>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "6px" }}>
-                        <Input label="Precio venta €" type="number" value={form.precioVenta || ""} onChange={(v: string) => updateForm("precioVenta", +v)} placeholder="0.00" />
-                        <Input label="Coste producto €" type="number" value={form.costeProducto || ""} onChange={(v: string) => updateForm("costeProducto", +v)} placeholder="0.00" />
-                        <Input label="Coste envío €" type="number" value={form.costeEnvio || ""} onChange={(v: string) => updateForm("costeEnvio", +v)} placeholder="0.00" />
-                        <Input label="Coste manip. €" type="number" value={form.costeManipulacion || ""} onChange={(v: string) => updateForm("costeManipulacion", +v)} placeholder="0.00" />
-                        <Input label="Coste devol. €" type="number" value={form.costeDevolucion || ""} onChange={(v: string) => updateForm("costeDevolucion", +v)} placeholder="0.00" />
+                        <Input label={`Precio venta ${form.moneda}`} type="number" value={form.precioVenta || ""} onChange={(v: string) => updateForm("precioVenta", +v)} placeholder="0.00" />
+                        <Input label={`Coste producto ${form.moneda}`} type="number" value={form.costeProducto || ""} onChange={(v: string) => updateForm("costeProducto", +v)} placeholder="0.00" />
+                        <Input label={`Coste envío ${form.moneda}`} type="number" value={form.costeEnvio || ""} onChange={(v: string) => updateForm("costeEnvio", +v)} placeholder="0.00" />
+                        <Input label={`Coste manip. ${form.moneda}`} type="number" value={form.costeManipulacion || ""} onChange={(v: string) => updateForm("costeManipulacion", +v)} placeholder="0.00" />
+                        <Input label={`Coste devol. ${form.moneda}`} type="number" value={form.costeDevolucion || ""} onChange={(v: string) => updateForm("costeDevolucion", +v)} placeholder="0.00" />
                         <Input label="Tasa entrega %" type="number" value={form.tasaEntrega || ""} onChange={(v: string) => updateForm("tasaEntrega", +v)} placeholder="70" />
                         <Input label="Tasa envío %" type="number" value={form.tasaEnvio || ""} onChange={(v: string) => updateForm("tasaEnvio", +v)} placeholder="95" />
                         <Input label="Tasa convers. %" type="number" value={form.tasaConversion || ""} onChange={(v: string) => updateForm("tasaConversion", +v)} placeholder="2" />
@@ -404,11 +423,11 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                     }}>
                         <Metric label="ROAS BR" value={metricas.roasBR.toFixed(1) + "x"}
                             color={metricas.roasBR < 1.5 ? "#ef4444" : metricas.roasBR < 2.5 ? "#f59e0b" : "#16a34a"} borderRight />
-                        <Metric label="CPA Máx" value={"€" + metricas.cpaMax.toFixed(0)} color="#3b82f6" borderRight />
-                        <Metric label="CPC Máx" value={"€" + metricas.cpcMax.toFixed(2)} color="#8b5cf6" borderRight />
-                        <Metric label="Margen" value={"€" + metricas.margen.toFixed(0)} color="#64748b" borderRight />
-                        <Metric label="Benef. neto" value={"€" + metricas.beneficioNeto.toFixed(0)} color="#64748b" borderRight />
-                        <Metric label="Coste real" value={"€" + metricas.costeReal.toFixed(0)} color="#64748b" />
+                        <Metric label="CPA Máx" value={(form.moneda === 'EUR' ? '€' : form.moneda === 'USD' ? '$' : form.moneda) + metricas.cpaMax.toFixed(0)} color="#3b82f6" borderRight />
+                        <Metric label="CPC Máx" value={(form.moneda === 'EUR' ? '€' : form.moneda === 'USD' ? '$' : form.moneda) + metricas.cpcMax.toFixed(2)} color="#8b5cf6" borderRight />
+                        <Metric label="Margen" value={(form.moneda === 'EUR' ? '€' : form.moneda === 'USD' ? '$' : form.moneda) + metricas.margen.toFixed(0)} color="#64748b" borderRight />
+                        <Metric label="Benef. neto" value={(form.moneda === 'EUR' ? '€' : form.moneda === 'USD' ? '$' : form.moneda) + metricas.beneficioNeto.toFixed(0)} color="#64748b" borderRight />
+                        <Metric label="Coste real" value={(form.moneda === 'EUR' ? '€' : form.moneda === 'USD' ? '$' : form.moneda) + metricas.costeReal.toFixed(0)} color="#64748b" />
                     </div>
 
                     {/* ── COMPETIDORES ── */}

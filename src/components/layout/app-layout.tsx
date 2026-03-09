@@ -4,75 +4,63 @@ import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { cn } from "@/lib/utils";
+import { StoreProvider, useStore } from "@/context/StoreContext";
 import { ProductProvider } from "@/context/ProductContext";
-import { StoreProvider } from "@/lib/store/store-context";
 
-import { AgentCompanion } from "@/components/layout/agent-companion";
-
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+// Inner layout that has access to StoreContext
+function InnerLayout({ children }: { children: React.ReactNode }) {
+    const { activeStoreId } = useStore();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
-    const [isPinned, setIsPinned] = useState(false);
+    const [isPinned, setIsPinned] = useState(true);
 
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth >= 1280) {
-                setIsSidebarOpen(false);
-                setIsPinned(false);
+                setIsSidebarOpen(true);
+                setIsPinned(true);
             } else if (window.innerWidth >= 768) {
                 setIsSidebarOpen(false);
-                setIsPinned(false);
+                setIsPinned(true);
             } else {
                 setIsSidebarOpen(false);
                 setIsPinned(false);
             }
         };
-
         handleResize();
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const isExpanded = isPinned || isHovered;
+    return (
+        // Key on activeStoreId forces ProductProvider to remount and refetch when store changes
+        <ProductProvider key={activeStoreId || 'no-store'} storeId={activeStoreId}>
+            <div className="min-h-screen bg-[#F7F8FA] font-sans antialiased text-foreground">
+                <TopBar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+                <Sidebar
+                    isOpen={isSidebarOpen}
+                    toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                />
+                <main
+                    className={cn(
+                        "transition-all duration-300 ease-in-out pt-14 min-h-screen",
+                        isPinned
+                            ? (isSidebarOpen ? "md:ml-60" : "md:ml-16")
+                            : "md:ml-0"
+                    )}
+                >
+                    <div className="px-2 md:px-6 py-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        {children}
+                    </div>
+                </main>
+            </div>
+        </ProductProvider>
+    );
+}
 
+export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <StoreProvider>
-            <ProductProvider>
-                <div className="min-h-screen bg-[var(--bg)] font-[family-name:var(--font)] antialiased text-[var(--text)]">
-                    <TopBar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isExpanded={isExpanded} />
-
-                    <Sidebar
-                        isOpen={isSidebarOpen}
-                        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-                        onHoverChange={setIsHovered}
-                    />
-
-                    <main
-                        className={cn(
-                            "transition-all duration-200 ease-in-out min-h-screen relative overflow-x-hidden",
-                            "max-md:ml-0"
-                        )}
-                        style={{
-                            paddingTop: 'var(--topbar-h)',
-                            marginLeft: isExpanded ? 'var(--sidebar-w-exp)' : 'var(--sidebar-w)',
-                        }}
-                    >
-                        {/* Mobile Sidebar Backdrop */}
-                        {isSidebarOpen && (
-                            <div
-                                className="fixed inset-0 bg-black/10 z-40 md:hidden"
-                                onClick={() => setIsSidebarOpen(false)}
-                            />
-                        )}
-
-                        <div className="h-full">
-                            {children}
-                        </div>
-                    </main>
-
-                    <AgentCompanion />
-                </div>
-            </ProductProvider>
+            <InnerLayout>{children}</InnerLayout>
         </StoreProvider>
     );
 }

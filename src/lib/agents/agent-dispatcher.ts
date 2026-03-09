@@ -12,6 +12,9 @@ export interface AgentRequest {
     maxTokens?: number;
     jsonSchema?: boolean; // Habilitar modo JSON
     images?: string[];    // URLs o base64 de imágenes para visión
+    video?: string;       // Base64
+    videoMimeType?: string;
+    model?: string;       // Overide model
     locale?: string;      // Código de país (ES, MX, etc.) para localización
 }
 
@@ -80,18 +83,22 @@ export class AgentDispatcher {
         const agentConfig = getAgentConfig(role);
         const provider = getAgentProvider(role);
 
+        // Model override support
+        const modelToUse = request.model || agentConfig.model;
+        const finalConfig = { ...agentConfig, model: modelToUse };
+
         console.log(`[AgentDispatcher] Task → Agent: ${role}`);
         console.log(`[AgentDispatcher] Provider: ${provider}`);
-        console.log(`[AgentDispatcher] Model: ${agentConfig.model}`);
+        console.log(`[AgentDispatcher] Model: ${modelToUse}`);
 
         // Despachar según provider
         switch (provider) {
             case 'replicate-claude':
-                return this.dispatchToReplicate(role, agentConfig, request);
+                return this.dispatchToReplicate(role, finalConfig, request);
 
-            case 'gemini-2.0-pro':
-            case 'gemini-2.0-flash':
-                return this.dispatchToGemini(role, agentConfig, request);
+            case 'gemini-pro':
+            case 'gemini-flash':
+                return this.dispatchToGemini(role, finalConfig, request);
 
             default:
                 throw new Error(`Unknown provider: ${provider}`);
@@ -155,10 +162,11 @@ export class AgentDispatcher {
                 if (!token.token) throw new Error("Failed to get access token");
 
                 const culturalDirectives = this.getCulturalDirectives(request.locale);
-                const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
+                const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt || ''}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
 
                 // Normalizar nombre del modelo para Vertex AI
                 let vertexModel = config.model;
+
                 if (vertexModel === 'gemini-1.5-flash' || vertexModel === 'gemini-1.5-pro') {
                     vertexModel = `${vertexModel}-001`; // Vertex prefiere sufijos
                 }
@@ -171,27 +179,17 @@ export class AgentDispatcher {
                 if (request.images && request.images.length > 0) {
                     for (const imgUrl of request.images) {
                         try {
-                            // Si es una URL, intentamos fetch y convertir a base64
-                            // Si ya es base64 (data:image/...), lo procesamos
                             if (imgUrl.startsWith('data:')) {
                                 const mimeType = imgUrl.split(';')[0].split(':')[1];
                                 const data = imgUrl.split(',')[1];
-                                parts.push({
-                                    inlineData: {
-                                        mimeType,
-                                        data
-                                    }
-                                });
+                                parts.push({ inlineData: { mimeType, data } });
                             } else if (imgUrl.startsWith('http')) {
-                                // En el servidor, deberíamos bajarnos la imagen
                                 const imgRes = await fetch(imgUrl);
                                 const buffer = await imgRes.arrayBuffer();
-                                const base64 = Buffer.from(buffer).toString('base64');
-                                const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
                                 parts.push({
                                     inlineData: {
-                                        mimeType,
-                                        data: base64
+                                        mimeType: imgRes.headers.get('content-type') || 'image/jpeg',
+                                        data: Buffer.from(buffer).toString('base64')
                                     }
                                 });
                             }
@@ -199,6 +197,16 @@ export class AgentDispatcher {
                             console.error("[AgentDispatcher] Failed to process image:", imgUrl, imgError);
                         }
                     }
+                }
+
+                // Add video if provided
+                if (request.video) {
+                    parts.push({
+                        inlineData: {
+                            mimeType: request.videoMimeType || "video/mp4",
+                            data: request.video.split(',').pop()
+                        }
+                    });
                 }
 
                 const response = await fetch(endpoint, {
@@ -271,6 +279,15 @@ export class AgentDispatcher {
                         console.error("[AgentDispatcher] AI Studio Image Error:", e);
                     }
                 }
+            }
+
+            if (request.video) {
+                parts.push({
+                    inlineData: {
+                        mimeType: request.videoMimeType || "video/mp4",
+                        data: request.video.split(',').pop()
+                    }
+                });
             }
 
             const response = await fetch(endpoint, {

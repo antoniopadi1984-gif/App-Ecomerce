@@ -4,7 +4,7 @@ import { getConnectionSecret, getConnectionMeta } from '@/lib/server/connections
 
 export class GeminiProvider implements AIProvider {
     name = "gemini";
-    capabilities = ["TEXT" as const, "VISION" as const];
+    capabilities = ["TEXT" as const, "VISION" as const, "IMAGE" as const, "VIDEO" as const];
 
     private async getAccessToken(): Promise<string> {
         const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
@@ -29,7 +29,12 @@ export class GeminiProvider implements AIProvider {
         return [
             "gemini-1.5-pro-002",
             "gemini-1.5-flash-002",
-            "gemini-2.0-flash-exp",
+            "gemini-3-flash-preview",
+            "gemini-3.1-pro-preview",
+            "gemini-3.1-flash-lite-preview",
+            "gemini-3.1-flash-image",
+            "veo-3.1",
+            "lyria-002"
         ];
     }
 
@@ -136,6 +141,105 @@ export class GeminiProvider implements AIProvider {
         return this.processResponse(res, options.model, false);
     }
 
+    async invokeImage(options: any): Promise<AIResponse> {
+        const token = await this.getAccessToken();
+        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        const key = JSON.parse(saKey!);
+        const project = key.project_id;
+        const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const model = options.model || "imagegeneration@006";
+
+        const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predict`;
+
+        const body = {
+            instances: [{ prompt: options.prompt }],
+            parameters: {
+                sampleCount: options.numImages || 1,
+                aspectRatio: options.aspectRatio === "9:16" ? "9:16" : options.aspectRatio === "16:9" ? "16:9" : "1:1",
+            }
+        };
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+        const base64 = data.predictions?.[0]?.bytesBase64Encoded;
+
+        return {
+            text: base64 ? `data:image/png;base64,${base64}` : "",
+            raw: data
+        };
+    }
+
+    async invokeVideo(options: any): Promise<AIResponse> {
+        const token = await this.getAccessToken();
+        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        const key = JSON.parse(saKey!);
+        const project = key.project_id;
+        const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const model = options.model || "veo-3.1";
+
+        // VEO 3.1 Long Running Operation Pattern
+        const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predictLongRunning`;
+
+        const body = {
+            instances: [{
+                prompt: options.prompt
+            }],
+            parameters: {
+                duration: options.duration || "10s",
+                aspectRatio: options.aspectRatio || "9:16"
+            }
+        };
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        const lro = await res.json();
+        return {
+            text: lro.name, // The operation name for polling
+            raw: lro
+        };
+    }
+
+    async invokeMusic(options: any): Promise<AIResponse> {
+        const token = await this.getAccessToken();
+        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        const key = JSON.parse(saKey!);
+        const project = key.project_id;
+        const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const model = options.model || "lyria-002";
+
+        // LYRIA 2 pattern
+        const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predict`;
+
+        const body = {
+            instances: [{ prompt: options.prompt }],
+            parameters: { durationSeconds: options.duration || 30 }
+        };
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+        return {
+            text: data.predictions?.[0]?.audioUri || "",
+            raw: data
+        };
+    }
+
     private async processResponse(res: Response, model: string, isVertex: boolean): Promise<AIResponse> {
         if (!res.ok) {
             const errText = await res.text();
@@ -167,10 +271,104 @@ export class GeminiProvider implements AIProvider {
     }
 
     async invokeVision(options: VisionOptions): Promise<AIResponse> {
-        // Fallback to text for now
-        return this.invokeText({
-            model: options.model,
-            prompt: `[ANÁLISIS DE IMAGEN] ${options.prompt}`
+        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        const apiKey = await getConnectionSecret('store-main', 'GEMINI') || process.env.VERTEX_AI_API_KEY || process.env.GEMINI_API_KEY;
+
+        if (saKey) return this.invokeVertexVision(options);
+        if (apiKey) return this.invokeAIStudioVision(options);
+
+        throw new Error("No credentials for Gemini Vision");
+    }
+
+    private async invokeVertexVision(options: VisionOptions): Promise<AIResponse> {
+        const token = await this.getAccessToken();
+        const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        const key = JSON.parse(saKey!);
+        const project = key.project_id;
+
+        const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${options.model}:generateContent`;
+
+        const parts: any[] = [{ text: options.prompt }];
+
+        if (options.images) {
+            for (const img of options.images) {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: img.split(',').pop()
+                    }
+                });
+            }
+        }
+
+        if (options.video) {
+            parts.push({
+                inlineData: {
+                    mimeType: options.videoMimeType || "video/mp4",
+                    data: options.video.split(',').pop()
+                }
+            });
+        }
+
+        const body = {
+            contents: [{ role: "user", parts }],
+            generationConfig: {
+                temperature: options.temperature || 0.4,
+                responseMimeType: "application/json"
+            }
+        };
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
         });
+
+        return this.processResponse(res, options.model, true);
+    }
+
+    private async invokeAIStudioVision(options: VisionOptions): Promise<AIResponse> {
+        const apiKey = await getConnectionSecret('store-main', 'GEMINI') || process.env.GEMINI_API_KEY;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${apiKey}`;
+
+        const parts: any[] = [{ text: options.prompt }];
+
+        if (options.images) {
+            for (const img of options.images) {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: img.split(',').pop()
+                    }
+                });
+            }
+        }
+
+        if (options.video) {
+            parts.push({
+                inlineData: {
+                    mimeType: options.videoMimeType || "video/mp4",
+                    data: options.video.split(',').pop()
+                }
+            });
+        }
+
+        const body = {
+            contents: [{ role: "user", parts }],
+            generationConfig: {
+                temperature: options.temperature || 0.4,
+                responseMimeType: "application/json"
+            }
+        };
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        return this.processResponse(res, options.model, false);
     }
 }

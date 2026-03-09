@@ -67,6 +67,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
         if (!activeStoreId) return;
         setShopifyLoading(true);
         setShopifyProducts([]);
+        setShopifyConnected(false);
         fetch(`/api/shopify/products?storeId=${activeStoreId}`)
             .then(r => r.json())
             .then(data => {

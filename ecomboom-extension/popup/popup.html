@@ -1,76 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <meta charset="utf-8">
-    <title>EcomBoom Spy</title>
-    <style>
-        body { width: 320px; font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #0f172a; color: white; }
-        .header { padding: 12px 16px; border-bottom: 1px solid #1e293b; background: #020617; }
-        .header h1 { margin: 0; font-size: 16px; font-weight: 800; color: #a78bfa; display: flex; align-items: center; gap: 8px; }
-        .content { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-        .select-group { display: flex; flex-direction: column; gap: 6px; }
-        label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-        select, input { padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: white; font-size: 13px; outline: none; }
-        select:focus, input:focus { border-color: #8b5cf6; }
-        .section-title { font-size: 12px; font-weight: 700; margin-top: 8px; margin-bottom: 4px; color: #cbd5e1; }
-        .btn { padding: 10px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; background: #1e293b; color: white; }
-        .btn:hover { background: #334155; }
-        .btn.primary { background: #7c3aed; }
-        .btn.primary:hover { background: #8b5cf6; }
-        
-        #meta-ui, #tiktok-ui, #landing-ui { display: none; }
-        
-        .progress-bar { display: none; height: 4px; background: #1e293b; border-radius: 2px; overflow: hidden; margin-top: 8px; }
-        .progress-fill { height: 100%; background: #10b981; width: 0%; transition: width 0.3s ease; }
-        #status { font-size: 11px; color: #10b981; margin-top: 8px; text-align: center; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcomBoom Intelligence</title>
+    <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
-    <div class="header">
-        <h1>🎯 EcomBoom Spy</h1>
-    </div>
-    <div class="content">
-        <div class="select-group">
-            <label>Producto Activo</label>
-            <select id="product-select">
-                <option value="">Cargando productos...</option>
-            </select>
-        </div>
-        <div class="select-group">
-            <label>Competidor / Carpeta Destino</label>
-            <select id="competitor-select">
-                <option value="GENERAL">General ESPÍA (02_SPY)</option>
-            </select>
-            <input type="text" id="new-competitor" placeholder="+ Nuevo competidor..." style="display: none; margin-top: 6px;" />
-        </div>
-
-        <div id="meta-ui" class="action-group">
-            <div class="section-title">Meta Ads Library</div>
-            <button class="btn" id="meta-save-single">Guardar este anuncio</button>
-            <button class="btn primary" id="meta-save-all">Guardar biblioteca completa</button>
-            <button class="btn" id="meta-save-videos">Guardar solo vídeos</button>
-            <button class="btn" id="meta-save-images">Guardar solo imágenes</button>
+    <div id="app" class="app">
+        <!-- NOT AUTHENTICATED STATE -->
+        <div id="not-authenticated" class="state-container hidden">
+            <header class="header simple">
+                <div class="logo">
+                    <span class="icon">🚀</span>
+                    <span class="text">EcomBoom</span>
+                </div>
+            </header>
+            <div class="auth-card">
+                <div class="auth-icon">🔒</div>
+                <h2>Extensión Inactiva</h2>
+                <p>Inicia sesión en EcomBoom para activar todas las herramientas de espionaje.</p>
+                <button id="btn-login" class="action-button primary large">Abrir EcomBoom</button>
+            </div>
         </div>
 
-        <div id="tiktok-ui" class="action-group">
-            <div class="section-title">TikTok Ads Library</div>
-            <button class="btn" id="tiktok-save-single">Guardar este anuncio</button>
-            <button class="btn primary" id="tiktok-save-all">Guardar biblioteca completa</button>
-            <button class="btn" id="tiktok-save-videos">Guardar webm/vídeos</button>
-            <button class="btn" id="tiktok-save-images">Guardar solo imágenes/GIFs</button>
+        <!-- AUTHENTICATED STATE -->
+        <div id="authenticated" class="state-container hidden">
+            <header class="header">
+                <div class="user-info">
+                    <div id="user-avatar" class="avatar">
+                        <img src="../icons/icon128.png" alt="User">
+                    </div>
+                    <div class="user-meta">
+                        <span id="user-name" class="name">Cargando...</span>
+                        <span id="active-store" class="store-badge">Store: ---</span>
+                    </div>
+                </div>
+                <div class="logo-mini">🚀</div>
+            </header>
+
+            <!-- PLATFORM BANNERS -->
+            <div id="platform-banner-meta" class="banner banner-meta hidden">
+                <span class="banner-icon">📘</span>
+                <span class="banner-text">Meta Ad Library detectada</span>
+            </div>
+            <div id="platform-banner-tiktok" class="banner banner-tiktok hidden">
+                <span class="banner-icon">🎵</span>
+                <span class="banner-text">TikTok detectado</span>
+            </div>
+
+            <div class="content">
+                <!-- PROCESSING STATE (OVERLAY) -->
+                <div id="processing-overlay" class="processing-overlay hidden">
+                    <div class="loader-container">
+                        <div class="progress-info">
+                            <span id="processing-step">Preparando descarga...</span>
+                            <span id="processing-percent">25%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 25%"></div>
+                        </div>
+                    </div>
+                    <button id="btn-cancel" class="cancel-link">Cancelar captura</button>
+                </div>
+
+                <!-- MAIN ACTIONS -->
+                <section class="section">
+                    <h3 class="section-title">CAPTURAR ESTA PÁGINA</h3>
+                    <div class="action-grid">
+                        <!-- GENERIC BUTTONS -->
+                        <button id="btn-save-creative" class="action-button-mini primary">
+                            <span class="btn-icon">📥</span>
+                            <span class="btn-text">Guardar Creativo</span>
+                        </button>
+                        <button id="btn-clone-landing" class="action-button-mini secondary">
+                            <span class="btn-icon">🏘️</span>
+                            <span class="btn-text">Clonar Landing</span>
+                        </button>
+                    </div>
+
+                    <!-- META SPECIFIC BUTTONS -->
+                    <div id="meta-actions" class="special-actions hidden">
+                        <button id="btn-meta-ad" class="action-button large meta-btn">
+                            <span class="btn-icon">🎯</span>
+                            <span class="btn-text">CAPTURAR ANUNCIO ACTIVO</span>
+                        </button>
+                        <button id="btn-meta-full" class="action-button secondary meta-sub-btn">
+                            <span class="btn-icon">⚡</span>
+                            <span class="btn-text">ESPIAR PÁGINA COMPLETA</span>
+                        </button>
+                    </div>
+
+                    <!-- TIKTOK SPECIFIC BUTTONS -->
+                    <div id="tiktok-actions" class="special-actions hidden">
+                        <button id="btn-tiktok-video" class="action-button large tiktok-btn">
+                            <span class="btn-icon">🎬</span>
+                            <span class="btn-text">CAPTURAR VÍDEO ACTUAL</span>
+                        </button>
+                        <button id="btn-tiktok-profile" class="action-button secondary tiktok-sub-btn">
+                            <span class="btn-icon">👥</span>
+                            <span class="btn-text">CAPTURAR PERFIL COMPLETO</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- PRODUCT SELECTOR -->
+                <section class="section">
+                    <h3 class="section-title">PRODUCTO ACTIVO</h3>
+                    <div class="destination-picker">
+                        <select id="product-selector" class="selector">
+                            <option value="">Cargando productos...</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- HISTORY -->
+                <section class="section">
+                    <h3 class="section-title">ÚLTIMAS CAPTURAS</h3>
+                    <ul id="capture-history" class="capture-history">
+                        <!-- ITEMS INJECTED BY JS -->
+                        <li class="history-empty">No hay capturas recientes.</li>
+                    </ul>
+                </section>
+            </div>
         </div>
 
-        <div id="landing-ui" class="action-group">
-            <div class="section-title">Landing & Spy</div>
-            <button class="btn primary" id="landing-clone">Clonar página completa</button>
-            <button class="btn" id="landing-screenshot">Capturar Screenshot</button>
-            <button class="btn" id="landing-copy">Extraer Copy solamente</button>
-            <button class="btn" id="landing-structure">Extraer estructura solamente</button>
-        </div>
-
-        <div class="progress-bar" id="progress-container"><div class="progress-fill" id="progress-fill"></div></div>
-        <div id="status"></div>
+        <footer class="footer">
+            <a href="http://localhost:3000/dashboard" target="_blank" class="footer-link">Ver Panel de Control</a>
+        </footer>
     </div>
     <script src="popup.js"></script>
 </body>
+
 </html>

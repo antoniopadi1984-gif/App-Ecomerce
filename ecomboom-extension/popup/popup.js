@@ -1,106 +1,196 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Detect active tab
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const url = tab.url || '';
+/**
+ * EcomBoom Popup Logic
+ * Handles Authentication, UI states, and Messaging.
+ */
 
-    if (url.includes('facebook.com/ads/library')) {
-        document.getElementById('meta-ui').style.display = 'flex';
-        document.getElementById('meta-ui').style.flexDirection = 'column';
-        document.getElementById('meta-ui').style.gap = '8px';
-    } else if (url.includes('library.tiktok.com')) {
-        document.getElementById('tiktok-ui').style.display = 'flex';
-        document.getElementById('tiktok-ui').style.flexDirection = 'column';
-        document.getElementById('tiktok-ui').style.gap = '8px';
-    } else {
-        document.getElementById('landing-ui').style.display = 'flex';
-        document.getElementById('landing-ui').style.flexDirection = 'column';
-        document.getElementById('landing-ui').style.gap = '8px';
+document.addEventListener('DOMContentLoaded', async () => {
+    // ── Elements ──
+    const authState = document.getElementById('authenticated');
+    const guestState = document.getElementById('not-authenticated');
+    const userNameEl = document.getElementById('user-name');
+    const storeNameEl = document.getElementById('active-store');
+    const productSelector = document.getElementById('product-selector');
+    const progressBar = document.getElementById('progress-bar-fill');
+    const progressOverlay = document.getElementById('processing-overlay');
+    const progressStep = document.getElementById('processing-step');
+    const progressPercent = document.getElementById('processing-percent');
+
+    // Platform Banners & Actions
+    const metaBanner = document.getElementById('platform-banner-meta');
+    const metaActions = document.getElementById('meta-actions');
+    const tiktokBanner = document.getElementById('platform-banner-tiktok');
+    const tiktokActions = document.getElementById('tiktok-actions');
+
+    // History
+    const historyList = document.getElementById('capture-history');
+
+    // ── 1. Check Authentication State ──
+    // Normally checking for a token or session in storage
+    chrome.storage.sync.get(['ecomboom_user', 'ecomboom_store'], (result) => {
+        if (result.ecomboom_user) {
+            showAuthenticated(result.ecomboom_user, result.ecomboom_store);
+        } else {
+            showGuest();
+        }
+    });
+
+    function showGuest() {
+        guestState.classList.remove('hidden');
+        authState.classList.add('hidden');
+        document.getElementById('btn-login').onclick = () => {
+            chrome.tabs.create({ url: 'http://localhost:3000/auth/login' });
+        };
     }
 
-    // 2. Fetch products from Local Storage (sync from app later)
-    chrome.storage.local.get(['products', 'activeProductId'], (res) => {
-        const select = document.getElementById('product-select');
-        if (res.products && res.products.length > 0) {
-            select.innerHTML = res.products.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
-            if (res.activeProductId) {
-                select.value = res.activeProductId;
-            }
-        } else {
-            select.innerHTML = '<option value="">(Sin productos) Abre EcomBoom antes</option>';
+    async function showAuthenticated(user, store) {
+        authState.classList.remove('hidden');
+        guestState.classList.add('hidden');
+
+        userNameEl.textContent = user.name || "Usuario EcomBoom";
+        storeNameEl.textContent = `Store: ${store?.name || "Sin Store"}`;
+
+        // Load Products
+        loadProducts();
+
+        // Detect Platform
+        detectPlatform();
+
+        // Render History
+        renderHistory();
+    }
+
+    // ── 2. Platform Detection ──
+    async function detectPlatform() {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const url = tab.url;
+
+        if (url.includes('facebook.com/ads/library')) {
+            metaBanner.classList.remove('hidden');
+            metaActions.classList.remove('hidden');
+        } else if (url.includes('tiktok.com')) {
+            tiktokBanner.classList.remove('hidden');
+            tiktokActions.classList.remove('hidden');
         }
-    });
+    }
 
-    // 3. Handlers
-    const setStatus = (msg) => {
-        document.getElementById('status').innerText = msg;
-    };
-
-    const runExtraction = (actionName, tabId) => {
-        setStatus("Extrayendo...");
-        document.getElementById('progress-container').style.display = 'block';
-        document.getElementById('progress-fill').style.width = '30%';
-
-        chrome.tabs.sendMessage(tabId, { action: actionName }, (response) => {
-            if (response && response.success) {
-                document.getElementById('progress-fill').style.width = '70%';
-
-                // Send to background to upload to server
-                chrome.runtime.sendMessage({
-                    action: "send_to_ecomboom",
-                    payload: {
-                        productId: document.getElementById('product-select').value,
-                        competitor: document.getElementById('competitor-select').value,
-                        data: response.data
-                    }
-                }, (bgRes) => {
-                    if (bgRes && bgRes.success) {
-                        document.getElementById('progress-fill').style.width = '100%';
-                        setStatus(`¡${response.count || 1} assets guardados en EcomBoom -> 00_INBOX/SPY/!`);
-                    } else {
-                        setStatus("Error subiendo a EcomBoom.");
-                    }
+    // ── 3. Load Products ──
+    async function loadProducts() {
+        try {
+            const res = await fetch('http://localhost:3000/api/products');
+            const data = await res.json();
+            if (data.success && data.products) {
+                productSelector.innerHTML = '<option value="">Seleccionar producto...</option>';
+                data.products.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.title;
+                    productSelector.appendChild(opt);
                 });
-            } else {
-                setStatus("Error extrayendo o script no cargado en la página.");
+
+                // Auto-select last project
+                chrome.storage.local.get(['last_product_id'], (res) => {
+                    if (res.last_product_id) productSelector.value = res.last_product_id;
+                });
             }
-        });
+        } catch (err) {
+            productSelector.innerHTML = '<option value="">Error al conectar (Auth required)</option>';
+        }
+    }
+
+    productSelector.onchange = () => {
+        chrome.storage.local.set({ last_product_id: productSelector.value });
     };
 
-    // Meta Handlers
-    document.getElementById('meta-save-all')?.addEventListener('click', async () => {
-        runExtraction("extract_meta_all", tab.id);
-    });
+    // ── 4. Action Handlers ──
+    document.getElementById('btn-save-creative').onclick = () => runCapture('extract_creative');
+    document.getElementById('btn-clone-landing').onclick = () => runCapture('clone_landing');
 
-    // Landing Handlers
-    document.getElementById('landing-copy')?.addEventListener('click', async () => {
-        setStatus("Inyectando extractor de copy...");
-        chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['content/landing-cloner.js']
-        }, () => {
-            runExtraction("extract_landing_copy", tab.id);
-        });
-    });
+    // Meta Specials
+    document.getElementById('btn-meta-ad').onclick = () => runCapture('extract_creative');
+    document.getElementById('btn-meta-full').onclick = () => runCapture('scan_advertiser_library');
 
-    document.getElementById('landing-clone')?.addEventListener('click', async () => {
-        setStatus("Clonando Landing...");
-        chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['content/landing-cloner.js']
-        }, () => {
-            runExtraction("extract_landing_full", tab.id);
-        });
-    });
+    // TikTok Specials
+    document.getElementById('btn-tiktok-video').onclick = () => runCapture('extract_creative');
+    document.getElementById('btn-tiktok-profile').onclick = () => runCapture('scan_tiktok_profile');
 
-    // Handle competitor select logic
-    const compSelect = document.getElementById('competitor-select');
-    const newCompInput = document.getElementById('new-competitor');
-    compSelect.addEventListener('change', (e) => {
-        if (e.target.value === 'NEW') {
-            newCompInput.style.display = 'block';
-            newCompInput.focus();
-        } else {
-            newCompInput.style.display = 'none';
+    async function runCapture(action) {
+        const productId = productSelector.value;
+        if (!productId) {
+            alert("Selecciona un producto de destino primero.");
+            return;
         }
-    });
+
+        // Show Processing UI
+        showProcessing("Iniciando captura...");
+
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        chrome.tabs.sendMessage(tab.id, { action, productId }, (response) => {
+            if (chrome.runtime.lastError) {
+                updateProcessing("Error de conexión", 100);
+                setTimeout(hideProcessing, 2000);
+                return;
+            }
+
+            if (response && response.success) {
+                updateProcessing("¡Guardado con éxito!", 100);
+                saveToHistory({
+                    title: document.title || "Creativo detectado",
+                    status: 'success',
+                    timestamp: new Date().toLocaleTimeString()
+                });
+                setTimeout(hideProcessing, 1500);
+            } else {
+                updateProcessing("No se detectó el contenido", 100);
+                setTimeout(hideProcessing, 2000);
+            }
+        });
+    }
+
+    // ── UI Utilities ──
+    function showProcessing(step) {
+        progressOverlay.classList.remove('hidden');
+        updateProcessing(step, 10);
+    }
+
+    function updateProcessing(step, percent) {
+        progressStep.textContent = step;
+        progressPercent.textContent = `${percent}%`;
+        progressBar.style.width = `${percent}%`;
+    }
+
+    function hideProcessing() {
+        progressOverlay.classList.add('hidden');
+    }
+
+    function renderHistory() {
+        chrome.storage.local.get(['capture_history'], (res) => {
+            const history = res.capture_history || [];
+            if (history.length === 0) return;
+
+            historyList.innerHTML = '';
+            history.slice(0, 5).forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerHTML = `
+                    <div class="info">
+                        <span class="title">${item.title}</span>
+                        <span class="time">${item.timestamp}</span>
+                    </div>
+                    <span class="history-status ${item.status === 'success' ? 'status-success' : 'status-error'}">
+                        ${item.status === 'success' ? '✓' : '✗'}
+                    </span>
+                `;
+                historyList.appendChild(li);
+            });
+        });
+    }
+
+    function saveToHistory(item) {
+        chrome.storage.local.get(['capture_history'], (res) => {
+            const history = res.capture_history || [];
+            history.unshift(item);
+            chrome.storage.local.set({ capture_history: history.slice(0, 10) }, renderHistory);
+        });
+    }
 });

@@ -11,10 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Globe, Save, Package, Tag, Info, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { updateProduct } from "@/app/research/actions/research-actions";
+import { useStore } from "@/lib/store/store-context";
+import { updateProduct } from "@/app/investigacion/actions/product-actions";
 
 export function ProductSettings({ product }: { product: any }) {
     const router = useRouter();
+    const { activeStore } = useStore();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: product?.title || "",
@@ -22,6 +24,8 @@ export function ProductSettings({ product }: { product: any }) {
         country: product?.country || "ES",
         niche: product?.niche || "",
         productFamily: product?.productFamily || "",
+        marketLanguage: product?.marketLanguage || "ES",
+        currency: product?.currency || activeStore?.currency || "EUR",
     });
 
     const handleSave = async () => {
@@ -124,23 +128,45 @@ export function ProductSettings({ product }: { product: any }) {
                         </CardHeader>
                         <CardContent className="p-6">
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">País de Operación</Label>
-                                <Select
-                                    value={formData.country}
-                                    onValueChange={val => setFormData({ ...formData, country: val })}
-                                >
-                                    <SelectTrigger className="h-12 rounded-xl border-indigo-100 font-bold text-sm bg-white shadow-sm ring-1 ring-indigo-500/5">
-                                        <SelectValue placeholder="Selecciona localización..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl border-indigo-50 p-1 shadow-2xl">
-                                        <SelectItem value="ES" className="rounded-lg py-2.5 font-bold text-xs">🇪🇸 España (Peninsular)</SelectItem>
-                                        <SelectItem value="MX" className="rounded-lg py-2.5 font-bold text-xs">🇲🇽 México</SelectItem>
-                                        <SelectItem value="CO" className="rounded-lg py-2.5 font-bold text-xs">🇨🇴 Colombia</SelectItem>
-                                        <SelectItem value="AR" className="rounded-lg py-2.5 font-bold text-xs">🇦🇷 Argentina</SelectItem>
-                                        <SelectItem value="US" className="rounded-lg py-2.5 font-bold text-xs">🇺🇸 USA (American English)</SelectItem>
-                                        <SelectItem value="UK" className="rounded-lg py-2.5 font-bold text-xs">🇬🇧 UK (British English)</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-3">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Idioma del Mercado</Label>
+                                        <Select
+                                            value={formData.marketLanguage}
+                                            onValueChange={val => setFormData({ ...formData, marketLanguage: val })}
+                                        >
+                                            <SelectTrigger className="h-12 rounded-xl border-indigo-100 font-bold text-sm bg-white shadow-sm ring-1 ring-indigo-500/5">
+                                                <SelectValue placeholder="Idioma..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-xl border-indigo-50 p-1 shadow-2xl">
+                                                <SelectItem value="ES" className="rounded-lg py-2.5 font-bold text-xs">Español</SelectItem>
+                                                <SelectItem value="EN" className="rounded-lg py-2.5 font-bold text-xs">Inglés</SelectItem>
+                                                <SelectItem value="FR" className="rounded-lg py-2.5 font-bold text-xs">Francés</SelectItem>
+                                                <SelectItem value="IT" className="rounded-lg py-2.5 font-bold text-xs">Italiano</SelectItem>
+                                                <SelectItem value="DE" className="rounded-lg py-2.5 font-bold text-xs">Alemán</SelectItem>
+                                                <SelectItem value="PT" className="rounded-lg py-2.5 font-bold text-xs">Portugués</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Moneda de Venta</Label>
+                                        <Select
+                                            value={formData.currency}
+                                            onValueChange={val => setFormData({ ...formData, currency: val })}
+                                        >
+                                            <SelectTrigger className="h-12 rounded-xl border-indigo-100 font-bold text-sm bg-white shadow-sm ring-1 ring-indigo-500/5">
+                                                <SelectValue placeholder="Moneda..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-xl border-indigo-50 p-1 shadow-2xl">
+                                                <SelectItem value="EUR" className="rounded-lg py-2.5 font-bold text-xs">EUR (€)</SelectItem>
+                                                <SelectItem value="USD" className="rounded-lg py-2.5 font-bold text-xs">USD ($)</SelectItem>
+                                                <SelectItem value="MXN" className="rounded-lg py-2.5 font-bold text-xs">MXN ($)</SelectItem>
+                                                <SelectItem value="COP" className="rounded-lg py-2.5 font-bold text-xs">COP ($)</SelectItem>
+                                                <SelectItem value="GBP" className="rounded-lg py-2.5 font-bold text-xs">GBP (£)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
                                 <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-100 flex gap-3 text-amber-900/60">
                                     <Info className="w-5 h-5 text-amber-500 shrink-0" />
                                     <p className="text-[10px] font-bold uppercase leading-relaxed tracking-tight italic">

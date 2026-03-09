@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// GET /api/elevenlabs/voices — proxy to ElevenLabs API
-export async function GET() {
-    const apiKey = process.env.ELEVENLABS_API_KEY;
-    if (!apiKey) return NextResponse.json({ voices: [] });
+import { ElevenLabsService } from '@/lib/services/elevenlabs-service';
 
+export async function GET() {
     try {
-        const res = await fetch('https://api.elevenlabs.io/v1/voices', {
-            headers: { 'xi-api-key': apiKey },
-        });
-        const data = await res.json();
-        return NextResponse.json({ voices: data.voices ?? [] });
-    } catch (e) {
-        console.warn('[ElevenLabs/voices]', e);
-        return NextResponse.json({ voices: [] });
+        const voices = await ElevenLabsService.getVoices();
+        return NextResponse.json({ success: true, voices });
+    } catch (e: any) {
+        console.error('[ElevenLabs/voices]', e);
+        return NextResponse.json({ success: false, voices: [], error: e.message });
     }
 }

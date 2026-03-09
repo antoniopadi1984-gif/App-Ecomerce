@@ -78,6 +78,9 @@
   --text: var(--color-text-primary);
   --text-muted: var(--color-text-muted);
   --text-dim: var(--color-text-subtle);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-tertiary: var(--color-text-muted);
 
   /* ── Dimensiones del layout ── */
   --sidebar-w: 52px;
@@ -1035,8 +1038,114 @@ table thead th {
   color: #0f172a !important;
 }
 
-/* slate-950 */
+/* ============================================================
+   SECCIÓN 13 — CENTRO CREATIVO PREMIUM UTILITIES
+   ============================================================ */
 
-.agent-input::placeholder {
-  color: #94a3b8;
+.ds-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.ds-card-cre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ds-card-cre:hover {
+  border-color: var(--cre);
+  box-shadow: 0 10px 40px -10px var(--cre-bg);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+.scroll-area {
+  scrollbar-gutter: stable;
+}
+
+/* ============================================================
+   SECCIÓN 12 — REFINAMIENTOS ESTUDIO CREATIVO
+   ============================================================ */
+
+.estudio-module .module-tab {
+  height: 36px;
+  font-size: 12px;
+  padding: 0 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.estudio-module .ds-btn-cre {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  border-radius: 8px;
+  background: var(--cre);
+  color: #FFFFFF;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+
+.estudio-module .ds-btn-cre:hover {
+  opacity: 0.9;
+}
+
+.estudio-module .concept-card {
+  padding: 10px 12px !important;
+  border-radius: 8px !important;
+}
+
+.estudio-module .section-panel {
+  padding: 16px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.estudio-module .field-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--text-muted) !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  margin-bottom: 4px;
+  display: block;
 }

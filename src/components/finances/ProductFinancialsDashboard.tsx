@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useStore } from "@/lib/store/store-context";
 
 interface ProductFinancialsDashboardProps {
     data: any;
@@ -30,6 +31,10 @@ interface ProductFinancialsDashboardProps {
 }
 
 export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsDashboardProps) {
+    const { activeStore } = useStore();
+    const currency = activeStore?.currency || "EUR";
+    const symbol = currency === "EUR" ? "€" : currency === "MXN" ? "$" : currency === "USD" ? "$" : currency;
+
     const [activeTab, setActiveTab] = useState("daily");
 
     if (loading && !data) {
@@ -55,33 +60,34 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3">
                 <MetricCard
                     label="NET REVENUE"
-                    value={`€${(summary.totalRevenue || 0).toLocaleString()}`}
+                    value={`${symbol}${(summary.totalRevenue || 0).toLocaleString()}`}
                     sub={`${summary.totalOrders || 0} pedidos`}
                     icon={DollarSign}
                     color="indigo"
                 />
                 <MetricCard
                     label="NET PROFIT"
-                    value={`€${netProfit.toLocaleString()}`}
+                    value={`${symbol}${netProfit.toLocaleString()}`}
                     sub={`${((netProfit / (summary.totalRevenue || 1)) * 100).toFixed(1)}% margen`}
                     icon={Zap}
                     color={isProfitable ? "emerald" : "rose"}
                 />
                 <MetricCard
                     label="AD SPEND"
-                    value={`€${(summary.adSpend || 0).toLocaleString()}`}
+                    value={`${symbol}${(summary.adSpend || 0).toLocaleString()}`}
                     sub={`ROAS: ${(summary.totalRevenue / (summary.adSpend || 1)).toFixed(2)}`}
                     icon={Megaphone}
                     color="amber"
                 />
                 <MetricCard
                     label="CAC REAL"
-                    value={`€${(summary.adSpend / (summary.confirmedOrders || 1)).toFixed(2)}`}
+                    value={`${symbol}${(summary.adSpend / (summary.confirmedOrders || 1)).toFixed(2)}`}
                     sub={`Confirmados: ${summary.confirmedOrders || 0}`}
                     icon={TrendingUpIcon}
                     color="slate"
                 />
             </div>
+            {/* ... table headers ... */}
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="px-1 py-1 bg-white border border-slate-200 rounded-lg mb-4 shadow-sm inline-flex overflow-x-auto no-scrollbar max-w-full">
@@ -145,11 +151,11 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
                                         return (
                                             <tr key={day.date} className="hover:bg-slate-50/50 transition-colors text-[11px] font-medium">
                                                 <td className="px-4 py-2 font-black text-slate-900">{format(new Date(day.date), "dd/MM/yyyy")}</td>
-                                                <td className="px-4 py-2 text-slate-500">€{(day.metaAds || 0).toLocaleString()}</td>
-                                                <td className="px-4 py-2 text-slate-500">€{(day.tiktokAds || 0).toLocaleString()}</td>
-                                                <td className="px-4 py-2 text-slate-500">€{(day.googleAds || 0).toLocaleString()}</td>
-                                                <td className="px-4 py-2 font-bold text-slate-700">€{(day.adSpend || 0).toLocaleString()}</td>
-                                                <td className="px-4 py-2 font-bold text-slate-900">€{(day.revenue || 0).toLocaleString()}</td>
+                                                <td className="px-4 py-2 text-slate-500">{symbol}{(day.metaAds || 0).toLocaleString()}</td>
+                                                <td className="px-4 py-2 text-slate-500">{symbol}{(day.tiktokAds || 0).toLocaleString()}</td>
+                                                <td className="px-4 py-2 text-slate-500">{symbol}{(day.googleAds || 0).toLocaleString()}</td>
+                                                <td className="px-4 py-2 font-bold text-slate-700">{symbol}{(day.adSpend || 0).toLocaleString()}</td>
+                                                <td className="px-4 py-2 font-bold text-slate-900">{symbol}{(day.revenue || 0).toLocaleString()}</td>
                                                 <td className="px-4 py-2 text-slate-500 text-center">{day.orderCount || 0}</td>
                                                 <td className="px-4 py-2 text-slate-500 text-center">{day.confirmedOrders || 0}</td>
                                                 <td className="px-4 py-2 text-slate-500 text-center">{day.deliveredOrders || 0}</td>
@@ -161,11 +167,11 @@ export function ProductFinancialsDashboard({ data, loading }: ProductFinancialsD
                                                         {(day.revenue / (day.adSpend || 1)).toFixed(2)}
                                                     </Badge>
                                                 </td>
-                                                <td className="px-4 py-2 text-rose-500/70">€{(day.cogs || 0).toLocaleString()}</td>
-                                                <td className="px-4 py-2 text-rose-500/70">€{(day.shippingCost || 0).toLocaleString()}</td>
-                                                <td className="px-4 py-2 text-rose-500/70">€{(day.fees || 0).toLocaleString()}</td>
+                                                <td className="px-4 py-2 text-rose-500/70">{symbol}{(day.cogs || 0).toLocaleString()}</td>
+                                                <td className="px-4 py-2 text-rose-500/70">{symbol}{(day.shippingCost || 0).toLocaleString()}</td>
+                                                <td className="px-4 py-2 text-rose-500/70">{symbol}{(day.fees || 0).toLocaleString()}</td>
                                                 <td className={cn("px-4 py-2 font-black text-sm italic bg-emerald-50/20", isDayProfitable ? "text-emerald-600" : "text-rose-600")}>
-                                                    €{profit.toLocaleString()}
+                                                    {symbol}{profit.toLocaleString()}
                                                 </td>
                                                 <td className="px-4 py-2 font-bold text-slate-600">{((profit / (day.adSpend || 1)) * 100).toFixed(0)}%</td>
                                                 <td className="px-4 py-2">

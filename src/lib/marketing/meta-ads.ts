@@ -1,7 +1,7 @@
 
 import { getConnectionSecret } from '../server/connections';
 
-const META_API_VERSION = 'v21.0';
+const META_API_VERSION = 'v25.0';
 const BASE_URL = `https://graph.facebook.com/${META_API_VERSION}`;
 
 export interface MetaAdAccount {
@@ -18,14 +18,23 @@ export interface MetaAdAccount {
 export class MetaAdsService {
     constructor(private accessToken: string) { }
 
-    private async fetch(endpoint: string, params: Record<string, string> = {}) {
+    public async fetch(endpoint: string, params: Record<string, string> = {}, method: 'GET' | 'POST' = 'GET', body?: any) {
         const url = new URL(`${BASE_URL}/${endpoint}`);
         url.searchParams.append('access_token', this.accessToken);
         for (const [key, value] of Object.entries(params)) {
             url.searchParams.append(key, value);
         }
 
-        const response = await fetch(url.toString());
+        const options: RequestInit = {
+            method,
+            headers: method === 'POST' ? { 'Content-Type': 'application/json' } : {}
+        };
+
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url.toString(), options);
         const data = await response.json();
 
         if (data.error) {
@@ -76,44 +85,135 @@ export class MetaAdsService {
 
     /**
      * Get Insights for Account/Campaign/Adset/Ad
+     * Optimized for January 2026 standards: No legacy attribution, no 10s video.
      */
     async getInsights(
         id: string,
         level: 'account' | 'campaign' | 'adset' | 'ad',
-        timeRange?: { since: string, until: string } | string // 'today' or object
+        dateRanges: string | { since: string, until: string } = 'last_7d'
     ) {
         const params: Record<string, string> = {
             level,
             fields: [
-                'account_id', 'account_name',
-                'campaign_id', 'campaign_name',
-                'adset_id', 'adset_name',
-                'ad_id', 'ad_name',
-                'spend', 'impressions', 'clicks', 'reach', 'frequency',
-                'unique_clicks', 'inline_link_clicks', 'inline_link_click_ctr',
-                'unique_inline_link_clicks', 'unique_inline_link_click_ctr',
-                'outbound_clicks', 'unique_outbound_clicks', 'outbound_clicks_ctr',
-                'cpc', 'cpm', 'cpp', 'ctr', 'unique_ctr',
-                'cost_per_unique_click', 'cost_per_inline_link_click',
-                'purchase_roas', 'website_ctr',
-                'actions', 'action_values',
-                'video_p25_watched_actions', 'video_p50_watched_actions',
-                'video_p75_watched_actions', 'video_p100_watched_actions',
-                'video_30_sec_watched_actions', 'video_thruplay_watched_actions',
-                'quality_ranking', 'engagement_rate_ranking', 'conversion_rate_ranking',
-                'objective', 'buying_type', 'canvas_avg_view_time'
+                'impressions', 'reach', 'frequency', 'spend', 'clicks', 'ctr', 'cpc', 'cpm',
+                'actions', 'action_values', 'cost_per_action_type',
+                'video_thruplay_watched_actions', 'video_p25_watched_actions',
+                'video_p50_watched_actions', 'video_p75_watched_actions',
+                'video_continuous_2_sec_watched_actions'
             ].join(','),
+            action_attribution_windows: JSON.stringify([
+                "1d_click", "7d_click", "28d_click", "1d_view", "1d_engaged_view"
+            ])
         };
 
-        if (typeof timeRange === 'string') {
-            params.date_preset = timeRange;
-        } else if (timeRange) {
-            params.time_range = JSON.stringify(timeRange);
+        if (typeof dateRanges === 'string') {
+            params.date_preset = dateRanges;
         } else {
-            params.date_preset = 'today';
+            params.time_range = JSON.stringify(dateRanges);
         }
 
         const data = await this.fetch(`${id}/insights`, params);
+        return data.data;
+    }
+
+    /**
+     * Upload Video to Meta
+     * POST /{ad_account_id}/advideos
+     */
+    async uploadVideo(adAccountId: string, videoUrl: string, title: string) {
+        const id = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+        const data = await this.fetch(`${id}/advideos`, {
+            source: videoUrl,
+            title
+        }, 'POST');
+        return data.id as string; // video_id
+    }
+
+    /**
+     * Create AdCreative
+     * POST /{ad_account_id}/adcreatives
+     */
+    async createAdCreative(adAccountId: string, options: {
+        name: string,
+        pageId: string,
+        videoId: string,
+        message: string,
+        callToAction: string
+    }) {
+        const id = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+        const body = {
+            name: options.name,
+            object_story_spec: {
+                page_id: options.pageId,
+                video_data: {
+                    video_id: options.videoId,
+                    message: options.message,
+                    call_to_action: {
+                        type: options.callToAction,
+                        value: { link: "https://your-store-link.com" } // Replace with landing_id logic later
+                    }
+                }
+            }
+        };
+        const data = await this.fetch(`${id}/adcreatives`, {}, 'POST', body);
+        return data.id as string; // creative_id
+    }
+
+    /**
+     * Create Ad (Always first in PAUSED status)
+     * POST /{ad_account_id}/ads
+     */
+    async createAd(adAccountId: string, options: {
+        name: string,
+        adsetId: string,
+        creativeId: string
+    }) {
+        const id = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+        const data = await this.fetch(`${id}/ads`, {
+            name: options.name,
+            adset_id: options.adsetId,
+            creative: JSON.stringify({ creative_id: options.creativeId }),
+            status: "PAUSED"
+        }, 'POST');
+        return data.id as string; // ad_id
+    }
+
+    /**
+     * Search Ads Library for Competition
+     */
+    async searchAdsLibrary(searchTerms: string) {
+        const params = {
+            search_terms: searchTerms,
+            ad_type: 'ALL',
+            ad_active_status: 'ACTIVE',
+            fields: [
+                'id', 'ad_creative_bodies', 'ad_creative_link_captions',
+                'ad_creative_link_titles', 'page_name', 'page_id',
+                'ad_delivery_start_time', 'ad_delivery_stop_time'
+            ].join(',')
+        };
+        const data = await this.fetch('ads_archive', params);
+        return data.data;
+    }
+
+    /**
+     * Get Campaigns for Selector
+     */
+    async getCampaigns(adAccountId: string) {
+        const id = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+        const data = await this.fetch(`${id}/campaigns`, {
+            fields: 'id,name,status,objective'
+        });
+        return data.data;
+    }
+
+    /**
+     * Get AdSets for Selector
+     */
+    async getAdSets(campaignId: string) {
+        const data = await this.fetch(`${campaignId}/adsets`, {
+            fields: 'id,name,status,daily_budget'
+        });
         return data.data;
     }
 }

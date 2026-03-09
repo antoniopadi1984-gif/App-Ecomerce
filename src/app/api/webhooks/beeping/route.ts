@@ -1,84 +1,96 @@
-
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { BeepingClient } from "@/lib/beeping";
-import { recordOrderEvent } from "@/lib/logistics-engine";
-import { revalidatePath } from "next/cache";
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { BeepingClient } from '@/lib/beeping';
 
 export async function POST(req: NextRequest) {
     try {
-        const payload = await req.json();
+        const body = await req.json();
+        const { event, order_id, status, tracking, courier_id } = body;
 
-        // Beeping typically sends: { event: "order_updated", data: { ...order_details... } }
-        // Or sometimes just the order object depending on config.
-        // Let's assume standard payload.
-
-        const data = payload.data || payload;
-        const shopifyId = data.external_id || data.order_id; // Beeping maps Shopify ID to external_id usually
-
-        if (!shopifyId) {
-            return NextResponse.json({ success: false, message: "No external_id found" }, { status: 400 });
+        if (!order_id) {
+            return NextResponse.json({ success: false, error: "Missing order_id" });
         }
 
-        console.log(`[Beeping Webhook] Received update for ${shopifyId}`);
-
-        // Find Order
-        const order = await prisma.order.findUnique({
-            where: { shopifyId: shopifyId.toString() }
+        // Buscar Order
+        const orderNumber = String(order_id);
+        const order = await (prisma as any).order.findFirst({
+            where: { orderNumber, logisticsProvider: "BEEPING" }
         });
 
         if (!order) {
-            console.warn(`[Beeping Webhook] Order ${shopifyId} not found locally.`);
-            return NextResponse.json({ success: true, message: "Order not found, ignored" });
+            // Find storeId from connection metadata or payload if possible
+            // Usually we need the shop_id linked to a Store in our DB
+            const connection = await (prisma as any).connection.findFirst({
+                where: { provider: "BEEPING", extraConfig: { contains: String(body.shop_id || '') } }
+            });
+
+            const storeId = connection?.storeId || 'store-main';
+
+            // Create basic order
+            const mockBo = { status, order_shipment_status_id: status, ...body };
+            const logisticsStatus = BeepingClient.mapStatus(mockBo);
+
+            await (prisma as any).order.create({
+                data: {
+                    storeId,
+                    orderNumber,
+                    logisticsProvider: "BEEPING",
+                    logisticsStatus,
+                    status: mapBeepingToInternalStatus(logisticsStatus),
+                    trackingCode: tracking || body.tracking_code || null,
+                    carrier: courier_id ? BeepingClient.mapCourier(courier_id) : null,
+                    customerName: body.customer_name || body.delivery_name || "Sync Webhook",
+                    paymentMethod: "COD",
+                    totalPrice: parseFloat(body.price || body.total || 0),
+                    rawJson: JSON.stringify(body),
+                    updatedAt: new Date()
+                }
+            });
+
+            return NextResponse.json({ success: true, message: "Order created from webhook" });
         }
 
-        // Map Status
-        const mappedStatus = BeepingClient.mapStatus(data);
+        // Mapear el nuevo estado logístico
+        // Reutilizamos BeepingClient.mapStatus si el body tiene la estructura bo
+        const mockBo = { status, order_shipment_status_id: status, ...body };
+        const logisticsStatus = BeepingClient.mapStatus(mockBo);
+        const internalStatus = mapBeepingToInternalStatus(logisticsStatus);
 
-        const trackingCode = data.tracking_number || data.tracking_code;
-        const trackingUrl = data.tracking_url;
-
-        // Update DB
-        const updatedOrder = await prisma.order.update({
+        await (prisma as any).order.update({
             where: { id: order.id },
             data: {
-                logisticsStatus: mappedStatus,
-                ...(trackingCode ? { trackingCode } : {}),
-                ...(trackingUrl ? { trackingUrl } : {}),
-                // Accounting fields from Beeping Webhook
-                shippingCost: data.shipping_cost ? parseFloat(data.shipping_cost) : order.shippingCost,
-                // capturing more fields if available
-                finalStatus: (mappedStatus === 'DELIVERED' || mappedStatus === 'RETURNED' || mappedStatus === 'RETURN_TO_SENDER') ? mappedStatus : order.finalStatus,
-                // If delivered, set dates
-                ...(mappedStatus === 'DELIVERED' ? { deliveredAt: new Date() } : {}),
-                ...(mappedStatus === 'RETURNED' || mappedStatus === 'RETURN_TO_SENDER' ? { returnedAt: new Date() } : {})
+                logisticsStatus,
+                status: internalStatus,
+                trackingCode: tracking || body.tracking_code || order.trackingCode,
+                carrier: courier_id ? BeepingClient.mapCourier(courier_id) : order.carrier,
+                updatedAt: new Date()
             }
         });
 
-        // Recalculate profit for accounting (Imported from logistics-engine below)
-        const { calculateOrderProfit } = await import("@/lib/logistics-engine");
-        await calculateOrderProfit(updatedOrder.id);
-
-        // [FASE 5] Trigger Content Delivery Automations
-        const { DeliveryEngine } = await import("@/lib/marketing/contents/delivery-engine");
-        await DeliveryEngine.onOrderStatusChange(order.id, mappedStatus);
-
-        // Record Event
-        await recordOrderEvent({
-            orderId: order.id,
-            source: 'BEEPING',
-            type: 'WEBHOOK_UPDATE',
-            externalEventId: `hook-${Date.now()}`,
-            description: `Actualización automática Beeping: ${mappedStatus}`,
-            payload: payload
+        // Evento
+        await (prisma as any).orderEvent.create({
+            data: {
+                orderId: order.id,
+                type: event || "WEBHOOK_UPDATE",
+                source: "WEBHOOK_BEEPING",
+                description: `Webhook: ${logisticsStatus}`,
+                payload: JSON.stringify(body),
+                createdAt: new Date()
+            }
         });
-
-        revalidatePath("/pedidos");
-        revalidatePath("/logistics/dashboard");
 
         return NextResponse.json({ success: true });
     } catch (e: any) {
-        console.error("[Beeping Webhook Error]", e);
-        return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+        console.error('[Beeping Webhook Error]', e);
+        return NextResponse.json({ success: true }); // Siempre 200 para evitar reintentos infinitos si falla el mapeo
     }
+}
+
+function mapBeepingToInternalStatus(logisticsStatus: string): string {
+    const s = logisticsStatus.toLowerCase();
+    if (s.includes('entregado')) return 'DELIVERED';
+    if (s.includes('devuelto') || s.includes('siniestro')) return 'RETURNED';
+    if (s.includes('tránsito') || s.includes('reparto') || s.includes('enviado') || s.includes('recogida')) return 'IN_TRANSIT';
+    if (s.includes('cancelado')) return 'CANCELLED';
+    return 'PENDING';
 }

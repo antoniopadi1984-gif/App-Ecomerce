@@ -1,30 +1,161 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MetricsSnapshotService } from "@/lib/services/metrics-snapshot-service";
-import { requireStoreIdNext } from "@/lib/server/store-context";
+import { prisma } from "@/lib/prisma";
+import { startOfDay, endOfDay } from "date-fns";
 
-export async function GET(request: NextRequest) {
+/**
+ * 10.2 src/app/api/finances/sync-today/route.ts
+ * Sincronización manual de métricas del día para una tienda.
+ */
+export async function POST(req: NextRequest) {
     try {
-        const storeId = await requireStoreIdNext();
+        const body = await req.json();
+        const { storeId } = body;
 
-        // Sincronizar los últimos 120 días para cubrir histórico (Oct, Nov, Dic, Ene, Feb)
-        const today = new Date();
-        const startPath = new Date();
-        startPath.setDate(today.getDate() - 120);
+        if (!storeId) {
+            return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
+        }
 
-        console.log(`[sync-today] Triggering backfill from ${startPath.toISOString()} to ${today.toISOString()}`);
+        const today = startOfDay(new Date());
+        const tomorrow = endOfDay(today);
 
-        // Ejecutamos en segundo plano para no bloquear al usuario
-        MetricsSnapshotService.generateRangeSnapshots(storeId, startPath, today)
-            .then(() => console.log(`[sync-today] Full backfill completed`))
-            .catch(e => console.error(`[sync-today] Full backfill failed:`, e));
+        // 1. Calcular métricas de orders
+        const orders = await (prisma as any).order.findMany({
+            where: {
+                storeId,
+                createdAt: {
+                    gte: today,
+                    lte: tomorrow
+                }
+            },
+            include: {
+                items: true
+            }
+        });
+
+        let totalRevenue = 0;
+        let deliveredCount = 0;
+        let returnedCount = 0;
+        let cancelledCount = 0;
+        let totalCogs = 0;
+        let totalShippingCost = 0;
+
+        orders.forEach((order: any) => {
+            const status = (order.status || "").toUpperCase();
+
+            if (status === "DELIVERED") {
+                totalRevenue += order.totalPrice || 0;
+                deliveredCount++;
+            } else if (status === "RETURNED") {
+                returnedCount++;
+            } else if (status === "CANCELLED") {
+                cancelledCount++;
+            }
+
+            // Gastos se suman para todos los pedidos no cancelados (o según lógica contable)
+            // El prompt dice: netProfit = totalRevenue - cogs - adSpend - shippingCost
+            if (status !== "CANCELLED") {
+                totalShippingCost += order.estimatedLogisticsCost || 0;
+                if (order.items) {
+                    order.items.forEach((item: any) => {
+                        totalCogs += (item.unitCost || 0) * (item.quantity || 0);
+                    });
+                }
+            }
+        });
+
+        // 2. Ad Spend desde MetaInsightsCache
+        const insights = await (prisma as any).metaInsightsCache.findMany({
+            where: {
+                storeId,
+                date: {
+                    gte: today,
+                    lte: tomorrow
+                }
+            }
+        });
+
+        const adSpend = insights.reduce((sum: number, ins: any) => sum + (ins.spend || 0), 0);
+
+        // 3. Calcular Net Profit
+        const netProfit = totalRevenue - totalCogs - adSpend - totalShippingCost;
+
+        // 4. Upsert DailyFinance
+        await (prisma as any).dailyFinance.upsert({
+            where: {
+                storeId_date: { storeId, date: today }
+            },
+            update: {
+                totalRevenue,
+                ordersCount: orders.length,
+                deliveredCount,
+                returnedCount,
+                cancelledCount,
+                adSpend,
+                cogs: totalCogs,
+                shippingCost: totalShippingCost,
+                netProfit
+            },
+            create: {
+                storeId,
+                date: today,
+                totalRevenue,
+                ordersCount: orders.length,
+                deliveredCount,
+                returnedCount,
+                cancelledCount,
+                adSpend,
+                cogs: totalCogs,
+                shippingCost: totalShippingCost,
+                netProfit
+            }
+        });
+
+        // 5. Upsert DailySnapshot (View: ORDERS_CREATED)
+        const deliveryRate = orders.length > 0 ? (deliveredCount / orders.length) * 100 : 0;
+        const roasReal = adSpend > 0 ? totalRevenue / adSpend : 0;
+
+        await (prisma as any).dailySnapshot.upsert({
+            where: {
+                storeId_date_view: { storeId, date: today, view: "ORDERS_CREATED" }
+            },
+            update: {
+                spendAds: adSpend,
+                revenueReal: totalRevenue,
+                costsReal: totalCogs + totalShippingCost,
+                netProfit,
+                roasReal,
+                deliveryRate,
+                isComplete: true
+            },
+            create: {
+                storeId,
+                date: today,
+                view: "ORDERS_CREATED",
+                spendAds: adSpend,
+                revenueReal: totalRevenue,
+                costsReal: totalCogs + totalShippingCost,
+                netProfit,
+                roasReal,
+                deliveryRate,
+                isComplete: true
+            }
+        });
 
         return NextResponse.json({
             success: true,
-            message: "Sincronización histórica iniciada",
-            date: today.toISOString()
+            summary: {
+                totalRevenue,
+                adSpend,
+                netProfit,
+                ordersCount: orders.length,
+                deliveredCount,
+                returnedCount,
+                cancelledCount
+            }
         });
+
     } catch (error: any) {
         console.error("[sync-today] Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }

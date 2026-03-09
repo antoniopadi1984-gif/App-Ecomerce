@@ -4,7 +4,6 @@ import React from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
 import { ShoppingCart } from 'lucide-react';
-import { AgentCompanion } from '@/components/layout/agent-companion';
 
 export default function OperacionesLayout({ children }: { children: React.ReactNode }) {
     const { activeStoreId } = useStore();
@@ -37,8 +36,6 @@ export default function OperacionesLayout({ children }: { children: React.ReactN
                     {children}
                 </div>
             )}
-
-            <AgentCompanion pageContext={contextForAgent} agentRole="general" />
         </div>
     );
 }

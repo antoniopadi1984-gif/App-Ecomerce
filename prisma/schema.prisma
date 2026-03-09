@@ -8,25 +8,28 @@ datasource db {
 }
 
 model User {
-  id           String            @id @default(cuid())
-  email        String            @unique
-  name         String?
-  password     String?
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String?
+  password          String?
   // Usuario extended fields
-  nombre       String? // nombre propio  (migración añadida)
-  apellido     String? // apellido
-  rol          String            @default("visor") // admin | gestor | agente_ia | visor
-  tipo         String            @default("humano") // humano | bot
-  estado       String            @default("activo") // activo | invitado | inactivo
-  avatar       String? // URL foto o avatar
-  color        String            @default("#64748b") // color identificativo en la UI
-  invitadoPor  String? // id del usuario que lo invitó
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  auditLogs    AuditLog[]
-  stores       UserStoreAccess[]
-  workSessions WorkSession[]
-  connections  UserConnection[]
+  nombre            String? // nombre propio  (migración añadida)
+  apellido          String? // apellido
+  rol               String             @default("visor") // admin | gestor | agente_ia | visor
+  tipo              String             @default("humano") // humano | bot
+  estado            String             @default("activo") // activo | invitado | inactivo
+  avatar            String? // URL foto o avatar
+  color             String             @default("#64748b") // color identificativo en la UI
+  invitadoPor       String? // id del usuario que lo invitó
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  auditLogs         AuditLog[]
+  stores            UserStoreAccess[]
+  workSessions      WorkSession[]
+  connections       UserConnection[]
+  extensionCaptures ExtensionCapture[]
+  activeProductId   String?
+  preferences       UserPreference[]
 }
 
 model UserConnection {
@@ -80,6 +83,7 @@ model Store {
   auditLogs            AuditLog[]
   avatarProfiles       AvatarProfile[]
   research             AvatarResearch[]
+  // Legacy Clowdbot configuration (Keep for backward compatibility, do not create new references)
   clowdbotConfig       ClowdbotConfig?
   connections          Connection[]
   contentAssets        ContentAsset[]
@@ -90,11 +94,16 @@ model Store {
   creativeAssets       CreativeAsset[]
   creativeBlueprints   CreativeBlueprint[]
   customers            Customer[]
+  competitorBrands     CompetitorBrand[]
+  competitorAds        CompetitorAd[]
+  competitorLandings   CompetitorLanding[]
   finances             DailyFinance[]
   snapshots            DailySnapshot[]
   expenses             Expense[]
+  agentConfigs         AgentConfig[]
   fulfillmentRules     FulfillmentRule[]
   generatedCreatives   GeneratedCreative[]
+  inspirationAssets    InspirationAsset[]
   historicalSheets     HistoricalSpreadsheet[]
   scenarios            HypothesisScenario[]
   landingProjects      LandingProject[]
@@ -116,6 +125,10 @@ model Store {
   alertRules           AlertRule[]
   creativeBatches      CreativeBatch[]
   metaAdAccounts       MetaAdAccount[]
+  creativeArtifacts    CreativeArtifact[]
+  savedHooks           SavedHook[]
+  aiAvatars            AiAvatar[]
+  competitorTrackings  CompetitorTracking[]
   storeType            String                  @default("HYBRID")
   scoreCardConfig      ScoreCardConfig?
   concepts             Concept[]
@@ -125,6 +138,23 @@ model Store {
   competitorAnalyses   CompetitorAnalysis[]
   driveFiles           DriveFile[]
   driveSetupDone       Boolean                 @default(false)
+  finanzasConfig       FinanzasConfig?
+  competitorVideos     CompetitorVideo[]
+  competitorLibraries  CompetitorLibrary[]
+  landingClones        LandingClone[]
+  extensionCaptures    ExtensionCapture[]
+  metaInsights         MetaInsightsCache[]
+}
+
+model FinanzasConfig {
+  id             String   @id @default(cuid())
+  storeId        String   @unique
+  thresholdsJson String?
+  kpiOrderJson   String?
+  kpiEnabledJson String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  store          Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 }
 
 model MetaAdAccount {
@@ -349,8 +379,10 @@ model Product {
   productFamily       String?
   driveDocId          String?
   driveDocUrl         String?
+  isWinnersOnly       Boolean                @default(false)
   marketLanguage      String                 @default("ES") // idioma del mercado (EN, FR, IT, DE, etc.)
   interfaceLanguage   String                 @default("ES") // idioma de la interfaz (siempre ES)
+  currency            String                 @default("EUR")
   pvpEstimated        Float?
   cvrExpected         Float?
   cpaMax              Float?
@@ -363,7 +395,9 @@ model Product {
   avatarProfiles      AvatarProfile[]
   avatarResearches    AvatarResearch[]
   CompetitiveAnalysis CompetitiveAnalysis[]
-  competitorLandings  CompetitorLanding?
+  competitorLandings  CompetitorLanding[]
+  competitorAds       CompetitorAd[]
+  competitorBrands    CompetitorBrand[]
   competitorLinks     CompetitorLink[]
   assets              ContentAsset[]
   templates           ContentTemplate[]
@@ -373,6 +407,7 @@ model Product {
   creatives           Creative[]
   creativeAssets      CreativeAsset[]
   blueprints          CreativeBlueprint[]
+  inspirationAssets   InspirationAsset[]
   creativeProjects    CreativeProject[]
   driveAssets         DriveAsset[]
   evidenceChunks      EvidenceChunk[]
@@ -410,9 +445,17 @@ model Product {
   researchSteps       ResearchStep[]
   competitorAnalyses  CompetitorAnalysis[]
   amazonReviews       AmazonReview[]
+  creativeArtifacts   CreativeArtifact[]
+  savedHooks          SavedHook[]
+  aiAvatars           AiAvatar[]
+  competitorTrackings CompetitorTracking[]
+  competitorLibraries CompetitorLibrary[]
+  landingClones       LandingClone[]
+  extensionCaptures   ExtensionCapture[]
   driveFiles          DriveFile[]
   driveSetupDone      Boolean?               @default(false)
   driveIndexPath      String? // ruta del index.json en Drive
+  competitorVideos    CompetitorVideo[]
 }
 
 model Order {
@@ -775,26 +818,6 @@ model CopyContract {
   creativeProjects      CreativeProject[]
 }
 
-model CompetitorLanding {
-  id                String   @id @default(cuid())
-  productId         String   @unique
-  url               String
-  screenshotUrl     String?
-  type              String?
-  avatar            String?
-  awareness         String?
-  angle             String?
-  promise           String?
-  objectionsTreated String?
-  structureJson     String?
-  cta               String?
-  risks             String?
-  opportunityScore  Float?
-  status            String   @default("DETECTED")
-  createdAt         DateTime @default(now())
-  product           Product  @relation(fields: [productId], references: [id])
-}
-
 model VoiceOfCustomerQuote {
   id              String   @id @default(cuid())
   productId       String
@@ -826,7 +849,7 @@ model MarketingAngle {
 }
 
 model CreativeAsset {
-  id               String              @id @default(cuid())
+  id               String  @id @default(cuid())
   productId        String
   storeId          String?
   type             String
@@ -835,17 +858,17 @@ model CreativeAsset {
   nomenclatura     String?
   editor           String?
   angulo           String?
-  language         String              @default("es")
-  spend            Float               @default(0)
-  revenue          Float               @default(0)
-  purchases        Int                 @default(0)
+  language         String  @default("es")
+  spend            Float   @default(0)
+  revenue          Float   @default(0)
+  purchases        Int     @default(0)
   hookRate         Float?
   ctr              Float?
   verdict          String?
   conceptId        String?
   scriptEs         String?
   conceptCode      String? // C01, C02, C03
-  versionNumber    Int                 @default(1) // V01, V02
+  versionNumber    Int     @default(1) // V01, V02
   driveFileId      String? // ID en Google Drive
   drivePath        String? // ruta completa en Drive
   transcription    String? // texto completo Whisper
@@ -853,15 +876,40 @@ model CreativeAsset {
   clipsJson        String? // JSON paths clips
   hookText         String? // hook extraído primeros 3s
   funnelStage      String? // TOF | MOF | BOF | RT-CART | RT-VIEW | RT-BUYER
-  processingStatus String              @default("PENDING")
+  processingStatus String  @default("PENDING")
   // PENDING → PROCESSING → TRANSCRIBED → ANALYZED → ORGANIZED → DONE
   avatarId         String?
   angleId          String?
-  createdAt        DateTime            @default(now())
-  product          Product             @relation(fields: [productId], references: [id])
-  store            Store?              @relation(fields: [storeId], references: [id])
-  dailyStats       CreativeDailyStat[]
-  concept          Concept?            @relation(fields: [conceptId], references: [id])
+
+  // Meta Content & Status
+  metaStatus   String? @default("DRAFT") // ACTIVO | PAUSADO | FATIGADO | DRAFT
+  thumbnailUrl String?
+
+  // Auto-Tagging & Semantic (Gemini)
+  tagsJson            String? // JSON con { tipo_hook, angulo, formato, framework, emocion_dominante }
+  semanticDescription String? // Indexación semántica Gemini
+  format              String? // UGC | TALKING_HEAD | DEMO | BROLL | etc
+  framework           String? // PAS | AIDA | STORY_SELL | etc
+  dominantEmotion     String? // URGENGIA | CONFIANZA | EMPATIA | etc
+
+  // Fatigue Detection
+  fatigueScore    Float?
+  fatigueDaysLeft Int?
+  ctrTrend        String? // UP | STABLE | DOWN
+  frequency       Float?
+
+  // Versioning & Traceability
+  versionGroup   String? // ID para agrupar versiones (V1, V2...)
+  sourceAssetId  String? // De dónde viene este asset (traceability)
+  similarityHash String? // Hash para detección de similaridad
+  isMaster       Boolean @default(true)
+
+  createdAt  DateTime            @default(now())
+  product    Product             @relation(fields: [productId], references: [id])
+  store      Store?              @relation(fields: [storeId], references: [id])
+  dailyStats CreativeDailyStat[]
+  concept    Concept?            @relation(fields: [conceptId], references: [id])
+  avatar     AvatarProfile?      @relation(fields: [avatarId], references: [id])
 }
 
 model CreativeProject {
@@ -969,12 +1017,13 @@ model LandingProject {
   blueprintId         String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  semanticDescription String? // Indexación semántica Gemini
   store               Store    @relation(fields: [storeId], references: [id])
   product             Product? @relation(fields: [productId], references: [id])
 }
 
 model AvatarProfile {
-  id             String            @id @default(cuid())
+  id             String  @id @default(cuid())
   storeId        String
   name           String
   sex            String
@@ -982,33 +1031,46 @@ model AvatarProfile {
   region         String?
   imageUrl       String?
   videoUrl       String?
-  status         String            @default("DRAFT")
+  status         String  @default("DRAFT")
   lastError      String?
   evolutionId    String?
   evolutionStage String?
+  avatarId       String? // [PROD]-AV01
+  promptDNA      String? // Description + Psychography
   productId      String?
+
   metadataJson   String?
+  voiceId        String?
+  voiceProvider  String?           @default("ELEVENLABS")
+  voiceSettings  String? // JSON: { stability, similarity_boost, style, use_speaker_boost }
+  language       String            @default("es")
+  speed          Float             @default(1.0)
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   assets         AvatarAsset[]
   store          Store             @relation(fields: [storeId], references: [id])
   product        Product?          @relation(fields: [productId], references: [id])
   projects       CreativeProject[]
+  creativeAssets CreativeAsset[]
 
   @@index([productId])
 }
 
 model AvatarAsset {
-  id              String        @id @default(cuid())
-  avatarProfileId String
-  type            String        @default("AVATAR_IMAGE")
-  pathLocal       String
-  mime            String?
-  width           Int?
-  height          Int?
-  driveFileId     String?
-  createdAt       DateTime      @default(now())
-  avatarProfile   AvatarProfile @relation(fields: [avatarProfileId], references: [id], onDelete: Cascade)
+  id                  String        @id @default(cuid())
+  avatarProfileId     String
+  productId           String?
+  type                String        @default("AVATAR_IMAGE")
+  url                 String? // Remote URL (Replicate/S3)
+  pathLocal           String? // Local or Drive Path
+  driveFileId         String?
+  mime                String?
+  width               Int?
+  height              Int?
+  processingStatus    String?       @default("PENDING")
+  semanticDescription String? // Indexación semántica Gemini
+  createdAt           DateTime      @default(now())
+  avatarProfile       AvatarProfile @relation(fields: [avatarProfileId], references: [id], onDelete: Cascade)
 }
 
 model ProductFinance {
@@ -1371,7 +1433,7 @@ model AgentProfile {
   channels     String        @default("[]")
   menus        String        @default("[]")
   isActive     Boolean       @default(true)
-  model        String        @default("gemini-2.0-flash")
+  model        String        @default("gemini-3-flash-preview")
   temperature  Float         @default(0.7)
   systemPrompt String?
   createdAt    DateTime      @default(now())
@@ -2024,21 +2086,22 @@ model CreativeTemplate {
 }
 
 model ScriptLibrary {
-  id             String   @id @default(cuid())
-  productId      String?
-  framework      String
-  funnelStage    String
-  hook           String
-  body           String
-  cta            String
-  duration       Int?
-  wordCount      Int?
-  conversionRate Float?
-  usageCount     Int      @default(0)
-  avgCTR         Float?
-  avgCPC         Float?
-  createdAt      DateTime @default(now())
-  product        Product? @relation(fields: [productId], references: [id])
+  id                  String   @id @default(cuid())
+  productId           String?
+  framework           String
+  funnelStage         String
+  hook                String
+  body                String
+  cta                 String
+  duration            Int?
+  wordCount           Int?
+  conversionRate      Float?
+  usageCount          Int      @default(0)
+  avgCTR              Float?
+  avgCPC              Float?
+  createdAt           DateTime @default(now())
+  semanticDescription String? // Indexación semántica Gemini
+  product             Product? @relation(fields: [productId], references: [id])
 
   @@index([productId])
   @@index([framework])
@@ -2204,26 +2267,32 @@ model ScoreCardConfig {
 
 // ─── Concept (Spencer Pawlin) ─────────────────────────────────
 model Concept {
-  id          String          @id @default(cuid())
-  productId   String
-  storeId     String
-  name        String
-  hypothesis  String?
-  emotion     String?
-  angle       String?
-  funnelStage String          @default("TOF") // TOF | MOF | BOF | RT
-  status      String          @default("TESTING") // TESTING | WINNER | LOSER | PAUSED
-  spend       Float           @default(0)
-  revenue     Float           @default(0)
-  roas        Float           @default(0)
-  ctr         Float           @default(0)
-  cpa         Float           @default(0)
-  hookRate    Float           @default(0)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  product     Product         @relation(fields: [productId], references: [id])
-  store       Store           @relation(fields: [storeId], references: [id])
-  creatives   CreativeAsset[]
+  id             String  @id @default(cuid())
+  productId      String
+  storeId        String
+  name           String
+  type           String? // MECANISMO, PROBLEMA, etc.
+  angle          String?
+  awarenessLevel Int? // 1-5
+  funnelStage    String  @default("TOF") // TOF | MOF | BOF | RT
+  number         Int?    @default(1)
+  status         String  @default("TESTING") // TESTING | WINNER | LOSER | PAUSED
+  createdBy      String  @default("HUMAN") // HUMAN | AGENT
+  winnerVariantId String?
+
+  hypothesis String?
+  emotion    String?
+  spend      Float           @default(0)
+  revenue    Float           @default(0)
+  roas       Float           @default(0)
+  ctr        Float           @default(0)
+  cpa        Float           @default(0)
+  hookRate   Float           @default(0)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  product    Product         @relation(fields: [productId], references: [id])
+  store      Store           @relation(fields: [storeId], references: [id])
+  creatives  CreativeAsset[]
 }
 
 // ─── ComboMatrix (Avatar x Angle) ────────────────────────────
@@ -2391,3 +2460,545 @@ model DriveFolder {
 
   @@index([productId, path])
 }
+
+model CompetitorBrand {
+  id             String    @id @default(cuid())
+  storeId        String
+  productId      String?
+  name           String
+  websiteUrl     String?
+  trackingActive Boolean   @default(true)
+  lastTracked    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  store    Store               @relation(fields: [storeId], references: [id])
+  product  Product?            @relation(fields: [productId], references: [id])
+  ads      CompetitorAd[]
+  landings CompetitorLanding[]
+
+  @@index([storeId])
+}
+
+model CompetitorAd {
+  id           String  @id @default(cuid())
+  brandId      String?
+  storeId      String
+  productId    String?
+  title        String?
+  url          String?
+  videoUrl     String?
+  thumbnailUrl String?
+  platform     String? // META | TIKTOK | YOUTUBE
+  status       String? // ACTIVE | INACTIVE
+  source       String? // MANUAL | AUTO_TRACKING
+
+  // AI Analysis (Gemini 3.1 Pro)
+  analysisJson   String? // Full breakdown: timeline, transcription, why it works, etc.
+  blueprintJson  String? // Structure for Viral Clone Mode
+  diagnostic     String?
+  framework      String?
+  avatarTarget   String?
+  sellingAngle   String?
+  offerType      String?
+  awarenessLevel String?
+
+  firstSeen DateTime  @default(now())
+  lastSeen  DateTime?
+  createdAt DateTime  @default(now())
+
+  brand   CompetitorBrand? @relation(fields: [brandId], references: [id])
+  store   Store            @relation(fields: [storeId], references: [id])
+  product Product?         @relation(fields: [productId], references: [id])
+
+  @@index([storeId])
+}
+
+model CompetitorLanding {
+  id            String  @id @default(cuid())
+  brandId       String?
+  storeId       String
+  productId     String?
+  name          String?
+  url           String
+  screenshotUrl String?
+  localPath     String? // Path to downloaded HTML/CSS
+
+  // AI Analysis
+  type            String? // ADVERTORIAL | DIRECT | LISTICLE | VSL
+  offerAnalysis   String?
+  visualHierarchy String?
+  copyAnalysis    String?
+  targetTraffic   String?
+  diagnostic      String?
+  conversionScore Int?
+  analysisJson    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand           CompetitorBrand? @relation(fields: [brandId], references: [id])
+  store           Store            @relation(fields: [storeId], references: [id])
+  product         Product?         @relation(fields: [productId], references: [id])
+  extractedAssets ExtractedAsset[]
+
+  @@index([storeId])
+}
+
+model ExtractedAsset {
+  id        String   @id @default(cuid())
+  landingId String
+  type      String // IMAGE | TEXT
+  category  String? // PRODUCT | LIFESTYLE | ICON | UGC | BEFORE_AFTER | BADGE
+  content   String? // Text content or URL
+  url       String?
+  drivePath String?
+  createdAt DateTime @default(now())
+
+  landing CompetitorLanding @relation(fields: [landingId], references: [id], onDelete: Cascade)
+}
+
+model InspirationAsset {
+  id             String  @id @default(cuid())
+  storeId        String
+  productId      String?
+  type           String // VIDEO | IMAGE
+  sourceUrl      String?
+  thumbnailUrl   String?
+  driveUrl       String?
+  sourcePlatform String? // TIKTOK | INSTAGRAM | YOUTUBE | etc
+
+  // AI Tagging
+  label        String?
+  sector       String? // e.g. Fitness, Tech, Home
+  emotion      String? // e.g. Surprise, Happiness, Skepticism
+  hookType     String? // e.g. Question, Visual Pattern, Direct Pain
+  semanticDesc String?
+  analysisJson String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store   Store    @relation(fields: [storeId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([storeId])
+}
+
+// --- CREATIVE CENTER MODELS ---
+
+enum CreativeType {
+  VIDEO
+  STATIC
+  SCRIPT
+  HOOK
+  LANDING
+  AVATAR
+}
+
+enum FunnelStage {
+  COLD
+  WARM
+  HOT
+  RETARGETING
+}
+
+enum MetaAdStatus {
+  NOT_PUBLISHED
+  ACTIVE
+  PAUSED
+  FATIGUED
+}
+
+enum RelationType {
+  DERIVED_FROM
+  VERSION_OF
+  CLONE_OF
+  USED_IN
+}
+
+model CreativeArtifact {
+  id        String  @id @default(cuid())
+  storeId   String
+  productId String
+  conceptId String
+  avatarId  String?
+  angleId   String?
+  scriptId  String?
+  landingId String?
+  offerId   String?
+
+  // Nomenclatura
+  creativeCode  String  @unique // "PURE-MECH01-C-V1"
+  version       Int
+  variantSuffix String? // "a", "b", "c" for variants
+
+  // Tipo y formato
+  type            CreativeType
+  format          String // "9:16" | "4:5" | "1:1"
+  durationSeconds Int?
+  funnelStage     FunnelStage
+  framework       String // PAS | AIDA | etc.
+  hookType        String // curiosidad | miedo | etc.
+  emotion         String
+
+  // Archivos
+  driveUrl     String
+  driveFileId  String
+  thumbnailUrl String
+
+  // Estado en Meta
+  metaAdId   String?
+  metaStatus MetaAdStatus
+
+  // Scores
+  preLaunchScore Float?
+
+  // Metadatos de generación
+  modelsUsed     String? // Replicando patrón de String para JSON
+  promptsUsed    String? // Replicando patrón de String para JSON
+  generationCost Float // coste estimado en USD de las APIs usadas
+  metricsJson    String? // Metadatos de rendimiento de Meta Ads
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  store     Store                @relation(fields: [storeId], references: [id])
+  product   Product              @relation(fields: [productId], references: [id])
+  metrics   CreativeMetaMetric[]
+  edgesFrom ArtifactEdge[]       @relation("FromArtifact")
+  edgesTo   ArtifactEdge[]       @relation("ToArtifact")
+
+  @@index([storeId])
+  @@index([productId])
+}
+
+model CreativeMetaMetric {
+  id         String   @id @default(cuid())
+  creativeId String
+  date       DateTime
+
+  // Alcance y entrega
+  impressions Int
+  reach       Int
+  frequency   Float
+
+  // Engagement video
+  videoThruplayWatched Int
+  videoP25Watched      Int
+  videoP50Watched      Int
+  videoP75Watched      Int
+  video2sContinuous    Int
+  hookRate             Float // video_2s / impressions * 100
+  watch25Rate          Float
+  watch50Rate          Float
+
+  // Clicks
+  clicks     Int
+  linkClicks Int
+  ctr        Float
+  cpc        Float
+  cpm        Float
+
+  // Conversiones
+  conversions     Int
+  conversionValue Float
+  cvr             Float
+
+  // Coste
+  spend Float
+  cpa   Float
+  roas  Float
+
+  // Datos de retención
+  retentionCurve String? // Replicando patrón de String para JSON
+
+  creative CreativeArtifact @relation(fields: [creativeId], references: [id], onDelete: Cascade)
+
+  @@index([creativeId])
+  @@index([date])
+}
+
+model SavedHook {
+  id           String      @id @default(cuid())
+  storeId      String
+  productId    String
+  conceptId    String
+  text         String
+  type         String // curiosidad | miedo | etc.
+  funnelStage  FunnelStage
+  metaHookRate Float? // si se ha publicado y tiene datos
+  isWinner     Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([storeId])
+  @@index([productId])
+}
+
+model AiAvatar {
+  id         String @id @default(cuid())
+  avatarCode String @unique // "PURE-AV01"
+  storeId    String
+  productId  String
+  name       String
+
+  // Voz ElevenLabs
+  elevenVoiceId   String
+  voiceStability  Float
+  voiceSimilarity Float
+  voiceStyle      Float
+
+  // Assets del pack
+  photoFrontalUrl   String
+  photo34Url        String
+  photoLifestyleUrl String
+  clipGreetingUrl   String
+  clipPointingUrl   String
+  clipsExpressions  String? // Replicando patrón de String para JSON
+
+  createdAt DateTime @default(now())
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([storeId])
+  @@index([productId])
+}
+
+model ArtifactEdge {
+  id             String       @id @default(cuid())
+  fromArtifactId String
+  toArtifactId   String
+  relation       RelationType
+  metadata       String? // Replicando patrón de String para JSON
+  createdAt      DateTime     @default(now())
+
+  fromArtifact CreativeArtifact @relation("FromArtifact", fields: [fromArtifactId], references: [id])
+  toArtifact   CreativeArtifact @relation("ToArtifact", fields: [toArtifactId], references: [id])
+
+  @@index([fromArtifactId])
+  @@index([toArtifactId])
+}
+
+model CompetitorTracking {
+  id             String    @id @default(cuid())
+  storeId        String
+  productId      String
+  brandName      String
+  metaPageId     String?
+  trackingActive Boolean
+  lastCheckedAt  DateTime?
+  createdAt      DateTime  @default(now())
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([storeId])
+  @@index([productId])
+}
+
+model CompetitorVideo {
+  id              String   @id @default(cuid())
+  productId       String
+  storeId         String
+  sourceUrl       String?
+  filename        String
+  thumbnailUrl    String?
+  previewUrl      String?
+  status          String   @default("ANALIZANDO") // ANALIZANDO | LISTO | ERROR
+  hookDetected    String?
+  hookType        String?
+  framework       String?
+  fase            String?
+  formato         String?
+  duracion        String?
+  idiomaDetectado String?
+  idiomaDestino   String?
+  analysisJson    String? // El análisis completo (transcripción, visual, psicológico)
+  voiceoverScript     String? // Transcripción del voiceover (Step 1)
+  tomasCount          Int      @default(0) // Cantidad de tomas extraídas (Step 2)
+  vocalsUrl           String? // URL del audio solo voces
+  musicUrl            String? // URL del audio solo música/fondo
+  noVocalsUrl         String? // URL del vídeo final sin voces
+  googleDriveTomasId  String? // ID de la carpeta de tomas en Drive
+  voiceoverRemoved    Boolean  @default(false)
+  libraryId           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  product Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store   Store              @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  library CompetitorLibrary? @relation(fields: [libraryId], references: [id])
+
+  @@index([productId])
+  @@index([storeId])
+}
+
+model CompetitorLibrary {
+  id             String    @id @default(cuid())
+  storeId        String
+  productId      String?
+  advertiserId   String? // ID de Meta Advertiser
+  advertiserUrl  String
+  advertiserName String?
+  status         String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  adCount        Int       @default(0)
+  platform       String    @default("META")
+  lastSyncAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  store            Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product          Product?          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  competitorVideos CompetitorVideo[]
+
+  @@index([storeId])
+  @@index([productId])
+  @@map("competitor_libraries")
+}
+
+model LandingClone {
+  id            String   @id @default(cuid())
+  storeId       String
+  productId     String?
+  originalUrl   String
+  clonedUrl     String? // URL de la versión clonada alojada
+  status        String   @default("PENDING") // PENDING, CLONING, COMPLETED, FAILED
+  assetsJson    String? // JSON con mapeo de assets (original -> local)
+  screenshotUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  store   Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([productId])
+  @@map("landing_clones")
+}
+
+model ExtensionCapture {
+  id        String   @id @default(cuid())
+  storeId   String
+  productId String?
+  userId    String?
+  url       String
+  assetType String // IMAGE, VIDEO, GIF, LANDING, AD
+  assetUrl   String
+  cleanedUrl String?
+  audioJson  String? // JSON con URLs de voz/música
+  localPath  String?
+  metadata   String? // JSON con dimensiones, duración, etc.
+  status     String  @default("SAVED")
+  createdAt DateTime @default(now())
+
+  store   Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id])
+  job     MediaJob?
+
+  @@index([storeId])
+  @@index([productId])
+  @@index([userId])
+  @@map("extension_captures")
+}
+
+model MediaJob {
+  id          String   @id @default(cuid())
+  captureId   String   @unique
+  status      String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  currentStep Int      @default(0)
+  totalSteps  Int      @default(0)
+  stepsLog    String?  // JSON con { step: string, status: string, timestamp: string }
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  capture ExtensionCapture @relation(fields: [captureId], references: [id], onDelete: Cascade)
+
+  @@map("media_jobs")
+}
+
+// --- AGENT CONFIGS ---
+
+enum AgentId {
+  FINANZAS
+  CRM
+  CREATIVO
+  INVESTIGACION
+  MARKETING
+  MANDO
+  OPERACIONES
+  DIRECTOR
+  ESPECIALISTA_CREATIVO
+  DIRECTOR_MARKETING
+  AGENTE_OPERACIONES
+}
+
+model AgentConfig {
+  id           String   @id @default(cuid())
+  storeId      String   @map("store_id")
+  agentId      AgentId  @map("agent_id")
+  systemPrompt String   @map("system_prompt")
+  examples     Json?    @map("examples")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, agentId])
+  @@map("agent_configs")
+}
+
+model MetaInsightsCache {
+  id            String   @id @default(cuid())
+  storeId       String
+  accountId     String
+  level         String   // CAMPAIGN | ADSET | AD
+  externalId    String   // ID de Meta
+  name          String
+  status        String
+  spend         Float    @default(0)
+  impressions   Int      @default(0)
+  reach         Int      @default(0)
+  frequency     Float    @default(0)
+  clicks        Int      @default(0)
+  cpc           Float    @default(0)
+  ctr           Float    @default(0)
+  cpm           Float    @default(0)
+  results       Int      @default(0)
+  costPerResult Float    @default(0)
+  roas          Float    @default(0)
+  hookRate      Float    @default(0)
+  holdRate      Float    @default(0)
+  budget        Float?
+  objective     String?
+  bidStrategy   String?
+  deliveryVerdict String?
+  date          DateTime
+  metadata      String?  // JSON stringified
+  updatedAt     DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, accountId, level, date])
+  @@map("meta_insights_cache")
+}
+
+model UserPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  module    String   // e.g., 'ads'
+  config    String   // JSON stringified: { columnOrder: [], hiddenColumns: [], ... }
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, module])
+  @@map("user_preferences")
+}
+

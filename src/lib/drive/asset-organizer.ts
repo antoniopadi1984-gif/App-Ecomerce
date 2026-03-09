@@ -189,7 +189,7 @@ export class AssetOrganizer {
         fileBuffer?: Buffer
     ): Promise<ClassificationResult> {
 
-        // Strategy 1: Parse filename (Spencer Pawlin Style: [DATE]_[BRAND]_[ANGLE]_[HOOK]_[VAR])
+        // Strategy 1: Parse filename (IA Pro Style: [DATE]_[BRAND]_[ANGLE]_[HOOK]_[VAR])
         const spencerMatch = fileName.match(/^(\d{6})_([^_]*)_([^_]*)_([^_]*)_([^_]*)/i);
         if (spencerMatch) {
             return {
@@ -311,7 +311,7 @@ Return JSON:
   "concept": null,
   "subcategory": "ANGLE_NAME",
   "confidence": 0.8,
-  "reasoning": "Fits Spencer nomenclature and matches strategic research"
+  "reasoning": "Fits IA nomenclature and matches strategic research"
 }`;
 
         const result = await AiRouter.dispatch(

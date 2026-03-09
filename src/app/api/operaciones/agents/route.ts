@@ -4,10 +4,8 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 const DEFAULT_AGENTS = [
-    'MANDO', 'MEDIA_BUYING', 'COPYWRITING', 'VIDEO_EDITOR',
-    'LANDING_DESIGNER', 'CRO_SPECIALIST', 'AOV_SPECIALIST',
-    'BRANDING', 'COD_CONFIRMATION', 'ORDER_FOLLOWUP',
-    'CART_RECOVERY', 'RESEARCH_ANALYST'
+    'FINANZAS', 'CRM', 'CREATIVO', 'INVESTIGACION',
+    'MARKETING', 'MANDO', 'OPERACIONES', 'DIRECTOR'
 ];
 
 export async function GET(req: NextRequest) {
@@ -19,57 +17,43 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'storeId requerido' }, { status: 400 });
         }
 
-        let agents = await prisma.agentProfile.findMany({
+        // Cargamos de la nueva tabla agent_configs
+        let agents = await prisma.agentConfig.findMany({
             where: { storeId },
         });
 
-        // Ensure all default agents exist
-        const existingRoles = new Set(agents.map(a => a.role));
-        const missingRoles = DEFAULT_AGENTS.filter(rol => !existingRoles.has(rol));
+        // Asegurar que todos los agentes por defecto existen
+        const existingIds = new Set(agents.map(a => a.agentId));
+        const missingIds = DEFAULT_AGENTS.filter(id => !existingIds.has(id as any));
 
-        if (missingRoles.length > 0) {
-            const dataToInsert = missingRoles.map(role => ({
-                storeId,
-                role,
-                name: `Agente: ${role}`,
-                systemPrompt: `Eres un experto especializado en ${role}.`,
-                isActive: true,
-            }));
-            for (const agent of dataToInsert) {
-                await prisma.agentProfile.create({ data: agent });
+        if (missingIds.length > 0) {
+            for (const id of missingIds) {
+                await prisma.agentConfig.create({
+                    data: {
+                        storeId,
+                        agentId: id as any,
+                        systemPrompt: `Eres un experto especializado en ${id}. Responde de forma concisa y estratégica.`,
+                        examples: [],
+                    }
+                });
             }
 
-            agents = await prisma.agentProfile.findMany({
+            agents = await prisma.agentConfig.findMany({
                 where: { storeId },
             });
         }
 
-        return NextResponse.json({ ok: true, agents });
+        // Mapear para compatibilidad con el frontend AgentesPage
+        const mappedAgents = agents.map(a => ({
+            ...a,
+            role: a.agentId,
+            name: `Agente ${a.agentId}`, // Nombre por defecto
+            isActive: true // Por defecto activos ya que no hay columna en el nuevo spec
+        }));
+
+        return NextResponse.json({ ok: true, agents: mappedAgents });
     } catch (err: any) {
         console.error('[API /operaciones/agents GET]', err);
         return NextResponse.json({ error: err.message || 'Error interno' }, { status: 500 });
-    }
-}
-
-export async function PUT(req: NextRequest) {
-    try {
-        const body = await req.json();
-        const { id, storeId, systemPrompt, isActive } = body;
-
-        if (!id || !storeId) {
-            return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
-        }
-
-        const agent = await prisma.agentProfile.update({
-            where: { id },
-            data: {
-                systemPrompt: systemPrompt !== undefined ? systemPrompt : undefined,
-                isActive: isActive !== undefined ? isActive : undefined,
-            }
-        });
-
-        return NextResponse.json({ ok: true, agent });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

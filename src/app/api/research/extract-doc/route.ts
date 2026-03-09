@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 Analiza este documento de investigación de producto y extrae en JSON:
 
     // IDENTIDAD
-    nombre, categoria, pais, urlProducto, urlAmazon
+    nombre, categoria, pais, idioma, moneda, urlProducto, urlAmazon
 
     // FINANCIERO
     precioVenta, costeProducto, costeEnvio, costeManipulacion,

@@ -1,24 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { DropiClient } from '@/lib/dropi';
+import { getConnectionSecret } from '@/lib/server/connections';
+import { syncDropiOrders } from '@/lib/handlers/dropi-sync';
 
-/**
- * Placeholder endpoint para listar pedidos de Dropi.
- * Pendiente de documentación de la API oficial.
- */
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
     try {
-        return NextResponse.json({ success: true, message: 'Endpoint de Dropi preparado (esperando doc oficial)' });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: 'Error al conectar con Dropi' }, { status: 500 });
+        const body = await req.json();
+        const { storeId, syncDays } = body;
+
+        if (!storeId) {
+            return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
+        }
+
+        const result = await syncDropiOrders(storeId, syncDays || 30);
+        return NextResponse.json(result);
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
 
-/**
- * Placeholder endpoint para actualizar pedidos de Dropi.
- */
-export async function PUT(req: NextRequest) {
+export async function GET(req: NextRequest) {
+    const { searchParams } = new URL(req.url);
+    const storeId = searchParams.get('storeId');
+
+    if (!storeId) {
+        return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
+    }
+
+    const apiKey = await getConnectionSecret(storeId, "DROPI");
+    if (!apiKey) return NextResponse.json({ error: "Dropi no configurado" }, { status: 400 });
+
+    const client = new DropiClient(apiKey);
+
     try {
-        return NextResponse.json({ success: true, message: 'Acciones de Dropi preparadas (esperando doc oficial)' });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: 'Error al ejecutar acción en Dropi' }, { status: 500 });
+        const data = await client.getOrders({
+            page: parseInt(searchParams.get('page') || '1'),
+            per_page: parseInt(searchParams.get('per_page') || '50')
+        });
+        return NextResponse.json({ success: true, orders: data.data || data });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

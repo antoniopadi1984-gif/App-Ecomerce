@@ -3,7 +3,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import {
     UploadCloud, FileVideo, Loader2, CheckCircle2, AlertCircle,
     Play, Mic, Languages, Scissors, Music, Layers, Copy,
-    ChevronDown, ChevronRight, Clock, Tag
+    ChevronDown, ChevronRight, Clock, Tag, Plus, Video, HardDrive
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -35,306 +35,199 @@ const FUNNEL_COLORS: Record<string, string> = {
     'RT-CART': '#EF4444', 'RT-VIEW': '#EF4444', 'RT-BUYER': '#EF4444',
 };
 
-function ProgressBar({ progress, status }: { progress: number; status: string }) {
-    const color = status === 'ERROR' ? '#EF4444' : status === 'DONE' ? '#10B981' : '#8B5CF6';
-    return (
-        <div className="w-full h-1 bg-[var(--surface2)] rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${progress}%`, backgroundColor: color }} />
-        </div>
-    );
-}
-
-function ActionBtn({ icon: Icon, label, onClick, loading, done }: {
-    icon: any; label: string; onClick: () => void; loading?: boolean; done?: boolean;
-}) {
-    return (
-        <button onClick={onClick} disabled={loading}
-            className={cn(
-                'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wide transition-all border',
-                done ? 'bg-[var(--s-ok)]/10 border-[var(--s-ok)]/20 text-[var(--s-ok)]' :
-                    'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--inv)]/40 hover:text-[var(--inv)] hover:bg-[var(--inv)]/5',
-                loading && 'opacity-60 cursor-not-allowed'
-            )}>
-            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Icon className="w-3 h-3" />}
-            {label}
-        </button>
-    );
-}
-
 export function VideoLabTab({ storeId, productId, marketLang }: {
     storeId: string; productId: string; marketLang?: string;
 }) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [dragActive, setDragActive] = useState(false);
-    const [cards, setCards] = useState<VideoCard[]>([]);
-    const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
-
-    const updateCard = useCallback((id: string, updates: Partial<VideoCard>) => {
-        setCards(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-    }, []);
-
-    const pollJob = useCallback(async (cardId: string, jobId: string) => {
-        const poll = async () => {
-            try {
-                const res = await fetch(`/api/video-lab/process?jobId=${jobId}`);
-                const job = await res.json();
-                updateCard(cardId, {
-                    status: job.status, progress: job.progress,
-                    hook: job.hook, funnelStage: job.funnelStage,
-                    type: job.type, nomenclature: job.nomenclature,
-                });
-                if (!['DONE', 'ERROR'].includes(job.status)) {
-                    setTimeout(poll, 3000);
-                }
-            } catch { setTimeout(poll, 5000); }
-        };
-        poll();
-    }, [updateCard]);
-
-    const uploadFiles = useCallback(async (files: FileList) => {
-        if (!productId || productId === 'GLOBAL') {
-            toast.error('Selecciona un producto primero');
-            return;
-        }
-        Array.from(files).forEach(async (file) => {
-            const cardId = `card_${Date.now()}_${Math.random()}`;
-            const newCard: VideoCard = {
-                id: cardId, fileName: file.name,
-                status: 'PENDING', progress: 5, expanded: false,
-            };
-            setCards(prev => [newCard, ...prev]);
-
-            try {
-                const fd = new FormData();
-                fd.append('file', file);
-                fd.append('productId', productId);
-
-                const res = await fetch('/api/video-lab/process', {
-                    method: 'POST',
-                    headers: { 'X-Store-Id': storeId },
-                    body: fd,
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    updateCard(cardId, { jobId: data.jobId, assetId: data.assetId, status: 'INGESTED', progress: 15 });
-                    pollJob(cardId, data.jobId);
-                } else throw new Error(data.error);
-            } catch (e: any) {
-                updateCard(cardId, { status: 'ERROR', progress: 0 });
-                toast.error(`Error subiendo ${file.name}: ${e.message}`);
-            }
-        });
-    }, [productId, storeId, updateCard, pollJob]);
-
-    const handleAction = async (cardId: string, action: string, assetId?: string) => {
-        const key = `${cardId}_${action}`;
-        setActionLoading(prev => ({ ...prev, [key]: action }));
-        try {
-            const endpoints: Record<string, string> = {
-                transcribe: '/api/video-lab/transcribe',
-                translate: '/api/video-lab/translate-audio',
-                subtitles: '/api/video-lab/subtitles',
-                voice: '/api/video-lab/change-voice',
-                variants: '/api/video-lab/generate-variants',
-                clips: '/api/video-lab/split-clips',
-                music: '/api/video-lab/add-music',
-                lipsync: '/api/video-lab/lip-sync',
-            };
-            const ep = endpoints[action];
-            if (!ep || !assetId) return;
-            const res = await fetch(ep, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Store-Id': storeId },
-                body: JSON.stringify({ assetId, productId }),
-            });
-            const data = await res.json();
-            if (data.ok || data.success) toast.success(`${action} completado`);
-            else toast.error(data.error ?? 'Error');
-        } catch (e: any) {
-            toast.error(e.message);
-        } finally {
-            setActionLoading(prev => { const n = { ...prev }; delete n[key]; return n; });
-        }
-    };
-
-    const onDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setDragActive(false);
-        if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
-    };
-
-    const needsProduct = !productId || productId === 'GLOBAL';
+    const [view, setView] = useState<'WORKSPACE' | 'META' | 'DRIVE' | 'UPLOAD'>('WORKSPACE');
+    const [videoType, setVideoType] = useState<'propio' | 'competencia'>('propio');
+    const [activeProjects, setActiveProjects] = useState<any[]>([
+        { id: '1', name: 'Venta Flash Mar24', status: 'editando' },
+        { id: '2', name: 'Analisis Competencia X', status: 'analizado' },
+    ]);
 
     return (
-        <div className="flex flex-col gap-4">
-            {/* Drop Zone */}
-            <div
-                onDragEnter={e => { e.preventDefault(); setDragActive(true); }}
-                onDragLeave={() => setDragActive(false)}
-                onDragOver={e => e.preventDefault()}
-                onDrop={onDrop}
-                className={cn(
-                    'border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer',
-                    dragActive ? 'border-[var(--cre)] bg-[var(--cre)]/8 scale-[1.01]' :
-                        'border-[var(--border-high)] hover:border-[var(--cre)]/50 hover:bg-[var(--cre)]/3',
-                    needsProduct && 'opacity-50 pointer-events-none'
-                )}
-                onClick={() => !needsProduct && fileInputRef.current?.click()}
-            >
-                <input ref={fileInputRef} type="file" multiple accept="video/*" className="hidden"
-                    onChange={e => e.target.files && uploadFiles(e.target.files)} />
-                <UploadCloud className="w-10 h-10 mx-auto mb-3 text-[var(--cre)] opacity-70" />
-                <h3 className="text-[13px] font-black text-[var(--text)] mb-1">
-                    {needsProduct ? 'Selecciona un producto antes de subir' : 'Subida Masiva al Video Lab'}
-                </h3>
-                <p className="text-[10px] text-[var(--text-muted)] max-w-md mx-auto">
-                    Arrastra vídeos o carpetas. Pipeline automático: metadata strip → Whisper → Gemini análisis → nomenclatura Spencer → organización Drive
-                </p>
-                {!needsProduct && (
-                    <button className="mt-4 px-5 py-2 bg-[var(--cre)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all">
-                        Seleccionar archivos
+        <div className="flex flex-col h-[calc(100vh-140px)] animate-in fade-in duration-500">
+            {/* TOP ACTIONS BAR */}
+            <div className="flex items-center justify-between p-4 bg-white border-b border-[var(--border)] rounded-t-xl">
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setView('UPLOAD')}
+                        className={cn("h-10 px-5 rounded-lg font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm",
+                            view === 'UPLOAD' ? "bg-[var(--cre)] text-white" : "bg-white text-[var(--text-tertiary)] border border-[var(--border)]")}
+                    >
+                        <UploadCloud size={16} />
+                        Subir Videos
                     </button>
-                )}
+                    <button
+                        onClick={() => setView('META')}
+                        className={cn("h-10 px-5 rounded-lg font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm",
+                            view === 'META' ? "bg-[var(--cre)] text-white" : "bg-white text-[var(--text-tertiary)] border border-[var(--border)]")}
+                    >
+                        <Layers size={16} />
+                        Biblioteca Meta
+                    </button>
+                    <button
+                        onClick={() => setView('DRIVE')}
+                        className={cn("h-10 px-5 rounded-lg font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm",
+                            view === 'DRIVE' ? "bg-[var(--cre)] text-white" : "bg-white text-[var(--text-tertiary)] border border-[var(--border)]")}
+                    >
+                        <FileVideo size={16} />
+                        Biblioteca Drive
+                    </button>
+                    <button
+                        onClick={() => setView('WORKSPACE')}
+                        className="h-10 px-5 rounded-lg bg-[var(--text-primary)] text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-sm"
+                    >
+                        <Plus size={16} />
+                        Nuevo
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-tight">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Agente Video Lab Activo
+                </div>
             </div>
 
-            {/* Video Cards */}
-            {cards.length > 0 && (
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)]">
-                            Pipeline — {cards.filter(c => c.status === 'DONE').length}/{cards.length} completados
-                        </h3>
-                        {cards.some(c => !['DONE', 'ERROR'].includes(c.status)) && (
-                            <div className="flex items-center gap-1.5 text-[9px] text-[var(--inv)] font-bold">
-                                <Loader2 className="w-3 h-3 animate-spin" /> Procesando…
+            <div className="flex flex-1 overflow-hidden">
+                {/* LEFT PANEL */}
+                <aside className="w-64 border-r border-[var(--border)] bg-white p-4 flex flex-col gap-6 overflow-y-auto">
+                    <div>
+                        <h4 className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-[0.2em] mb-4">Proyectos Activos</h4>
+                        <div className="space-y-1">
+                            {activeProjects.map(p => (
+                                <div key={p.id} className="p-3 rounded-xl bg-[var(--bg)]/10 border border-[var(--border)] hover:border-[var(--cre)]/40 transition-all cursor-pointer group">
+                                    <div className="text-[11px] font-bold text-[var(--text-primary)] uppercase truncate">{p.name}</div>
+                                    <div className="flex items-center justify-between mt-1">
+                                        <span className="text-[8px] uppercase font-bold text-[var(--text-tertiary)]">{p.status}</span>
+                                        <ChevronRight size={12} className="text-[var(--text-tertiary)] group-hover:translate-x-1 transition-transform" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="mt-auto p-4 rounded-xl bg-[var(--cre-bg)]/20 border border-[var(--cre)]/10">
+                        <div className="flex items-center gap-2 text-[var(--cre)] mb-2">
+                            <Mic size={14} />
+                            <span className="text-[9px] font-bold uppercase tracking-wider">Agente IA</span>
+                        </div>
+                        <p className="text-[11px] text-[var(--text-primary)] font-medium leading-relaxed opacity-70 italic">
+                            "¿Quieres que analice el gancho de tu último video o prefieres que genere 5 variantes optimizadas?"
+                        </p>
+                    </div>
+                </aside>
+
+                {/* MAIN WORKSPACE */}
+                <main className="flex-1 bg-white p-6 overflow-y-auto relative">
+                    <div className="max-w-5xl mx-auto h-full">
+                        {view === 'WORKSPACE' && (
+                            <div className="flex flex-col items-center justify-center h-full text-center py-20 gap-4">
+                                <div className="w-16 h-16 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-[var(--text-tertiary)] opacity-30 shadow-sm">
+                                    <Video size={32} strokeWidth={1} />
+                                </div>
+                                <div className="space-y-2">
+                                    <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-widest">Área de Trabajo - Video Lab</h2>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] uppercase font-medium max-w-sm mx-auto leading-relaxed">
+                                        Selecciona un video de tus bibliotecas o sube uno nuevo para comenzar la edición optimizada.
+                                    </p>
+                                </div>
+                                <div className="mt-4 grid grid-cols-2 gap-4 w-full max-w-md">
+                                    <button onClick={() => setView('UPLOAD')} className="p-6 rounded-xl border border-[var(--border)] border-dashed bg-white hover:bg-[var(--cre-bg)]/10 transition-all group flex flex-col items-center gap-3">
+                                        <UploadCloud size={24} className="text-[var(--text-tertiary)] group-hover:text-[var(--cre)]" />
+                                        <span className="text-[10px] font-bold uppercase text-[var(--text-tertiary)]">Subir Archivo</span>
+                                    </button>
+                                    <button onClick={() => setView('DRIVE')} className="p-6 rounded-xl border border-[var(--border)] border-dashed bg-white hover:bg-[var(--cre-bg)]/10 transition-all group flex flex-col items-center gap-3">
+                                        <HardDrive size={24} className="text-[var(--text-tertiary)] group-hover:text-[var(--cre)]" />
+                                        <span className="text-[10px] font-bold uppercase text-[var(--text-tertiary)]">Desde Drive</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'UPLOAD' && (
+                            <div className="animate-in slide-in-from-bottom-2 duration-500 max-w-2xl mx-auto space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-primary)]">Subir Nuevo Video</h3>
+                                    <div className="flex bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)]">
+                                        <button
+                                            onClick={() => setVideoType('propio')}
+                                            className={cn("px-4 py-1.5 rounded-md text-[9px] font-bold uppercase transition-all", videoType === 'propio' ? "bg-white text-[var(--cre)] shadow-sm" : "text-[var(--text-tertiary)]")}
+                                        >
+                                            Propio
+                                        </button>
+                                        <button
+                                            onClick={() => setVideoType('competencia')}
+                                            className={cn("px-4 py-1.5 rounded-md text-[9px] font-bold uppercase transition-all", videoType === 'competencia' ? "bg-white text-[var(--cre)] shadow-sm" : "text-[var(--text-tertiary)]")}
+                                        >
+                                            Competencia
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="p-20 border-2 border-dashed border-[var(--border)] rounded-xl text-center relative group bg-[var(--bg)]/10 hover:bg-[var(--cre-bg)]/20 transition-all cursor-pointer">
+                                    <input type="file" accept="video/*" className="absolute inset-0 opacity-0 cursor-pointer" />
+                                    <UploadCloud size={40} className="mx-auto text-[var(--cre)] opacity-40 mb-4 group-hover:scale-110 transition-transform" />
+                                    <p className="text-[11px] font-bold uppercase text-[var(--text-primary)]">Arrastra tu video {videoType} aquí</p>
+                                    <p className="text-[9px] font-bold uppercase text-[var(--text-tertiary)] mt-2 italic opacity-60">Soporta MP4, MOV, WEBM (Max 500MB)</p>
+                                </div>
+                                <button className="w-full h-11 bg-[var(--cre)] text-white rounded-lg font-bold uppercase text-[10px] tracking-widest shadow-sm">Seleccionar Archivo Local</button>
+                            </div>
+                        )}
+
+                        {view === 'META' && (
+                            <div className="animate-in slide-in-from-bottom-2 duration-500 h-full">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-primary)] flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-[var(--cre)] shadow-sm">
+                                            <Layers size={14} />
+                                        </div>
+                                        Biblioteca Meta Ads
+                                    </h3>
+                                    <div className="flex gap-2">
+                                        <input type="text" placeholder="Buscar en Meta Ad Library..." className="h-9 px-4 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[10px] font-bold uppercase w-64 outline-none focus:border-[var(--cre)]/40" />
+                                        <button className="h-9 px-4 bg-[var(--text-primary)] text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm">Importar</button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4 pb-12">
+                                    {[1, 2, 3, 4, 5, 6].map(i => (
+                                        <div key={i} className="bg-white border border-[var(--border)] rounded-xl group overflow-hidden shadow-sm">
+                                            <div className="aspect-[9/16] bg-[var(--text-primary)] relative">
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <Play size={24} className="text-white opacity-40 group-hover:opacity-100 transition-opacity" />
+                                                </div>
+                                                <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-emerald-500 text-white text-[8px] font-bold rounded uppercase shadow-sm">Activo</div>
+                                            </div>
+                                            <div className="p-3">
+                                                <div className="text-[10px] font-bold uppercase text-[var(--text-primary)] truncate">Meta Ad #00{i}</div>
+                                                <div className="text-[8px] text-[var(--text-tertiary)] uppercase font-bold mt-1 opacity-60">Gasto Est: $1.2k - $5k</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'DRIVE' && (
+                            <div className="animate-in slide-in-from-bottom-2 duration-500 h-full">
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-primary)] mb-8 flex items-center gap-3">
+                                    <HardDrive size={18} className="text-[var(--cre)]" />
+                                    Drive de Producto
+                                </h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {['01_HOOKS', '02_CRUDE_CONTENT', '03_EDITS', '04_RESOURCES'].map(folder => (
+                                        <div key={folder} className="p-4 bg-white border border-[var(--border)] rounded-xl flex items-center gap-3 hover:border-[var(--cre)]/40 transition-all cursor-pointer shadow-sm group">
+                                            <div className="w-8 h-8 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-amber-500 font-bold text-[10px] group-hover:bg-amber-50 group-hover:border-amber-200">
+                                                D
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase text-[var(--text-primary)] truncate">{folder}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
-
-                    {cards.map(card => (
-                        <div key={card.id}
-                            className={cn(
-                                'bg-[var(--surface)] border rounded-xl overflow-hidden transition-all',
-                                card.status === 'DONE' ? 'border-[var(--s-ok)]/20' :
-                                    card.status === 'ERROR' ? 'border-[var(--s-ko)]/20' : 'border-[var(--border)]'
-                            )}>
-                            {/* Card Header */}
-                            <div className="flex items-center gap-3 p-3 cursor-pointer"
-                                onClick={() => updateCard(card.id, { expanded: !card.expanded })}>
-                                {/* Status Icon */}
-                                <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                                    card.status === 'DONE' ? 'bg-[var(--s-ok)]/15 text-[var(--s-ok)]' :
-                                        card.status === 'ERROR' ? 'bg-[var(--s-ko)]/15 text-[var(--s-ko)]' :
-                                            'bg-[var(--inv)]/10 text-[var(--inv)]')}>
-                                    {card.status === 'DONE' ? <CheckCircle2 className="w-4 h-4" /> :
-                                        card.status === 'ERROR' ? <AlertCircle className="w-4 h-4" /> :
-                                            <Loader2 className="w-4 h-4 animate-spin" />}
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-black text-[var(--text)] truncate font-mono">
-                                        {card.nomenclature ?? card.fileName}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <span className="text-[9px] text-[var(--text-muted)]">
-                                            {STATUS_LABELS[card.status] ?? card.status}
-                                        </span>
-                                        {card.funnelStage && (
-                                            <span className="px-1.5 py-0.5 rounded text-[8px] font-black"
-                                                style={{ backgroundColor: `${FUNNEL_COLORS[card.funnelStage]}20`, color: FUNNEL_COLORS[card.funnelStage] }}>
-                                                {card.funnelStage}
-                                            </span>
-                                        )}
-                                        {card.type && (
-                                            <span className="text-[8px] font-bold text-[var(--text-dim)] bg-[var(--surface2)] px-1.5 py-0.5 rounded">
-                                                {card.type}
-                                            </span>
-                                        )}
-                                    </div>
-                                    {card.status !== 'DONE' && card.status !== 'ERROR' && (
-                                        <ProgressBar progress={card.progress} status={card.status} />
-                                    )}
-                                </div>
-
-                                {card.status === 'DONE' && (
-                                    <div className="shrink-0 text-[var(--text-dim)]">
-                                        {card.expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Expanded: hook + actions */}
-                            {card.expanded && card.status === 'DONE' && (
-                                <div className="px-4 pb-4 border-t border-[var(--border)] pt-3 space-y-3">
-                                    {card.hook && (
-                                        <div className="relative">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
-                                                Hook detectado {marketLang && marketLang !== 'ES' && <LangBadge marketLang={marketLang} />}
-                                            </p>
-                                            {marketLang && marketLang !== 'ES' ? (
-                                                <TranslationToggle text={card.hook} marketLang={marketLang} context="ad hook">
-                                                    {(t) => <p className="text-[11px] text-[var(--text)] italic">"{t}"</p>}
-                                                </TranslationToggle>
-                                            ) : (
-                                                <p className="text-[11px] text-[var(--text)] italic">"{card.hook}"</p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Acciones automáticas completadas */}
-                                    <div className="space-y-1">
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">✅ Automático al subir</p>
-                                        <div className="flex flex-wrap gap-1">
-                                            {['Metadata eliminada', 'Nomenclatura Spencer', 'Análisis Gemini', 'Organizado Drive'].map(t => (
-                                                <span key={t} className="text-[8px] px-2 py-0.5 bg-[var(--s-ok)]/10 text-[var(--s-ok)] rounded-full font-bold">✓ {t}</span>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Acciones disponibles */}
-                                    <div className="space-y-1">
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Acciones disponibles</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            <ActionBtn icon={Mic} label="Transcribir"
-                                                onClick={() => handleAction(card.id, 'transcribe', card.assetId)}
-                                                loading={actionLoading[`${card.id}_transcribe`] !== undefined} />
-                                            <ActionBtn icon={Languages} label="Traducir"
-                                                onClick={() => handleAction(card.id, 'translate', card.assetId)}
-                                                loading={actionLoading[`${card.id}_translate`] !== undefined} />
-                                            <ActionBtn icon={Scissors} label="Separar clips"
-                                                onClick={() => handleAction(card.id, 'clips', card.assetId)}
-                                                loading={actionLoading[`${card.id}_clips`] !== undefined} />
-                                            <ActionBtn icon={FileVideo} label="Subtítulos"
-                                                onClick={() => handleAction(card.id, 'subtitles', card.assetId)}
-                                                loading={actionLoading[`${card.id}_subtitles`] !== undefined} />
-                                            <ActionBtn icon={Mic} label="Cambiar voz"
-                                                onClick={() => handleAction(card.id, 'voice', card.assetId)}
-                                                loading={actionLoading[`${card.id}_voice`] !== undefined} />
-                                            <ActionBtn icon={Music} label="Añadir música"
-                                                onClick={() => handleAction(card.id, 'music', card.assetId)}
-                                                loading={actionLoading[`${card.id}_music`] !== undefined} />
-                                            <ActionBtn icon={Layers} label="Lip Sync"
-                                                onClick={() => handleAction(card.id, 'lipsync', card.assetId)}
-                                                loading={actionLoading[`${card.id}_lipsync`] !== undefined} />
-                                            <ActionBtn icon={Copy} label="Generar variantes ×5"
-                                                onClick={() => handleAction(card.id, 'variants', card.assetId)}
-                                                loading={actionLoading[`${card.id}_variants`] !== undefined} />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {cards.length === 0 && (
-                <div className="text-center py-12 text-[10px] text-[var(--text-dim)]">
-                    <FileVideo className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    No hay vídeos en el pipeline. Arrastra archivos arriba.
-                </div>
-            )}
+                </main>
+            </div>
         </div>
     );
 }

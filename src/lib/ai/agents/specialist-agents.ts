@@ -3,30 +3,129 @@ import { TaskType, AIResponse } from "../providers/interfaces";
 import { STRATEGIC_INTELLIGENCE_CORE } from "../../research/strategic-context";
 
 /**
+ * AGENTE JEFE GLOBAL: DIRECTOR CREATIVO (CHIEF CREATIVE OFFICER)
+ * Tiene visión completa del Centro Creativo y orquesta los demás agentes.
+ */
+export class GlobalChiefAgent {
+    static async getGlobalDirection(storeId: string, productId: string, activeContext: string): Promise<AIResponse> {
+        const systemPrompt = `
+            ROL: Agente Jefe Global del Centro Creativo (CCO).
+            MISION: Supervisar la estrategia creativa global vinculada al producto activo.
+            VISION: "Creative is the targeting". Asegurar consistencia entre Drive, Branding, Conceptos y Performance.
+            REGLAS:
+            - Todo debe estar vinculado al producto en el TopBar.
+            - Nomenclatura IA Pro obligatoria en cada asset.
+            - Registro automático en BD con metadatos de funnel y framework.
+        `;
+
+        const prompt = `
+            PRODUCTO ACTIVO: ${productId}
+            CONTEXTO ACTUAL: ${activeContext}
+            TAREA: Proporciona la dirección estratégica para este ciclo creativo. 
+            Define la fase de embudo prioritaria y los frameworks a utilizar.
+        `;
+
+        return AiRouter.dispatch(storeId, TaskType.DIRECTOR_STRATEGY, prompt, { systemPrompt });
+    }
+}
+
+/**
+ * AGENTE ESPECIALISTA: LABORATORIO DE CONCEPTOS
+ */
+export class ConceptSpecialistAgent {
+    static async generateConcept(storeId: string, productId: string, researchData: any): Promise<AIResponse> {
+        const systemPrompt = `
+            ROL: Especialista en Ingeniería de Conceptos Creativos.
+            MISION: Generar Hooks y Scripts masivos (AIDA, PAS, STORY, DR, MECH).
+            REGLAS:
+            - Cada asset generado debe tener: ID, Fase de Embudo, Framework, Variante.
+            - Nomenclatura IA: HOOK_[CONC]_[TIPO]_[NUM].txt / SCRIPT_[CONC]_[FRAMEWORK]_[NUM].txt.
+            - Tipos de Hook: NEG, POS, CUR, AUT, COMP, INT.
+        `;
+
+        const prompt = `
+            DATA DE INVESTIGACIÓN: ${JSON.stringify(researchData)}
+            TAREA: Genera 3 Conceptos creativos (C1-C7) con sus respectivos Hooks y Scripts.
+        `;
+
+        return AiRouter.dispatch(storeId, TaskType.CREATIVE_CONCEPTS, prompt, { systemPrompt, jsonSchema: true });
+    }
+}
+
+/**
+ * AGENTE ESPECIALISTA: BIBLIOTECA & ASSETS
+ */
+export class AssetsSpecialistAgent {
+    static async organizeLibrary(storeId: string, driveStructure: any): Promise<AIResponse> {
+        const systemPrompt = `
+            ROL: Curador de Activos Globales y Branding.
+            MISION: Gestionar Logos, Música, Voces y Banco de Hooks.
+            REGLAS:
+            - Nomenclatura IA para música: MUS_[EMOCION]_[TEMPO]_[NUM].mp3.
+            - Nomenclatura IA para voces: VOZ_[AVATAR_ID]_[IDIOMA].mp3.
+        `;
+
+        const prompt = `
+            ESTRUCTURA DRIVE: ${JSON.stringify(driveStructure)}
+            TAREA: Analiza los activos actuales y sugiere música/voces faltantes según la emoción de los conceptos activos.
+        `;
+
+        return AiRouter.dispatch(storeId, TaskType.ASSETS_CURATOR, prompt, { systemPrompt });
+    }
+}
+
+/**
+ * AGENTE ESPECIALISTA: ANÁLISIS DE COMPETENCIA
+ */
+export class CompetitorAgent {
+    static async dissectCompetitorAd(storeId: string, adUrl: string, mediaType: 'VIDEO' | 'STATIC'): Promise<AIResponse> {
+        const systemPrompt = `
+            ROL: Analista de Inteligencia Competitiva.
+            MISION: Deconstruir creativos de la competencia.
+            REGLAS:
+            - Output: JSON con análisis de estructura, hook, oferta y debilidades.
+            - Nomenclatura IA: COMP_[MARCA]_[NUM]_ANALISIS.json.
+        `;
+
+        const prompt = `URL AD COMPETENCIA: ${adUrl} (${mediaType}). TAREA: Extrae el ángulo y el framework que están usando.`;
+
+        return AiRouter.dispatch(storeId, TaskType.COMPETITOR_SPY, prompt, { systemPrompt, jsonSchema: true });
+    }
+}
+
+/**
+ * AGENTE ESPECIALISTA: RENDIMIENTO (SCORECARD)
+ */
+export class PerformanceAgent {
+    static async analyzeScores(storeId: string, metrics: any): Promise<AIResponse> {
+        const systemPrompt = `
+            ROL: Data Scientist Creativo (Performance Guru).
+            MISION: Evaluar CTR, CPA, ROAS, Hook Rate, 3s View por creativo.
+            REGLAS:
+            - Generar SCORECARD_[PROD]_[MES].json.
+            - Identificar creativos ganadores y perdedores (Kill/Scale).
+        `;
+
+        const prompt = `MÉTRICAS: ${JSON.stringify(metrics)}. TAREA: Genera el diagnóstico de rendimiento.`;
+
+        return AiRouter.dispatch(storeId, TaskType.PERFORMANCE_ADS, prompt, { systemPrompt, jsonSchema: true });
+    }
+}
+
+/**
  * AGENTE ESPECIALISTA: COPYWRITER DE RESPUESTA DIRECTA
  */
 export class CopywriterAgent {
     static async generateSalesLetter(storeId: string, context: string, targetAvatar: any): Promise<AIResponse> {
         const systemPrompt = `
-            ROL: Copywriter de Respuesta Directa nivel Dios (Estilo Hormozi + Schwartz + Kennedy).
-            MISION: Escribir una Sales Letter que convierta desconocidos en clientes leales.
-            REGLAS:
-            - Usa el Gancho Emocional Primario detectado en la investigación.
-            - Estructura: Hook -> Problema -> Agitación -> Mecanismo Único -> Oferta -> Garantía.
-            - Tono: Directo, visceral, rompiendo creencias limitantes.
-            - Metodología: Investigación Profunda real.
-            - NOMENCLATURA SPENCER PAWLIN: Asegúrate de referenciar el Spencer Angle Code y Spencer Hook Code en los borradores para trazabilidad.
-            - IDENTIDAD VISUAL: Si la investigación incluye paleta de colores y tipografía, úsalas para sugerir la apariencia de la página y elementos de diseño.
+            ROL: Copywriter de Respuesta Directa nivel Dios.
+            REGLAS SPENCER: LP_[CONC]_[TIPO]_[VAR].html. Tipos: LP, ADV, LIST, VSL.
         `;
 
         const prompt = `
-            CONTEXTO DE INVESTIGACIÓN:
-            ${context}
-
-            AVATAR OBJETIVO:
-            ${JSON.stringify(targetAvatar)}
-
-            TAREA: Escribe el borrador completo de una Sales Letter de alta conversión.
+            CONTEXTO: ${context}
+            AVATAR: ${JSON.stringify(targetAvatar)}
+            TAREA: Escribe el borrador de la Landing Page.
         `;
 
         return AiRouter.dispatch(storeId, TaskType.COPYWRITING_PAGES, prompt, { systemPrompt });
@@ -39,23 +138,14 @@ export class CopywriterAgent {
 export class ScriptWriterAgent {
     static async generateAdvancedScript(storeId: string, researchData: any, videoType: string = 'VSL'): Promise<AIResponse> {
         const systemPrompt = `
-            ROL: Guionista Senior de Video Marketing (VSL & Ads Virales).
-            MISION: Crear un guion optimizado para retención y conversión.
-            REGLAS:
-            - Minuto 0-5s: Hook visual y verbal disruptivo.
-            - Storytelling basado en la "Capa de Verdad" de la investigación.
-            - Llamada a la acción clara y potente.
-            - NOMENCLATURA OBLIGATORIA (Spencer Pawlin): Los guiones generados DEBEN proponer un nombre de archivo siguiendo el patrón: [YYMMDD]_[BRAND]_[ANGULO]_[HOOK]_[VAR_VISUAL]_[EDITOR].
-            - DIRECCIÓN DE ARTE: Incorpora las directrices visuales (estilo de video, iluminación, vibe) en las descripciones de escena del guion.
+            ROL: Guionista Senior de Video Marketing.
+            NOMENCLATURA SPENCER: VID_[CONC]_[FASE]_[HOOK]_[FORMATO]_[VAR].mp4.
         `;
 
         const prompt = `
-            INVESTIGACIÓN FORENSE:
-            ${JSON.stringify(researchData)}
-
-            TIPO DE VIDEO: ${videoType}
-
-            TAREA: Genera un guion detallado (Visual | Audio) con timestamps sugeridos.
+            RESEARCH: ${JSON.stringify(researchData)}
+            TIPO: ${videoType}
+            TAREA: Genera un guion detallado.
         `;
 
         return AiRouter.dispatch(storeId, TaskType.SCRIPTS_ADVANCED, prompt, { systemPrompt });
@@ -68,22 +158,13 @@ export class ScriptWriterAgent {
 export class CroSpecialistAgent {
     static async auditLandingPage(storeId: string, pageHierarchy: any, researchData: any): Promise<AIResponse> {
         const systemPrompt = `
-            ROL: Especialista Senior en CRO (Conversion Rate Optimization).
-            MISION: Auditar y mejorar la arquitectura de persuasión de la landing page.
-            REGLAS:
-            - Identifica fricciones cognitivas.
-            - Asegura que el Mecanismo Único esté bien posicionado.
-            - Verifica que los CTAs resuelvan el dolor principal del avatar.
+            ROL: Especialista Senior en CRO.
         `;
 
         const prompt = `
-            JERARQUÍA DE PÁGINA:
-            ${JSON.stringify(pageHierarchy)}
-
-            DATA DE MERCADO:
-            ${JSON.stringify(researchData)}
-
-            TAREA: Proporciona 5 mejoras críticas de CRO basadas en psicología de mercado.
+            JERARQUÍA: ${JSON.stringify(pageHierarchy)}
+            DATA: ${JSON.stringify(researchData)}
+            TAREA: Mejora de 5 puntos críticos.
         `;
 
         return AiRouter.dispatch(storeId, TaskType.CRO_AUDIT, prompt, { systemPrompt });
@@ -95,15 +176,12 @@ export class CroSpecialistAgent {
  */
 export class ForensicResearcherAgent {
     static async executeDeepAnalysis(storeId: string, productTitle: string, initialEvidence: string, productFamily: string = ''): Promise<AIResponse> {
-        const systemPrompt = STRATEGIC_INTELLIGENCE_CORE; // Use the God Tier methodology
+        const systemPrompt = STRATEGIC_INTELLIGENCE_CORE;
 
         const prompt = `
             PRODUCTO: ${productTitle}
-            FAMILIA: ${productFamily}
-            EVIDENCIA RECOLECTADA: ${initialEvidence}
-
-            TAREA: Ejecuta la Fase 1 y 2 de la metodología GOD TIER. 
-            Extrae el DNA Forense y el Truth Layer real.
+            EVIDENCIA: ${initialEvidence}
+            TAREA: Extrae el DNA Forense.
         `;
 
         return AiRouter.dispatch(storeId, TaskType.RESEARCH_FORENSIC, prompt, { jsonSchema: true });
@@ -116,18 +194,11 @@ export class ForensicResearcherAgent {
 export class VideoDirectorAgent {
     static async dissectVideo(storeId: string, context: string): Promise<AIResponse> {
         const systemPrompt = `
-            ROL: Director Creativo de Video Ads (Ex-Harmon Brothers).
-            MISION: Deconstruir videos ganadores para extraer su estructura persuasiva.
-            REGLAS:
-            - Identifica el Hook visual y auditivo exacto.
-            - Mapea la retención segundo a segundo.
-            - Extrae la lógica de conversión (por qué funciona).
+            ROL: Director Creativo de Video Ads.
         `;
 
         const prompt = `
-            CONTEXTO DEL VIDEO:
-            ${context}
-
+            CONTEXTO: ${context}
             TAREA: Realiza una disección forense del video.
         `;
 

@@ -3,12 +3,13 @@ import { AdvancedVideoClassifier } from '../video/advanced-classifier';
 import { GoogleSheetsService } from '../google-sheets';
 import { generateNomenclature, getDriveFolderPath, CREATIVE_CONCEPTS } from './spencer-knowledge';
 import { prisma } from '../prisma';
+import { SemanticIndexService } from '../services/semantic-index-service';
 
 /**
  * BULK UPLOAD PIPELINE
  * 
  * Orchestrator that wraps VideoProcessingPipeline + AdvancedVideoClassifier
- * and adds: Spencer nomenclature, Sheets logging, image handling, 
+ * and adds: IA nomenclature, Sheets logging, image handling, 
  * and Drive organization by store/product/concept.
  * 
  * Handles both VIDEO and IMAGE files.
@@ -106,7 +107,7 @@ export class BulkUploadPipeline {
                 );
             }
 
-            // 3. Generate Spencer nomenclature
+            // 3. Generate IA nomenclature
             const store = await prisma.store.findFirst({
                 where: { id: params.storeId },
                 select: { name: true },
@@ -114,11 +115,11 @@ export class BulkUploadPipeline {
 
             const conceptData = CREATIVE_CONCEPTS.find(c => c.id === (classification?.concept || pipelineResult.concept || 3));
             const nomenclatura = generateNomenclature({
-                brand: store?.name || 'BRAND',
-                angle: conceptData?.name || 'MECANISMO',
-                hook: pipelineResult.script?.hook?.slice(0, 15) || 'HOOK',
-                variant: `V${Date.now() % 1000}`,
-                type: 'VIDEO',
+                type: 'VID',
+                conceptNum: classification?.concept || pipelineResult.concept || 3,
+                subType: classification?.funnelStage || 'FRIO',
+                numOrHook: pipelineResult.script?.hook?.slice(0, 15) || 'HOOK',
+                variant: 'A'
             });
 
             // 4. Update asset in DB with full classification
@@ -149,6 +150,11 @@ export class BulkUploadPipeline {
             }
 
             console.log(`[BulkPipeline] ✅ Video complete: ${nomenclatura} (${processingTime})`);
+
+            if (pipelineResult.videoId) {
+                // Background indexing
+                SemanticIndexService.indexCreativeAsset(pipelineResult.videoId).catch((e: any) => console.error("[BulkPipeline] Index error:", e));
+            }
 
             return {
                 success: true,
@@ -187,25 +193,19 @@ export class BulkUploadPipeline {
         source?: string;
         isCompetitor?: boolean;
     }): Promise<BulkUploadResult> {
-
-        console.log(`[BulkPipeline] 🖼️ Processing image: ${params.fileName}`);
-
         try {
-            const store = await prisma.store.findFirst({
-                where: { id: params.storeId },
-                select: { name: true },
-            });
+            const { MetadataRemover } = await import('../media/metadata');
+            const cleanBuffer = await MetadataRemover.stripImage(params.buffer);
 
-            // Generate nomenclature
+            const { generateNomenclature } = await import('./spencer-knowledge');
             const nomenclatura = generateNomenclature({
-                brand: store?.name || 'BRAND',
-                angle: 'VISUAL',
-                hook: params.fileName.replace(/\.[^/.]+$/, '').slice(0, 15),
-                variant: `V${Date.now() % 1000}`,
-                type: 'STATIC',
+                type: 'IMG',
+                conceptNum: 3,
+                subType: 'VISUAL',
+                formato: '9X16',
+                variant: 'A'
             });
 
-            // Save to DB as CreativeAsset
             const asset = await (prisma as any).creativeAsset.create({
                 data: {
                     storeId: params.storeId,
@@ -219,8 +219,6 @@ export class BulkUploadPipeline {
                 },
             });
 
-            console.log(`[BulkPipeline] ✅ Image saved: ${nomenclatura}`);
-
             return {
                 success: true,
                 fileName: params.fileName,
@@ -228,9 +226,8 @@ export class BulkUploadPipeline {
                 nomenclatura,
                 assetId: asset.id,
             };
-
         } catch (error: any) {
-            console.error(`[BulkPipeline] ❌ Image error:`, error);
+            console.error('[BulkPipeline] Image error:', error);
             return {
                 success: false,
                 fileName: params.fileName,

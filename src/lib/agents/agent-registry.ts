@@ -33,11 +33,12 @@ export type AgentRole =
     | 'ebook-writer'
     | 'offer-configurator'
     | 'video-director'
+    | 'media-cleaner'
 
     // Propósito general
     | 'general';
 
-export type ModelProvider = 'replicate-claude' | 'gemini-2.0-pro' | 'gemini-2.0-flash';
+export type ModelProvider = 'replicate-claude' | 'gemini-pro' | 'gemini-flash';
 
 export interface AgentConfig {
     role: AgentRole;
@@ -244,7 +245,7 @@ Estilo: Moderno, limpio, orientado a conversión.`,
 
     'research-lab': {
         role: 'research-lab',
-        provider: 'gemini-2.0-pro',
+        provider: 'gemini-pro',
         model: API_CONFIG.vertexAI.models.gemini.production,
         temperature: 0.3,
         maxTokens: 8192,
@@ -265,7 +266,7 @@ Output: Datos estructurados, específicos, con evidencia.`,
 
     'competitor-analyst': {
         role: 'competitor-analyst',
-        provider: 'gemini-2.0-pro',
+        provider: 'gemini-pro',
         model: API_CONFIG.vertexAI.models.gemini.production,
         temperature: 0.3,
         maxTokens: 6144,
@@ -286,7 +287,7 @@ Identifies: Oportunidades de diferenciación.`,
 
     'voc-extractor': {
         role: 'voc-extractor',
-        provider: 'gemini-2.0-pro',
+        provider: 'gemini-pro',
         model: API_CONFIG.vertexAI.models.gemini.production,
         temperature: 0.2,
         maxTokens: 6144,
@@ -307,7 +308,7 @@ CRÍTICO: No inventes. Solo extraes frases reales.`,
 
     'avatar-creator': {
         role: 'avatar-creator',
-        provider: 'gemini-2.0-pro',
+        provider: 'gemini-pro',
         model: API_CONFIG.vertexAI.models.gemini.production,
         temperature: 0.4,
         maxTokens: 8192,
@@ -330,7 +331,7 @@ Cada avatar es una persona real, no un estereotipo.`,
 
     'angle-engineer': {
         role: 'angle-engineer',
-        provider: 'gemini-2.0-pro',
+        provider: 'gemini-pro',
         model: API_CONFIG.vertexAI.models.gemini.production,
         temperature: 0.5,
         maxTokens: 6144,
@@ -355,7 +356,7 @@ Cada ángulo conecta con un avatar específico y usa VOC real.`,
 
     'customer-support': {
         role: 'customer-support',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.5,
         maxTokens: 2048,
@@ -376,7 +377,7 @@ Siempre ofreces solución específica.`,
 
     'video-director': {
         role: 'video-director',
-        provider: 'gemini-2.0-pro',
+        provider: 'gemini-pro',
         model: API_CONFIG.vertexAI.models.gemini.production, // Use Pro for deep analysis
         temperature: 0.4,
         maxTokens: 4096,
@@ -396,7 +397,7 @@ Siempre ofreces solución específica.`,
 
     'cart-recovery': {
         role: 'cart-recovery',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.6,
         maxTokens: 1024,
@@ -417,7 +418,7 @@ Tono: Conversacional, no pushy.`,
 
     'order-tracker': {
         role: 'order-tracker',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.3,
         maxTokens: 1024,
@@ -437,7 +438,7 @@ Tono: Claro, informativo, tranquilizador.`,
 
     'shipping-alert': {
         role: 'shipping-alert',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.4,
         maxTokens: 1024,
@@ -457,7 +458,7 @@ Provees: Soluciones claras y próximos pasos.`,
 
     'incident-manager': {
         role: 'incident-manager',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.3,
         maxTokens: 2048,
@@ -478,7 +479,7 @@ Output: Estructurado, claro, accionable.`,
 
     'daily-accountant': {
         role: 'daily-accountant',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.2,
         maxTokens: 3072,
@@ -499,11 +500,11 @@ Output: Reportes diarios estructurados.`,
 
     'metrics-analyzer': {
         role: 'metrics-analyzer',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.3,
         maxTokens: 3072,
-        systemPrompt: `Eres un analista senior de métricas de Meta Ads con enfoque en Creative Testing (Método Spencer Pawlin).
+        systemPrompt: `Eres un analista senior de métricas de Meta Ads con enfoque en Creative Testing (Método IA Pro).
         
         Misión: Identificar qué creativos están escalando la cuenta y cuáles deben ser cortados inmediatamente.
         
@@ -525,7 +526,7 @@ Output: Reportes diarios estructurados.`,
         model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
         temperature: 0.7,
         maxTokens: 4096,
-        systemPrompt: `Eres un Media Buyer de Élite experto en pauta publicitaria de respuesta directa (Methodology: Spencer Pawlin).
+        systemPrompt: `Eres un Media Buyer de Élite experto en pauta publicitaria de respuesta directa (Methodology: IA Pro).
         
         Tu expertise se basa en:
         1. Creative-Led Growth: El creativo hace el segmentado, no el interés técnico.
@@ -533,7 +534,7 @@ Output: Reportes diarios estructurados.`,
         3. Escalado Horizontal Y Vertical: Conocimiento de cuándo duplicar conjuntos y cuándo subir budget.
         4. Broad Targeting: Dominio de audiencias abiertas donde el algoritmo busca la conversión.
         
-        Principios Spencer Pawlin:
+        Principios IA Pro:
         - "Creative is the targeting".
         - Foco extremo en los primeros 3 segundos del video.
         - Estructura de campaña simplificada.`,
@@ -544,7 +545,7 @@ Output: Reportes diarios estructurados.`,
 
     'performance-tracker': {
         role: 'performance-tracker',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.2,
         maxTokens: 2048,
@@ -565,11 +566,11 @@ Output: Dashboards y reportes de performance.`,
 
     'drive-organizer': {
         role: 'drive-organizer',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.4,
         maxTokens: 2048,
-        systemPrompt: `Eres un organizador experto de activos digitales y Google Drive de alto rendimiento (Standard: Spencer Pawlin).
+        systemPrompt: `Eres un organizador experto de activos digitales y Google Drive de alto rendimiento (Standard: IA Pro).
         
         NOMENCLATURA OBLIGATORIA:
         - Video Ads: [YYMMDD]_[BRAND]_[ANGULO]_[HOOK]_[VAR_VISUAL]_[EDITOR]
@@ -584,14 +585,14 @@ Output: Dashboards y reportes de performance.`,
         04_BACKUP_HISTORICO
         
         Misión: Mantener el Drive impecable para que el Media Buyer encuentre todo en segundos.`,
-        description: 'Organización de Google Drive con estándares Spencer Pawlin',
+        description: 'Organización de Google Drive con estándares IA Pro',
         tier: 3,
         costTier: 'economic'
     },
 
     'lead-nurturer': {
         role: 'lead-nurturer',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.6,
         maxTokens: 2048,
@@ -612,7 +613,7 @@ Objetivo: Mantener interés sin ser agresivo.`,
 
     'ebook-writer': {
         role: 'ebook-writer',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.6,
         maxTokens: 6144,
@@ -633,7 +634,7 @@ Contenido: Valioso, accionable, bien estructurado.`,
 
     'offer-configurator': {
         role: 'offer-configurator',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.4,
         maxTokens: 2048,
@@ -652,13 +653,9 @@ Output: Especificaciones técnicas de ofertas.`,
         costTier: 'economic'
     },
 
-    // ============================================
-    // GENERAL
-    // ============================================
-
     'general': {
         role: 'general',
-        provider: 'gemini-2.0-flash',
+        provider: 'gemini-flash',
         model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.5,
         maxTokens: 2048,
@@ -666,8 +663,33 @@ Output: Especificaciones técnicas de ofertas.`,
         description: 'Propósito general',
         tier: 3,
         costTier: 'economic'
+    },
+
+    // ============================================
+    // MEDIA CLEANING (Pipeline Orchestration)
+    // ============================================
+    'media-cleaner': {
+        role: 'media-cleaner',
+        provider: 'gemini-pro',
+        model: API_CONFIG.vertexAI.models.gemini.production,
+        temperature: 0.1,
+        maxTokens: 2048,
+        systemPrompt: `Eres un experto en limpieza de activos digitales (Video & Image).
+        
+Tu misión es analizar archivos multimedia para detectar elementos no deseados:
+- Subtítulos quemados (Bottom third genéricamente)
+- Marcas de agua (Esquinas)
+- Texto superpuesto (Ad copy, stickers)
+- Logos de redes sociales (TikTok, Reels)
+
+Debes devolver las coordenadas JSON exactas [ymin, xmin, ymax, xmax] de cada elemento para que el pipeline de inpainting pueda eliminarlos.
+Identifica también si hay voz en off que deba ser separada del audio original.`,
+        description: 'Detección y orquestación de limpieza de medios',
+        tier: 2,
+        costTier: 'standard'
     }
 };
+
 
 // Helper para obtener config de agente
 export function getAgentConfig(role: AgentRole): AgentConfig {
@@ -758,6 +780,9 @@ export function selectAgentForTask(taskDescription: string): AgentRole {
     if (lower.includes('config') || lower.includes('promo') || lower.includes('discount')) {
         return 'offer-configurator';
     }
+    if (lower.includes('clean') || lower.includes('limpiar') || lower.includes('subtítulo') || lower.includes('watermark')) {
+        return 'media-cleaner';
+    }
 
     return 'general';
 }
@@ -775,8 +800,8 @@ export function getAgentStats() {
         total: configs.length,
         byProvider: {
             replicateClaude: configs.filter(c => c.provider === 'replicate-claude').length,
-            geminiPro: configs.filter(c => c.provider === 'gemini-2.0-pro').length,
-            geminiFlash: configs.filter(c => c.provider === 'gemini-2.0-flash').length
+            geminiPro: configs.filter(c => c.provider === 'gemini-pro').length,
+            geminiFlash: configs.filter(c => c.provider === 'gemini-flash').length
         },
         byTier: {
             tier1: configs.filter(c => c.tier === 1).length,

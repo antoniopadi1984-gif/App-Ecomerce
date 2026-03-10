@@ -102,6 +102,7 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
     const [imported, setImported] = useState(false);
     const [importedCount, setImportedCount] = useState(0);
     const [creating, setCreating] = useState(false);
+    const [eurRate, setEurRate] = useState<number | null>(null);
     const imageRef = useRef<HTMLInputElement>(null);
 
     const [form, setForm] = useState({
@@ -124,6 +125,12 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
             setForm(prev => ({ ...prev, moneda: activeStore.currency }));
         }
     }, [activeStore?.currency]);
+
+    useEffect(() => {
+        if (form.moneda === 'EUR') { setEurRate(null); return; }
+        const rates: Record<string, number> = { MXN: 0.052, USD: 0.92, GBP: 1.17, COP: 0.00023 };
+        setEurRate(rates[form.moneda] ?? null);
+    }, [form.moneda]);
 
     const updateForm = (key: string, value: any) => setForm(f => ({ ...f, [key]: value }));
     const updateComp = (i: number, key: string, value: any) => {
@@ -429,6 +436,21 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
                         <Metric label="Benef. neto" value={(form.moneda === 'EUR' ? '€' : form.moneda === 'USD' ? '$' : form.moneda) + metricas.beneficioNeto.toFixed(0)} color="#64748b" borderRight />
                         <Metric label="Coste real" value={(form.moneda === 'EUR' ? '€' : form.moneda === 'USD' ? '$' : form.moneda) + metricas.costeReal.toFixed(0)} color="#64748b" />
                     </div>
+
+                    {/* ── CONVERSIÓN EUR ── */}
+                    {eurRate && form.moneda !== 'EUR' && metricas.beneficioNeto > 0 && (
+                        <div style={{
+                            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+                            gap: '6px', padding: '6px 10px',
+                            background: '#f8faff', borderRadius: '8px',
+                            border: '1px dashed #c7d7f0', marginBottom: '10px'
+                        }}>
+                            <Metric label="CPA Máx €" value={'€' + (metricas.cpaMax * eurRate).toFixed(0)} color="#3b82f6" borderRight />
+                            <Metric label="CPC Máx €" value={'€' + (metricas.cpcMax * eurRate).toFixed(2)} color="#8b5cf6" borderRight />
+                            <Metric label="Benef. neto €" value={'€' + (metricas.beneficioNeto * eurRate).toFixed(0)} color="#16a34a" borderRight />
+                            <Metric label="Coste real €" value={'€' + (metricas.costeReal * eurRate).toFixed(0)} color="#64748b" />
+                        </div>
+                    )}
 
                     {/* ── COMPETIDORES ── */}
                     <Label>Competidores</Label>

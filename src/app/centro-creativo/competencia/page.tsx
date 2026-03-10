@@ -9,9 +9,9 @@ const CompetenciaTab = dynamic(() => import('@/components/creativo/CompetenciaTa
 
 export default function CompetenciaPage() {
     const { activeStoreId: storeId } = useStore();
-    const { productId } = useProduct();
+    const { productId, product } = useProduct();
 
     if (!storeId || !productId || productId === 'GLOBAL') return null;
 
-    return <CompetenciaTab storeId={storeId} productId={productId} />;
+    return <CompetenciaTab storeId={storeId} productId={productId} productSku={product?.handle || 'PROD'} />;
 }

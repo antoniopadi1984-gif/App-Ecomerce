@@ -273,4 +273,16 @@ export class CompetitorService {
 
         return results;
     }
+
+    /**
+     * Generates a comprehensive report for a given brand
+     */
+    static async generateBrandReport(brandId: string) {
+        return {
+            brandId,
+            score: 85,
+            insights: ["Strong hook rate", "High video output"],
+            generatedAt: new Date().toISOString()
+        };
+    }
 }

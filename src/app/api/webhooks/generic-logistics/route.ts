@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { DropeaClient } from "@/lib/dropea";
-import { DroppiClient } from "@/lib/dropi";
+import { DropiClient } from "@/lib/dropi";
 import { recordOrderEvent } from "@/lib/logistics-engine";
 
 export async function POST(req: NextRequest) {
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
         const payload = await req.json();
         const provider = req.nextUrl.searchParams.get("provider")?.toUpperCase(); // ?provider=DROPEA
 
-        if (!provider || !['DROPEA', 'DROPPI'].includes(provider)) {
+        if (!provider || !['DROPEA', 'DROPPI', 'DROPI'].includes(provider)) {
             return NextResponse.json({ success: false, message: "Invalid provider param" }, { status: 400 });
         }
 
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
         let mappedStatus = 'PENDING';
         if (provider === 'DROPEA') mappedStatus = DropeaClient.mapStatus(statusRaw);
-        if (provider === 'DROPPI') mappedStatus = DroppiClient.mapStatus(statusRaw);
+        if (provider === 'DROPPI' || provider === 'DROPI') mappedStatus = DropiClient.mapStatus(statusRaw);
 
         await (prisma as any).order.update({
             where: { id: order.id },

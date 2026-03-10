@@ -217,7 +217,7 @@ export function ProduccionTab({ storeId, productId }: { storeId: string; product
                                         {activeConcept?.type || 'CONCEPTO'}
                                     </span>
                                     <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-tight">
-                                        SKU: {product?.sku || 'PROD'}
+                                        SKU: {product?.handle || 'PROD'}
                                     </span>
                                 </div>
                                 <h1 className="text-xl font-semibold text-[var(--text-primary)] tracking-tight uppercase">
@@ -288,7 +288,7 @@ export function ProduccionTab({ storeId, productId }: { storeId: string; product
                                         conceptName={activeConcept?.name || ''}
                                         storeId={storeId}
                                         productId={productId}
-                                        productSku={product?.sku || 'PROD'}
+                                        productSku={product?.handle || 'PROD'}
                                     />
                                 ) : <EmptyState message="Selecciona un concepto para activar la fábrica" />}
                             </section>
@@ -355,7 +355,7 @@ export function ProduccionTab({ storeId, productId }: { storeId: string; product
                                     conceptId={activeConceptId}
                                     storeId={storeId}
                                     productId={productId}
-                                    productSku={product?.sku || 'PROD'}
+                                    productSku={product?.handle || 'PROD'}
                                 />
                             </section>
                         </div>

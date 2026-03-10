@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '@/lib/store/store-context';
+import { useStore } from '@/context/StoreContext';
 import { useProduct } from '@/context/ProductContext';
 import { Clapperboard } from 'lucide-react';
+import { AgentCompanion } from '@/components/layout/agent-companion';
 
-export default function CreativoLayout({ children }: { children: React.ReactNode }) {
+function CreativoLayoutInner({ children }: { children: React.ReactNode }) {
     const { activeStoreId } = useStore();
     const { productId } = useProduct();
     const [marketLang, setMarketLang] = useState('ES');
@@ -61,6 +62,12 @@ export default function CreativoLayout({ children }: { children: React.ReactNode
                     {children}
                 </div>
             )}
+
+            <AgentCompanion pageContext={contextForAgent} agentRole="centro-creativo" />
         </div>
     );
+}
+
+export default function CreativoLayout({ children }: { children: React.ReactNode }) {
+    return <CreativoLayoutInner>{children}</CreativoLayoutInner>;
 }

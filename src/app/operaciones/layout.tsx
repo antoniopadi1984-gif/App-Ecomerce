@@ -4,12 +4,12 @@ import React from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
 import { ShoppingCart } from 'lucide-react';
+import { AgentCompanion } from '@/components/layout/agent-companion';
 
-export default function OperacionesLayout({ children }: { children: React.ReactNode }) {
+function OperacionesLayoutInner({ children }: { children: React.ReactNode }) {
     const { activeStoreId } = useStore();
     const { productId } = useProduct();
-
-    const contextForAgent = `Operaciones. Tienda: ${activeStoreId}. Producto filtrado (si aplica): ${productId}`;
+    const contextForAgent = `Operaciones. Tienda: ${activeStoreId}. Producto: ${productId}`;
 
     return (
         <div className="content-main flex flex-col gap-4 pt-0 h-full min-h-screen bg-[var(--bg)]">
@@ -26,16 +26,18 @@ export default function OperacionesLayout({ children }: { children: React.ReactN
                     </div>
                 </div>
             </div>
-
             {!activeStoreId ? (
                 <div className="text-center p-8 text-[11px] font-semibold text-[var(--text-dim)] ds-card">
                     Selecciona una tienda en el selector superior (TopBar).
                 </div>
             ) : (
-                <div className="flex-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    {children}
-                </div>
+                <div className="flex-1 animate-in fade-in slide-in-from-bottom-2 duration-300">{children}</div>
             )}
+            <AgentCompanion pageContext={contextForAgent} agentRole="general" />
         </div>
     );
+}
+
+export default function OperacionesLayout({ children }: { children: React.ReactNode }) {
+    return <OperacionesLayoutInner>{children}</OperacionesLayoutInner>;
 }

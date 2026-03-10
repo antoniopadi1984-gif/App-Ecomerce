@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useStore } from '@/lib/store/store-context';
+import { useStore } from '@/context/StoreContext';
 import { useProduct } from '@/context/ProductContext';
 import { motion, AnimatePresence } from 'framer-motion';
 

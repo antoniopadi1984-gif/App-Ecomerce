@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '@/lib/store/store-context';
+import { useStore } from '@/context/StoreContext';
 import { Bot, RefreshCw, Save, RotateCcw, Sparkles, MessageSquare, Trash2, Plus, Type, FileImage, Youtube } from 'lucide-react';
 import { DEFAULT_AGENT_PROMPTS } from '@/lib/ai/defaults/agent-prompts';
 import { toast } from 'sonner';

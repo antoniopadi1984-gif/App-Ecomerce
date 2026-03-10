@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { useStore } from '@/lib/store/store-context';
+import { useStore } from '@/context/StoreContext';
 import { useProduct } from '@/context/ProductContext';
 import { Send, Loader2, Sparkles, X, Bot, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +13,12 @@ interface Message {
     content: string;
 }
 
-export function AgentCompanion() {
+interface AgentCompanionProps {
+    pageContext?: string;
+    agentRole?: string;
+}
+
+export function AgentCompanion({ pageContext, agentRole }: AgentCompanionProps = {}) {
     const [open, setOpen] = useState(false);
     const [agentTab, setAgentTab] = useState<'especialista' | 'director'>('especialista');
 
@@ -33,15 +38,18 @@ export function AgentCompanion() {
     const modulesConfig: Record<string, { label: string; color: string; context: string; slug: string }> = {
         'finanzas': { label: 'Finanzas', color: '#16a34a', context: 'Análisis financiero', slug: 'finanzas' },
         'crm': { label: 'CRM Forense', color: '#dc2626', context: 'Gestión de clientes', slug: 'crm' },
-        'operaciones': { label: 'Operaciones', color: '#2563eb', context: 'Logística y flujos', slug: 'operaciones' },
-        'creativo': { label: 'Centro Creativo', color: '#9333ea', context: 'Producción de anuncios', slug: 'creativo' },
-        'investigacion': { label: 'Investigación', color: '#0891b2', context: 'Análisis de mercado', slug: 'investigacion' },
-        'marketing': { label: 'Marketing', color: '#ea580c', context: 'Campañas y pauta', slug: 'marketing' },
-        'mando': { label: 'Mando', color: '#0f172a', context: 'Visión general', slug: 'mando' },
+        'operaciones': { label: 'Operaciones', color: '#10B981', context: 'Logística y flujos', slug: 'operaciones' },
+        'general': { label: 'Operaciones', color: '#10B981', context: 'Logística y flujos', slug: 'operaciones' },
+        'creativo': { label: 'Centro Creativo', color: '#F59E0B', context: 'Producción de anuncios', slug: 'creativo' },
+        'centro-creativo': { label: 'Centro Creativo', color: '#F59E0B', context: 'Producción de anuncios', slug: 'creativo' },
+        'investigacion': { label: 'Investigación', color: '#8B5CF6', context: 'Análisis de mercado', slug: 'investigacion' },
+        'research-lab': { label: 'Investigación', color: '#8B5CF6', context: 'Análisis de mercado', slug: 'investigacion' },
+        'marketing': { label: 'Marketing', color: '#EF4444', context: 'Campañas y pauta', slug: 'marketing' },
+        'mando': { label: 'Mando', color: '#6366F1', context: 'Visión general', slug: 'mando' },
     };
 
-    const currentModuleKey = Object.keys(modulesConfig).find(k => pathname.includes(k)) || 'mando';
-    const config = modulesConfig[currentModuleKey];
+    const effectiveRole = agentRole || Object.keys(modulesConfig).find(k => pathname.includes(k)) || 'mando';
+    const config = modulesConfig[effectiveRole] || modulesConfig['mando'];
 
     const NOMBRE_MODULO = config.label;
     const MODULE_COLOR = config.color;
@@ -86,7 +94,8 @@ export function AgentCompanion() {
                     context: {
                         module: NOMBRE_MODULO,
                         path: pathname,
-                        productId: productId !== 'GLOBAL' ? productId : undefined
+                        productId: productId !== 'GLOBAL' ? productId : undefined,
+                        pageContext: pageContext || undefined
                     }
                 }),
             });

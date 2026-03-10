@@ -12,7 +12,7 @@ export interface Store {
 interface StoreContextType {
     activeStore: Store | null;
     activeStoreId: string | null;
-    allStores: Store[];
+    stores: Store[];
     setActiveStoreId: (id: string) => void;
     isLoading: boolean;
     refreshStores: () => Promise<void>;
@@ -22,7 +22,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
     const [activeStoreId, setActiveStoreIdState] = useState<string | null>(null);
-    const [allStores, setAllStores] = useState<Store[]>([]);
+    const [stores, setStores] = useState<Store[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchStores = useCallback(async () => {
@@ -30,7 +30,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             const res = await fetch('/api/stores');
             const data = await res.json();
             if (data.success && data.stores?.length > 0) {
-                setAllStores(data.stores);
+                setStores(data.stores);
                 // Restore from localStorage or default to first store
                 const saved = typeof window !== 'undefined'
                     ? localStorage.getItem('activeStoreId')
@@ -60,13 +60,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    const activeStore = allStores.find(s => s.id === activeStoreId) || null;
+    const activeStore = stores.find(s => s.id === activeStoreId) || null;
 
     return (
         <StoreContext.Provider value={{
             activeStore,
             activeStoreId,
-            allStores,
+            stores,
             setActiveStoreId,
             isLoading,
             refreshStores: fetchStores

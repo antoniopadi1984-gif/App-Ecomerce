@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '@/lib/store/store-context';
+import { useStore } from '@/context/StoreContext';
 import { useProduct } from '@/context/ProductContext';
 import { Sparkles, RefreshCw } from 'lucide-react';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '@/lib/store/store-context';
+import { useStore } from '@/context/StoreContext';
 import { RefreshCw, Loader2, ChevronDown, ChevronRight, Zap, Pencil, X, TrendingUp, Check, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getWeeksInMonth, getWeekRanges } from '@/lib/weekUtils';

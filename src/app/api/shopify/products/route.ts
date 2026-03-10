@@ -40,10 +40,10 @@ export async function GET(req: NextRequest) {
             id: p.id,
             title: p.title,
             handle: p.handle,
-            image: p.featuredImage?.url || null,
+            image: p.images?.nodes?.[0]?.url || null,
             variants: p.variants || [],
             status: p.status,
-            ecomBoomId: skuToId.get(p.variants?.[0]?.sku) || null
+            ecomBoomId: skuToId.get(p.variants?.nodes?.[0]?.sku) || skuToId.get(p.variants?.[0]?.sku) || null
         }));
 
         return NextResponse.json({

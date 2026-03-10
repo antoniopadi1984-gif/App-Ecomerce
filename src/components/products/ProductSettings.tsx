@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Globe, Save, Package, Tag, Info, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useStore } from "@/lib/store/store-context";
+import { useStore } from "@/context/StoreContext";
 import { updateProduct } from "@/app/investigacion/actions/product-actions";
 
 export function ProductSettings({ product }: { product: any }) {

@@ -3,10 +3,10 @@
 import React from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { LayoutDashboard } from 'lucide-react';
+import { AgentCompanion } from '@/components/layout/agent-companion';
 
-export default function MandoLayout({ children }: { children: React.ReactNode }) {
+function MandoLayoutInner({ children }: { children: React.ReactNode }) {
     const { activeStoreId } = useStore();
-
     const contextForAgent = `Centro de Mando. Tienda: ${activeStoreId}`;
 
     return (
@@ -24,16 +24,18 @@ export default function MandoLayout({ children }: { children: React.ReactNode })
                     </div>
                 </div>
             </div>
-
             {!activeStoreId ? (
                 <div className="text-center p-8 text-[11px] font-semibold text-[var(--text-dim)] ds-card">
                     Selecciona una tienda en el selector superior (TopBar) para ver el mando.
                 </div>
             ) : (
-                <div className="flex-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    {children}
-                </div>
+                <div className="flex-1 animate-in fade-in slide-in-from-bottom-2 duration-300">{children}</div>
             )}
+            <AgentCompanion pageContext={contextForAgent} agentRole="mando" />
         </div>
     );
+}
+
+export default function MandoLayout({ children }: { children: React.ReactNode }) {
+    return <MandoLayoutInner>{children}</MandoLayoutInner>;
 }

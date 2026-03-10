@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProduct } from "@/context/ProductContext";
-import { useStore } from "@/lib/store/store-context";
+import { useStore } from "@/context/StoreContext";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -139,7 +139,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                 <ChevronDown className="w-3 h-3 text-[var(--text-dim)] group-hover:text-[var(--inv)] transition-colors shrink-0" />
                             </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[240px] glass-card p-1.5 z-[70] border-none rounded-2xl">
+                        <DropdownMenuContent align="end" className="w-[240px] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)] p-1.5 z-[70] border border-slate-100 rounded-2xl">
                             <DropdownMenuLabel className="px-3 py-2 border-b border-slate-50 mb-1">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cambiar Tienda</span>
                             </DropdownMenuLabel>
@@ -196,7 +196,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                 <ChevronDown className="w-3 h-3 text-[var(--text-dim)] group-hover:text-[var(--inv)] transition-colors shrink-0" />
                             </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[280px] glass-card p-1.5 z-[70] border-none rounded-2xl">
+                        <DropdownMenuContent align="end" className="w-[300px] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)] p-1.5 z-[70] border border-slate-100 rounded-2xl">
                             <DropdownMenuLabel className="px-3 py-2 border-b border-slate-50 mb-1">
                                 <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Cambiar Producto</span>
                             </DropdownMenuLabel>
@@ -356,7 +356,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                     <Settings className="w-3.5 h-3.5" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[200px] glass-card p-1.5 z-[70] border-none rounded-2xl shadow-xl">
+                            <DropdownMenuContent align="end" className="w-[200px] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-slate-100 p-1.5 z-[70] rounded-2xl">
                                 <DropdownMenuLabel className="px-3 py-2">
                                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ajustes & Sistema</span>
                                 </DropdownMenuLabel>

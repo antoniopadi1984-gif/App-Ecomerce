@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { cn } from "@/lib/utils";
-import { StoreProvider, useStore } from "@/context/StoreContext";
+import { StoreProvider, useStore } from "@/lib/store/store-context";
 import { ProductProvider } from "@/context/ProductContext";
 
 // Inner layout that has access to StoreContext

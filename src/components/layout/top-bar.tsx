@@ -45,11 +45,16 @@ interface ShopifyProductItem {
 
 export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; isExpanded?: boolean }) {
     const { product, allProducts, productId, setProductId } = useProduct();
-    const { activeStoreId, activeStore, stores, setActiveStoreId } = useStore();
+    const { activeStoreId, activeStore, stores, setActiveStoreId, storeOverview, overviewLoading } = useStore();
     const [search, setSearch] = useState("");
     const pathname = usePathname();
     const router = useRouter();
     const [scrolled, setScrolled] = useState(false);
+
+    const roas = storeOverview?.kpis?.roas7d ?? '-';
+    const revenue = storeOverview?.kpis?.revenue7d ?? '-';
+    // const orders = storeOverview?.kpis?.orders7d ?? '-';
+    // const pendingOrders = storeOverview?.kpis?.pendingOrders ?? 0;
 
     // ── Shopify products state ──────────────────────────────────
     const [shopifyProducts, setShopifyProducts] = useState<ShopifyProductItem[]>([]);
@@ -330,18 +335,18 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                     </DropdownMenu>
 
                     {/* KPI Pills - Glass Style */}
-                    {product && (
-                        <div className="hidden lg:flex items-center gap-1.5 p-1 glass-panel rounded-xl shadow-sm">
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/80 rounded-lg shadow-xs border border-white/50">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">ROAS BE</span>
-                                <span className="text-[11px] font-black text-rose-500 italic">{(product as any).roasBE || "2.40"}</span>
-                            </div>
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/80 rounded-lg shadow-xs border border-white/50">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">CPA BE</span>
-                                <span className="text-[11px] font-black text-slate-900 italic">{(product as any).cpaBE || "12.50"}€</span>
-                            </div>
+                    <div className="hidden lg:flex items-center gap-1.5 p-1 glass-panel rounded-xl shadow-sm">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white/80 rounded-lg shadow-xs border border-white/50">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">ROAS 7D</span>
+                            <span className="text-[11px] font-black text-rose-500 italic">{overviewLoading ? '...' : roas}</span>
                         </div>
-                    )}
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white/80 rounded-lg shadow-xs border border-white/50">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">VENTAS 7D</span>
+                            <span className="text-[11px] font-black text-emerald-600 italic">
+                                {overviewLoading ? '...' : revenue}€
+                            </span>
+                        </div>
+                    </div>
 
                     {/* Action Icons */}
                     <div className="flex items-center gap-2 shrink-0 border-l border-slate-200/50 pl-4 h-8">

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, startTransition } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { invalidateStoreCache } from '@/lib/services/drive-service';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -20,6 +21,8 @@ interface StoreContextType {
     isLoading: boolean;
     setActiveStoreId: (id: string) => void;
     refreshStores: () => Promise<void>;
+    storeOverview: any | null;
+    overviewLoading: boolean;
 }
 
 const STORAGE_KEY = "ecombom.activeStoreId";
@@ -32,6 +35,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const [activeStoreId, setActiveStoreIdState] = useState<string | null>(null);
     const [stores, setStores] = useState<StoreInfo[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [storeOverview, setStoreOverview] = useState<any | null>(null);
+    const [overviewLoading, setOverviewLoading] = useState(false);
     const router = useRouter();
 
     // Cargar stores disponibles
@@ -85,6 +90,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         startTransition(() => {
             router.refresh();
         });
+
+        if (id) {
+            invalidateStoreCache(id); // fuerza refetch de Drive
+            setOverviewLoading(true);
+            fetch(`/api/stores/${id}/overview`)
+                .then(r => r.json())
+                .then(d => { setStoreOverview(d); setOverviewLoading(false); })
+                .catch(() => setOverviewLoading(false));
+        }
     }, [stores, router]);
 
     // Store activa actual
@@ -98,6 +112,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             isLoading,
             setActiveStoreId,
             refreshStores: fetchStores,
+            storeOverview,
+            overviewLoading,
         }}>
             {children}
         </StoreContext.Provider>

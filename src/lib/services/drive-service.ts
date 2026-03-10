@@ -45,6 +45,14 @@ export interface VideoEntry {
 const indexCache = new Map<string, { data: ProductIndex; expires: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+export function invalidateStoreCache(storeId: string) {
+  for (const [key] of indexCache.entries()) {
+    if (key.startsWith(storeId)) {
+      indexCache.delete(key);
+    }
+  }
+}
+
 import { NomenclatureService } from './nomenclature-service';
 
 // ── Folder path builders ──────────────────────────────────────────────────────

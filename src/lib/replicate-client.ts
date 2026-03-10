@@ -22,7 +22,7 @@ const BASE_URL = 'https://api.replicate.com/v1';
 
 // ─── Core ──────────────────────────────────────────────────────────────────────
 
-async function replicateRequest(path: string, body?: any, method = 'POST') {
+export async function replicateRequest(path: string, body?: any, method = 'POST') {
     const res = await fetch(`${BASE_URL}${path}`, {
         method,
         headers: {

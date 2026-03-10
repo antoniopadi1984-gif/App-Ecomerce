@@ -480,6 +480,12 @@ export async function uploadToProduct(
     return { driveFileId, drivePath, driveUrl: driveUrl || '' };
 }
 
+export async function downloadFile(fileId: string): Promise<Buffer> {
+    const drive = await getDriveClient();
+    const res = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'arraybuffer' });
+    return Buffer.from(res.data as ArrayBuffer);
+}
+
 /**
  * ── Inbox Processing ────────────────────────────────────────────────────────
  * Moves files from 00_INBOX to studies (03_RAW/02_AUDIO) with nomenclature.

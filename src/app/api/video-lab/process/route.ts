@@ -14,8 +14,23 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { buildNomenclature, productCode, uploadToProduct } from '@/lib/services/drive-service';
+import { uploadToProduct } from '@/lib/services/drive-service';
 import { invalidateProductCache } from '@/lib/services/product-index';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as os from 'os';
+import { ElevenLabsService } from '@/lib/services/elevenlabs-service';
+import { AiRouter } from '@/lib/ai/router';
+import { TaskType } from '@/lib/ai/providers/interfaces';
+
+const execAsync = promisify(exec);
+
+// Helper locales para nomenclatura
+const productCode = (title: string) => title.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase() || 'PROD';
+const buildNomenclature = (opts: { prodCode: string, conceptCode: string, funnelStage: string, type: string, version: string | number, ext: string }) => 
+    `${opts.prodCode}_${opts.conceptCode}_${opts.funnelStage}_${opts.type}_V${opts.version}.${opts.ext}`;
 
 // In-memory job store (en producción usar Bull/Redis)
 const jobs = new Map<string, JobStatus>();
@@ -143,147 +158,102 @@ export async function GET(request: NextRequest) {
 
 // ── Background processing ─────────────────────────────────────────────────────
 async function processVideoBackground(
-    file: File,
-    assetId: string,
-    productId: string,
-    storeId: string,
-    jobId: string,
-    hints: { conceptCode?: string | null; funnelStage?: string | null }
+  file: File, assetId: string, productId: string, storeId: string,
+  jobId: string, hints: { conceptCode?: string | null; funnelStage?: string | null }
 ) {
-    const updateJob = (updates: Partial<JobStatus>) => {
-        const j = jobs.get(jobId);
-        if (j) { Object.assign(j, updates, { updatedAt: new Date().toISOString() }); }
-    };
-    const updateAsset = (data: any) =>
-        (prisma as any).creativeAsset.update({ where: { id: assetId }, data });
-
-    try {
-        await updateAsset({ processingStatus: 'PROCESSING' });
-
-        updateJob({ status: 'TRANSCRIBED', progress: 30 });
-        let transcription = '';
-        let detectedLang = 'es';
-        
-        try {
-            const bytes = await file.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            const base64 = buffer.toString('base64');
-            const dataUrl = `data:${file.type};base64,${base64}`;
-
-            // Usa el nuevo Replicate client
-            const result = await transcribeAudio(dataUrl, 'es');
-            transcription = typeof result === 'string' ? result : '';
-        } catch (e) {
-            console.warn('[VideoLab] Transcription failed:', e);
-            transcription = '[Transcripción no disponible]';
-        }
-
-        await updateAsset({ transcription, processingStatus: 'TRANSCRIBED' });
-
-        // ── STEP 2: ANALYZE with Gemini ──────────────────────────────────────
-        updateJob({ status: 'ANALYZED', progress: 55 });
-        let funnelStage = hints.funnelStage ?? 'TOF';
-        let type = 'UGC';
-        let hookText = '';
-        let conceptCode = hints.conceptCode ?? 'C01';
-        let scoreHook = 3, scoreEmotion = 3;
-
-        try {
-            const { GoogleGenerativeAI } = await import('@google/generative-ai');
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-            const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL_FAST || 'gemini-3-flash-preview' });
-
-            const prompt = `Analiza esta transcripción de vídeo publicitario y extrae:
-1. funnelStage: TOF (frío, awareness) | MOF (tibio, consideración) | BOF (caliente, compra) | RT-CART | RT-VIEW | RT-BUYER
-2. type: UGC | FACE | DEMO | STATIC
-3. hookText: primeras 1-2 frases del gancho (máximo 20 palabras)
-4. conceptCode: si mencionas mecanismo único → C01, error común → C02, vergüenza social → C03, urgencia → C04. Si no puedes determinar → C01
-5. scoreHook: 1-5 (claridad y fuerza del gancho)
-6. scoreEmotion: 1-5 (intensidad emocional)
-
-Transcripción (${detectedLang}):
-${transcription.slice(0, 2000)}
-
-Responde SOLO con JSON:
-{"funnelStage":"TOF","type":"UGC","hookText":"...","conceptCode":"C01","scoreHook":3,"scoreEmotion":4}`;
-
-            const result = await model.generateContent(prompt);
-            const text = result.response.text().trim().replace(/```json\n?|\n?```/g, '');
-            const parsed = JSON.parse(text);
-
-            funnelStage = parsed.funnelStage ?? funnelStage;
-            type = parsed.type ?? type;
-            hookText = parsed.hookText ?? '';
-            conceptCode = parsed.conceptCode ?? conceptCode;
-            scoreHook = parsed.scoreHook ?? 3;
-            scoreEmotion = parsed.scoreEmotion ?? 3;
-        } catch (e) {
-            console.warn('[VideoLab] Gemini analysis failed:', e);
-        }
-
-        await updateAsset({
-            processingStatus: 'ANALYZED',
-            funnelStage, type, hookText, conceptCode,
-        });
-        updateJob({ funnelStage, type });
-
-        // ── STEP 3: Build nomenclature ────────────────────────────────────────
-        updateJob({ status: 'ORGANIZED', progress: 80 });
-        const product = await (prisma as any).product.findUnique({
-            where: { id: productId }, select: { title: true }
-        });
-        const prodCode = productCode(product?.title ?? 'PRD');
-
-        // Count existing versions for this concept
-        const existingVersions = await (prisma as any).creativeAsset.count({
-            where: { productId, conceptCode, type, funnelStage }
-        });
-
-        const nomenclature = buildNomenclature({
-            prodCode,
-            conceptCode,
-            funnelStage,
-            type,
-            version: existingVersions,
-            ext: 'mp4',
-        });
-
-        updateJob({ status: 'ORGANIZED', progress: 90, nomenclature });
-
-        // ── STEP 4: Drive Upload ──────────────────────────────────────────────
-        try {
-            const bytes = await file.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            const { driveFileId, drivePath } = await uploadToProduct(
-                buffer,
-                nomenclature,
-                file.type,
-                productId,
-                storeId,
-                { conceptCode, funnelStage, fileType: 'VIDEO' }
-            );
-
-            await updateAsset({
-                driveFileId,
-                drivePath,
-                driveUrl: `https://drive.google.com/file/d/${driveFileId}/view`,
-                processingStatus: 'DONE',
-            });
-        } catch (e) {
-            console.error('[VideoLab] Drive upload failed:', e);
-            await updateAsset({ processingStatus: 'DONE' }); // Still mark as done in DB even if drive fails
-        }
-
-        updateJob({ status: 'DONE', progress: 100 });
-
-        // ── STEP 5: Invalidate caches ─────────────────────────────────────────
-        invalidateProductCache(productId);
-
-    } catch (e: any) {
-        await (prisma as any).creativeAsset.update({
-            where: { id: assetId },
-            data: { processingStatus: 'ERROR' }
-        }).catch(() => { });
-        throw e;
-    }
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vlab-'));
+  const inputPath = path.join(tmpDir, file.name);
+  const strippedPath = path.join(tmpDir, 'stripped_' + file.name);
+ 
+  try {
+    // Guardar archivo temporalmente
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await fs.writeFile(inputPath, buffer);
+ 
+    // PASO 1: Strip metadata con FFmpeg (obligatorio)
+    await execAsync(
+      `ffmpeg -i '${inputPath}' -map_metadata -1 -c:v copy -c:a copy '${strippedPath}' -y`
+    );
+    updateJob(jobId, { status: 'INGESTED', progress: 20 });
+ 
+    // PASO 2: Transcripción con ElevenLabs Scribe v2
+    const audioPath = path.join(tmpDir, 'audio.mp3');
+    await execAsync(`ffmpeg -i '${strippedPath}' -vn -acodec mp3 '${audioPath}' -y`);
+    const audioBuffer = await fs.readFile(audioPath);
+    const audioBlob = new Blob([audioBuffer], { type: 'audio/mp3' });
+    const transcriptionResult = await ElevenLabsService.speechToText(audioBlob);
+    const transcription = transcriptionResult?.text || '';
+    updateJob(jobId, { status: 'TRANSCRIBED', progress: 45 });
+ 
+    // PASO 3: Análisis con Gemini
+    const analysisResult = await AiRouter.dispatch(
+      storeId, TaskType.RESEARCH_DEEP,
+      `Analiza este vídeo publicitario. Transcripción: ${transcription}
+      Responde JSON: { "funnelStage": "...", "type": "...", "hook": "...", "hookScore": 5, "avatarMatch": "...", "angle": "...", "engagementPrediction": "...", "improvementSuggestions": "..." }`,
+      { jsonSchema: true }
+    );
+    let analysis: any = {};
+    try { analysis = JSON.parse(analysisResult.text.replace(/```json|```/g, '').trim()); } catch {}
+    updateJob(jobId, { status: 'ANALYZED', progress: 65, hook: analysis.hook, funnelStage: analysis.funnelStage });
+ 
+    // PASO 4: Scene detect y split con FFmpeg
+    const clipsDir = path.join(tmpDir, 'clips');
+    await fs.mkdir(clipsDir, { recursive: true });
+    await execAsync(
+      `ffmpeg -i '${strippedPath}' -filter:v "select='gt(scene,0.3)',showinfo" -vsync vfr '${clipsDir}/clip_%03d.mp4' -y`
+    ).catch(() => {
+      // Si no detecta escenas, copiar el vídeo completo como único clip
+      return execAsync(`cp '${strippedPath}' '${clipsDir}/clip_001.mp4'`);
+    });
+    updateJob(jobId, { status: 'SPLIT', progress: 80 });
+ 
+    // PASO 5: Subir a Drive con nomenclatura IA
+    const product = await prisma.product.findUnique({ where: { id: productId }, select: { sku: true, title: true } });
+    const sku = product?.sku || 'PROD';
+    const existingVersions = await (prisma as any).creativeAsset.count({
+        where: { productId, conceptCode: hints.conceptCode || 'C01', type: analysis.type || 'UGC', funnelStage: analysis.funnelStage || hints.funnelStage || 'TOF' }
+    });
+    const generatedNomen = buildNomenclature({
+      prodCode: productCode(product?.title ?? 'PRD'), conceptCode: hints.conceptCode || 'C01',
+      funnelStage: analysis.funnelStage || hints.funnelStage || 'TOF',
+      type: analysis.type || 'UGC', version: existingVersions, ext: 'mp4'
+    });
+ 
+    const driveFileUpload = await uploadToProduct(
+      Buffer.from(await fs.readFile(strippedPath)),
+      generatedNomen,
+      file.type,
+      productId,
+      storeId,
+      { conceptCode: hints.conceptCode || 'C01', funnelStage: analysis.funnelStage || hints.funnelStage || 'TOF', fileType: 'VIDEO' }
+    );
+ 
+    // Actualizar asset en BD
+    await (prisma as any).creativeAsset.update({
+      where: { id: assetId },
+      data: {
+        transcription, funnelStage: analysis.funnelStage, type: analysis.type,
+        hook: analysis.hook, hookScore: analysis.hookScore, angle: analysis.angle,
+        driveFileId: driveFileUpload.driveFileId, drivePath: driveFileUpload.drivePath, driveUrl: `https://drive.google.com/file/d/${driveFileUpload.driveFileId}/view`, processingStatus: 'READY', nomenclature: generatedNomen,
+        metadata: JSON.stringify({ analysis, clipsCount: (await fs.readdir(clipsDir)).length })
+      }
+    });
+ 
+    updateJob(jobId, { status: 'DONE', progress: 100, nomenclature: generatedNomen });
+ 
+  } catch (err: any) {
+    console.error('[VideoLab] Pipeline error:', err);
+    updateJob(jobId, { status: 'ERROR', progress: 0, error: err.message });
+    await (prisma as any).creativeAsset.update({
+      where: { id: assetId },
+      data: { processingStatus: 'ERROR' }
+    });
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  }
+}
+ 
+function updateJob(jobId: string, updates: Partial<JobStatus>) {
+  const job = jobs.get(jobId);
+  if (job) jobs.set(jobId, { ...job, ...updates, updatedAt: new Date().toISOString() });
 }

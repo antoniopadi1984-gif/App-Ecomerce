@@ -82,4 +82,15 @@ export const navigation = [
             { label: 'MVP Wizard', emoji: '🚀', href: '/marketing/mvp-wizard' },
         ]
     },
+    {
+        id: 'sistema',
+        label: 'Sistema',
+        emoji: '⚙️',
+        color: '#64748B',
+        colorMuted: 'rgba(100,116,139,0.12)',
+        href: '/sistema/settings',
+        children: [
+            { label: 'Sistema & Conexiones', emoji: '⚙️', href: '/sistema/settings' }
+        ]
+    }
 ];

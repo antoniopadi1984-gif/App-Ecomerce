@@ -41,24 +41,39 @@ export async function sendOfficialWhatsApp(data: {
 
         const cost = PRICING[data.category];
 
-        // 1. OFFICIAL META API CALL (Conceptual Integration)
-        /* 
-        const response = await fetch(`https://graph.facebook.com/v17.0/${phoneId}/messages`, {
+        // 1. OFFICIAL META API CALL
+        const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+        const accessToken = account.accessToken || process.env.WHATSAPP_ACCESS_TOKEN;
+        
+        if (!phoneNumberId || !accessToken) {
+          return { success: false, error: 'WHATSAPP_PHONE_NUMBER_ID o WHATSAPP_ACCESS_TOKEN no configurados en .env' };
+        }
+        
+        const waResponse = await fetch(
+          `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`,
+          {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                messaging_product: "whatsapp",
-                to: data.phoneNumber,
-                type: "text",
-                text: { body: data.content }
+              messaging_product: 'whatsapp',
+              to: data.phoneNumber,
+              type: 'text',
+              text: { body: data.content }
             })
-        });
-        */
-
-        console.log(`[META ${data.category}] Sending to ${data.phoneNumber} | Cost: ${cost}€`);
+          }
+        );
+        
+        if (!waResponse.ok) {
+          const errBody = await waResponse.json().catch(() => ({}));
+          console.error('[WHATSAPP] API Error:', errBody);
+          return { success: false, error: `Meta API error: ${errBody?.error?.message || waResponse.statusText}` };
+        }
+        
+        const waData = await waResponse.json();
+        console.log(`[META ${data.category}] Sent to ${data.phoneNumber} | WA msg id: ${waData.messages?.[0]?.id}`);
 
         // 2. Persist Message with Status & Cost
         const msg = await (prisma as any).message.create({

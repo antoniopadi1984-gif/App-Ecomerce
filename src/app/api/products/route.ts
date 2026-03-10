@@ -74,11 +74,16 @@ export async function POST(request: Request) {
         });
 
         let driveFolderId: string | null = null;
-        try {
-            const driveResult = await createProductDriveStructure(product.id, title);
-            driveFolderId = driveResult?.productRootId || null;
-        } catch (driveError) {
-            console.error('[API] Drive folder creation failed (non-fatal):', driveError);
+        const store = await prisma.store.findUnique({ where: { id: storeId } });
+        if (store && process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+            createProductDriveStructure(
+                product.id,
+                product.title,
+                product.sku || null,
+                storeId,
+                store.name
+            ).catch(err => console.error('[Drive] Structure creation failed:', err));
+            // Fire and forget — no bloquea la respuesta
         }
 
         await prisma.store.update({

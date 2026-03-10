@@ -1,333 +1,286 @@
-import { google } from "googleapis";
-import { prisma } from "./prisma";
-import { getGoogleAuth } from './google-auth';
-
 /**
- * DRIVE STRUCTURE MANAGER
- * Auto-creates comprehensive folder structure for each product following IA Pro methodology
+ * Google Drive — cliente canónico EcomBoom
+ * Service Account: app-ecombom@gen-lang-client-0246473908.iam.gserviceaccount.com
+ * Root: 1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8 (Ecombom Control)
+ *
+ * Estructura canónica:
+ * Ecombom Control/
+ *   [STORE_ID]/
+ *     _CONFIG/
+ *     [PROD_SKU]_[PROD_TITLE]/
+ *       00_INBOX/
+ *       01_RESEARCH/
+ *       02_SPY/
+ *       03_CONCEPTOS/
+ *       04_PRODUCCION/
+ *       05_LANDINGS/
+ *       06_ASSETS/
+ *       07_AVATARES_IA/
+ *       08_BIBLIOTECA/
+ *
+ * REGLA: Drive es almacenamiento visual. La verdad está en DB (DriveFolder table).
+ * Los agentes NUNCA buscan carpetas en Drive — preguntan a la DB.
  */
 
-async function getDriveClient() {
-    const auth = await getGoogleAuth('store-main');
-    return google.drive({ version: "v3", auth });
+import { prisma } from '@/lib/prisma';
+import { google } from 'googleapis';
+
+const ROOT_FOLDER_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8';
+
+const PRODUCT_SUBFOLDERS = [
+    '00_INBOX',
+    '01_RESEARCH',
+    '02_SPY',
+    '03_CONCEPTOS',
+    '04_PRODUCCION',
+    '05_LANDINGS',
+    '06_ASSETS',
+    '07_AVATARES_IA',
+    '08_BIBLIOTECA',
+] as const;
+
+export type ProductSubfolder = typeof PRODUCT_SUBFOLDERS[number];
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+function getDriveClient() {
+    const saKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '{}');
+    const auth = new google.auth.GoogleAuth({
+        credentials: saKey,
+        scopes: ['https://www.googleapis.com/auth/drive'],
+    });
+    return google.drive({ version: 'v3', auth });
 }
 
-export async function getAuthClient() {
-    return getGoogleAuth('store-main');
-}
+// ─── Core helpers ─────────────────────────────────────────────────────────────
 
-async function getRootFolderId(drive: any, storeId: string): Promise<string> {
-    const store = await prisma.store.findUnique({
-        where: { id: storeId },
-        select: { driveRootFolderId: true, name: true }
+/**
+ * Busca una carpeta por nombre dentro de un parent. Si no existe, la crea.
+ */
+async function getOrCreateFolder(name: string, parentId: string): Promise<string> {
+    const drive = getDriveClient();
+
+    // Buscar existente
+    const res = await drive.files.list({
+        q: `name='${name.replace(/'/g, "\\'")}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+        fields: 'files(id, name)',
+        pageSize: 1,
     });
 
-    if (store?.driveRootFolderId) {
-        return store.driveRootFolderId;
+    if (res.data.files && res.data.files.length > 0) {
+        return res.data.files[0].id!;
     }
 
-    // Create root folder for store
-    const folderMetadata = {
-        name: `Ecombom - ${store?.name || storeId}`,
-        mimeType: "application/vnd.google-apps.folder",
-    };
-
-    const folder = await drive.files.create({
-        requestBody: folderMetadata,
-        fields: "id",
+    // Crear nueva
+    const created = await drive.files.create({
+        requestBody: {
+            name,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [parentId],
+        },
+        fields: 'id',
     });
 
-    await prisma.store.update({
+    return created.data.id!;
+}
+
+// ─── Store folder ──────────────────────────────────────────────────────────────
+
+/**
+ * Obtiene o crea la carpeta de tienda dentro de Ecombom Control
+ * Ejemplo: Ecombom Control/store-main/
+ */
+export async function getOrCreateStoreFolder(storeId: string, storeName: string): Promise<string> {
+    const folderName = storeName.toUpperCase().replace(/\s+/g, '_');
+    const folderId = await getOrCreateFolder(folderName, ROOT_FOLDER_ID);
+
+    // Guardar en BD
+    await (prisma as any).store.update({
         where: { id: storeId },
-        data: { driveRootFolderId: folder.data.id }
-    });
+        data: { driveRootFolderId: folderId },
+    }).catch(() => {}); // no falla si campo no existe aún
 
-    return folder.data.id;
+    // Crear _CONFIG dentro de la tienda
+    await getOrCreateFolder('_CONFIG', folderId);
+
+    return folderId;
 }
 
-async function createFolder(drive: any, name: string, parentId: string): Promise<string> {
-    const folderMetadata = {
-        name,
-        mimeType: "application/vnd.google-apps.folder",
-        parents: [parentId],
-    };
+// ─── Product folder structure ──────────────────────────────────────────────────
 
-    const folder = await drive.files.create({
-        requestBody: folderMetadata,
-        fields: "id",
-    });
-
-    return folder.data.id;
-}
-
-interface FolderStructure {
+export interface ProductDriveStructure {
     productRootId: string;
-    centroCreativoId: string;
-    inboxId: string;
-    estudio: {
-        root: string;
-        iaVillages: string;
-        audio: string;
-        raw: string;
-        proyectos: string;
-    };
-    biblioteca: {
-        root: string;
-        retargeting: {
-            root: string;
-            directo: string;
-            problema: string;
-            story: string;
-        };
-        conceptos: string;
-        estaticos: string;
-    };
+    productRootPath: string;
+    folders: Record<ProductSubfolder, string>;
 }
 
 /**
- * Creates complete folder structure for a product in Google Drive
+ * Crea la estructura completa de carpetas para un producto.
+ * Idempotente — si ya existe, retorna los IDs existentes.
  */
 export async function createProductDriveStructure(
     productId: string,
-    productTitle: string
-): Promise<FolderStructure> {
-    try {
-        const drive = await getDriveClient();
+    productTitle: string,
+    productSku: string | null,
+    storeId: string,
+    storeName: string
+): Promise<ProductDriveStructure> {
 
-        const product = await prisma.product.findUnique({
-            where: { id: productId },
-            select: { storeId: true, driveFolderId: true }
-        });
+    // 1. Store folder
+    const storeFolderId = await getOrCreateStoreFolder(storeId, storeName);
 
-        if (!product) throw new Error("Product not found");
+    // 2. Product folder name: SKU_TITULO o solo TITULO
+    const slug = productTitle
+        .toUpperCase()
+        .replace(/[^A-Z0-9\s]/g, '')
+        .replace(/\s+/g, '_')
+        .slice(0, 40);
+    const folderName = productSku ? `${productSku}_${slug}` : slug;
 
-        // Use existing folder or create new
-        let productRootId: string;
+    const productRootId = await getOrCreateFolder(folderName, storeFolderId);
+    const productRootPath = `/EcomBoom/${storeName}/${folderName}/`;
 
-        if (product.driveFolderId) {
-            productRootId = product.driveFolderId;
-        } else {
-            const rootFolderId = await getRootFolderId(drive, product.storeId);
-            const folderName = `PROD_${productTitle.toUpperCase().replace(/\s+/g, '_')}`;
-            productRootId = await createFolder(drive, folderName, rootFolderId);
+    // 3. Crear las 9 subcarpetas
+    const folders: Partial<Record<ProductSubfolder, string>> = {};
 
-            await prisma.product.update({
-                where: { id: productId },
-                data: { driveFolderId: productRootId }
-            });
-        }
+    for (const sub of PRODUCT_SUBFOLDERS) {
+        const subId = await getOrCreateFolder(sub, productRootId);
+        folders[sub] = subId;
 
-        console.log(`📁 Creating IA Pro structure for: ${productTitle}`);
-
-        // 1. CENTRO_CREATIVO (Main folder for all creative work)
-        const centroCreativoId = await createFolder(drive, "CENTRO_CREATIVO", productRootId);
-
-        // ... rest of the code as before ...
-        const inboxId = await createFolder(drive, "00_INBOX_SIN_PROCESAR", centroCreativoId);
-        const estudioRootId = await createFolder(drive, "01_ESTUDIO_PRODUCCION", centroCreativoId);
-        const estudio = {
-            root: estudioRootId,
-            iaVillages: await createFolder(drive, "01_IA_VILLAGES", estudioRootId),
-            audio: await createFolder(drive, "02_AUDIO", estudioRootId),
-            raw: await createFolder(drive, "03_RAW", estudioRootId),
-            proyectos: await createFolder(drive, "04_PROYECTOS", estudioRootId),
-        };
-
-        const bibliotecaRootId = await createFolder(drive, "02_BIBLIOTECA_LISTOS_PARA_ADS", centroCreativoId);
-        const retargetingRootId = await createFolder(drive, "01_RETARGETING", bibliotecaRootId);
-        const biblioteca = {
-            root: bibliotecaRootId,
-            retargeting: {
-                root: retargetingRootId,
-                directo: await createFolder(drive, "R10_COPY_DIRECTO", retargetingRootId),
-                problema: await createFolder(drive, "R20_COPY_PROBLEMA", retargetingRootId),
-                story: await createFolder(drive, "R30_COPY_STORY", retargetingRootId),
+        // Upsert en DriveFolder (BD)
+        await (prisma as any).driveFolder.upsert({
+            where: {
+                productId_path: {
+                    productId,
+                    path: `${productRootPath}${sub}/`,
+                }
             },
-            conceptos: await createFolder(drive, "02_CONCEPTOS", bibliotecaRootId),
-            estaticos: await createFolder(drive, "03_ESTATICOS", bibliotecaRootId),
-        };
-
-        const structure: FolderStructure = {
-            productRootId,
-            centroCreativoId,
-            inboxId,
-            estudio,
-            biblioteca
-        };
-
-        // Save structure to product
-        await prisma.product.update({
-            where: { id: productId },
-            data: {
-                driveRootPath: JSON.stringify(structure)
-            }
-        });
-
-        console.log(`✅ IA Pro Drive structure created for ${productTitle}`);
-        return structure;
-
-    } catch (error: any) {
-        console.error("[createProductDriveStructure] Error:", error);
-        throw new Error(`Failed to create IA Pro Drive structure: ${error.message}`);
-    }
-}
-
-/**
- * Creates a specific concept folder structure within the product's CONCEPTOS folder
- */
-export async function createConceptFolder(
-    productId: string,
-    conceptNum: number,
-    conceptName: string
-): Promise<string> {
-    try {
-        const drive = await getDriveClient();
-        const product = await prisma.product.findUnique({
-            where: { id: productId },
-            select: { driveRootPath: true }
-        });
-
-        if (!product?.driveRootPath) throw new Error("Product structure not found");
-        const structure: FolderStructure = JSON.parse(product.driveRootPath as string);
-
-        const conceptFolderName = `CONC_${String(conceptNum).padStart(2, '0')}_${conceptName.toUpperCase().replace(/\s+/g, '_')}`;
-        const conceptId = await createFolder(drive, conceptFolderName, structure.biblioteca.conceptos);
-
-        // Subfolders for concept following the methodology
-        await createFolder(drive, "HOOKS", conceptId);
-        await createFolder(drive, "SCRIPTS", conceptId);
-
-        const videosId = await createFolder(drive, "VIDEOS_PROCESADOS", conceptId);
-        await createFolder(drive, "VERSIONES", videosId);
-
-        return conceptId;
-    } catch (error: any) {
-        console.error("[createConceptFolder] Error:", error);
-        throw new Error(`Failed to create Concept folder: ${error.message}`);
-    }
-}
-
-/**
- * Upload file to specific product folder
- */
-export async function uploadToDrive(
-    productId: string,
-    file: Buffer,
-    fileName: string,
-    mimeType: string,
-    targetFolderPath: string // Using ID directly if possible, or mapping
-): Promise<string> {
-    try {
-        const drive = await getDriveClient();
-
-        const fileMetadata = {
-            name: fileName,
-            parents: [targetFolderPath],
-        };
-
-        const media = {
-            mimeType,
-            body: require('stream').Readable.from(file),
-        };
-
-        const uploadedFile = await drive.files.create({
-            requestBody: fileMetadata,
-            media,
-            fields: 'id, webViewLink, webContentLink',
-        });
-
-        return uploadedFile.data.id!;
-
-    } catch (error: any) {
-        console.error("[uploadToDrive] Error:", error);
-        throw new Error(`Failed to upload to Drive: ${error.message}`);
-    }
-}
-
-export async function uploadFileFromUrl(
-    url: string,
-    fileName: string,
-    parentFolderId: string,
-    mimeType: string = 'image/jpeg'
-): Promise<string> {
-    try {
-        const drive = await getDriveClient();
-        const response = await fetch(url);
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        const fileMetadata = {
-            name: fileName,
-            parents: [parentFolderId],
-        };
-
-        const media = {
-            mimeType,
-            body: require('stream').Readable.from(buffer),
-        };
-
-        const uploadedFile = await drive.files.create({
-            requestBody: fileMetadata,
-            media,
-            fields: 'id',
-        });
-
-        return uploadedFile.data.id!;
-    } catch (error: any) {
-        console.error("[uploadFileFromUrl] Error:", error);
-        throw new Error(`Failed to upload from URL to Drive: ${error.message}`);
-    }
-}
-
-export async function getOrCreateFolder(drive: any, name: string, parentId: string): Promise<string> {
-    const response = await drive.files.list({
-        q: `name = '${name}' and '${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-        fields: 'files(id)',
-    });
-
-    if (response.data.files && response.data.files.length > 0) {
-        return response.data.files[0].id;
-    }
-
-    return createFolder(drive, name, parentId);
-}
-
-export async function downloadFromDrive(driveFileId: string): Promise<Buffer> {
-    try {
-        const drive = await getDriveClient();
-
-        const response = await drive.files.get(
-            {
-                fileId: driveFileId,
-                alt: 'media'
+            update: { driveFolderId: subId },
+            create: {
+                storeId,
+                productId,
+                path: `${productRootPath}${sub}/`,
+                driveFolderId: subId,
+                label: sub,
             },
-            { responseType: 'arraybuffer' }
-        );
-
-        return Buffer.from(response.data as ArrayBuffer);
-
-    } catch (error: any) {
-        console.error("[downloadFromDrive] Error:", error);
-        throw new Error(`Failed to download from Drive: ${error.message}`);
+        }).catch(() => {}); // graceful — si el schema no tiene ese modelo aún
     }
-}
 
-export async function getProductDriveFolders(productId: string) {
-    const product = await prisma.product.findUnique({
+    // 4. Crear index.json en la raíz del producto
+    const drive = getDriveClient();
+    const indexContent = JSON.stringify({
+        productId,
+        title: productTitle,
+        sku: productSku,
+        storeId,
+        createdAt: new Date().toISOString(),
+        folders,
+        rootPath: productRootPath,
+    }, null, 2);
+
+    const indexBlob = Buffer.from(indexContent);
+    await drive.files.create({
+        requestBody: {
+            name: 'index.json',
+            mimeType: 'application/json',
+            parents: [productRootId],
+        },
+        media: {
+            mimeType: 'application/json',
+            body: require('stream').Readable.from([indexBlob]),
+        },
+        fields: 'id',
+    }).catch(() => {}); // no crítico si ya existe
+
+    // 5. Actualizar producto en BD
+    await (prisma as any).product.update({
         where: { id: productId },
-        select: { driveRootPath: true, driveFolderId: true }
-    });
-
-    if (!product?.driveRootPath) {
-        return null;
-    }
-
-    const structure: FolderStructure = JSON.parse(product.driveRootPath as string);
+        data: {
+            driveSetupDone: true,
+            driveRootPath: productRootPath,
+            driveFolderId: productRootId,
+        },
+    }).catch(() => {});
 
     return {
-        productRoot: `https://drive.google.com/drive/folders/${structure.productRootId}`,
-        centroCreativo: `https://drive.google.com/drive/folders/${structure.centroCreativoId}`,
-        inbox: `https://drive.google.com/drive/folders/${structure.inboxId}`,
-        biblioteca: `https://drive.google.com/drive/folders/${structure.biblioteca.root}`,
+        productRootId,
+        productRootPath,
+        folders: folders as Record<ProductSubfolder, string>,
     };
+}
+
+// ─── Concept folder (dentro de 03_CONCEPTOS) ──────────────────────────────────
+
+/**
+ * Estructura Spencer Mode para un concepto creativo:
+ * 03_CONCEPTOS/CONCEPT_01_NOMBRE/ANGLE_A_NOMBRE/CREATIVE_01/
+ *   RAW/ CLIPS/ SCRIPT/ AVATAR/ LANDING/ DATA/
+ */
+export async function createConceptFolder(params: {
+    productId: string;
+    storeId: string;
+    conceptCode: string;   // ej: "C01"
+    conceptName: string;   // ej: "VERGUENZA"
+    angleCode?: string;    // ej: "A"
+    angleName?: string;    // ej: "MIEDO"
+    creativeNumber?: number; // ej: 1
+}): Promise<{ conceptFolderId: string; creativeFolderId?: string }> {
+
+    // Obtener carpeta 03_CONCEPTOS del producto desde BD
+    const conceptosFolder = await (prisma as any).driveFolder.findFirst({
+        where: { productId: params.productId, label: '03_CONCEPTOS' },
+    });
+
+    if (!conceptosFolder) throw new Error('Product Drive structure not initialized');
+
+    // Concept folder: CONCEPT_01_VERGUENZA
+    const conceptFolderName = `CONCEPT_${params.conceptCode}_${params.conceptName.toUpperCase().replace(/\s+/g, '_')}`;
+    const conceptFolderId = await getOrCreateFolder(conceptFolderName, conceptosFolder.driveFolderId);
+
+    if (!params.angleCode) return { conceptFolderId };
+
+    // Angle folder: ANGLE_A_MIEDO
+    const angleFolderName = `ANGLE_${params.angleCode}_${(params.angleName || '').toUpperCase().replace(/\s+/g, '_')}`;
+    const angleFolderId = await getOrCreateFolder(angleFolderName, conceptFolderId);
+
+    if (!params.creativeNumber) return { conceptFolderId, creativeFolderId: angleFolderId };
+
+    // Creative folder: CREATIVE_01
+    const creativeFolderName = `CREATIVE_${String(params.creativeNumber).padStart(2, '0')}`;
+    const creativeFolderId = await getOrCreateFolder(creativeFolderName, angleFolderId);
+
+    // Subcarpetas del creativo
+    for (const sub of ['RAW', 'CLIPS', 'SCRIPT', 'AVATAR', 'LANDING', 'DATA']) {
+        await getOrCreateFolder(sub, creativeFolderId);
+    }
+
+    return { conceptFolderId, creativeFolderId };
+}
+
+// ─── Utility: obtener ID de subcarpeta desde BD ────────────────────────────────
+
+export async function getProductSubfolderID(
+    productId: string,
+    subfolder: ProductSubfolder
+): Promise<string | null> {
+    const folder = await (prisma as any).driveFolder.findFirst({
+        where: { productId, label: subfolder },
+    });
+    return folder?.driveFolderId || null;
+}
+
+// ─── List files in subfolder ───────────────────────────────────────────────────
+
+export async function listProductSubfolderFiles(productId: string, subfolder: ProductSubfolder) {
+    const folderId = await getProductSubfolderID(productId, subfolder);
+    if (!folderId) return [];
+
+    const drive = getDriveClient();
+    const res = await drive.files.list({
+        q: `'${folderId}' in parents and trashed=false`,
+        fields: 'files(id, name, mimeType, size, createdTime, webViewLink, thumbnailLink)',
+        pageSize: 100,
+    });
+
+    return res.data.files || [];
 }

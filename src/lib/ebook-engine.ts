@@ -1,5 +1,8 @@
 import { jsPDF } from "jspdf";
-import { askGemini } from "./ai";
+import { AiRouter } from '@/lib/ai/router';
+import { TaskType } from '@/lib/ai/providers/interfaces';
+import { uploadToProduct } from './services/drive-service';
+import { prisma } from './prisma';
 import fs from "fs";
 import path from "path";
 
@@ -16,7 +19,7 @@ export interface EbookRequest {
     tone: 'EDUCA' | 'INSPIRE' | 'SELL' | 'FUN';
 }
 
-export async function generateEbookPDF(req: EbookRequest) {
+export async function generateEbookPDF(req: EbookRequest & { storeId: string; productId: string }) {
     try {
         console.log(`[EBOOK] Generando contenido para: ${req.title}...`);
 
@@ -44,8 +47,8 @@ export async function generateEbookPDF(req: EbookRequest) {
             No incluyas texto fuera de estos bloques. Usa un lenguaje magnético, profesional y cargado de valor técnico.
         `;
 
-        const aiResponse = await askGemini(prompt);
-        const content = aiResponse.text;
+        const aiResult = await AiRouter.dispatch(req.storeId, TaskType.COPYWRITING_DEEP, prompt, {});
+        const content = aiResult.text;
         if (!content) throw new Error("No se pudo generar el contenido con IA.");
 
         // 2. Setup PDF Generation
@@ -129,20 +132,24 @@ export async function generateEbookPDF(req: EbookRequest) {
             yPos += 15;
         }
 
-        // 3. Save PDF
-        const outputDir = path.join(process.cwd(), "public", "outputs", "ebooks");
-        if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-
-        const filename = `ebook_${Date.now()}.pdf`;
-        const filepath = path.join(outputDir, filename);
-
-        const buffer = Buffer.from(doc.output("arraybuffer"));
-        fs.writeFileSync(filepath, buffer);
+        // 3. Save PDF to Drive
+        const pdfBuffer = doc.output('arraybuffer');
+        const product = await (prisma as any).product.findUnique({ where: { id: req.productId }, select: { sku: true, title: true } });
+        const fileName = `${req.title.replace(/\s+/g,'-')}.pdf`;
+        const driveFileIdRes = await uploadToProduct(
+            Buffer.from(pdfBuffer),
+            fileName,
+            'application/pdf',
+            req.productId,
+            req.storeId,
+            { fileType: 'EBOOK' }
+        );
 
         return {
             success: true,
-            url: `/outputs/ebooks/${filename}`,
-            filename
+            content,
+            driveFileId: driveFileIdRes.driveFileId,
+            fileName
         };
 
     } catch (e: any) {

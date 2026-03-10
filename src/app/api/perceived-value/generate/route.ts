@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { AiRouter } from '@/lib/ai/router';
 import { TaskType } from '@/lib/ai/providers/interfaces';
+import { generateEbookPDF } from '@/lib/ebook-engine';
 
 export const maxDuration = 120;
 export const runtime = 'nodejs';
@@ -98,6 +99,28 @@ Responde en JSON: { title, description, sections: [{name, fields: []}] }`,
         // Fire and forget AI generation
         setImmediate(async () => {
             try {
+                if (type === 'EBOOK') {
+                    const product = await prisma.product.findUnique({ where: { id: productId || '' }, select: { title: true } }) as any;
+                    const ebookResult = await generateEbookPDF({
+                      title: `Guía Maestra: ${product ? product.title : 'Tu Producto'}`,
+                      productName: product?.title || 'Producto',
+                      theme: 'Maximizar resultados con tu compra',
+                      targetAudience: 'Clientes recientes',
+                      tone: 'EDUCA',
+                      storeId, productId: productId || ''
+                    });
+                    
+                    if (!ebookResult.success) {
+                        throw new Error(ebookResult.error || 'Failed to generate ebook');
+                    }
+
+                    await ((prisma as any).perceivedValue).update({
+                      where: { id: record.id },
+                      data: { title: ebookResult.fileName, pagesJson: JSON.stringify({ driveFileId: ebookResult.driveFileId }), status: 'READY' }
+                    });
+                    return;
+                }
+
                 const result = await AiRouter.dispatch(
                     storeId,
                     TaskType.COPYWRITING_DEEP,

@@ -102,37 +102,46 @@ export class ElevenLabsService {
         return response.data.voice_id;
     }
 
-    static async speechToText(audioBlob: Blob): Promise<{ text: string }> {
-        const headers = await this.getHeaders();
+    static async speechToText(audioBlob: Blob, options?: { language?: string }): Promise<{ text: string; words?: any[] }> {
         const formData = new FormData();
-        formData.append('file', audioBlob, 'audio.mp3');
-        formData.append('model_id', 'scribe_v1');
-        
-        try {
-            const response = await axios.post(
-                `${BASE_URL}/speech-to-text`,
-                formData,
-                { headers: { ...headers, 'Content-Type': 'multipart/form-data' } }
-            );
-            return response.data;
-        } catch (e: any) {
-            console.error('ElevenLabs Scribe failed:', e?.response?.data || e);
-            throw new Error(e?.response?.data?.detail?.message || 'Scribe failed');
+        formData.append('audio', audioBlob, 'audio.mp3');
+        formData.append('model_id', 'scribe_v2');
+        if (options?.language) formData.append('language_code', options.language);
+
+        const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
+            method: 'POST',
+            headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY! },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(`ElevenLabs STT error: ${err.detail || response.statusText}`);
         }
+
+        const data = await response.json();
+        return { text: data.text || '', words: data.words };
     }
 
-    static async generateMusic(prompt: string, duration_seconds: number): Promise<Buffer> {
-        const headers = await this.getHeaders();
-        try {
-            const response = await axios.post(
-                `${BASE_URL}/sound-generation`,
-                { text: prompt, duration_seconds },
-                { headers, responseType: 'arraybuffer' }
-            );
-            return Buffer.from(response.data);
-        } catch (e: any) {
-            console.error('ElevenLabs Music failed:', e?.response?.data || e);
-            throw new Error('Music generation failed');
+    static async generateMusic(prompt: string, durationSeconds: number = 30): Promise<ArrayBuffer> {
+        const response = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
+            method: 'POST',
+            headers: {
+                'xi-api-key': process.env.ELEVENLABS_API_KEY!,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                text: prompt,
+                duration_seconds: durationSeconds,
+                prompt_influence: 0.3,
+            }),
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(`ElevenLabs music error: ${err.detail || response.statusText}`);
         }
+
+        return response.arrayBuffer();
     }
 }

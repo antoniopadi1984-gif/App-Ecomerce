@@ -28,9 +28,9 @@ export async function POST(req: NextRequest) {
         // Hardfall: mapear por storeId conocido si todo lo anterior falla
         if (!shop) {
             const domainMap: Record<string, string> = {
-                'store-main': 'f7z7nn-ei.myshopify.com',
-                'store-alecare-mx': 'im8zf5-6c.myshopify.com',
-                'store-alecare-uk': 'v1ethu-he.myshopify.com',
+                'store-main':                'f7z7nn-ei.myshopify.com',
+                'alecare-mx':               'im8zf5-6c.myshopify.com',
+                'cmlxrad5405b826d99j9kpgyy': 'v1ethu-he.myshopify.com',
             };
             shop = domainMap[storeId] ?? null;
         }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { AiRouter } from '@/lib/ai/router';
 import { TaskType } from '@/lib/ai/providers/interfaces';
+import { GEMINI_PROMPTS_V3 } from '@/lib/research/v3-prompts';
 
 export const maxDuration = 120; // 2 mins per step ideally
 export const runtime = 'nodejs';
@@ -35,36 +36,129 @@ export async function POST(req: NextRequest) {
             case 'P1': // Product Core
                 let docContext = '';
                 if (product.googleDocUrl) {
-                    docContext = `\n[Fuente Extraída Google Doc]: Texto extraído orgánicamente desde ${product.googleDocUrl}...`;
+                    docContext = `\n[Fuente Google Doc]: ${product.googleDocUrl}`;
                 }
-                resultText = await simulateAI(storeId, `Extraer Product Core (Fase 1) para: ${product.title}\nDescripción: ${product.description}${docContext}`);
-                resultJson = { "core_extraction": resultText };
+                const p1Result = await AiRouter.dispatch(
+                    storeId,
+                    TaskType.RESEARCH_DEEP,
+                    `Actúa como experto en investigación de mercado y copywriting de respuesta directa.
+                    Extrae el Product Core completo para: ${product.title}
+                    Descripción: ${product.description || 'No disponible'}
+                    ${docContext}
+                    
+                    Responde en JSON con esta estructura exacta:
+                    {
+                      "product_core": {
+                        "headline_promise": "...",
+                        "solution_mechanism": { "name": "...", "unique_method": "..." },
+                        "proof_elements": ["..."],
+                        "objection_stack": ["..."]
+                      },
+                      "voc": {
+                        "pain_stack": [{"pain": "...", "intensity": 1-10}],
+                        "desires": [{"name": "...", "depth": "..."}],
+                        "taboo_phrases": ["..."],
+                        "buying_triggers": ["..."]
+                      }
+                    }`,
+                    { jsonSchema: true }
+                );
+                try {
+                    const clean = p1Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+                    resultJson = JSON.parse(clean);
+                    resultText = JSON.stringify(resultJson);
+                } catch {
+                    resultText = p1Result.text;
+                    resultJson = { raw: p1Result.text };
+                }
                 break;
 
             case 'P2': // Macro Avatar Engine
                 const p1Data = await getStepOutput('P1');
-                resultText = await simulateAI(storeId, `Macro Avatar Engine (20 avatares)\nContexto: ${JSON.stringify(p1Data)}`);
-                resultJson = { "avatars": [{ id: "AV-01", name: "Avatar Principal" }, { id: "AV-02", name: "Avatar Secundario" }] };
+                const p2Result = await AiRouter.dispatch(
+                    storeId,
+                    TaskType.RESEARCH_DEEP,
+                    `${GEMINI_PROMPTS_V3.MACRO_AVATAR_CREATION}
+                    \n\nCONTEXTO REAL:
+                    Producto: ${product.title}
+                    Descripción: ${product.description || 'No disponible'}
+                    Esencia del Producto (P1): ${JSON.stringify(p1Data)}`,
+                    { jsonSchema: true }
+                );
+                try {
+                    const clean = p2Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+                    resultJson = JSON.parse(clean);
+                    resultText = JSON.stringify(resultJson);
+                } catch {
+                    resultText = p2Result.text;
+                    resultJson = { raw: p2Result.text };
+                }
                 break;
 
             case 'P3': // Language Bank
                 const p2Data = await getStepOutput('P2');
-                resultText = await simulateAI(storeId, `Language Bank Extraction (vocabulario taboo, CTAs)\nAvatares: ${JSON.stringify(p2Data)}`);
-                resultJson = { "language_bank": "Extracto simulado del P2.1" };
+                const p3Result = await AiRouter.dispatch(
+                    storeId,
+                    TaskType.RESEARCH_DEEP,
+                    `${GEMINI_PROMPTS_V3.LANGUAGE_EXTRACTION}
+                    \n\nCONTEXTO REAL:
+                    Avatares Generados: ${JSON.stringify(p2Data)}`,
+                    { jsonSchema: true }
+                );
+                try {
+                    const clean = p3Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+                    resultJson = JSON.parse(clean);
+                    resultText = JSON.stringify(resultJson);
+                } catch {
+                    resultText = p3Result.text;
+                    resultJson = { raw: p3Result.text };
+                }
                 break;
 
             case 'P4': // Angle Engine
-                const p1 = await getStepOutput('P1');
-                const p2 = await getStepOutput('P2');
-                const p3 = await getStepOutput('P3');
-                resultText = await simulateAI(storeId, `Angle Engine (20 angulos)\nP1: ${!!p1} P2: ${!!p2} P3: ${!!p3}`);
-                resultJson = { "angles": [{ id: "ANG-01", name: "Mecanismo Único" }, { id: "ANG-02", name: "Enemigo Externo" }] };
+                const _p1Data = await getStepOutput('P1');
+                const _p2Data = await getStepOutput('P2');
+                const _p3Data = await getStepOutput('P3');
+                const p4Result = await AiRouter.dispatch(
+                    storeId,
+                    TaskType.RESEARCH_DEEP,
+                    `${GEMINI_PROMPTS_V3.ANGLE_ENGINEERING_V3}
+                    \n\nCONTEXTO REAL:
+                    Producto: ${product.title}
+                    Evidencia (P1): ${JSON.stringify(_p1Data)}
+                    Avatar y Contexto (P2): ${JSON.stringify(_p2Data)}
+                    Banco de Lenguaje (P3): ${JSON.stringify(_p3Data)}
+                    Nivel Consciencia: Problem Aware
+                    Sofisticación: 3`,
+                    { jsonSchema: true }
+                );
+                try {
+                    const clean = p4Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+                    resultJson = JSON.parse(clean);
+                    resultText = JSON.stringify(resultJson);
+                } catch {
+                    resultText = p4Result.text;
+                    resultJson = { raw: p4Result.text };
+                }
                 break;
 
             case 'P5': // Combo Matrix
-                const p2B = await getStepOutput('P2');
-                const p4 = await getStepOutput('P4');
-                resultText = await simulateAI(storeId, `Generar 400 combinaciones AV x ANG... Validando hooks no saturados...`);
+                const p5Result = await AiRouter.dispatch(
+                    storeId,
+                    TaskType.RESEARCH_DEEP,
+                    `Generar 400 combinaciones AV x ANG... Validando hooks no saturados...
+                    Responde EXACTAMENTE en JSON con esta estructura:
+                    { "combos": [{"avatar": "...", "angle": "...", "hook": "...", "painStatement": "..."}] }`,
+                    { jsonSchema: true }
+                );
+                try {
+                    const clean = p5Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+                    resultJson = JSON.parse(clean);
+                    resultText = JSON.stringify(resultJson);
+                } catch {
+                    resultText = p5Result.text;
+                    resultJson = { raw: p5Result.text };
+                }
 
                 // Guardado real en DB (ComboMatrix)
                 await prisma.comboMatrix.create({
@@ -72,16 +166,28 @@ export async function POST(req: NextRequest) {
                         productId,
                         avatarId: 'AV_ALL',
                         angleId: 'ANG_ALL',
-                        hookBank: JSON.stringify(['Hook 1', 'Hook 2']),
-                        painStatements: JSON.stringify(['Pain 1']),
+                        hookBank: JSON.stringify(resultJson?.combos || []),
+                        painStatements: JSON.stringify(resultJson?.combos || []),
                     }
                 });
-                resultJson = { "combos": "Guardados en ComboMatrix model" };
                 break;
 
             case 'P6': // Vector Mapping
-                resultText = await simulateAI(storeId, `Vector Mapping: Dolor -> Mecanismo -> Prueba -> Resultado -> CTA`);
-                resultJson = { "vectors": ["Advertorial", "Listicle", "PDP", "Video Script"] };
+                const p6Result = await AiRouter.dispatch(
+                    storeId,
+                    TaskType.RESEARCH_DEEP,
+                    `Vector Mapping: Dolor -> Mecanismo -> Prueba -> Resultado -> CTA.
+                    Responde EXACTAMENTE en JSON con la estructura { "vectors": [{"dolor": "...", "mecanismo": "...", "prueba": "...", "resultado": "...", "cta": "..."}] }`,
+                    { jsonSchema: true }
+                );
+                try {
+                    const clean = p6Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+                    resultJson = JSON.parse(clean);
+                    resultText = JSON.stringify(resultJson);
+                } catch {
+                    resultText = p6Result.text;
+                    resultJson = { raw: p6Result.text };
+                }
                 break;
 
             default:
@@ -139,13 +245,3 @@ export async function GET(req: NextRequest) {
     }
 }
 
-// Emulador de la IA interna usando el AiRouter local para un flujo rapido
-async function simulateAI(storeId: string, prompt: string) {
-    const res = await AiRouter.dispatch(
-        storeId,
-        TaskType.RESEARCH_DEEP, // Usa el agente research-lab
-        prompt,
-        { context: "Eres el God Tier Research Analyst." }
-    );
-    return res.text;
-}

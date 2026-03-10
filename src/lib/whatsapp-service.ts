@@ -49,6 +49,40 @@ export async function sendOfficialWhatsApp(data: {
           return { success: false, error: 'WHATSAPP_PHONE_NUMBER_ID o WHATSAPP_ACCESS_TOKEN no configurados en .env' };
         }
         
+        let requestBody: any;
+        
+        // Determinar si es un template basado en el contenido o categoría
+        if (data.category === 'UTILITY' && data.content.startsWith('TEMPLATE:')) {
+          // Extraer nombre del template y parámetros del string: "TEMPLATE:nombre|param1|param2"
+          const parts = data.content.substring(9).split('|');
+          const templateName = parts[0];
+          const parameters = parts.slice(1).map(p => ({ type: 'text', text: p }));
+          
+          requestBody = {
+            messaging_product: 'whatsapp',
+            to: data.phoneNumber,
+            type: 'template',
+            template: {
+              name: templateName, // nombre del template aprobado
+              language: { code: 'es' },
+              components: [{
+                type: 'body',
+                parameters: parameters.length > 0 ? parameters : []
+              }]
+            }
+          };
+        } else {
+          // NOTA: Mientras los templates no estén aprobados, usar type: 'text' solo funciona
+          // si el cliente te escribe primero (ventana de 24h). Para outbound sin respuesta previa,
+          // los templates aprobados son obligatorios.
+          requestBody = {
+            messaging_product: 'whatsapp',
+            to: data.phoneNumber,
+            type: 'text',
+            text: { body: data.content }
+          };
+        }
+
         const waResponse = await fetch(
           `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`,
           {
@@ -57,12 +91,7 @@ export async function sendOfficialWhatsApp(data: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              to: data.phoneNumber,
-              type: 'text',
-              text: { body: data.content }
-            })
+            body: JSON.stringify(requestBody)
           }
         );
         

@@ -21,47 +21,60 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'driveAssetId es requerido' }, { status: 400 });
         }
 
-        const asset = await prisma.driveAsset.findUnique({ where: { id: driveAssetId } });
+        const asset = await (prisma as any).driveAsset.findUnique({ where: { id: driveAssetId } })
+            ?? await (prisma as any).adSpyCapture.findUnique({ where: { id: driveAssetId } });
+
         if (!asset) return NextResponse.json({ error: 'Asset no encontrado' }, { status: 404 });
-        
-        const storeId = asset.productId
-          ? (await prisma.product.findUnique({ where: { id: asset.productId }, select: { storeId: true } }))?.storeId || ''
-          : '';
-        
-        const result = await AiRouter.dispatch(
-          storeId,
-          TaskType.RESEARCH_DEEP,
-          `Eres un experto en análisis de creativos publicitarios. Analiza este creativo de la competencia.
-          URL/Path: ${asset.sourceUrl || asset.drivePath}
-          Tipo: ${asset.assetType}
-          
-          Responde en JSON con esta estructura:
-          {
-            "shotBreakdown": [{"time": "...", "visual": "...", "copy": "..."}],
-            "guionTranscrito": "string",
-            "diagnostico": { "porQueVende": "...", "porQueNoVenderia": "...", "emocionPilar": "..." },
-            "plantillaReplicable": "string",
-            "hooks": ["string"],
-            "cta": "string",
-            "funnelStage": "string"
-          }`,
-          { jsonSchema: true }
+
+        const storeId = (req as any).headers?.get?.('X-Store-Id')
+            || (asset.productId
+                ? (await prisma.product.findUnique({ where: { id: asset.productId }, select: { storeId: true } }))?.storeId || ''
+                : '');
+
+        const aiResult = await AiRouter.dispatch(
+            storeId,
+            TaskType.RESEARCH_FORENSIC,
+            `Eres un experto en análisis de creativos publicitarios de respuesta directa.
+  Analiza este creativo de la competencia.
+  URL/referencia: ${asset.sourceUrl || asset.url || asset.landingUrl || 'no disponible'}
+  Tipo: ${asset.type || asset.assetType || 'VIDEO'}
+  Transcripción: ${asset.transcription || 'no disponible'}
+
+  Responde SOLO en JSON válido con esta estructura exacta:
+  {
+    "shotBreakdown": [{"time": "0-3s", "visual": "...", "copy": "..."}],
+    "guionTranscrito": "...",
+    "diagnostico": {
+      "porQueVende": "...",
+      "porQueNoVenderia": "...",
+      "emocionPilar": "miedo|esperanza|identidad|curiosidad|urgencia"
+    },
+    "plantillaReplicable": "...",
+    "hooks": ["...", "..."],
+    "cta": "...",
+    "funnelStage": "TOF"
+  }`,
+            { jsonSchema: true }
         );
-        
-        let analysis;
+
+        let analysis: any = {};
         try {
-          const clean = result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-          analysis = JSON.parse(clean);
+            const clean = aiResult.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+            analysis = JSON.parse(clean);
         } catch {
-          analysis = { raw: result.text };
+            analysis = { raw: aiResult.text };
         }
-        
-        // Guardar análisis en metadata del asset
-        await prisma.driveAsset.update({
-          where: { id: driveAssetId },
-          data: { metadata: JSON.stringify({ ...JSON.parse((asset.metadata as string) || '{}'), analysis }) }
-        });
-        
+
+        // Guardar análisis en metadata del asset (si tiene ese campo)
+        try {
+            if (asset.metadata !== undefined) {
+                await (prisma as any).driveAsset.update({
+                    where: { id: driveAssetId },
+                    data: { metadata: JSON.stringify({ ...JSON.parse((asset.metadata as string) || '{}'), analysis }) }
+                });
+            }
+        } catch { /* si el modelo no tiene metadata, ignorar */ }
+
         return NextResponse.json({ ok: true, data: analysis });
     } catch (error: unknown) {
         return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });

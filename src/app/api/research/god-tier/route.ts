@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { AiRouter } from '@/lib/ai/router';
 import { TaskType } from '@/lib/ai/providers/interfaces';
-import { GEMINI_PROMPTS_V3 } from '@/lib/research/v3-prompts';
+import { GEMINI_PROMPTS_V3 } from '@/lib/research/research-v3-prompts';
 
 export const maxDuration = 120; // 2 mins per step ideally
 export const runtime = 'nodejs';
@@ -33,36 +33,16 @@ export async function POST(req: NextRequest) {
 
         // Ejecución lógica según la Fase
         switch (stepKey) {
-            case 'P1': // Product Core
-                let docContext = '';
-                if (product.googleDocUrl) {
-                    docContext = `\n[Fuente Google Doc]: ${product.googleDocUrl}`;
-                }
-                const p1Result = await AiRouter.dispatch(
-                    storeId,
-                    TaskType.RESEARCH_DEEP,
-                    `Actúa como experto en investigación de mercado y copywriting de respuesta directa.
-                    Extrae el Product Core completo para: ${product.title}
-                    Descripción: ${product.description || 'No disponible'}
-                    ${docContext}
-                    
-                    Responde en JSON con esta estructura exacta:
-                    {
-                      "product_core": {
-                        "headline_promise": "...",
-                        "solution_mechanism": { "name": "...", "unique_method": "..." },
-                        "proof_elements": ["..."],
-                        "objection_stack": ["..."]
-                      },
-                      "voc": {
-                        "pain_stack": [{"pain": "...", "intensity": 1-10}],
-                        "desires": [{"name": "...", "depth": "..."}],
-                        "taboo_phrases": ["..."],
-                        "buying_triggers": ["..."]
-                      }
-                    }`,
-                    { jsonSchema: true }
-                );
+            case 'P1': { // Product Core Forensic
+                const promptTemplate = GEMINI_PROMPTS_V3.PRODUCT_CORE_FORENSIC;
+                const prompt = promptTemplate
+                    .replace('{{productTitle}}', product.title)
+                    .replace('{{niche}}', (product as any).niche || product.title)
+                    .replace('{{productFamily}}', (product as any).category || 'General')
+                    .replace('{{country}}', 'España')
+                    .replace('{{competitorsJson}}', '[]');
+
+                const p1Result = await AiRouter.dispatch(storeId, TaskType.RESEARCH_DEEP, prompt, { jsonSchema: true });
                 try {
                     const clean = p1Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
                     resultJson = JSON.parse(clean);
@@ -72,6 +52,7 @@ export async function POST(req: NextRequest) {
                     resultJson = { raw: p1Result.text };
                 }
                 break;
+            }
 
             case 'P2': // Macro Avatar Engine
                 const p1Data = await getStepOutput('P1');
@@ -142,13 +123,21 @@ export async function POST(req: NextRequest) {
                 }
                 break;
 
-            case 'P5': // Combo Matrix
+            case 'P5': { // Combo Matrix — Avatar x Ángulo con datos reales
+                const _p2DataForP5 = await getStepOutput('P2');
+                const _p4DataForP5 = await getStepOutput('P4');
                 const p5Result = await AiRouter.dispatch(
                     storeId,
                     TaskType.RESEARCH_DEEP,
-                    `Generar 400 combinaciones AV x ANG... Validando hooks no saturados...
-                    Responde EXACTAMENTE en JSON con esta estructura:
-                    { "combos": [{"avatar": "...", "angle": "...", "hook": "...", "painStatement": "..."}] }`,
+                    `Eres un experto en media buying y copywriting de respuesta directa.
+                    Genera 50 combinaciones Avatar x Ángulo con hooks específicos basados EN LOS DATOS REALES proporcionados.
+                    
+                    Producto: ${product.title}
+                    Avatares (P2): ${JSON.stringify(_p2DataForP5).slice(0, 3000)}
+                    Ángulos de Ataque (P4): ${JSON.stringify(_p4DataForP5).slice(0, 3000)}
+                    
+                    Responde EXACTAMENTE en JSON:
+                    { "combos": [{ "avatar": "nombre del avatar", "angle": "nombre del ángulo", "hook": "hook específico de 8-12 palabras", "painStatement": "frase de dolor visceral de 10-15 palabras", "funnelStage": "TOF|MOF|BOF" }] }`,
                     { jsonSchema: true }
                 );
                 try {
@@ -166,11 +155,12 @@ export async function POST(req: NextRequest) {
                         productId,
                         avatarId: 'AV_ALL',
                         angleId: 'ANG_ALL',
-                        hookBank: JSON.stringify(resultJson?.combos || []),
-                        painStatements: JSON.stringify(resultJson?.combos || []),
+                        hookBank: JSON.stringify((resultJson as any)?.combos || []),
+                        painStatements: JSON.stringify((resultJson as any)?.combos || []),
                     }
                 });
                 break;
+            }
 
             case 'P6': // Vector Mapping
                 const p6Result = await AiRouter.dispatch(

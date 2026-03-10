@@ -9,14 +9,17 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const storeId = searchParams.get('storeId') || req.headers.get('X-Store-Id');
 
-        if (!storeId) {
-            return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
-        }
+        if (!storeId) return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
 
         const secret = await getConnectionSecret(storeId, 'SHOPIFY');
         const meta = await getConnectionMeta(storeId, 'SHOPIFY');
 
-        if (!secret) return NextResponse.json({ connected: false, products: [] });
+        // DEBUG TEMPORAL — eliminar después de confirmar fix
+        if (!secret) return NextResponse.json({
+            connected: false,
+            products: [],
+            debug: { storeId, secretNull: true, meta }
+        });
 
         let shop = meta?.extraConfig?.SHOPIFY_SHOP_DOMAIN
             || meta?.extraConfig?.Tienda

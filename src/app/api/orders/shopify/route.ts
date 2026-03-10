@@ -16,11 +16,23 @@ export async function POST(req: NextRequest) {
         const secret = await getConnectionSecret(storeId, 'SHOPIFY');
         const meta = await getConnectionMeta(storeId, 'SHOPIFY');
 
-        let shop = meta?.extraConfig?.SHOPIFY_SHOP_DOMAIN || meta?.extraConfig?.Tienda;
+        let shop = meta?.extraConfig?.SHOPIFY_SHOP_DOMAIN
+            || meta?.extraConfig?.Tienda
+            || meta?.extraConfig?.shopDomain;
 
         if (!shop) {
             const store = await (prisma as any).store.findUnique({ where: { id: storeId } });
             shop = store?.domain;
+        }
+
+        // Hardfall: mapear por storeId conocido si todo lo anterior falla
+        if (!shop) {
+            const domainMap: Record<string, string> = {
+                'store-main': 'f7z7nn-ei.myshopify.com',
+                'store-alecare-mx': 'im8zf5-6c.myshopify.com',
+                'store-alecare-uk': 'v1ethu-he.myshopify.com',
+            };
+            shop = domainMap[storeId] ?? null;
         }
 
         if (!secret || !shop) {

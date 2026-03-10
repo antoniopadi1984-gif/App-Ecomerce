@@ -138,6 +138,7 @@ model Store {
   competitorAnalyses   CompetitorAnalysis[]
   driveFiles           DriveFile[]
   driveSetupDone       Boolean                 @default(false)
+  tasks                Task[]
   finanzasConfig       FinanzasConfig?
   competitorVideos     CompetitorVideo[]
   competitorLibraries  CompetitorLibrary[]
@@ -3013,5 +3014,24 @@ model UserPreference {
 
   @@unique([userId, module])
   @@map("user_preferences")
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  storeId     String
+  title       String
+  description String?
+  assignedTo  String?   // userId del gestor
+  status      String    @default("TODO") // TODO | IN_PROGRESS | DONE | BLOCKED
+  priority    String    @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
+  dueDate     DateTime?
+  completedAt DateTime?
+  orderId     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  store       Store     @relation(fields: [storeId], references: [id])
+ 
+  @@index([storeId, status])
+  @@index([assignedTo])
 }
 

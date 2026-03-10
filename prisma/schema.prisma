@@ -144,6 +144,19 @@ model Store {
   landingClones        LandingClone[]
   extensionCaptures    ExtensionCapture[]
   metaInsights         MetaInsightsCache[]
+  automationRules      AutomationRule[]
+}
+
+model AutomationRule {
+  id        String   @id @default(cuid())
+  storeId   String
+  ruleId    String
+  isEnabled Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store    @relation(fields: [storeId], references: [id])
+ 
+  @@unique([storeId, ruleId])
 }
 
 model FinanzasConfig {

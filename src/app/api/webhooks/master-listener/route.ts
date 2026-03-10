@@ -179,6 +179,37 @@ async function handleShopifyWebhook(topic: string, data: any) {
         // CRITICAL FIX: Sync Line Items for Statistics
         const { syncOrderItemsAndProducts } = await import("@/app/operaciones/pedidos/actions");
         await syncOrderItemsAndProducts(data, order.id, storeId);
+
+        // Webhook Shopify → Notificaciones Automáticas
+        const { sendNotification } = await import('@/lib/notifications');
+         
+        // Trigger automático de confirmación al crear pedido nuevo
+        if (topic === 'orders/create') {
+          const savedOrder = await prisma.order.findFirst({
+            where: { shopifyId: shopifyId }
+          });
+          if (savedOrder) {
+            await sendNotification(savedOrder.id, 'CONFIRMATION', 'WHATSAPP').catch(e =>
+              console.error('[Webhook] Notification failed:', e.message)
+            );
+          }
+        }
+         
+        // Trigger de tracking cuando llega código de seguimiento
+        if (topic === 'orders/updated' && data.fulfillments?.length > 0) {
+          const trackingCode = data.fulfillments[0]?.tracking_number;
+          if (trackingCode) {
+            const savedOrder = await prisma.order.findFirst({
+              where: { shopifyId: shopifyId, msgTrackingSent: false }
+            });
+            if (savedOrder) {
+              await sendNotification(savedOrder.id, 'TRACKING', 'WHATSAPP').catch(e =>
+                console.error('[Webhook] Tracking notification failed:', e.message)
+              );
+            }
+          }
+        }
+
     }
 }
 

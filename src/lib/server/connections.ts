@@ -84,15 +84,23 @@ export async function getConnectionSecret(storeId: string, provider: string): Pr
     }
 
     try {
-        return decryptSecret({
+        const decrypted = decryptSecret({
             enc: conn.secretEnc,
             iv: conn.secretIv,
             tag: conn.secretTag
         });
+        if (decrypted) return decrypted;
     } catch (err) {
         console.error(`[getConnectionSecret] Error decrypting for ${provider}:`, err);
-        return null;
     }
+
+    // Fallback: legacy fields si el decrypt falla (key distinta, campo corrupto, etc.)
+    if (conn.accessToken || conn.apiKey || conn.apiSecret) {
+        console.warn(`[getConnectionSecret] decrypt falló para ${provider}, usando legacy fields`);
+        return conn.accessToken || conn.apiKey || conn.apiSecret;
+    }
+
+    return null;
 }
 
 /**

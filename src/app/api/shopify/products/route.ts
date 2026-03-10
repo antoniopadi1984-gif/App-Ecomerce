@@ -14,16 +14,17 @@ export async function GET(req: NextRequest) {
         const secret = await getConnectionSecret(storeId, 'SHOPIFY');
         const meta = await getConnectionMeta(storeId, 'SHOPIFY');
 
-        // DEBUG TEMPORAL — eliminar después de confirmar fix
-        if (!secret) return NextResponse.json({
-            connected: false,
-            products: [],
-            debug: { storeId, secretNull: true, meta }
-        });
+        if (!secret) return NextResponse.json({ connected: false, products: [] });
 
-        let shop = meta?.extraConfig?.SHOPIFY_SHOP_DOMAIN
-            || meta?.extraConfig?.Tienda
-            || meta?.extraConfig?.shopDomain;
+        // Parsear extraConfig — soporta keys en inglés y español
+        let extraConfig: any = {};
+        try { extraConfig = JSON.parse(meta?.extraConfig || '{}'); } catch {}
+
+        let shop = extraConfig.SHOPIFY_SHOP_DOMAIN
+            || extraConfig.DOMINIO_TIENDA_SHOPIFY
+            || extraConfig.shopUrl
+            || extraConfig.shop
+            || extraConfig.Tienda;
 
         if (!shop) {
             const store = await (prisma as any).store.findUnique({ where: { id: storeId } });
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
         }
 
         if (!shop) return NextResponse.json({ connected: false, products: [] });
+
 
         const client = new ShopifyClient(shop, secret);
         const data: any = await client.getProductsDetailed(50); // Fetch first 50 for the selector
@@ -85,9 +87,15 @@ export async function POST(req: NextRequest) {
         const secret = await getConnectionSecret(storeId, 'SHOPIFY');
         const meta = await getConnectionMeta(storeId, 'SHOPIFY');
 
-        let shop = meta?.extraConfig?.SHOPIFY_SHOP_DOMAIN
-            || meta?.extraConfig?.Tienda
-            || meta?.extraConfig?.shopDomain;
+        // Parsear extraConfig — soporta keys en inglés y español
+        let extraConfig: any = {};
+        try { extraConfig = JSON.parse(meta?.extraConfig || '{}'); } catch {}
+
+        let shop = extraConfig.SHOPIFY_SHOP_DOMAIN
+            || extraConfig.DOMINIO_TIENDA_SHOPIFY
+            || extraConfig.shopUrl
+            || extraConfig.shop
+            || extraConfig.Tienda;
 
         if (!shop) {
             const store = await (prisma as any).store.findUnique({ where: { id: storeId } });

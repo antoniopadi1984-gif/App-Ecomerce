@@ -16,9 +16,15 @@ export async function POST(req: NextRequest) {
         const secret = await getConnectionSecret(storeId, 'SHOPIFY');
         const meta = await getConnectionMeta(storeId, 'SHOPIFY');
 
-        let shop = meta?.extraConfig?.SHOPIFY_SHOP_DOMAIN
-            || meta?.extraConfig?.Tienda
-            || meta?.extraConfig?.shopDomain;
+        // Parsear extraConfig — soporta keys en inglés y español
+        let extraConfig: any = {};
+        try { extraConfig = JSON.parse(meta?.extraConfig || '{}'); } catch {}
+
+        let shop = extraConfig.SHOPIFY_SHOP_DOMAIN
+            || extraConfig.DOMINIO_TIENDA_SHOPIFY
+            || extraConfig.shopUrl
+            || extraConfig.shop
+            || extraConfig.Tienda;
 
         if (!shop) {
             const store = await (prisma as any).store.findUnique({ where: { id: storeId } });

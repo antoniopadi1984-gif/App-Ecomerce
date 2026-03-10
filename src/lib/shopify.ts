@@ -233,6 +233,23 @@ export class ShopifyClient {
     };
   }
 
+  async getAllOrders(callback: (batch: any[]) => Promise<void>, options: { minDate?: string; status?: string } = {}) {
+    let hasNextPage = true;
+    let cursor: string | undefined = undefined;
+
+    while (hasNextPage) {
+      const res = await this.getOrdersHistorical({ from: options.minDate, cursor, status: options.status });
+      const batch = res.orders;
+
+      if (batch && batch.length > 0) {
+        await callback(batch);
+      }
+
+      hasNextPage = res.pageInfo?.hasNextPage || false;
+      cursor = res.pageInfo?.endCursor || undefined;
+    }
+  }
+
   /**
    * CATÁLOGO PRODUCTOS DETALLADO
    */

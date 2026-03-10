@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, startTransition } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { invalidateStoreCache } from '@/lib/services/drive-service';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -92,7 +91,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         });
 
         if (id) {
-            invalidateStoreCache(id); // fuerza refetch de Drive
             setOverviewLoading(true);
             fetch(`/api/stores/${id}/overview`)
                 .then(r => r.json())

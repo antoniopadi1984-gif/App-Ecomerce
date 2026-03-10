@@ -2,7 +2,7 @@ import { JobHandler } from "../worker";
 import prisma from "../prisma";
 import fs from "fs";
 import path from "path";
-import { replicateClient } from "../ai/replicate-client";
+import { replicateClient } from "../replicate-client";
 import { resolveModel } from "../ai/model-registry";
 
 const generateAvatarImageHandler: JobHandler = {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { replicateClient } from "@/lib/ai/replicate-client";
+import { replicateClient } from "@/lib/replicate-client";
 import { createJob } from "@/lib/worker";
 
 /**

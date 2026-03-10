@@ -19,11 +19,19 @@ export async function PUT(req: NextRequest) {
   if (id) {
     result = await prisma.notificationTemplate.update({ where: { id }, data });
   } else {
-    result = await prisma.notificationTemplate.upsert({
-      where: { storeId_trigger_channel: { storeId, trigger, channel: channel || 'WHATSAPP' } },
-      update: data,
-      create: { storeId, name: trigger, ...data }
+    const existing = await prisma.notificationTemplate.findFirst({
+      where: { storeId, trigger, channel: channel || 'WHATSAPP' }
     });
+    if (existing) {
+      result = await prisma.notificationTemplate.update({
+        where: { id: existing.id },
+        data
+      });
+    } else {
+      result = await prisma.notificationTemplate.create({
+        data: { storeId, name: trigger, ...data }
+      });
+    }
   }
   return NextResponse.json(result);
 }

@@ -45,7 +45,7 @@ export async function POST(
                 // Re-transcribir si no hay transcripción
                 if (!asset.driveFileId) return NextResponse.json({ error: 'Asset sin archivo en Drive' }, { status: 400 });
                 const fileBuffer = await downloadFile(asset.driveFileId);
-                const blob = new Blob([fileBuffer], { type: 'audio/mp4' });
+                const blob = new Blob([new Uint8Array(fileBuffer)], { type: 'audio/mp4' });
                 const result = await ElevenLabsService.speechToText(blob);
                 await (prisma as any).creativeAsset.update({ where: { id: assetId }, data: { transcription: result.text } });
                 return NextResponse.json({ ok: true, transcription: result.text });
@@ -55,7 +55,7 @@ export async function POST(
                 if (!voiceId) return NextResponse.json({ error: 'voiceId required' }, { status: 400 });
                 if (!asset.driveFileId) return NextResponse.json({ error: 'Asset sin archivo en Drive' }, { status: 400 });
                 const fileBuffer = await downloadFile(asset.driveFileId);
-                const audioBlob = new Blob([fileBuffer], { type: 'audio/mp4' });
+                const audioBlob = new Blob([new Uint8Array(fileBuffer)], { type: 'audio/mp4' });
                 const stsResponse = await fetch(`https://api.elevenlabs.io/v1/speech-to-speech/${voiceId}`, {
                     method: 'POST',
                     headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY! },
@@ -118,7 +118,7 @@ export async function POST(
                 );
                 const translatedText = translationResult.text.trim();
                 // 2. Generar audio con ElevenLabs TTS
-                const audioBuffer = await ElevenLabsService.textToSpeech(translatedText, voiceId || 'EXAVITQu4vr4xnSDxMaL', { model: 'eleven_v3', stability: 0.5, similarity_boost: 0.8 });
+                const audioBuffer = await ElevenLabsService.textToSpeech(translatedText, voiceId || 'EXAVITQu4vr4xnSDxMaL', { stability: 0.5, similarity_boost: 0.8 });
                 // 3. Subir audio traducido a Drive
                 const product = await prisma.product.findUnique({ where: { id: asset.productId || '' }, select: { sku: true } });
                 const newDriveUpload = await uploadToProduct(Buffer.from(audioBuffer), `translated_${targetLang}_${asset.name}`, 'audio/mp3', asset.productId || '', asset.storeId || '', { conceptCode: asset.conceptCode, funnelStage: asset.funnelStage, fileType: 'AUDIO' });

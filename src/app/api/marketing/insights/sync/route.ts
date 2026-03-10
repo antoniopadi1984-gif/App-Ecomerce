@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
                     'actions', 'action_values', 'video_thruplay_watched_actions',
                     'video_continuous_2_sec_watched_actions', 'ad_id', 'ad_name'
                 ].join(','),
-                action_attribution_windows: JSON.stringify(["1d_click", "7d_click", "1d_view"])
+                action_attribution_windows: JSON.stringify(["1d_click", "7d_click", "28d_click", "1d_engaged_view"])
             });
 
             if (rawInsights.data) {

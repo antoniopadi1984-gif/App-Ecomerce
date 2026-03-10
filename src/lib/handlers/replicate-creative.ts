@@ -1,6 +1,6 @@
 import { JobHandler } from "../worker";
 import { prisma } from "../prisma";
-import { replicateClient } from "../ai/replicate-client";
+import { replicateClient } from "../replicate-client";
 import { resolveModel } from "../ai/model-registry";
 import path from "path";
 import fs from "fs";

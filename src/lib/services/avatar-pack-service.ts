@@ -38,7 +38,7 @@ export class AvatarPackService {
         // Adjusting folder name to follow 05_AVATARES_IA convention if needed, 
         // but structure.assetsGlobales.avatares is already the ID of the 'AVATARES_IA' folder.
         const avatarFolderName = `${avatar.avatarId || avatar.name.toUpperCase().replace(/\s+/g, '_')}`;
-        const avatarFolderId = await getOrCreateFolder(drive, avatarFolderName, structure.assetsGlobales.avatares);
+        const avatarFolderId = await getOrCreateFolder(avatarFolderName, structure.assetsGlobales.avatares);
 
         // --- 2. Generate Base Photos (Flux Kontext Pro) ---
         console.log(`[AvatarPack] Processing base photo for ${avatar.name}...`);
@@ -48,12 +48,12 @@ export class AvatarPackService {
         if (!frontalUrl) {
             // IA_SCRATCH or no image provided
             const frontalPrompt = `Cinematic photo portrait of ${avatar.name}, a person with ${avatar.promptDNA || 'professional appearance'}, frontal view, neutral light grey studio background, high resolution, 8k, looking at camera.`;
-            const frontalOutput: any = await replicate.run(REPLICATE_MODELS.IMAGE.FLUX_KONTEXT as any, { input: { prompt: frontalPrompt, aspect_ratio: "3:4" } });
+            const frontalOutput: any = await replicate.run(REPLICATE_MODELS.IMAGE.FLUX_KONTEXT_PRO as any, { input: { prompt: frontalPrompt, aspect_ratio: "3:4" } });
             frontalUrl = Array.isArray(frontalOutput) ? frontalOutput[0] : frontalOutput;
         } else if (avatar.promptDNA?.includes('REAL_PHOTOS')) {
             // REAL_PHOTOS: Use identity keeping logic
             const frontalPrompt = `Cinematic photo portrait of the person in the reference image, high-end photography, maintaining facial identity but in a neutral studio background, professional lighting, high resolution.`;
-            const frontalOutput: any = await replicate.run(REPLICATE_MODELS.IMAGE.FLUX_KONTEXT as any, {
+            const frontalOutput: any = await replicate.run(REPLICATE_MODELS.IMAGE.FLUX_KONTEXT_PRO as any, {
                 input: {
                     prompt: frontalPrompt,
                     image: frontalUrl,
@@ -69,20 +69,20 @@ export class AvatarPackService {
         // Photo 3/4 Profile
         console.log(`[AvatarPack] Generating 3/4 profile...`);
         const profilePrompt = `Cinematic photo portrait of the same person from ${frontalUrl}, 3/4 profile view, same lighting, same clothes, high resolution.`;
-        const profileOutput: any = await replicate.run(REPLICATE_MODELS.IMAGE.FLUX_KONTEXT as any, { input: { prompt: profilePrompt, image: frontalUrl, aspect_ratio: "3:4" } });
+        const profileOutput: any = await replicate.run(REPLICATE_MODELS.IMAGE.FLUX_KONTEXT_PRO as any, { input: { prompt: profilePrompt, image: frontalUrl, aspect_ratio: "3:4" } });
         const profileUrl = Array.isArray(profileOutput) ? profileOutput[0] : profileOutput;
 
         // Photo Lifestyle
         console.log(`[AvatarPack] Generating lifestyle...`);
         const lifestylePrompt = `Lifestyle photo of the same person from ${frontalUrl} in a modern context, professional environment, high resolution.`;
-        const lifestyleOutput: any = await replicate.run(REPLICATE_MODELS.IMAGE.FLUX_KONTEXT as any, { input: { prompt: lifestylePrompt, image: frontalUrl, aspect_ratio: "16:9" } });
+        const lifestyleOutput: any = await replicate.run(REPLICATE_MODELS.IMAGE.FLUX_KONTEXT_PRO as any, { input: { prompt: lifestylePrompt, image: frontalUrl, aspect_ratio: "16:9" } });
         const lifestyleUrl = Array.isArray(lifestyleOutput) ? lifestyleOutput[0] : lifestyleOutput;
 
         // --- 3. Generate Video Greeting (3s) using OmniHuman ---
         console.log(`[AvatarPack] Generating 3s greeting with OmniHuman...`);
         const greetingAudio = await ElevenLabsService.textToSpeech(`Hola, soy ${avatar.name}.`, avatar.voiceId || '21m00Tcm4TlvDq8ikWAM');
 
-        const greetingVideo: any = await replicate.run(REPLICATE_MODELS.VIDEO.OMNI_HUMAN as any, {
+        const greetingVideo: any = await replicate.run(REPLICATE_MODELS.AVATAR.OMNI_HUMAN as any, {
             input: {
                 image: frontalUrl,
                 audio: `data:audio/mpeg;base64,${greetingAudio.toString('base64')}`,
@@ -93,7 +93,7 @@ export class AvatarPackService {
 
         // --- 4. Generate Video "Pointing/Using Product" (3s) ---
         console.log(`[AvatarPack] Generating 3s product interaction...`);
-        const productVideo: any = await replicate.run(REPLICATE_MODELS.VIDEO.OMNI_HUMAN as any, {
+        const productVideo: any = await replicate.run(REPLICATE_MODELS.AVATAR.OMNI_HUMAN as any, {
             input: {
                 image: frontalUrl,
                 prompt: "person smiling and pointing at a product on the side, friendly, professional",
@@ -114,7 +114,7 @@ export class AvatarPackService {
         const generatedExpressions: any[] = [];
         for (const exp of expressionTypes) {
             console.log(`[AvatarPack] Generating expression: ${exp.name}...`);
-            const expVideo: any = await replicate.run(REPLICATE_MODELS.VIDEO.OMNI_HUMAN as any, {
+            const expVideo: any = await replicate.run(REPLICATE_MODELS.AVATAR.OMNI_HUMAN as any, {
                 input: {
                     image: frontalUrl,
                     prompt: `person ${exp.prompt}`,

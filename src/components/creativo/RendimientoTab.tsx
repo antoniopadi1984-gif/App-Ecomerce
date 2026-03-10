@@ -458,7 +458,7 @@ function CreativoPerformance() {
                                 <option value="1d_click">1-day Click</option>
                                 <option value="7d_click">7-day Click</option>
                                 <option value="28d_click">28-day Click</option>
-                                <option value="1d_view">1-day View</option>
+
                                 <option value="1d_engaged_view">1-day Engaged View</option>
                             </select>
                         </div>

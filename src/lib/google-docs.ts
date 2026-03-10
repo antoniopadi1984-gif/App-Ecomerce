@@ -4,9 +4,26 @@
  */
 
 import { google } from 'googleapis';
-import { getAuthClient } from './google-drive';
+import { getConnectionSecret } from '@/lib/server/connections';
 
 const docs = google.docs('v1');
+
+async function getAuthClient() {
+    const credsStr = await getConnectionSecret('store-main', 'GOOGLE_CLOUD_CREDENTIALS') || process.env.GOOGLE_CLOUD_CREDENTIALS;
+    if (credsStr) {
+        const creds = JSON.parse(credsStr);
+        return new google.auth.GoogleAuth({
+            credentials: {
+                client_email: creds.client_email,
+                private_key: creds.private_key,
+            },
+            scopes: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/documents'],
+        });
+    }
+    return new google.auth.GoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/documents'],
+    });
+}
 
 /**
  * Create a new Google Doc

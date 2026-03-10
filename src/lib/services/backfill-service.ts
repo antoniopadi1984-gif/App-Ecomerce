@@ -69,7 +69,7 @@ export class BackfillService {
         const shopify = new ShopifyClient(shopifyConn.extraConfig!, shopifyConn.apiKey!);
 
         // Fetch ALL orders since startDate
-        await shopify.getAllOrders(async (batch) => {
+        await shopify.getAllOrders(async (batch: any[]) => {
             console.log(`[BackfillService] Processing Shopify batch of ${batch.length} orders...`);
             for (const order of batch) {
                 try {

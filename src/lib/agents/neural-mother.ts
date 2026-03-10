@@ -77,6 +77,8 @@ export class NeuralMotherService {
             // STEP 4: Perceived Value Asset (eBook)
             log("📘 Fabricando eBook de Fidelización...");
             const ebookReq = {
+                storeId: this.storeId!,
+                productId: this.productId,
                 title: `Guía Maestra: ${researchData.product_core?.identity?.definition || 'Tu Solución'}`,
                 productName: researchData.product_core?.vehiculo || 'Producto',
                 theme: researchData.dna_forense?.mecanismo_real || 'Excelencia',
@@ -85,8 +87,10 @@ export class NeuralMotherService {
             };
 
             const ebookResult = await generateEbookPDF(ebookReq);
-            if (ebookResult.success) {
-                log(`✅ eBook generado: ${ebookResult.url}`);
+            let finalEbookUrl = '';
+            if (ebookResult.success && ebookResult.driveFileId) {
+                finalEbookUrl = `https://drive.google.com/uc?id=${ebookResult.driveFileId}`;
+                log(`✅ eBook generado: ${finalEbookUrl}`);
 
                 // Link to ContentAsset in DB
                 await (prisma as any).contentAsset.create({
@@ -94,7 +98,7 @@ export class NeuralMotherService {
                         storeId: this.storeId!,
                         productId: this.productId,
                         name: ebookReq.title,
-                        fileUrl: ebookResult.url!,
+                        fileUrl: finalEbookUrl,
                         type: 'PDF',
                         metadataJson: JSON.stringify({
                             generatedBy: 'NEURAL_MOTHER',
@@ -116,7 +120,7 @@ export class NeuralMotherService {
                 logs,
                 outputs: {
                     researchRunId: latestRun.id,
-                    ebookUrl: ebookResult.url,
+                    ebookUrl: finalEbookUrl,
                     avatarName: winnerAvatar.name
                 }
             };

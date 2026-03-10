@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
                 'ad_name', 'adset_name', 'campaign_name', 'status', 'account_id',
                 'video_thruplay_watched_actions', 'video_continuous_2_sec_watched_actions'
             ].join(','),
-            action_attribution_windows: JSON.stringify(["1d_click", "7d_click", "1d_view"])
+            action_attribution_windows: JSON.stringify(["1d_click", "7d_click", "28d_click", "1d_engaged_view"])
         });
 
         const insightsData = rawInsights.data || [];

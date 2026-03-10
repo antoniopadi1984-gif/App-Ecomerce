@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { elevenLabs } from '@/lib/elevenlabs';
 import { agentDispatcher } from '@/lib/agents/agent-dispatcher';
 import { SPENCER_CORE_KNOWLEDGE } from './spencer-knowledge';
-import { uploadToDrive } from '@/lib/google-drive';
+import { uploadToProduct } from '@/lib/services/drive-service';
 import { writeFile, unlink, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -42,8 +42,8 @@ export async function processCompetitorVideo(
         console.log(`[Job] Uploading to Google Drive...`);
         let driveUrl = "";
         try {
-            const driveFileId = await uploadToDrive(productId, buffer, `COMP_${videoId}.mp4`, 'video/mp4', 'comp-videos');
-            driveUrl = `https://drive.google.com/open?id=${driveFileId}`;
+            const uploadRes = await uploadToProduct(buffer, `COMP_${videoId}.mp4`, 'video/mp4', productId, storeId, { fileType: 'COMP_VIDEO' });
+            driveUrl = uploadRes.driveUrl;
         } catch (driveErr) {
             console.error("[Job] Drive upload failed:", driveErr);
         }

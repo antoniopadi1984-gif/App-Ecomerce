@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { vertexGenerate } from '@/lib/vertex-ai';
+
 import { generateCopy } from '@/lib/replicate-client';
 
 export async function POST(req: NextRequest) {

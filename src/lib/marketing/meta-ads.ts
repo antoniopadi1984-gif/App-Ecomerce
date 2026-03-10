@@ -102,7 +102,7 @@ export class MetaAdsService {
                 'video_continuous_2_sec_watched_actions'
             ].join(','),
             action_attribution_windows: JSON.stringify([
-                "1d_click", "7d_click", "28d_click", "1d_view", "1d_engaged_view"
+                "1d_click", "7d_click", "28d_click", "1d_engaged_view"
             ])
         };
 

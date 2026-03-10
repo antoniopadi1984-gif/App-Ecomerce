@@ -57,7 +57,7 @@ function getDriveClient() {
 /**
  * Busca una carpeta por nombre dentro de un parent. Si no existe, la crea.
  */
-async function getOrCreateFolder(name: string, parentId: string): Promise<string> {
+export async function getOrCreateFolder(name: string, parentId: string): Promise<string> {
     const drive = getDriveClient();
 
     // Buscar existente
@@ -82,6 +82,30 @@ async function getOrCreateFolder(name: string, parentId: string): Promise<string
     });
 
     return created.data.id!;
+}
+
+/**
+ * Descarga y guarda un archivo en Drive desde una URL
+ */
+export async function uploadFileFromUrl(url: string, name: string, parentId: string, mimeType: string): Promise<string> {
+    const drive = getDriveClient();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Error fetching file: ${res.statusText}`);
+    const buffer = Buffer.from(await res.arrayBuffer());
+
+    const driveRes = await drive.files.create({
+        requestBody: {
+            name,
+            mimeType,
+            parents: [parentId]
+        },
+        media: {
+            mimeType,
+            body: require('stream').Readable.from([buffer])
+        },
+        fields: 'id'
+    });
+    return driveRes.data.id!;
 }
 
 // ─── Store folder ──────────────────────────────────────────────────────────────

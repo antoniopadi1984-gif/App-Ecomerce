@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
 import { Play, CheckCircle2, Circle, Loader2, ArrowRight, BrainCircuit, ScanSearch, UserPlus, FileText, Share2, Target, Plus, Package } from 'lucide-react';
 import { AddProductDialog } from '@/components/products/AddProductDialog';

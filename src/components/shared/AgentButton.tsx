@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, X, User, MessageSquare, Brain, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 import {
     Sheet,
     SheetContent,

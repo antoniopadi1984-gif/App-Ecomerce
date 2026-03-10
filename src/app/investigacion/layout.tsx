@@ -4,7 +4,7 @@ import React from 'react';
 import { Telescope } from 'lucide-react';
 import { AgentCompanion } from '@/components/layout/agent-companion';
 import { AddProductDialog } from '@/components/products/AddProductDialog';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
 
 function InvestigacionLayoutInner({ children }: { children: React.ReactNode }) {

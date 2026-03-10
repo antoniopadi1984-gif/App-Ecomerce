@@ -8,7 +8,10 @@ export class AutoConnectionService {
         // Ensure we have a default store
         const store = await (prisma as any).store.upsert({
             where: { id: 'store-main' },
-            update: {},
+            update: {
+                // Solo actualiza domain si existe en env — NUNCA sobreescribe name
+                ...(process.env.SHOPIFY_SHOP_DOMAIN ? { domain: process.env.SHOPIFY_SHOP_DOMAIN } : {})
+            },
             create: {
                 id: 'store-main',
                 name: 'Aleessence',

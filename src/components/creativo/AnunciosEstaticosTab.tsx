@@ -14,7 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useProduct } from '@/context/ProductContext';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 
 type AssetOrigin = 'SHOPIFY_URL' | 'MANUAL' | 'DRIVE';
 type AdType = 'SINGLE' | 'CAROUSEL' | 'SPLIT_SCREEN';

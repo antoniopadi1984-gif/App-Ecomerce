@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 import {
     RefreshCw,
     Loader2,

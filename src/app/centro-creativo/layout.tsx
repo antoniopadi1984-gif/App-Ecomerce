@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
 import { Clapperboard } from 'lucide-react';
 import { AgentCompanion } from '@/components/layout/agent-companion';

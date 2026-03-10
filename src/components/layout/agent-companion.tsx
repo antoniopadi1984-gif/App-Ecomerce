@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
 import { Send, Loader2, Sparkles, X, Bot, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useProduct } from '@/context/ProductContext';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 import { toast } from 'sonner';
 
 // ── UI Components ──────────────────────────────────────────────

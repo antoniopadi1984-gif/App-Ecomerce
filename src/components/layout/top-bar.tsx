@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProduct } from "@/context/ProductContext";
-import { useStore } from "@/context/StoreContext";
+import { useStore } from "@/lib/store/store-context";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 

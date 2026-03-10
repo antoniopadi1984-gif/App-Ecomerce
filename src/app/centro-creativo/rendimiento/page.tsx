@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
 import dynamic from 'next/dynamic';
 

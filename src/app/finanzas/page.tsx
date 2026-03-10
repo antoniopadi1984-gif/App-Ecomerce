@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useStore } from '@/context/StoreContext';
+import { useStore } from '@/lib/store/store-context';
 import { DollarSign, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AgentButton } from '@/components/shared/AgentButton';
 

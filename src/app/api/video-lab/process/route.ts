@@ -35,8 +35,52 @@ interface JobStatus {
     updatedAt: string;
 }
 
+import { generateVideo, transcribeAudio, addSubtitles, upscaleVideo } from '@/lib/replicate-client';
+
 export async function POST(request: NextRequest) {
     try {
+        const contentType = request.headers.get('content-type') || '';
+        
+        // JSON Action Router
+        if (contentType.includes('application/json')) {
+            const body = await request.json();
+            const { action } = body;
+            
+            if (action === 'generate_video') {
+                const videoUrl = await generateVideo({
+                    prompt: body.prompt,
+                    mode: body.imageUrl ? 'image2video' : 'text2video',
+                    imageUrl: body.imageUrl,
+                    duration: body.duration || 5,
+                    aspectRatio: body.aspectRatio || '9:16',
+                    quality: 'pro',
+                });
+                return NextResponse.json({ ok: true, videoUrl });
+            }
+            
+            if (action === 'transcribe') {
+                const transcript = await transcribeAudio(body.audioUrl, body.language || 'es');
+                return NextResponse.json({ ok: true, transcript });
+            }
+            
+            if (action === 'add_subtitles') {
+                const subtitledUrl = await addSubtitles(body.videoUrl, {
+                    position: 'bottom',
+                    fontSize: 7,
+                    color: 'white',
+                });
+                return NextResponse.json({ ok: true, subtitledUrl });
+            }
+            
+            if (action === 'upscale') {
+                const upscaledUrl = await upscaleVideo(body.videoUrl);
+                return NextResponse.json({ ok: true, upscaledUrl });
+            }
+            
+            return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+        }
+
+        // --- BACKWARD COMPATIBILITY: FORM DATA PIPELINE ---
         const storeId = request.headers.get('X-Store-Id');
         if (!storeId) return NextResponse.json({ error: 'Store ID required' }, { status: 400 });
 
@@ -50,7 +94,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'file and productId required' }, { status: 400 });
         }
 
-        // 1. Create CreativeAsset record immediately
         const asset = await (prisma as any).creativeAsset.create({
             data: {
                 productId,
@@ -73,7 +116,6 @@ export async function POST(request: NextRequest) {
         };
         jobs.set(jobId, job);
 
-        // Process in background (no await)
         processVideoBackground(file, asset.id, productId, storeId, jobId, {
             conceptCode: conceptCodeHint,
             funnelStage: funnelHint,
@@ -118,31 +160,19 @@ async function processVideoBackground(
     try {
         await updateAsset({ processingStatus: 'PROCESSING' });
 
-        // ── STEP 1: TRANSCRIPTION (Whisper via Replicate or OpenAI) ──────────
         updateJob({ status: 'TRANSCRIBED', progress: 30 });
         let transcription = '';
         let detectedLang = 'es';
+        
         try {
             const bytes = await file.arrayBuffer();
             const buffer = Buffer.from(bytes);
+            const base64 = buffer.toString('base64');
+            const dataUrl = `data:${file.type};base64,${base64}`;
 
-            // Try Replicate Whisper
-            const replicateToken = process.env.REPLICATE_API_TOKEN;
-            if (replicateToken) {
-                const { default: Replicate } = await import('replicate');
-                const replicate = new Replicate({ auth: replicateToken });
-
-                // Upload to tmp for Replicate
-                const base64 = buffer.toString('base64');
-                const dataUrl = `data:${file.type};base64,${base64}`;
-
-                const output: any = await replicate.run(
-                    'openai/whisper:4d50797290df275329f202e48c76360b3f22b08d28c196cbc54600319435f8d2',
-                    { input: { audio: dataUrl, translate: false, language: null } }
-                );
-                transcription = output?.transcription ?? output?.text ?? '';
-                detectedLang = output?.detected_language ?? 'es';
-            }
+            // Usa el nuevo Replicate client
+            const result = await transcribeAudio(dataUrl, 'es');
+            transcription = typeof result === 'string' ? result : '';
         } catch (e) {
             console.warn('[VideoLab] Transcription failed:', e);
             transcription = '[Transcripción no disponible]';

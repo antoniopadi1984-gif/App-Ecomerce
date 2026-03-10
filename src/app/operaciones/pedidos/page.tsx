@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Search, Filter, MapPin, User, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Search, Filter, MapPin, User, AlertTriangle, RefreshCcw } from 'lucide-react';
 import { ORDER_STATES } from '@/lib/orderStates';
 import { useGestores } from '@/hooks/useGestores';
+import { useStore } from '@/lib/store/store-context';
+import { toast } from 'sonner';
 
 const TABS = [
     { id: 'todos', label: 'Todos' },
@@ -1254,8 +1256,39 @@ function OrderDrawer({ pedido, onClose, onSelectOrder }: { pedido: Record<string
 export default function PedidosPage() {
     const [activeTab, setActiveTab] = useState('todos');
     const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);
+    const [syncing, setSyncing] = useState(false);
+    const { activeStoreId } = useStore();
     // Gestores — hook compartido con caché global + polling 30s
     const { gestores: gestoresLive } = useGestores();
+
+    const fetchOrders = async () => {
+        if (!activeStoreId) return;
+        // Recarga la lista de pedidos (placeholder — implementar llamada real si se tiene tabla real)
+        console.log('[Pedidos] Recargando lista para storeId:', activeStoreId);
+    };
+
+    const handleSyncShopify = async () => {
+        if (!activeStoreId) return;
+        setSyncing(true);
+        try {
+            const res = await fetch('/api/orders/shopify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ storeId: activeStoreId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success(`Sincronizados ${data.synced} pedidos`);
+                fetchOrders();
+            } else {
+                toast.error(data.error || 'Error en sincronización');
+            }
+        } catch {
+            toast.error('Error de red al sincronizar');
+        } finally {
+            setSyncing(false);
+        }
+    };
 
     const pedidos = [
         ...Array(42).fill({ state: 'nuevo' }),
@@ -1481,9 +1514,14 @@ export default function PedidosPage() {
                                 <option>Histórico completo</option>
                             </select>
                         )}
-                        <button className="ds-btn" style={{ background: "white", color: "var(--text-muted)", textTransform: "none", letterSpacing: "normal", fontSize: "11px", fontWeight: 600 }}>
-                            <RefreshCw className="w-3.5 h-3.5" />
-                            Sincronizar Estados
+                        <button
+                            className="ds-btn"
+                            onClick={handleSyncShopify}
+                            disabled={syncing}
+                            style={{ background: "white", color: syncing ? "#3b82f6" : "var(--text-muted)", textTransform: "none", letterSpacing: "normal", fontSize: "11px", fontWeight: 600 }}
+                        >
+                            <RefreshCcw size={14} className={syncing ? "animate-spin" : ""} style={{ flexShrink: 0 }} />
+                            {syncing ? 'Sincronizando...' : 'Sincronizar Pedidos'}
                         </button>
                     </div>
                 </div>

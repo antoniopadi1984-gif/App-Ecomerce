@@ -6,7 +6,11 @@ import { prisma } from '@/lib/prisma';
  * PUT/POST: Actualizar AgentProfile — VALIDAR modelos deprecated.
  */
 
-const DEPRECATED_MODELS = ["gemini-3-flash-preview", "gemini-3.1-pro-preview"];
+const DEPRECATED_MODELS = [
+  'gemini-1.5-pro', 'gemini-1.5-pro-002', 'gemini-1.5-flash-002',
+  'gemini-1.5-flash', 'gemini-3-flash-preview', 'gemini-1.5-pro-latest',
+  'eleven_multilingual_v1', 'eleven_multilingual_v2'
+];
 
 export async function GET(req: NextRequest) {
     const storeId = req.nextUrl.searchParams.get('storeId');
@@ -37,7 +41,7 @@ export async function PUT(req: NextRequest) {
         // Validación de modelo
         if (DEPRECATED_MODELS.includes(model)) {
             return NextResponse.json({
-                error: "Modelo deprecated. Usar gemini-3-flash-preview o gemini-3.1-pro-preview"
+                error: "Modelo deprecated. Usar gemini-3.1-pro-preview o gemini-3.1-flash-lite-preview"
             }, { status: 400 });
         }
 

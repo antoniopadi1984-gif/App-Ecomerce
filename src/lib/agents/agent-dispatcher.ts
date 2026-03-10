@@ -167,8 +167,8 @@ export class AgentDispatcher {
                 // Normalizar nombre del modelo para Vertex AI
                 let vertexModel = config.model;
 
-                if (vertexModel === 'gemini-1.5-flash' || vertexModel === 'gemini-1.5-pro') {
-                    vertexModel = `${vertexModel}-001`; // Vertex prefiere sufijos
+                if (vertexModel.includes('1.5-flash') || vertexModel.includes('1.5-pro')) {
+                    vertexModel = 'gemini-3.1-pro-preview'; // Upgrade automático a modelo actual
                 }
 
                 const endpoint = `https://${API_CONFIG.vertexAI.location}-aiplatform.googleapis.com/v1/projects/${API_CONFIG.vertexAI.projectId}/locations/${API_CONFIG.vertexAI.location}/publishers/google/models/${vertexModel}:generateContent`;

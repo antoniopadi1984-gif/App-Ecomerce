@@ -16,7 +16,7 @@ export const API_CONFIG = {
             // Gemini - Text Generation
             gemini: {
                 production: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-3.1-pro-preview',
-                fast: process.env.GEMINI_MODEL_FAST || 'gemini-3-flash-preview',
+                fast: process.env.GEMINI_MODEL_FAST || 'gemini-3.1-flash-lite-preview',
                 endpoint: 'v1'
             },
 

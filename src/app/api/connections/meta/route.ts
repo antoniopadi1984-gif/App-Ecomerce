@@ -37,7 +37,7 @@ export async function POST(request: Request) {
         }
 
         const validateRes = await fetch(
-            `https://graph.facebook.com/v21.0/me?access_token=${accessToken}`
+            `https://graph.facebook.com/v25.0/me?access_token=${accessToken}`
         );
         const validateData = await validateRes.json();
 

@@ -21,7 +21,7 @@ function getModelForAgent(agentId: AgentId): string {
         return "gemini-3.1-pro-preview";
     }
 
-    return "gemini-3-flash-preview";
+    return "gemini-3.1-flash-lite-preview";
 }
 
 export async function POST(req: NextRequest) {

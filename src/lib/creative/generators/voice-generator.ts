@@ -64,7 +64,7 @@ export class VoiceGenerator {
                     },
                     body: JSON.stringify({
                         text: options.text,
-                        model_id: 'eleven_multilingual_v2',
+                        model_id: 'eleven_v3',
                         voice_settings: {
                             stability: options.stability ?? 0.5,
                             similarity_boost: options.similarityBoost ?? 0.75,

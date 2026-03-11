@@ -420,7 +420,7 @@ export async function uploadToProduct(
     mimeType: string,
     productId: string,
     storeId: string,
-    opts: { conceptCode?: string; funnelStage?: string; fileType?: string; creativeArtifactId?: string; subfolderName?: string; version?: number }
+    opts: { conceptCode?: string; funnelStage?: string; angle?: string; fileType?: string; creativeArtifactId?: string; subfolderName?: string; version?: number }
 ): Promise<{ driveFileId: string; drivePath: string; driveUrl: string; parentFolderId: string }> {
     const drive = await getDriveClient();
     const product = await (prisma as any).product.findUnique({
@@ -435,16 +435,26 @@ export async function uploadToProduct(
     let subFolder = folderId;
 
     if (opts.conceptCode) {
-        // Concept folder inside CONCEPTOS folder
+        // Hierarchical structure: CONCEPTOS / [CONCEPT] / [STAGE] / [ANGLE]
         const parentConceptsId = await findOrCreateFolder(drive, "CONCEPTOS", folderId);
+        
+        // 1. Concept Folder
         const conceptName = opts.conceptCode.toUpperCase();
         const conceptFolderId = await findOrCreateFolder(drive, conceptName, parentConceptsId);
         
-        subFolder = conceptFolderId;
+        // 2. Funnel Stage Folder (TOFU, MOFU, BOFU, RETARGETING)
+        const stageName = (opts.funnelStage || 'TOFU').toUpperCase();
+        const stageFolderId = await findOrCreateFolder(drive, stageName, conceptFolderId);
+        
+        // 3. Angle Folder (Inside Stage)
+        const angleName = (opts.angle || 'GENERAL').toUpperCase().replace(/\s+/g, '_');
+        const angleFolderId = await findOrCreateFolder(drive, angleName, stageFolderId);
 
-        // Sub-elements (like CLIPS) - Inside the concept folder
+        subFolder = angleFolderId;
+
+        // 4. Sub-elements (like CLIPS) - Inside the Angle folder
         if (opts.subfolderName) {
-            subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), conceptFolderId);
+            subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), angleFolderId);
         }
     } else if (opts.fileType === 'IMAGE') {
         const assetsFolder = await findOrCreateFolder(drive, 'ASSETS', folderId);

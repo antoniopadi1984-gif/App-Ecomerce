@@ -194,25 +194,17 @@ async function processVideoBackground(
     const analysisResult = await AiRouter.dispatch(
       storeId, TaskType.PERFORMANCE_ADS, 
       `Eres un Marketer Senior de Respuesta Directa. Analiza este video y su transcripción "${transcription}".
-      MISION: Desglosar la estructura del anuncio y extraer las "disecciones" (clips) de mayor impacto.
-      
-      ANALIZA:
-      1. HOOK VISUAL/VERBAL: ¿Es suficientemente disruptivo (Scroll Stopper)?
-      2. MECANISMO ÚNICO: ¿Cómo explicamos que nuestro producto funciona?
-      3. STORYTELLING/PRUEBA SOCIAL: ¿Es creíble?
-      4. CLIPS PARA VARIACIONES: Identifica timestamps exactos [start - end] de: El Hook, La Demostración, El Testimonio, El CTA.
-      
-      FORMATO JSON:
-      {
-        "conceptSuggestion": "NOMBRE_CORTO_Y_MAYUSCULAS",
-        "funnelStage": "TOFU|MOFU|BOFU",
-        "type": "UGC|REVIEW|COMERCIAL",
-        "hookScore": 1-10,
-        "hook": "Análisis táctico del primer segundo",
-        "angle": "Ángulo psicológico exacto",
-        "avatarMatch": "Avatar objetivo detallado",
-        "clips": [{"name": "HOOK", "start": 0, "end": 3}, {"name": "BENEFICIOS", "start": 3, "end": 8}, ...],
-        "improvementSuggestions": "Análisis estratégico profundo para el cliente..."
+      Responde JSON: 
+      { 
+        "conceptSuggestion": "NOMBRE_DEL_CONCEPTO",
+        "funnelStage": "TOFU|MOFU|BOFU|RETARGETING", 
+        "type": "UGC|REVIEW|COMERCIAL", 
+        "hookScore": 1-10, 
+        "hook": "Análisis del gancho", 
+        "angle": "Ángulo psicológico (ej: Lógica, Miedo, Status...)",
+        "avatarMatch": "Perfil psicográfico",
+        "clips": [{"name": "HOOK", "start": 0, "end": 3}, ...],
+        "improvementSuggestions": "Análisis marketer profundo..." 
       }`,
       { 
         jsonSchema: true,
@@ -259,8 +251,8 @@ async function processVideoBackground(
         where: { productId, conceptCode }
     });
     const versionNum = existingVersions + 1;
-
-    const generatedNomen = `${productCode(product?.title ?? 'PRD')}_${conceptCode}_V${versionNum}.mp4`;
+    const cleanAngle = (analysis.angle || 'GENERAL').toUpperCase().replace(/\s+/g, '_');
+    const generatedNomen = `${productCode(product?.title ?? 'PRD')}_${conceptCode}_${cleanAngle}_V${versionNum}.mp4`;
  
     // 5.1 Subir Video Principal
     const mainVideoUpload = await uploadToProduct(
@@ -272,6 +264,7 @@ async function processVideoBackground(
       { 
         conceptCode, 
         funnelStage, 
+        angle: analysis.angle,
         fileType: 'VIDEO', 
         version: versionNum 
       }
@@ -312,13 +305,14 @@ Generado por el Agente Director Creativo IA Pro
         const clipBuffer = await fs.readFile(path.join(clipsDir, clipFile));
         await uploadToProduct(
             clipBuffer,
-            clipFile, // Ya contiene el nombre sugerido por la IA
+            clipFile, 
             'video/mp4',
             productId,
             storeId,
             { 
               conceptCode, 
               funnelStage, 
+              angle: analysis.angle,
               fileType: 'VIDEO', 
               version: versionNum,
               subfolderName: 'CLIPS'

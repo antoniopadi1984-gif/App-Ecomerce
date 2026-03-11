@@ -109,19 +109,34 @@ export class ElevenLabsService {
         formData.append('model_id', 'scribe_v1');
         if (options?.language) formData.append('language_code', options.language);
 
-        const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
-            method: 'POST',
-            headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY! },
-            body: formData,
-        });
+        const apiKey = await getConnectionSecret('store-main', 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY;
+        if (!apiKey) throw new Error("ELEVENLABS_API_KEY no configurado");
 
-        if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(`ElevenLabs STT error: ${err.detail || response.statusText}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos de timeout para STT
+
+        try {
+            const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
+                method: 'POST',
+                headers: { 'xi-api-key': apiKey },
+                body: formData,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(`ElevenLabs STT error: ${err.detail || response.statusText}`);
+            }
+
+            const data = await response.json();
+            return { text: data.text || '', words: data.words };
+        } catch (e: any) {
+            clearTimeout(timeoutId);
+            if (e.name === 'AbortError') throw new Error("ElevenLabs STT timeout (2 min). El audio es demasiado largo o el servicio no responde.");
+            throw e;
         }
-
-        const data = await response.json();
-        return { text: data.text || '', words: data.words };
     }
 
     static async generateMusic(prompt: string, durationSeconds: number = 30): Promise<ArrayBuffer> {

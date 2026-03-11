@@ -197,22 +197,34 @@ export class AgentDispatcher {
                 const endpoint = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${projectId}/locations/${location}/publishers/google/models/${modelName}:generateContent`;
                 console.log(`[Gemini] Vertex AI (v1beta1) → ${modelName} @ ${location}`);
 
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(bodyPayload)
-                });
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 1 minuto timeout
 
-                // Si el modelo no está en esta región, caemos a AI Studio
-                if (response.status === 404) {
-                    const errBody = await response.text();
-                    console.warn(`[Gemini] Vertex 404 para ${modelName} en ${location}, usando AI Studio. ${errBody.slice(0, 200)}`);
-                    // fallthrough a Canal 2
-                } else {
-                    return await this.processGeminiResponse(response, role, config);
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(bodyPayload),
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    // Si el modelo no está en esta región, caemos a AI Studio
+                    if (response.status === 404) {
+                        const errBody = await response.text();
+                        console.warn(`[Gemini] Vertex 404 para ${modelName} en ${location}, usando AI Studio. ${errBody.slice(0, 200)}`);
+                        // fallthrough a Canal 2
+                    } else {
+                        return await this.processGeminiResponse(response, role, config);
+                    }
+                } catch (e: any) {
+                    clearTimeout(timeoutId);
+                    if (e.name === 'AbortError') throw new Error("Gemini Vertex AI timeout (60s)");
+                    throw e;
                 }
 
             } catch (e: any) {
@@ -229,13 +241,24 @@ export class AgentDispatcher {
             const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             console.log(`[Gemini] AI Studio (v1beta) → ${modelName}`);
 
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bodyPayload)
-            });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); 
 
-            return this.processGeminiResponse(response, role, config);
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyPayload),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                return this.processGeminiResponse(response, role, config);
+            } catch (e: any) {
+                clearTimeout(timeoutId);
+                if (e.name === 'AbortError') throw new Error("Gemini AI Studio timeout (60s)");
+                throw e;
+            }
         }
 
         throw new Error("No Gemini credentials. Añade GEMINI_API_KEY en .env.local (obtén una en aistudio.google.com/apikey)");

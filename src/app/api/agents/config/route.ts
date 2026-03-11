@@ -70,7 +70,7 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: `'${agentId}' no es un AgentId válido` }, { status: 400 });
         }
 
-        const builtExamples = buildExamples(examples || [], mod, label, description);
+        const builtExamples = buildExamples(examples || [], mod, label, description) as any[];
 
         const config = await prisma.agentConfig.upsert({
             where: { storeId_agentId: { storeId, agentId: agentId as AgentId } },

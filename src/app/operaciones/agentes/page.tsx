@@ -317,7 +317,7 @@ export default function AgentesPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '18px' }}>{cfg.emoji}</span>
                       <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{cfg.label}</span>
-                      <ModuleBadge moduleId={editing.module} />
+                      <ModuleBadge moduleId={editing!.module} />
                     </div>
                     <button onClick={() => setEditing(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}>
                       <X size={15} />
@@ -329,8 +329,8 @@ export default function AgentesPage() {
                       <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Módulo</label>
                       <select
                         className="ds-input"
-                        value={editing.module}
-                        onChange={e => setEditing({ ...editing, module: e.target.value })}
+                        value={editing!.module || ''}
+                        onChange={e => setEditing({ ...editing!, module: e.target.value } as AgentConfig)}
                         style={{ fontSize: '12px', width: '100%' }}
                       >
                         {MODULES.map(m => <option key={m.id} value={m.id}>{m.emoji} {m.label}</option>)}
@@ -340,8 +340,8 @@ export default function AgentesPage() {
                       <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Descripción</label>
                       <input
                         className="ds-input"
-                        value={editing.description || ''}
-                        onChange={e => setEditing({ ...editing, description: e.target.value })}
+                        value={editing!.description || ''}
+                        onChange={e => setEditing({ ...editing!, description: e.target.value } as AgentConfig)}
                         style={{ fontSize: '12px', width: '100%' }}
                       />
                     </div>
@@ -350,8 +350,8 @@ export default function AgentesPage() {
                   <div style={{ marginBottom: '12px' }}>
                     <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>System Prompt</label>
                     <textarea
-                      value={editing.systemPrompt}
-                      onChange={e => setEditing({ ...editing, systemPrompt: e.target.value })}
+                      value={editing!.systemPrompt || ''}
+                      onChange={e => setEditing({ ...editing!, systemPrompt: e.target.value } as AgentConfig)}
                       className="ds-input"
                       rows={7}
                       style={{ fontSize: '12px', width: '100%', fontFamily: 'monospace', resize: 'vertical' }}

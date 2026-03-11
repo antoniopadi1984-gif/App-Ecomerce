@@ -211,6 +211,7 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
                 body: JSON.stringify(emptyIndex, null, 2),
             },
             fields: 'id',
+            supportsAllDrives: true
         });
 
         await (prisma as any).product.update({
@@ -287,6 +288,8 @@ export async function syncProductIndex(productId: string, storeId: string) {
         const res = await drive.files.list({
             q: `name = 'index.json' and '${product.driveFolderId}' in parents and trashed = false`,
             fields: 'files(id)',
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true
         });
 
         if (res.data.files && res.data.files.length > 0) {
@@ -298,6 +301,7 @@ export async function syncProductIndex(productId: string, storeId: string) {
                         mimeType: 'application/json',
                         body: JSON.stringify(indexData, null, 2),
                     },
+                    supportsAllDrives: true
                 });
             }
         } else {
@@ -311,6 +315,7 @@ export async function syncProductIndex(productId: string, storeId: string) {
                     mimeType: 'application/json',
                     body: JSON.stringify(indexData, null, 2),
                 },
+                supportsAllDrives: true
             });
         }
 
@@ -340,6 +345,8 @@ export async function getProductIndex(productId: string, storeId: string): Promi
             q: `name = 'index.json' and '${product.driveFolderId}' in parents and trashed = false`,
             fields: 'files(id)',
             pageSize: 1,
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true
         });
 
         if (!res.data.files || res.data.files.length === 0) return null;
@@ -384,6 +391,8 @@ export async function listProductFolder(
                     q: `name = '${part}' and '${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
                     fields: 'files(id)',
                     pageSize: 1,
+                    supportsAllDrives: true,
+                    includeItemsFromAllDrives: true
                 });
                 if (!res.data.files?.length) return [];
                 parentId = res.data.files[0].id;
@@ -395,6 +404,8 @@ export async function listProductFolder(
             fields: 'files(id,name,mimeType,size,thumbnailLink,webViewLink)',
             pageSize: 100,
             orderBy: 'name',
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true
         });
 
         return (res.data.files ?? []).map((f: any) => ({
@@ -496,7 +507,7 @@ export async function uploadToProduct(
 
 export async function downloadFile(fileId: string): Promise<Buffer> {
     const drive = await getDriveClient();
-    const res = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'arraybuffer' });
+    const res = await drive.files.get({ fileId, alt: 'media', supportsAllDrives: true }, { responseType: 'arraybuffer' });
     return Buffer.from(res.data as ArrayBuffer);
 }
 
@@ -523,6 +534,8 @@ export async function processInbox(productId: string, storeId: string) {
         const res = await drive.files.list({
             q: `'${inboxId}' in parents and trashed = false`,
             fields: 'files(id, name, mimeType)',
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true
         });
 
         const processed = [];
@@ -547,7 +560,8 @@ export async function processInbox(productId: string, storeId: string) {
                     fileId: file.id,
                     addParents: targetFolderId,
                     removeParents: inboxId,
-                    requestBody: { name: newName }
+                    requestBody: { name: newName },
+                    supportsAllDrives: true
                 } as any);
 
                 processed.push({ original: file.name, processed: newName });
@@ -586,6 +600,8 @@ export async function getLandingAssets(productId: string) {
         const res = await drive.files.list({
             q: `'${imagesId}' in parents and trashed = false and mimeType contains 'image/'`,
             fields: 'files(id, name, webContentLink, webViewLink, thumbnailLink)',
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true
         });
 
         return (res.data.files || []).map(f => ({
@@ -620,6 +636,8 @@ export async function saveLandingProject(productId: string, storeId: string, typ
         const search = await drive.files.list({
             q: `name = '${fileName}' and '${versionId}' in parents and trashed = false`,
             fields: 'files(id)',
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true
         });
 
         const fileMetadata = { name: fileName, parents: [versionId], mimeType: 'application/json' };
@@ -628,12 +646,14 @@ export async function saveLandingProject(productId: string, storeId: string, typ
         if (search.data.files && search.data.files.length > 0) {
             await drive.files.update({
                 fileId: search.data.files[0].id,
-                media: media
+                media: media,
+                supportsAllDrives: true
             } as any);
         } else {
             await drive.files.create({
                 requestBody: fileMetadata,
-                media: media
+                media: media,
+                supportsAllDrives: true
             });
         }
 

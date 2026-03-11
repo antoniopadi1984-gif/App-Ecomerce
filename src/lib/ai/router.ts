@@ -17,6 +17,7 @@ const TASK_TO_AGENT: Record<string, AgentRole> = {
     [TaskType.SCRIPTS_ADVANCED]: 'script-generator',
     [TaskType.CRO_AUDIT]: 'cro-optimizer',
     [TaskType.RESEARCH_FORENSIC]: 'competitor-analyst',
+    [TaskType.PERFORMANCE_ADS]: 'video-director',
     // Operaciones (Mapeo de strings si no están en Enum)
     'CUSTOMER_SUPPORT': 'customer-support',
     'CART_RECOVERY': 'cart-recovery',

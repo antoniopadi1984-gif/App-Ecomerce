@@ -114,8 +114,8 @@ Provides:
 
     'script-generator': {
         role: 'script-generator',
-        provider: 'replicate-claude',
-        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
+        provider: 'gemini-pro',
+        model: API_CONFIG.vertexAI.models.gemini.production,
         temperature: 0.7,
         maxTokens: 3072,
         systemPrompt: `Eres un guionista experto en videos UGC y video ads de alto rendimiento.
@@ -135,8 +135,8 @@ Formato:
 [PROOF] (25-35 seg)
 [CTA] (35-40 seg)`,
         description: 'Scripts para videos UGC y video ads',
-        tier: 1,
-        costTier: 'premium'
+        tier: 2,
+        costTier: 'standard'
     },
 
     'landing-creator': {

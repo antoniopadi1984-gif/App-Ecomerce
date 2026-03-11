@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { replicateRequest } from '@/lib/replicate-client';
+import { AiRouter } from '@/lib/ai/router';
+import { TaskType } from '@/lib/ai/providers/interfaces';
 
 /**
  * POST /api/ai/video-lab/script
@@ -19,15 +20,16 @@ Formato: Hook (3s) → Problema (5s) → Solución (8s) → CTA (4s).`;
 
         const userPrompt = prompt || `Escribe un script de ${duration || 20} segundos para el producto: ${product}. Tono: ${tone || 'persuasivo y urgente'}.`;
 
-        const result = await replicateRequest('/models/anthropic/claude-opus-4-6/predictions', {
-            input: {
-                system: systemPrompt,
-                prompt: userPrompt,
-                max_tokens: 1024,
+        const response = await AiRouter.dispatch(
+            'default', // video-lab podría no tener storeId en la request actual, usamos default o un param si existe
+            TaskType.RESEARCH_DEEP, // Mapeado a Gemini
+            userPrompt,
+            {
+                systemPrompt: systemPrompt
             }
-        });
+        );
 
-        return NextResponse.json({ ok: true, script: result });
+        return NextResponse.json({ ok: true, script: response.text });
     } catch (e: any) {
         console.error('[video-lab/script]', e);
         return NextResponse.json({ error: e.message }, { status: 500 });

@@ -57,7 +57,8 @@ Escenas: \${JSON.stringify(scenes)}`;
             prompt,
             {
                 systemPrompt,
-                model: "gemini-1.5-flash-002"
+                model: process.env.GEMINI_MODEL_FAST || "gemini-3.0-flash",
+                jsonSchema: true
             }
         );
 

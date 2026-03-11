@@ -251,8 +251,7 @@ async function processVideoBackground(
         where: { productId, conceptCode }
     });
     const versionNum = existingVersions + 1;
-    const cleanAngle = (analysis.angle || 'GENERAL').toUpperCase().replace(/\s+/g, '_');
-    const generatedNomen = `${productCode(product?.title ?? 'PRD')}_${conceptCode}_${cleanAngle}_V${versionNum}.mp4`;
+    const generatedNomen = `${productCode(product?.title ?? 'PRD')}_V${versionNum}_${conceptCode}.mp4`;
  
     // 5.1 Subir Video Principal
     const mainVideoUpload = await uploadToProduct(

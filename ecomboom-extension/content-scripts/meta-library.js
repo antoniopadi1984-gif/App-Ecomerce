@@ -18,83 +18,130 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// 2. Initial setup: Inject floating buttons into Meta Library
-function injectEcomBoomUI() {
-    // Only inject if not already there
-    if (document.getElementById('ecomboom-float-btn')) return;
+// 2. Inject Buttons DIRECTLY onto the Ad Cards
+function injectButtonsOnCards() {
+    // Busca las tarjetas de anuncios
+    const adCards = document.querySelectorAll('div[role="region"]');
+    
+    adCards.forEach(card => {
+        // Verifica si ya inyectamos el botón para no duplicarlo
+        if (card.querySelector('.ecomboom-card-btn')) return;
 
-    const floatBtn = document.createElement('div');
-    floatBtn.id = 'ecomboom-float-btn';
-    floatBtn.innerHTML = `
-        <div class="ecomboom-glow"></div>
-        <button class="eb-main-btn">🚀 Spy Ad</button>
-    `;
+        // Buscaremos si hay video o imagen en la misma card
+        const video = card.querySelector('video');
+        const img = card.querySelector('img[src*="ad_creative"]');
 
-    // Minimal styles for the float button
-    const style = document.createElement('style');
-    style.textContent = `
-        #ecomboom-float-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 999999;
-            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
-        }
-        .eb-main-btn {
-            background: #0f172a;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 30px;
-            font-weight: 800;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-        .eb-main-btn:hover {
-            transform: scale(1.05) translateY(-2px);
-            background: #1e293b;
-        }
-        .ecomboom-glow {
+        if (!video && !img) return; // Si no hay media, no inyectamos aún
+
+        const type = video ? 'VIDEO' : 'IMAGE';
+        
+        // Creamos el botón
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'ecomboom-card-btn';
+        btnContainer.style.cssText = `
             position: absolute;
-            inset: -5px;
-            background: linear-gradient(45deg, #0f172a, #1877F2);
-            border-radius: 40px;
-            filter: blur(10px);
-            opacity: 0.3;
-            z-index: -1;
-        }
-    `;
-    document.head.appendChild(style);
-    document.body.appendChild(floatBtn);
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+        `;
 
-    floatBtn.onclick = () => {
-        chrome.runtime.sendMessage({ action: "open_popup_with_context", platform: "meta" });
-    };
+        btnContainer.innerHTML = `
+            <button style="
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 6px 12px;
+                font-family: 'Inter', sans-serif;
+                font-size: 11px;
+                font-weight: 800;
+                cursor: pointer;
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            ">
+                🚀 Guardar en EcomBoom
+            </button>
+        `;
+
+        // Prevenimos que clicks en la tarjeta arruinen el botón
+        btnContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            // Obtenemos el product id por defecto
+            chrome.storage.local.get(['last_product_id'], (res) => {
+                const productId = res.last_product_id;
+                if (!productId) {
+                    alert("⚠️ ¡Atención! Abre la extensión de EcomBoom arriba a la derecha y selecciona el producto donde guardar esto.");
+                    return;
+                }
+
+                // URL base
+                let url = '';
+                if (video && video.src && !video.src.startsWith('blob')) {
+                    url = video.src;
+                } else if (img && img.src) {
+                    url = img.src;
+                } else {
+                    alert("Aún cargando video...");
+                    return;
+                }
+
+                btnContainer.querySelector('button').innerHTML = "⏳ Guardando...";
+                
+                // Enviar a Background script para descarga/guardado
+                chrome.runtime.sendMessage({
+                    action: "save_competitor_creative",
+                    payload: {
+                        url,
+                        type,
+                        productId,
+                        meta: {
+                            platform: "META",
+                            adCopy: card.innerText.slice(0, 500),
+                            timestamp: new Date().toISOString()
+                        }
+                    }
+                }, (response) => {
+                    setTimeout(() => {
+                        btnContainer.querySelector('button').innerHTML = "✅ ¡Enviado a Drive+IA!";
+                        btnContainer.querySelector('button').style.background = "#0f172a";
+                    }, 500);
+                });
+            });
+        });
+
+        // Buscamos el div contenedor del media para ponerlo arriba
+        const mediaContainer = video ? video.parentElement : img.parentElement;
+        if (mediaContainer) {
+            mediaContainer.style.position = 'relative';
+            mediaContainer.appendChild(btnContainer);
+        }
+    });
 }
 
-// Initial Scan
-injectEcomBoomUI();
+// Observador para cuando se hace scroll e inyectar en nuevas tarjetas
+const observer = new MutationObserver(() => {
+    injectButtonsOnCards();
+});
 
-/**
- * Capture the most prominent ad card currently in view
- */
+observer.observe(document.body, { childList: true, subtree: true });
+
+// Llamada inicial
+setTimeout(injectButtonsOnCards, 2000);
+
+// --- Funciones antiguas para el Popup interactivo ---
 function captureActiveAd(productId, sendResponse) {
     const cards = Array.from(document.querySelectorAll('div[role="region"]'));
     if (cards.length === 0) {
         sendResponse({ success: false, error: "No ad cards found" });
         return;
     }
-
-    // Heuristic: Find first active card with a video or image
     for (const card of cards) {
         const video = card.querySelector('video');
         const img = card.querySelector('img[src*="ad_creative"]');
-
         if (video && video.src && !video.src.startsWith('blob')) {
             reportAsset(video.src, 'VIDEO', card, productId, sendResponse);
             return;
@@ -103,7 +150,6 @@ function captureActiveAd(productId, sendResponse) {
             return;
         }
     }
-
     sendResponse({ success: false, error: "No clear creative source found in active cards" });
 }
 
@@ -114,84 +160,9 @@ function reportAsset(url, type, card, productId, sendResponse) {
             url,
             type,
             productId,
-            meta: {
-                platform: "META",
-                adCopy: card.innerText.slice(0, 500),
-                timestamp: new Date().toISOString()
-            }
+            meta: { platform: "META", adCopy: card.innerText.slice(0, 500) }
         }
     }, (response) => {
         sendResponse(response);
-    });
-}
-
-/**
- * Experimental: Multi-ad scanner for Meta Library
- * Automatically scrolls and captures every ad for a specific advertiser.
- */
-async function scanFullLibrary(productId, sendResponse) {
-    console.log("[MetaScraper] 🚀 Starting heavy library spy job...");
-
-    // Identify advertiser name
-    const advertiserName = document.title.split('|')[0].trim();
-    let adsFound = 0;
-    let lastHeight = 0;
-
-    // Initial response to notify starting
-    sendResponse({ success: true, status: "SCANNING", advertiser: advertiserName });
-
-    // Scrolling loop to reveal all ads
-    while (true) {
-        const currentHeight = document.body.scrollHeight;
-        if (currentHeight === lastHeight) break; // Reached bottom or no more loading
-
-        lastHeight = currentHeight;
-        window.scrollTo(0, currentHeight);
-
-        // Wait for potential Lazy Loading
-        await new Promise(r => setTimeout(r, 2000));
-
-        // Find visible cards
-        const cards = Array.from(document.querySelectorAll('div[role="region"]'));
-
-        for (const card of cards) {
-            // Check if we already processed this card
-            if (card.dataset.ecomboomProcessed) continue;
-
-            const video = card.querySelector('video');
-            const img = card.querySelector('img[src*="ad_creative"]');
-
-            if (video && video.src && !video.src.startsWith('blob')) {
-                reportBackgroundAsset(video.src, 'VIDEO', card, productId);
-                adsFound++;
-            } else if (img && img.src) {
-                reportBackgroundAsset(img.src, 'IMAGE', card, productId);
-                adsFound++;
-            }
-
-            card.dataset.ecomboomProcessed = "true";
-        }
-
-        console.log(`[MetaScraper] Progress: ${adsFound} ads detected...`);
-
-        // Safety break if it's too many (e.g. 200+)
-        if (adsFound > 200) break;
-    }
-
-    console.log(`[MetaScraper] ✅ Finished! Total ads spied: ${adsFound}`);
-}
-
-function reportBackgroundAsset(url, type, card, productId) {
-    chrome.runtime.sendMessage({
-        action: "save_competitor_creative",
-        payload: {
-            url,
-            type,
-            productId,
-            meta: {
-                platform: "META_BULK",
-                adCopy: card.innerText.slice(0, 500)
-            }
-        }
     });
 }

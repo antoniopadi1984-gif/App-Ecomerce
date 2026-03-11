@@ -75,15 +75,32 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
         setLoadingMeta(true);
         try {
             const q = productId && productId !== 'GLOBAL' ? `productId=${productId}` : '';
-            const res = await fetch(`/api/creative/library?${q}`);
+            const res = await fetch(`/api/competitor/ads?${q}`, {
+                headers: { 'X-Store-Id': storeId }
+            });
             const data = await res.json();
-            if (data.success) setMetaCreatives(data.creatives || []);
+            if (data.ads) {
+                // Map CompetitorAd to fit the UI
+                const mapped = data.ads.map((ad: any) => ({
+                    id: ad.id,
+                    concept: ad.title || 'Anuncio Competencia',
+                    thumbnailUrl: null, // Si Meta nos da imagen
+                    videoUrl: ad.url,
+                    stage: ad.analysisJson ? JSON.parse(ad.analysisJson).awareness : 'COLD',
+                    status: ad.status || 'ACTIVE',
+                    createdAt: ad.createdAt,
+                    ctr: null,
+                    revenue: 0,
+                    spend: 0
+                }));
+                setMetaCreatives(mapped);
+            }
         } catch (e) {
             console.error('[VideoLab] Error fetching meta library:', e);
         } finally {
             setLoadingMeta(false);
         }
-    }, [productId]);
+    }, [productId, storeId]);
 
     // Fetch Drive folders
     const fetchDriveFolders = useCallback(async () => {

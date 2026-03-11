@@ -30,6 +30,9 @@ export async function GET(request: Request) {
                 name: c.originalUrl ? new URL(c.originalUrl).hostname : 'Landing sin nombre',
                 url: c.originalUrl,
                 screenshot: c.screenshotUrl,
+                assets: analysis.assets || [],
+                assetCount: analysis.assetCount || 0,
+                structure: analysis.structure || [],
                 scores: analysis.scores || {
                     mobile: Math.floor(Math.random() * 30) + 60,
                     desktop: Math.floor(Math.random() * 20) + 70,

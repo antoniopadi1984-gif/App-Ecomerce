@@ -11,11 +11,20 @@ import { cn } from '@/lib/utils';
 import { useProduct } from '@/context/ProductContext';
 import { toast } from 'sonner';
 
+interface LandingAsset {
+    type: 'image' | 'video' | 'gif';
+    url: string;
+    name: string;
+}
+
 interface LandingAnalysis {
     id: string;
     name: string;
     url: string;
     screenshot?: string;
+    assets: LandingAsset[];
+    assetCount: number;
+    structure: string[];
     scores?: {
         mobile: number;
         desktop: number;
@@ -28,7 +37,7 @@ interface LandingAnalysis {
 
 export function DisenoTab({ storeId, productId }: { storeId: string, productId: string }) {
     const { product } = useProduct();
-    const [activeTab, setActiveTab] = useState<'visual' | 'analysis'>('visual');
+    const [activeTab, setActiveTab] = useState<'visual' | 'analysis' | 'assets'>('visual');
     const [landings, setLandings] = useState<LandingAnalysis[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -212,6 +221,19 @@ export function DisenoTab({ storeId, productId }: { storeId: string, productId: 
                                     <BarChart3 size={14} />
                                     Análisis IA
                                 </button>
+                                <button
+                                    onClick={() => setActiveTab('assets')}
+                                    className={cn(
+                                        "h-full text-[11px] font-black uppercase tracking-widest border-b-2 transition-all flex items-center gap-2",
+                                        activeTab === 'assets' ? "border-[var(--cre)] text-[var(--cre)]" : "border-transparent text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    <Sparkles size={14} />
+                                    Recursos Extraídos
+                                    {activeLanding.assetCount > 0 && (
+                                        <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-[var(--cre)] text-white text-[8px] leading-none">{activeLanding.assetCount}</span>
+                                    )}
+                                </button>
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -255,7 +277,7 @@ export function DisenoTab({ storeId, productId }: { storeId: string, productId: 
                                         </div>
                                     </div>
                                 </div>
-                            ) : (
+                            ) : activeTab === 'analysis' ? (
                                 <div className="p-6 h-full overflow-y-auto custom-scrollbar">
                                     <div className="grid grid-cols-12 gap-6">
                                         {/* SCORING CARDS */}
@@ -353,7 +375,60 @@ export function DisenoTab({ storeId, productId }: { storeId: string, productId: 
                                         </div>
                                     </div>
                                 </div>
-                            )}
+                            ) : activeTab === 'assets' ? (
+                                <div className="p-6 h-full overflow-y-auto custom-scrollbar">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="col-span-full">
+                                            <h3 className="text-[14px] font-black text-slate-800 uppercase tracking-widest mb-1 flex items-center gap-2">
+                                                <Sparkles size={16} className="text-[var(--cre)]" />
+                                                Multimedia Extraída
+                                            </h3>
+                                            <p className="text-[11px] text-slate-500 font-medium">Imágenes, GIFs y vídeos extraídos directamente del DOM de la competencia.</p>
+                                        </div>
+                                        
+                                        {activeLanding.assets && activeLanding.assets.length > 0 ? activeLanding.assets.map((asset, i) => (
+                                            <div key={i} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm flex flex-col group hover:border-[var(--cre)] transition-colors">
+                                                <div className="h-40 bg-slate-100 relative flex items-center justify-center overflow-hidden">
+                                                    {asset.type === 'video' ? (
+                                                        <div className="absolute inset-0 flex items-center justify-center group-hover:bg-black/10 transition-colors z-10 w-full h-full bg-slate-200">
+                                                             <span className="text-[10px] font-black bg-black text-white px-2 py-1 rounded">VIDEO</span>
+                                                        </div>
+                                                    ) : (
+                                                        <img src={asset.url} alt={asset.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                                                    )}
+                                                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-white/90 shadow text-slate-700">
+                                                        {asset.type}
+                                                    </span>
+                                                </div>
+                                                <div className="p-3 border-t border-slate-100 flex flex-col justify-between flex-1">
+                                                    <p className="text-[10px] font-bold text-slate-700 truncate mb-2" title={asset.name || asset.url.split('/').pop()}>{asset.name || asset.url.split('/').pop() || 'Asset sin nombre'}</p>
+                                                    <a href={asset.url} target="_blank" rel="noopener noreferrer" className="w-full py-1.5 bg-slate-50 border border-slate-200 rounded text-[9px] font-black text-slate-500 uppercase flex justify-center items-center gap-1 hover:bg-slate-100 hover:text-[var(--cre)] hover:border-[var(--cre)]/30 transition-all">
+                                                        <ExternalLink size={10} /> Enlace directo
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )) : (
+                                            <div className="col-span-full py-20 text-center">
+                                                <p className="text-[12px] text-slate-400 font-bold uppercase tracking-widest">No se detectaron recursos extraíbles explícitos.</p>
+                                            </div>
+                                        )}
+                                        
+                                        {activeLanding.structure && activeLanding.structure.length > 0 && (
+                                            <div className="col-span-full mt-6">
+                                                <h3 className="text-[14px] font-black text-slate-800 uppercase tracking-widest mb-4 border-t border-slate-200 pt-6">Estructura Copywriting y Layout Extraído</h3>
+                                                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden text-[11px] text-slate-600 font-medium">
+                                                    {activeLanding.structure.map((str, idx) => (
+                                                        <div key={idx} className="p-4 border-b border-slate-100 flex gap-4 hover:bg-slate-50 last:border-0">
+                                                            <div className="font-black text-[var(--cre)] opacity-50 shrink-0">0{idx + 1}</div>
+                                                            <div>{str}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : null}
                         </div>
                     </>
                 )}

@@ -173,39 +173,14 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
         const prodSku = NomenclatureService.extractSku(product?.title ?? productId, product?.sku);
         const prodFolderId = await findOrCreateFolder(drive, prodSku, storeFolderId);
 
-        // --- NEW IA PRO STRUCTURE ---
-        const centroId = await findOrCreateFolder(drive, "CENTRO_CREATIVO", prodFolderId);
-
-        // 00_INBOX
-        await findOrCreateFolder(drive, "00_INBOX_SIN_PROCESAR", centroId);
-
-        // 01_ESTUDIO
-        const estudioId = await findOrCreateFolder(drive, "01_ESTUDIO_PRODUCCION", centroId);
-        await findOrCreateFolder(drive, "01_IA_VILLAGES", estudioId);
-        await findOrCreateFolder(drive, "02_AUDIO", estudioId);
-        await findOrCreateFolder(drive, "03_RAW", estudioId);
-        await findOrCreateFolder(drive, "04_PROYECTOS", estudioId);
-
-        // 02_BIBLIOTECA
-        const biblioId = await findOrCreateFolder(drive, "02_BIBLIOTECA_LISTOS_PARA_ADS", centroId);
-
-        // Retargeting subfolders
-        const retargetId = await findOrCreateFolder(drive, "01_RETARGETING", biblioId);
-        await findOrCreateFolder(drive, "R10_COPY_DIRECTO", retargetId);
-        await findOrCreateFolder(drive, "R20_COPY_PROBLEMA", retargetId);
-        await findOrCreateFolder(drive, "R30_COPY_STORY", retargetId);
-
-        await findOrCreateFolder(drive, "02_CONCEPTOS", biblioId);
-        await findOrCreateFolder(drive, "03_ESTATICOS", biblioId);
-
-        // 05_LANDINGS
-        await findOrCreateFolder(drive, "05_LANDINGS", centroId);
-
-        // 06_ASSETS
-        const assetsId = await findOrCreateFolder(drive, "06_ASSETS", centroId);
-        await findOrCreateFolder(drive, "IMAGENES_LANDING", assetsId);
-        await findOrCreateFolder(drive, "TEMA_SHOPIFY", assetsId);
-        // --- END IA PRO STRUCTURE ---
+        // --- SIMPLIFIED STRUCTURE ---
+        // Put core utility folders directly under the product
+        await findOrCreateFolder(drive, "INBOX", prodFolderId);
+        await findOrCreateFolder(drive, "CONCEPTOS", prodFolderId);
+        await findOrCreateFolder(drive, "LANDINGS", prodFolderId);
+        await findOrCreateFolder(drive, "ASSETS", prodFolderId);
+        await findOrCreateFolder(drive, "RESEARCH", prodFolderId);
+        // --- END SIMPLIFIED STRUCTURE ---
 
         // Create empty index.json
         const emptyIndex: ProductIndex = {
@@ -460,18 +435,19 @@ export async function uploadToProduct(
     let subFolder = folderId;
 
     if (opts.conceptCode) {
-        // 1. Concept Folder (e.g. C1_NOMBRE)
+        // Concept folder inside CONCEPTOS folder
+        const parentConceptsId = await findOrCreateFolder(drive, "CONCEPTOS", folderId);
         const conceptName = opts.conceptCode.toUpperCase();
-        const conceptFolderId = await findOrCreateFolder(drive, conceptName, folderId);
+        const conceptFolderId = await findOrCreateFolder(drive, conceptName, parentConceptsId);
         
         subFolder = conceptFolderId;
 
-        // 2. Sub-elements (like CLIPS) - Si se solicita, creamos carpeta CLIPS dentro del concepto
+        // Sub-elements (like CLIPS) - Inside the concept folder
         if (opts.subfolderName) {
             subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), conceptFolderId);
         }
     } else if (opts.fileType === 'IMAGE') {
-        const assetsFolder = await findOrCreateFolder(drive, '06_ASSETS', folderId);
+        const assetsFolder = await findOrCreateFolder(drive, 'ASSETS', folderId);
         subFolder = await findOrCreateFolder(drive, 'IMAGENES', assetsFolder);
     }
 
@@ -571,11 +547,10 @@ export async function processInbox(productId: string, storeId: string) {
 
         if (!product?.driveFolderId) return { success: false, error: "Drive not setup" };
 
-        const centroId = await findOrCreateFolder(drive, "CENTRO_CREATIVO", product.driveFolderId);
-        const inboxId = await findOrCreateFolder(drive, "00_INBOX_SIN_PROCESAR", centroId);
-        const estudioId = await findOrCreateFolder(drive, "01_ESTUDIO_PRODUCCION", centroId);
-        const rawFolderId = await findOrCreateFolder(drive, "03_RAW", estudioId);
-        const audioFolderId = await findOrCreateFolder(drive, "02_AUDIO", estudioId);
+        const inboxId = await findOrCreateFolder(drive, "INBOX", product.driveFolderId);
+        const assetsFolderId = await findOrCreateFolder(drive, "ASSETS", product.driveFolderId);
+        const rawFolderId = await findOrCreateFolder(drive, "RAW", assetsFolderId);
+        const audioFolderId = await findOrCreateFolder(drive, "AUDIO", assetsFolderId);
 
         const res = await drive.files.list({
             q: `'${inboxId}' in parents and trashed = false`,
@@ -639,8 +614,7 @@ export async function getLandingAssets(productId: string) {
 
         if (!product?.driveFolderId) return [];
 
-        const centroId = await findOrCreateFolder(drive, "CENTRO_CREATIVO", product.driveFolderId);
-        const assetsId = await findOrCreateFolder(drive, "06_ASSETS", centroId);
+        const assetsId = await findOrCreateFolder(drive, "ASSETS", product.driveFolderId);
         const imagesId = await findOrCreateFolder(drive, "IMAGENES_LANDING", assetsId);
 
         const res = await drive.files.list({
@@ -672,10 +646,9 @@ export async function saveLandingProject(productId: string, storeId: string, typ
 
         if (!product?.driveFolderId) throw new Error("Drive no configurado");
 
-        const centroId = await findOrCreateFolder(drive, "CENTRO_CREATIVO", product.driveFolderId);
-        const landingsId = await findOrCreateFolder(drive, "05_LANDINGS", centroId);
+        const landingsId = await findOrCreateFolder(drive, "LANDINGS", product.driveFolderId);
         const typeId = await findOrCreateFolder(drive, type.toUpperCase(), landingsId);
-        const versionId = await findOrCreateFolder(drive, `V${String(version).padStart(2, '0')}`, typeId);
+        const versionId = await findOrCreateFolder(drive, `V${String(version)}`, typeId);
 
         // Save index.json for the landing
         const fileName = 'landing_data.json';

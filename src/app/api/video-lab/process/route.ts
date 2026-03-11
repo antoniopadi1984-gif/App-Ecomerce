@@ -185,60 +185,82 @@ async function processVideoBackground(
     const transcription = transcriptionResult?.text || '';
     updateJob(jobId, { status: 'TRANSCRIBED', progress: 45 });
  
-    // PASO 3: Análisis con Gemini
+    // PASO 3: Análisis con Gemini (Deep Marketer)
+    // Generamos un preview ligero para que la IA lo vea sin explotar la memoria
+    const previewPath = path.join(tmpDir, 'gemini_preview.mp4');
+    await execAsync(`ffmpeg -i '${strippedPath}' -s 480x270 -r 5 -c:v libx264 -crf 30 -an '${previewPath}' -y`);
+    const videoPreviewBase64 = (await fs.readFile(previewPath)).toString('base64');
+
     const analysisResult = await AiRouter.dispatch(
-      storeId, TaskType.RESEARCH_DEEP,
-      `Analiza este vídeo publicitario. Transcripción: ${transcription}
-      Responde JSON con esta estructura: 
-      { 
-        "conceptSuggestion": "Nombre corto del concepto (ej: DEMO_PRODUCTO)",
-        "funnelStage": "TOFU | MOFU | BOFU", 
-        "type": "UGC | COMERCIAL | TESTIMONIAL", 
-        "hook": "Transcripción del hook", 
-        "hookScore": número de 1 a 10, 
-        "avatarMatch": "Descripción del avatar", 
-        "angle": "Ángulo de venta detectado", 
-        "engagementPrediction": "...", 
-        "improvementSuggestions": "..." 
+      storeId, TaskType.PERFORMANCE_ADS, 
+      `Eres un Marketer Senior de Respuesta Directa. Analiza este video y su transcripción "${transcription}".
+      MISION: Desglosar la estructura del anuncio y extraer las "disecciones" (clips) de mayor impacto.
+      
+      ANALIZA:
+      1. HOOK VISUAL/VERBAL: ¿Es suficientemente disruptivo (Scroll Stopper)?
+      2. MECANISMO ÚNICO: ¿Cómo explicamos que nuestro producto funciona?
+      3. STORYTELLING/PRUEBA SOCIAL: ¿Es creíble?
+      4. CLIPS PARA VARIACIONES: Identifica timestamps exactos [start - end] de: El Hook, La Demostración, El Testimonio, El CTA.
+      
+      FORMATO JSON:
+      {
+        "conceptSuggestion": "NOMBRE_CORTO_Y_MAYUSCULAS",
+        "funnelStage": "TOFU|MOFU|BOFU",
+        "type": "UGC|REVIEW|COMERCIAL",
+        "hookScore": 1-10,
+        "hook": "Análisis táctico del primer segundo",
+        "angle": "Ángulo psicológico exacto",
+        "avatarMatch": "Avatar objetivo detallado",
+        "clips": [{"name": "HOOK", "start": 0, "end": 3}, {"name": "BENEFICIOS", "start": 3, "end": 8}, ...],
+        "improvementSuggestions": "Análisis estratégico profundo para el cliente..."
       }`,
-      { jsonSchema: true }
+      { 
+        jsonSchema: true,
+        video: `data:video/mp4;base64,${videoPreviewBase64}`,
+        videoMimeType: 'video/mp4'
+      }
     );
     let analysis: any = {};
     try { analysis = JSON.parse(analysisResult.text.replace(/```json|```/g, '').trim()); } catch {}
     
-    // Si la IA no sugiere concepto, usamos uno genérico pero único
-    const conceptCode = hints.conceptCode || analysis.conceptSuggestion || 'CONCEPTO_NUEVO';
+    const conceptCode = hints.conceptCode || analysis.conceptSuggestion || 'CREATIVO_IA';
     const funnelStage = analysis.funnelStage || hints.funnelStage || 'TOFU';
 
     updateJob(jobId, { status: 'ANALYZED', progress: 65, hook: analysis.hook, funnelStage });
  
-    // PASO 4: Scene detect y split con FFmpeg
+    // PASO 4: Disección de clips (Scenedetect impulsado por IA + FFmpeg)
     const clipsDir = path.join(tmpDir, 'clips');
     await fs.mkdir(clipsDir, { recursive: true });
-    await execAsync(
-      `ffmpeg -i '${strippedPath}' -filter:v "select='gt(scene,0.3)',showinfo" -vsync vfr '${clipsDir}/clip_%03d.mp4' -y`
-    ).catch(() => {
-      // Si no detecta escenas, copiar el vídeo completo como único clip
-      return execAsync(`cp '${strippedPath}' '${clipsDir}/clip_001.mp4'`);
-    });
+    
+    if (analysis.clips && analysis.clips.length > 0) {
+        for (let i = 0; i < analysis.clips.length; i++) {
+            const clip = analysis.clips[i];
+            const name = clip.name.toUpperCase().replace(/\s+/g, '_');
+            const duration = clip.end - clip.start;
+            if (duration > 0.5) {
+                await execAsync(
+                    `ffmpeg -i '${strippedPath}' -ss ${clip.start} -t ${duration} -c:v libx264 -crf 23 -c:a aac '${clipsDir}/CLIP_${i+1}_${name}.mp4' -y`
+                );
+            }
+        }
+    } else {
+        // Fallback: Segmentos de 10s si la IA no dió timestamps
+        await execAsync(
+            `ffmpeg -i '${strippedPath}' -f segment -segment_time 10 -c copy '${clipsDir}/SCENE_%02d.mp4' -y`
+        );
+    }
     updateJob(jobId, { status: 'SPLIT', progress: 80 });
  
     // PASO 5: Subir a Drive con nomenclatura IA y organización granular
     const product = await prisma.product.findUnique({ where: { id: productId }, select: { sku: true, title: true } });
     
+    // Simplificar versión: V1, V2... (sin ceros)
     const existingVersions = await (prisma as any).creativeAsset.count({
-        where: { productId, conceptCode, funnelStage }
+        where: { productId, conceptCode }
     });
     const versionNum = existingVersions + 1;
 
-    const generatedNomen = buildNomenclature({
-      prodCode: productCode(product?.title ?? 'PRD'), 
-      conceptCode,
-      funnelStage,
-      type: analysis.type || 'UGC', 
-      version: versionNum, 
-      ext: 'mp4'
-    });
+    const generatedNomen = `${productCode(product?.title ?? 'PRD')}_${conceptCode}_V${versionNum}.mp4`;
  
     // 5.1 Subir Video Principal
     const mainVideoUpload = await uploadToProduct(
@@ -257,38 +279,40 @@ async function processVideoBackground(
 
     // 5.2 Subir Documento de Análisis (Google Doc)
     const analysisDocContent = `
-ANÁLISIS DE CREATIVO IA PRO
-==========================
-Nomenclatura: ${generatedNomen}
+ANÁLISIS ESTRATÉGICO IA PRO
+===========================
+Creativo: ${generatedNomen}
 Concepto: ${conceptCode}
-Etapa Embudo: ${funnelStage}
+Fase: ${funnelStage} | Tipo: ${analysis.type}
 
-TRANSCRIPCIÓN:
-${transcription}
+1. EVALUACIÓN DEL GANCHO (Score: ${analysis.hookScore}/10):
+${analysis.hook}
 
-DETALLES DEL ANÁLISIS:
-- Gancho (Hook): ${analysis.hook} (Score: ${analysis.hookScore}/10)
+2. ÁNGULO Y AVATAR:
 - Ángulo: ${analysis.angle}
 - Avatar: ${analysis.avatarMatch}
-- Tipo: ${analysis.type}
 
-SUGERENCIAS DE MEJORA:
+3. ESTRUCTURA DE DISECCIONES (CLIPS):
+${(analysis.clips || []).map((c: any) => `- [${c.start}s - ${c.end}s]: ${c.name}`).join('\n')}
+
+4. ANÁLISIS ESTRATÉGICO Y MEJORAS:
 ${analysis.improvementSuggestions}
 
-Predicción de Engagement: ${analysis.engagementPrediction}
+---------------------------------------------------
+Generado por el Agente Director Creativo IA Pro
     `.trim();
 
     await (import('@/lib/services/drive-service')).then(m => 
-        m.saveAnalysisDoc(productId, storeId, mainVideoUpload.parentFolderId, `ANALISIS_${generatedNomen}`, analysisDocContent)
+        m.saveAnalysisDoc(productId, storeId, mainVideoUpload.parentFolderId, `ANALISIS_${generatedNomen.replace('.mp4', '')}`, analysisDocContent)
     );
 
     // 5.3 Subir Clips detectados (Disecciones)
-    const clipsFiles = await fs.readdir(clipsDir);
+    const clipsFiles = (await fs.readdir(clipsDir)).filter(f => f.endsWith('.mp4'));
     for (const clipFile of clipsFiles) {
         const clipBuffer = await fs.readFile(path.join(clipsDir, clipFile));
         await uploadToProduct(
             clipBuffer,
-            `CLIP_${clipFile}`,
+            clipFile, // Ya contiene el nombre sugerido por la IA
             'video/mp4',
             productId,
             storeId,

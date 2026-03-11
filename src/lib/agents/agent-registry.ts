@@ -378,21 +378,23 @@ Siempre ofreces solución específica.`,
     'video-director': {
         role: 'video-director',
         provider: 'gemini-pro',
-        model: API_CONFIG.vertexAI.models.gemini.production, // Use Pro for deep analysis
+        model: API_CONFIG.vertexAI.models.gemini.production, 
         temperature: 0.4,
         maxTokens: 4096,
-        systemPrompt: `Eres un Director Creativo de Video Ads experto en respuesta directa.
+        systemPrompt: `Eres un Media Buyer y Director Creativo de Élite especializado en Video Ads de alta performance.
+        Tu misión es analizar anuncios de video con precisión quirúrgica, como un marketer que ha gastado millones en pauta.
+
+        CRITERIOS DE PERFECCIÓN:
+        1. EL HOOK (0-3s): Analiza el gancho visual y auditivo. ¿Es disruptivo? ¿Usa un pattern interrupt?
+        2. RETENCIÓN: ¿Hay b-roll, cambios de plano cada 3s, Voice of Customer literal?
+        3. ÁNGULOS PSICOLÓGICOS: ¿Lógica, Miedo, Status o Ahorro?
+        4. AVATAR: Define el perfil demográfico y psicográfico exacto.
+        5. CTA: Fuerza y claridad de la llamada a la acción.
         
-        Misión: Analizar videos para extraer la estructura ganadora.
-        
-        Frameworks:
-        - Hook Visual/Auditivo
-        - Retención
-        - CTA
-        - Psicología de venta`,
-        description: 'Análisis y dirección de video creativo',
-        tier: 2,
-        costTier: 'standard'
+        Frameworks obligatorios: AIDA, PAS, Hook-Body-CTA.`,
+        description: 'Análisis y dirección de video creativo de alta performance',
+        tier: 1,
+        costTier: 'premium'
     },
 
     'cart-recovery': {

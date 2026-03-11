@@ -460,22 +460,15 @@ export async function uploadToProduct(
     let subFolder = folderId;
 
     if (opts.conceptCode) {
-        // 1. Concept Folder (e.g. C01_NOMBRE)
-        const conceptName = opts.conceptCode.startsWith('C') ? opts.conceptCode : `C01_${opts.conceptCode}`;
-        const conceptFolderId = await findOrCreateFolder(drive, conceptName.toUpperCase(), folderId);
+        // 1. Concept Folder (e.g. C1_NOMBRE)
+        const conceptName = opts.conceptCode.toUpperCase();
+        const conceptFolderId = await findOrCreateFolder(drive, conceptName, folderId);
         
-        // 2. Funnel Stage Folder (e.g. TOFU, MOFU, BOFU)
-        const funnelFolderId = await findOrCreateFolder(drive, (opts.funnelStage || 'TOFU').toUpperCase(), conceptFolderId);
-        
-        // 3. Version Folder (e.g. V01, V02)
-        const versionNum = opts.version !== undefined ? String(opts.version).padStart(2, '0') : '01';
-        const versionFolderId = await findOrCreateFolder(drive, `V${versionNum}`, funnelFolderId);
-        
-        subFolder = versionFolderId;
+        subFolder = conceptFolderId;
 
-        // 4. Sub-elements (like CLIPS)
+        // 2. Sub-elements (like CLIPS) - Si se solicita, creamos carpeta CLIPS dentro del concepto
         if (opts.subfolderName) {
-            subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), versionFolderId);
+            subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), conceptFolderId);
         }
     } else if (opts.fileType === 'IMAGE') {
         const assetsFolder = await findOrCreateFolder(drive, '06_ASSETS', folderId);

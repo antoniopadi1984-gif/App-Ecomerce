@@ -11,10 +11,10 @@ const MODULES = [
   { id: 'creativo',         label: 'Centro Creativo',    emoji: '🎨', color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe' },
   { id: 'investigacion',    label: 'Investigación',      emoji: '🔭', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
   { id: 'marketing',        label: 'Marketing & Ads',    emoji: '📡', color: '#ef4444', bg: '#fef2f2', border: '#fecaca' },
-  { id: 'operaciones',      label: 'Operaciones',        emoji: '⚙️', color: '#64748b', bg: '#f8fafc', border: '#e2e8f0' },
+  { id: 'operaciones',      label: 'Operaciones',        emoji: '⚙️', color: '#1e293b', bg: '#f8fafc', border: '#e2e8f0' },
   { id: 'drive',            label: 'Drive / Archivos',   emoji: '📁', color: '#0ea5e9', bg: '#f0f9ff', border: '#bae6fd' },
   { id: 'mando',            label: 'Centro de Mando',    emoji: '🎛️', color: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' },
-  { id: 'sistema',          label: 'Sistema',            emoji: '🛠️', color: '#94a3b8', bg: '#f8fafc', border: '#e2e8f0' },
+  { id: 'sistema',          label: 'Sistema',            emoji: '🛠️', color: '#475569', bg: '#f8fafc', border: '#e2e8f0' },
 ];
 
 // ── Agentes predefinidos (sistema) ────────────────────────────────
@@ -173,7 +173,7 @@ export default function AgentesPage() {
           <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
             Agentes IA
           </h1>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 500 }}>
+          <p style={{ fontSize: '12px', color: '#334155', marginTop: '4px', fontWeight: 500 }}>
             Configura y asigna agentes a módulos específicos · {configs.length} agentes activos
           </p>
         </div>
@@ -197,14 +197,14 @@ export default function AgentesPage() {
               </div>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>Nuevo Agente Personalizado</span>
             </div>
-            <button onClick={() => setCreating(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+            <button onClick={() => setCreating(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}>
               <X size={16} />
             </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
-              <label style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
                 ID del Agente *
               </label>
               <input
@@ -216,7 +216,7 @@ export default function AgentesPage() {
               />
             </div>
             <div>
-              <label style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
                 Nombre del Agente *
               </label>
               <input
@@ -231,7 +231,7 @@ export default function AgentesPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
-              <label style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
                 Módulo Asignado
               </label>
               <select
@@ -244,7 +244,7 @@ export default function AgentesPage() {
               </select>
             </div>
             <div>
-              <label style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
                 Descripción breve
               </label>
               <input
@@ -258,7 +258,7 @@ export default function AgentesPage() {
           </div>
 
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
               System Prompt
             </label>
             <textarea
@@ -290,9 +290,9 @@ export default function AgentesPage() {
 
       {/* ── Grouped by module ──────────────────────────────────────────── */}
       {grouped.length === 0 && !creating && (
-        <div className="ds-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', flexDirection: 'column', gap: '12px', color: '#94a3b8', textAlign: 'center' }}>
+        <div className="ds-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', flexDirection: 'column', gap: '12px', color: '#475569', textAlign: 'center' }}>
           <Bot size={36} style={{ opacity: 0.4 }} />
-          <span style={{ fontSize: '14px', fontWeight: 700, color: '#64748b' }}>Sin agentes configurados</span>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>Sin agentes configurados</span>
           <span style={{ fontSize: '12px' }}>Crea tu primer agente con el botón superior</span>
         </div>
       )}
@@ -303,7 +303,7 @@ export default function AgentesPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', paddingLeft: '2px' }}>
             <span style={{ fontSize: '14px' }}>{mod.emoji}</span>
             <span style={{ fontSize: '11px', fontWeight: 800, color: mod.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{mod.label}</span>
-            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>({agents.length})</span>
+            <span style={{ fontSize: '10px', color: '#475569', fontWeight: 600 }}>({agents.length})</span>
             <div style={{ flex: 1, height: '1px', background: mod.border, marginLeft: '4px' }} />
           </div>
 
@@ -319,14 +319,14 @@ export default function AgentesPage() {
                       <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{cfg.label}</span>
                       <ModuleBadge moduleId={editing.module} />
                     </div>
-                    <button onClick={() => setEditing(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                    <button onClick={() => setEditing(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}>
                       <X size={15} />
                     </button>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                     <div>
-                      <label style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Módulo</label>
+                      <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Módulo</label>
                       <select
                         className="ds-input"
                         value={editing.module}
@@ -337,7 +337,7 @@ export default function AgentesPage() {
                       </select>
                     </div>
                     <div>
-                      <label style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Descripción</label>
+                      <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Descripción</label>
                       <input
                         className="ds-input"
                         value={editing.description || ''}
@@ -348,7 +348,7 @@ export default function AgentesPage() {
                   </div>
 
                   <div style={{ marginBottom: '12px' }}>
-                    <label style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>System Prompt</label>
+                    <label style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>System Prompt</label>
                     <textarea
                       value={editing.systemPrompt}
                       onChange={e => setEditing({ ...editing, systemPrompt: e.target.value })}
@@ -393,15 +393,15 @@ export default function AgentesPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap' }}>{cfg.label}</span>
-                      <span style={{ fontSize: '9px', fontWeight: 700, color: '#94a3b8', fontFamily: 'monospace', background: '#f1f5f9', padding: '1px 5px', borderRadius: '4px' }}>
+                      <span style={{ fontSize: '9px', fontWeight: 700, color: '#475569', fontFamily: 'monospace', background: '#f1f5f9', padding: '1px 5px', borderRadius: '4px' }}>
                         {cfg.agentId}
                       </span>
                     </div>
-                    <p style={{ fontSize: '11px', color: '#64748b', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '11px', color: '#1e293b', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {cfg.description}
                     </p>
                     {cfg.systemPrompt && (
-                      <p style={{ fontSize: '10px', color: '#94a3b8', margin: '3px 0 0', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: '10px', color: '#475569', margin: '3px 0 0', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {cfg.systemPrompt.slice(0, 80)}…
                       </p>
                     )}
@@ -415,7 +415,7 @@ export default function AgentesPage() {
                       style={{
                         width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #e2e8f0',
                         background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#64748b', transition: 'all 0.12s',
+                        color: '#1e293b', transition: 'all 0.12s',
                       }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; (e.currentTarget as HTMLElement).style.color = mod.color; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'white'; (e.currentTarget as HTMLElement).style.color = '#64748b'; }}
@@ -433,7 +433,7 @@ export default function AgentesPage() {
                       style={{
                         width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #e2e8f0',
                         background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#94a3b8', transition: 'all 0.12s', opacity: deleting === cfg.agentId ? 0.5 : 1,
+                        color: '#475569', transition: 'all 0.12s', opacity: deleting === cfg.agentId ? 0.5 : 1,
                       }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#fef2f2'; (e.currentTarget as HTMLElement).style.color = '#ef4444'; (e.currentTarget as HTMLElement).style.borderColor = '#fecaca'; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'white'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'; }}

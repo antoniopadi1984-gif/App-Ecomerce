@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
                 const p2Data = await getStepOutput('P2');
                 const p3Result = await AiRouter.dispatch(
                     storeId,
-                    TaskType.RESEARCH_DEEP,
+                    TaskType.COPYWRITING_DEEP,
                     `${GEMINI_PROMPTS_V3.LANGUAGE_EXTRACTION}
                     \n\nCONTEXTO REAL:
                     Avatares Generados: ${JSON.stringify(p2Data)}`,
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
                 const _p3Data = await getStepOutput('P3');
                 const p4Result = await AiRouter.dispatch(
                     storeId,
-                    TaskType.RESEARCH_DEEP,
+                    TaskType.COPYWRITING_DEEP,
                     `${GEMINI_PROMPTS_V3.ANGLE_ENGINEERING_V3}
                     \n\nCONTEXTO REAL:
                     Producto: ${product.title}
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
                 const _p4DataForP5 = await getStepOutput('P4');
                 const p5Result = await AiRouter.dispatch(
                     storeId,
-                    TaskType.RESEARCH_DEEP,
+                    TaskType.COPYWRITING_DEEP,
                     `Eres un experto en media buying y copywriting de respuesta directa.
                     Genera 50 combinaciones Avatar x Ángulo con hooks específicos basados EN LOS DATOS REALES proporcionados.
                     
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
             case 'P6': // Vector Mapping
                 const p6Result = await AiRouter.dispatch(
                     storeId,
-                    TaskType.RESEARCH_DEEP,
+                    TaskType.COPYWRITING_DEEP,
                     `Vector Mapping: Dolor -> Mecanismo -> Prueba -> Resultado -> CTA.
                     Responde EXACTAMENTE en JSON con la estructura { "vectors": [{"dolor": "...", "mecanismo": "...", "prueba": "...", "resultado": "...", "cta": "..."}] }`,
                     { jsonSchema: true }

@@ -65,6 +65,8 @@ export async function getOrCreateFolder(name: string, parentId: string): Promise
         q: `name='${name.replace(/'/g, "\\'")}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
         fields: 'files(id, name)',
         pageSize: 1,
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
     });
 
     if (res.data.files && res.data.files.length > 0) {
@@ -79,6 +81,7 @@ export async function getOrCreateFolder(name: string, parentId: string): Promise
             parents: [parentId],
         },
         fields: 'id',
+        supportsAllDrives: true,
     });
 
     return created.data.id!;
@@ -103,7 +106,8 @@ export async function uploadFileFromUrl(url: string, name: string, parentId: str
             mimeType,
             body: require('stream').Readable.from([buffer])
         },
-        fields: 'id'
+        fields: 'id',
+        supportsAllDrives: true,
     });
     return driveRes.data.id!;
 }
@@ -214,6 +218,7 @@ export async function createProductDriveStructure(
             body: require('stream').Readable.from([indexBlob]),
         },
         fields: 'id',
+        supportsAllDrives: true,
     }).catch(() => {}); // no crítico si ya existe
 
     // 5. Actualizar producto en BD
@@ -304,6 +309,8 @@ export async function listProductSubfolderFiles(productId: string, subfolder: Pr
         q: `'${folderId}' in parents and trashed=false`,
         fields: 'files(id, name, mimeType, size, createdTime, webViewLink, thumbnailLink)',
         pageSize: 100,
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
     });
 
     return res.data.files || [];

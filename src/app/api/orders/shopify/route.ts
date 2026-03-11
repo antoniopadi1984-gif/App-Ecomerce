@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
             const domainMap: Record<string, string> = {
                 'store-main':                'f7z7nn-ei.myshopify.com',
                 'alecare-mx':               'im8zf5-6c.myshopify.com',
-                'cmlxrad5405b826d99j9kpgyy': 'v1ethu-he.myshopify.com',
+                'cmlxrad5405b826d99j9kpgyy': 'v1etfu-he.myshopify.com',
             };
             shop = domainMap[storeId] ?? null;
         }

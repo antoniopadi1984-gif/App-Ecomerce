@@ -178,7 +178,9 @@ export class DriveSync {
         const res = await drive.files.list({
             q: query,
             fields: "files(id, name)",
-            spaces: "drive"
+            spaces: "drive",
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true
         });
 
         if (res.data.files && res.data.files.length > 0) {
@@ -193,7 +195,8 @@ export class DriveSync {
                 mimeType: "application/vnd.google-apps.folder",
                 parents: parentId ? [parentId] : undefined
             },
-            fields: "id"
+            fields: "id",
+            supportsAllDrives: true
         });
 
         console.log(`[DriveSync] Created folder: ${file.data.id}`);
@@ -226,7 +229,8 @@ export class DriveSync {
                 media: {
                     mimeType,
                     body: content
-                }
+                },
+                supportsAllDrives: true
             });
             return { success: true };
         } catch (error: any) {

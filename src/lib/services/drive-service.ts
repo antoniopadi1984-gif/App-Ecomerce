@@ -133,7 +133,7 @@ export async function setupStoreDrive(storeId: string): Promise<string> {
         const storeName = store?.name?.replace(/\s+/g, '_').toUpperCase() ?? storeId;
         
         // Use ROOT_ID as the container. We don't need a middle ECOMBOOM folder if it causes Quota issues.
-        const storeFolderId = await findOrCreateFolder(drive, `STORE_${storeName}`, ROOT_ID);
+        const storeFolderId = await findOrCreateFolder(drive, storeName, ROOT_ID);
         
         // Config folder
         await findOrCreateFolder(drive, '_CONFIG', storeFolderId);

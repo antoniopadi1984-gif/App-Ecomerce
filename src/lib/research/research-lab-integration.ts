@@ -90,7 +90,12 @@ export class ResearchLabIntegration {
 
             // Find or create RESEARCH subfolder
             const researchFolderQuery = `mimeType='application/vnd.google-apps.folder' and name='RESEARCH' and '${product.driveFolderId}' in parents and trashed=false`;
-            const resFolders = await drive.files.list({ q: researchFolderQuery, fields: 'files(id)' });
+            const resFolders = await drive.files.list({ 
+                q: researchFolderQuery, 
+                fields: 'files(id)',
+                supportsAllDrives: true,
+                includeItemsFromAllDrives: true
+            });
             const researchFolderId = resFolders.data.files?.[0]?.id || product.driveFolderId;
 
             const uploadDoc = async (name: string, content: string) => {
@@ -105,7 +110,8 @@ export class ResearchLabIntegration {
                         media: {
                             mimeType: 'text/markdown',
                             body: content
-                        }
+                        },
+                        supportsAllDrives: true
                     });
                 } catch (e) {
                     console.error(`Error uploading ${name}:`, e);
@@ -334,7 +340,12 @@ ${(ci.dominant_claims || []).map((cl: string) => `- ${cl}`).join('\n')}
 
             // Find SCRIPTS subfolder
             const scriptsQuery = `mimeType='application/vnd.google-apps.folder' and name='SCRIPTS' and '${product.driveFolderId}' in parents and trashed=false`;
-            const resFolders = await drive.files.list({ q: scriptsQuery, fields: 'files(id)' });
+            const resFolders = await drive.files.list({ 
+                q: scriptsQuery, 
+                fields: 'files(id)',
+                supportsAllDrives: true,
+                includeItemsFromAllDrives: true
+            });
             let scriptsFolderId = resFolders.data.files?.[0]?.id;
 
             if (!scriptsFolderId) {
@@ -364,7 +375,8 @@ ${copyContent}
 ---
 *Generado mediante Secuencia Forense 3-Step*
 `
-                }
+                },
+                supportsAllDrives: true
             });
 
             console.log(`[ResearchLab] ✅ God Tier Copy guardado en Drive: ${fileName}`);

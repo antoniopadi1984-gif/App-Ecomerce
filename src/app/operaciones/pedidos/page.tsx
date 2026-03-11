@@ -1258,14 +1258,73 @@ export default function PedidosPage() {
     const [selectedOrder, setSelectedOrder] = useState<{ ref: string } | null>(null);
     const [syncing, setSyncing] = useState(false);
     const { activeStoreId } = useStore();
-    // Gestores — hook compartido con caché global + polling 30s
     const { gestores: gestoresLive } = useGestores();
+
+    // ── Real orders state ─────────────────────────────────────────
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [realOrders, setRealOrders] = useState<Record<string, any>[]>([]);
+    const [ordersTotal, setOrdersTotal] = useState(0);
+    const [ordersLoading, setOrdersLoading] = useState(false);
 
     const fetchOrders = async () => {
         if (!activeStoreId) return;
-        // Recarga la lista de pedidos (placeholder — implementar llamada real si se tiene tabla real)
-        console.log('[Pedidos] Recargando lista para storeId:', activeStoreId);
+        setOrdersLoading(true);
+        try {
+            const res = await fetch(`/api/orders?storeId=${activeStoreId}&limit=200`);
+            const data = await res.json();
+            if (data.orders) {
+                // Normalise API fields to match UI expectations
+                const normalised = data.orders.map((o: any) => ({
+                    id:           o.id,
+                    ref:          o.orderNumber || o.id?.slice(-6) || '—',
+                    state:        normaliseStatus(o.status),
+                    cliente:      o.customerName || '—',
+                    telefono:     o.customerPhone || '—',
+                    producto:     o.items?.[0]?.title || '—',
+                    importe:      o.totalPrice ?? 0,
+                    pago:         o.paymentMethod || 'COD',
+                    fulfillment:  (o.logisticsProvider || 'manual').toLowerCase(),
+                    tracking:     o.trackingCode || null,
+                    cp:           o.zip || '—',
+                    ciudad:       o.city || '—',
+                    gestor:       o.gestorId ? { id: o.gestorId, nombre: o.gestorId, emoji: '👤' } : null,
+                    createdAt:    o.createdAt,
+                    shopifyOrderId: o.shopifyOrderId || null,
+                }));
+                setRealOrders(normalised);
+                setOrdersTotal(data.total ?? normalised.length);
+            }
+        } catch (e) {
+            console.error('[Pedidos] fetchOrders error', e);
+        } finally {
+            setOrdersLoading(false);
+        }
     };
+
+    // Reload when store changes
+    useEffect(() => {
+        setRealOrders([]);
+        setOrdersTotal(0);
+        fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeStoreId]);
+
+    // Map Prisma status → UI state key
+    function normaliseStatus(s: string): string {
+        if (!s) return 'nuevo';
+        const map: Record<string, string> = {
+            PENDING:    'nuevo',
+            NEW:        'nuevo',
+            PROCESSING: 'en_gestion',
+            SHIPPED:    'enviado',
+            DELIVERED:  'entregado',
+            CANCELLED:  'cancelado',
+            FAILED:     'fallido',
+            RETURNED:   'devolucion',
+            REFUNDED:   'devolucion',
+        };
+        return map[s.toUpperCase()] ?? 'nuevo';
+    }
 
     const handleSyncShopify = async () => {
         if (!activeStoreId) return;
@@ -1290,22 +1349,6 @@ export default function PedidosPage() {
         }
     };
 
-    const pedidos = [
-        ...Array(42).fill({ state: 'nuevo' }),
-        ...Array(18).fill({ state: 'en_gestion' }),
-        ...Array(85).fill({ state: 'enviado' }),
-        ...Array(10).fill({ state: 'confirmado' }),
-        ...Array(30).fill({ state: 'en_preparacion' }),
-        ...Array(5).fill({ state: 'fallido' }),
-        ...Array(12).fill({ state: 'reintento' }),
-        ...Array(31).fill({ state: 'devolucion' }),
-        ...Array(15).fill({ state: 'entregado' }),
-        ...Array(6).fill({ state: 'cancelado' }),
-    ];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [pedidosState, setPedidosState] = useState<Record<string, any>[]>(pedidos);
-
-
     async function assignGestor(pedidoId: string, gestorId: string | null) {
         try {
             await fetch(`/api/pedidos/${pedidoId}/gestor`, {
@@ -1313,26 +1356,29 @@ export default function PedidosPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ gestorId }),
             });
-        } catch { /* optimistic update — ignore error */ }
-        setPedidosState(prev => prev.map(p =>
+        } catch { /* optimistic */ }
+        setRealOrders(prev => prev.map(p =>
             p.id === pedidoId
                 ? { ...p, gestor: gestorId ? GESTORES_LIST.find(g => g.id === gestorId) ?? null : null }
                 : p
         ));
     }
-    const carritosAbandonados = Array(12).fill({ state: 'abandonado' });
-    const borradores = Array(5).fill({ state: 'borrador' });
 
-    const pedidosFiltrados = {
-        "todos": pedidos,
-        "por-gestionar": pedidos.filter(p => ["nuevo", "en_gestion"].includes(p.state)),
-        "en-transito": pedidos.filter(p => ["enviado", "confirmado", "en_preparacion"].includes(p.state)),
-        "incidencias": pedidos.filter(p => ["fallido", "reintento"].includes(p.state)),
-        "devoluciones": pedidos.filter(p => p.state === "devolucion"),
-        "carritos-abandonados": carritosAbandonados,
-        "borradores": borradores,
-        "historial": pedidos.filter(p => ["entregado", "cancelado"].includes(p.state)),
-    }[activeTab as string] ?? pedidos;
+    // ── Filter real orders by tab ──────────────────────────────────
+    const pedidosFiltrados = (() => {
+        switch (activeTab) {
+            case 'por-gestionar':   return realOrders.filter(p => ['nuevo','en_gestion'].includes(p.state));
+            case 'en-transito':     return realOrders.filter(p => ['enviado','confirmado','en_preparacion'].includes(p.state));
+            case 'incidencias':     return realOrders.filter(p => ['fallido','reintento'].includes(p.state));
+            case 'devoluciones':    return realOrders.filter(p => p.state === 'devolucion');
+            case 'historial':       return realOrders.filter(p => ['entregado','cancelado'].includes(p.state));
+            case 'carritos-abandonados': return [];
+            case 'borradores':      return [];
+            default:                return realOrders;
+        }
+    })();
+
+
 
 
 
@@ -1502,7 +1548,7 @@ export default function PedidosPage() {
                             {TABS.find(t => t.id === activeTab)?.label}
                         </span>
                         <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "2px 8px", background: "white", borderRadius: "10px", border: "1px solid var(--border)", fontWeight: 600 }}>
-                            {pedidosFiltrados.length} {activeTab === 'carritos-abandonados' ? 'carritos' : activeTab === 'borradores' ? 'borradores' : 'pedidos'}
+                            {ordersLoading ? '...' : (activeTab === 'todos' ? ordersTotal : pedidosFiltrados.length)} {activeTab === 'carritos-abandonados' ? 'carritos' : activeTab === 'borradores' ? 'borradores' : 'pedidos'}
                         </span>
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
@@ -1526,10 +1572,20 @@ export default function PedidosPage() {
                     </div>
                 </div>
 
-                {/* Mock Table */}
-
-                {/* Custom compact table styles */}
+                {/* Table — real data or empty/loading state */}
                 <div style={{ width: "100%", overflowX: "auto", flex: 1 }}>
+                    {ordersLoading ? (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 20px", flexDirection: "column", gap: "12px", color: "#94a3b8" }}>
+                            <RefreshCcw size={24} className="animate-spin" style={{ opacity: 0.5 }} />
+                            <span style={{ fontSize: "13px", fontWeight: 600 }}>Cargando pedidos...</span>
+                        </div>
+                    ) : !ordersLoading && realOrders.length === 0 ? (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 20px", flexDirection: "column", gap: "12px", color: "#94a3b8", textAlign: "center" }}>
+                            <span style={{ fontSize: "36px" }}>📦</span>
+                            <span style={{ fontSize: "14px", fontWeight: 700, color: "#64748b" }}>Sin pedidos para esta tienda</span>
+                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>Usa &quot;Sincronizar Pedidos&quot; para importar desde Shopify</span>
+                        </div>
+                    ) : (
                     <table className="ds-table ds-compact-table" style={{ borderTop: "none", width: "100%", tableLayout: "auto", borderCollapse: "collapse", fontSize: "12px" }}>
                         <thead>
                             <tr>
@@ -2240,6 +2296,7 @@ export default function PedidosPage() {
                             )}
                         </tbody>
                     </table>
+                    )}
                 </div>
             </div>
             {selectedOrder && <OrderDrawer pedido={selectedOrder} onClose={() => setSelectedOrder(null)} onSelectOrder={setSelectedOrder} />}

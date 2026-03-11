@@ -25,10 +25,12 @@ interface LandingAnalysis {
     assets: LandingAsset[];
     assetCount: number;
     structure: string[];
+    productCount: number;
+    productsFound: string[];
     scores?: {
-        mobile: number;
-        desktop: number;
-        cvr: string;
+        hook: number;
+        mechanism: number;
+        offer: number;
     };
     criticalPoints?: string[];
     recommendations?: string[];
@@ -163,8 +165,8 @@ export function DisenoTab({ storeId, productId }: { storeId: string, productId: 
                                         <span className="text-[9px] font-mono text-slate-400">{new Date(l.createdAt).toLocaleDateString()}</span>
                                         {l.scores && (
                                             <div className="flex items-center gap-1 mt-1">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                                <span className="text-[10px] font-black text-green-600">{l.scores.mobile}%</span>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--cre)]" />
+                                                <span className="text-[10px] font-black text-[var(--cre)]">{l.scores.hook}% Hook</span>
                                             </div>
                                         )}
                                     </div>
@@ -260,9 +262,13 @@ export function DisenoTab({ storeId, productId }: { storeId: string, productId: 
                                                 <span className="text-[9px] text-slate-400 font-mono truncate">{activeLanding.url}</span>
                                             </div>
                                         </div>
+                                        <div className="absolute inset-0 top-7 flex flex-col items-center justify-center p-8 text-center text-slate-400 -z-10">
+                                            <AlertCircle size={24} className="mb-2 opacity-50" />
+                                            <p className="text-[11px] font-bold">Si la página rechaza la conexión, usa el botón "Visitar URL" o revisa la pestaña "Recursos Extraídos".</p>
+                                        </div>
                                         <iframe
                                             src={activeLanding.url}
-                                            className="w-full h-full border-none bg-white"
+                                            className="w-full h-full border-none bg-transparent"
                                             title="Landing Preview"
                                         />
                                         <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform bg-gradient-to-t from-black/60 to-transparent">
@@ -283,53 +289,62 @@ export function DisenoTab({ storeId, productId }: { storeId: string, productId: 
                                         {/* SCORING CARDS */}
                                         <div className="col-span-12 lg:col-span-4 grid grid-cols-1 gap-4">
                                             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                                                <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
+                                                <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
                                                 <div className="flex items-center gap-3 mb-4">
-                                                    <div className="p-2 bg-green-500/10 rounded-lg text-green-600">
-                                                        <Smartphone size={18} />
+                                                    <div className="p-2 bg-orange-500/10 rounded-lg text-orange-600">
+                                                        <Search size={18} />
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mobile Score</h4>
+                                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Atención (Hook)</h4>
                                                         <div className="flex items-baseline gap-1">
-                                                            <span className="text-[28px] font-black text-slate-800 leading-none">{activeLanding.scores?.mobile || 0}</span>
+                                                            <span className="text-[28px] font-black text-slate-800 leading-none">{activeLanding.scores?.hook || 0}</span>
                                                             <span className="text-[14px] font-bold text-slate-400">/100</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-green-500 rounded-full" style={{ width: `${activeLanding.scores?.mobile || 0}%` }} />
+                                                    <div className="h-full bg-orange-500 rounded-full" style={{ width: `${activeLanding.scores?.hook || 0}%` }} />
                                                 </div>
-                                                <p className="text-[9px] text-slate-400 mt-2 font-medium">Análisis de tiempo de carga y experiencia táctil.</p>
+                                                <p className="text-[9px] text-slate-400 mt-2 font-medium">Capacidad de capturar atención en el primer impacto y el Hero Section.</p>
                                             </div>
 
                                             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
                                                 <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
                                                 <div className="flex items-center gap-3 mb-4">
                                                     <div className="p-2 bg-blue-500/10 rounded-lg text-blue-600">
-                                                        <Monitor size={18} />
+                                                        <Wand2 size={18} />
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Desktop Score</h4>
+                                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mecanismo Único</h4>
                                                         <div className="flex items-baseline gap-1">
-                                                            <span className="text-[28px] font-black text-slate-800 leading-none">{activeLanding.scores?.desktop || 0}</span>
+                                                            <span className="text-[28px] font-black text-slate-800 leading-none">{activeLanding.scores?.mechanism || 0}</span>
                                                             <span className="text-[14px] font-bold text-slate-400">/100</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${activeLanding.scores?.desktop || 0}%` }} />
+                                                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${activeLanding.scores?.mechanism || 0}%` }} />
                                                 </div>
-                                                <p className="text-[9px] text-slate-400 mt-2 font-medium">Legibilidad, jerarquía visual y coherencia en monitores.</p>
+                                                <p className="text-[9px] text-slate-400 mt-2 font-medium">Claridad en explicar "por qué esto funciona" frente a la competencia.</p>
                                             </div>
 
                                             <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-5 rounded-2xl shadow-xl relative overflow-hidden group">
                                                 <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--cre)]/10 rounded-full -mr-16 -mt-16 animate-pulse" />
-                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">CVR Prevista</h4>
-                                                <div className="flex items-baseline gap-2">
-                                                    <span className="text-[36px] font-black text-[var(--cre)] leading-none">{activeLanding.scores?.cvr || '0.0%'}</span>
-                                                    <ArrowUpRight size={20} className="text-green-400" />
+                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Oferta & Productos</h4>
+                                                <div className="flex items-baseline gap-2 mb-2">
+                                                    <span className="text-[36px] font-black text-[var(--cre)] leading-none">{activeLanding.scores?.offer || 0}</span>
+                                                    <span className="text-[14px] font-bold text-slate-400">/100</span>
                                                 </div>
-                                                <p className="text-[9px] text-slate-500 mt-3 font-medium uppercase tracking-tight">Potencial de conversión basado en ángulos de IA Pro.</p>
+                                                <div className="mt-2 bg-slate-800/50 rounded-lg p-2 border border-slate-700">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Catálogo</span>
+                                                        <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[9px] font-black">{activeLanding.productCount} extraídos</span>
+                                                    </div>
+                                                    <p className="text-[9px] text-slate-300 truncate">
+                                                        {activeLanding.productsFound?.join(', ') || 'Sin clasificar'}
+                                                    </p>
+                                                </div>
+                                                <p className="text-[9px] text-slate-500 mt-3 font-medium uppercase tracking-tight">Evaluación de urgencia, valor percibido e irresistibilidad.</p>
                                             </div>
                                         </div>
 

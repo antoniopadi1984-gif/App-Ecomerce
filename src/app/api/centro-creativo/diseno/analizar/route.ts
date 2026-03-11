@@ -68,24 +68,26 @@ export async function POST(request: Request) {
         // 4. Send to GPT/Gemini via AiRouter for deep marketing analysis
         const prompt = `Analiza la siguiente estructura y copy de esta Landing Page: URL: ${url}. 
         Estos son los títulos y textos extraídos: 
-        """${plainText.substring(0, 2000)}"""
+        """${plainText.substring(0, 2500)}"""
         
-        Extrajimos ${extractedAssets.length} assets multimedia (imágenes, gifs, vídeos).
+        Extrajimos ${extractedAssets.length} assets multimedia.
         
-        Actúa como el mejor Marketer de Respuesta Directa del mundo. Evalúa cómo ataca los dolores, cómo presenta el mecanismo único, y detecta los puntos de fricción.
+        Actúa como el mejor Marketer de Respuesta Directa del mundo. Evalúa cómo ataca los dolores, cómo presenta el mecanismo único, y detecta los puntos de fricción. En particular detecta cuántos y cuáles productos vende.
         
         Devuelve ABSOLUTAMENTE en formato JSON con la siguiente estructura y formato estricto:
         {
            "scores": {
-               "mobile": [Puntaje 0-100 como número],
-               "desktop": [Puntaje 0-100 como número],
-               "cvr": "[Porcentaje esperado, ej: '3.4%']"
+               "hook": [Puntaje 0-100 para el gancho inicial (headline, primer scroll)],
+               "mechanism": [Puntaje 0-100 para la explicación del mecanismo único y demostración],
+               "offer": [Puntaje 0-100 para la claridad de la oferta y urgencia]
            },
+           "productCount": [Número entero de productos distintos identificados],
+           "productsFound": ["Nombre producto 1", "Nombre producto 2"],
            "structure": [
-               "Headline Prometido...",
-               "Sección Agitación / Problema...",
-               "Demostración / Mecanismo...",
-               "Oferta y Stack..."
+               "1. Hook / Headline: [De qué habla]",
+               "2. Agitación / Problema: [De qué habla]",
+               "3. Mecanismo Único: [De qué habla]",
+               "4. Oferta: [De qué habla]"
            ],
            "criticalPoints": [
                "Punto de fricción 1...",
@@ -97,7 +99,7 @@ export async function POST(request: Request) {
            ]
         }`;
 
-        let iaAnalysis = {};
+        let iaAnalysis: any = {};
         try {
             const aiResponse = await AiRouter.dispatch(
                 storeId,
@@ -113,10 +115,12 @@ export async function POST(request: Request) {
             console.error('Error in AiRouter inside analizador landing:', aiErr);
             // Fallback AI
             iaAnalysis = {
-                scores: { mobile: 75, desktop: 82, cvr: '2.5%' },
-                structure: ['Hero Section', 'Beneficios', 'Prueba Social', 'CTA'],
-                criticalPoints: ["Copy superficial de AI Error", "Optimizar imágenes (Detectado Offline)"],
-                recommendations: ["Mejorar carga de la web", "Reforzar sentido de escasez"]
+                scores: { hook: 0, mechanism: 0, offer: 0 },
+                productCount: 0,
+                productsFound: [],
+                structure: ['Error al extraer la estructura mediante IA'],
+                criticalPoints: ["Hubo un problema de conexión con la IA"],
+                recommendations: ["Por favor, intenta analizar esta URL de nuevo"]
             };
         }
 

@@ -33,21 +33,15 @@ export async function GET(request: Request) {
                 assets: analysis.assets || [],
                 assetCount: analysis.assetCount || 0,
                 structure: analysis.structure || [],
+                productCount: analysis.productCount || 0,
+                productsFound: analysis.productsFound || [],
                 scores: analysis.scores || {
-                    mobile: Math.floor(Math.random() * 30) + 60,
-                    desktop: Math.floor(Math.random() * 20) + 70,
-                    cvr: (Math.random() * 3 + 1.5).toFixed(1) + '%'
+                    hook: 0,
+                    mechanism: 0,
+                    offer: 0
                 },
-                criticalPoints: analysis.criticalPoints || [
-                    "Tiempo de carga superior a 3.5s",
-                    "Falta de contraste en el botón de CTA principal",
-                    "Jerarquía de títulos confusa en versión móvil"
-                ],
-                recommendations: analysis.recommendations || [
-                    "Implementar Sticky ATC en scroll móvil",
-                    "Simplificar el formulario de checkout",
-                    "Añadir prueba social (reseñas) arriba del fold"
-                ],
+                criticalPoints: analysis.criticalPoints || [],
+                recommendations: analysis.recommendations || [],
                 createdAt: c.createdAt
             };
         });

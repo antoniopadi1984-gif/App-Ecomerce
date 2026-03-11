@@ -59,9 +59,9 @@ export const navigation = [
         emoji: '🎨',
         color: '#F59E0B',
         colorMuted: 'rgba(245,158,11,0.12)',
-        href: '/centro-creativo/estudio',
+        href: '/centro-creativo/video-lab',
         children: [
-            { label: 'Laboratorio IA', emoji: '🎬', href: '/centro-creativo/estudio' },
+            { label: 'Laboratorio IA', emoji: '🎬', href: '/centro-creativo/video-lab' },
             { label: 'Diseño y Conversión', emoji: '🎯', href: '/centro-creativo/diseno' },
             { label: 'Avatares y Voces', emoji: '🤖', href: '/centro-creativo/avatares' },
             { label: 'Biblioteca IA', emoji: '📚', href: '/centro-creativo/biblioteca' },

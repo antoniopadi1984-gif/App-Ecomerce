@@ -89,12 +89,16 @@ export async function findOrCreateFolder(drive: any, name: string, parentId?: st
     const q = [`name = '${name}'`, `mimeType = 'application/vnd.google-apps.folder'`, `trashed = false`];
     if (parentId) q.push(`'${parentId}' in parents`);
 
-    const res = await drive.files.list({ q: q.join(' and '), fields: 'files(id,name)', pageSize: 5 });
+    const res = await drive.files.list({ 
+        q: q.join(' and '), fields: 'files(id,name)', pageSize: 5,
+        supportsAllDrives: true, includeItemsFromAllDrives: true
+    });
     if (res.data.files?.length > 0) return res.data.files[0].id;
 
     const created = await drive.files.create({
         requestBody: { name, mimeType: 'application/vnd.google-apps.folder', parents: parentId ? [parentId] : [] },
         fields: 'id',
+        supportsAllDrives: true
     });
     return created.data.id!;
 }
@@ -109,7 +113,8 @@ export async function setupStoreDrive(storeId: string): Promise<string> {
         const drive = await getDriveClient();
 
         // Root: ECOMBOOM/
-        const rootId = await findOrCreateFolder(drive, 'ECOMBOOM');
+        const rootParentId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+        const rootId = await findOrCreateFolder(drive, 'ECOMBOOM', rootParentId);
         // Store folder
         const store = await (prisma as any).store.findUnique({ where: { id: storeId }, select: { name: true } });
         const storeName = store?.name?.replace(/\s+/g, '_').toUpperCase() ?? storeId;
@@ -452,6 +457,7 @@ export async function uploadToProduct(
         requestBody: { name: fileName, parents: [subFolder] },
         media: { mimeType, body: require('stream').Readable.from(fileBuffer) },
         fields: 'id,name,webViewLink,webContentLink',
+        supportsAllDrives: true
     });
 
     const driveFileId = res.data.id!;

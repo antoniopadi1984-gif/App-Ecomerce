@@ -496,13 +496,13 @@ export async function uploadToProduct(
         where: { driveFileId },
         create: {
             storeId, productId, driveFileId, drivePath, fileName,
-            driveUrl: driveUrl || '',
             conceptCode: opts.conceptCode,
             funnelStage: opts.funnelStage,
             fileType: opts.fileType ?? 'VIDEO',
             mimeType,
+            nomenclature: fileName // Usamos el nombre del archivo como nomenclatura por defecto si no hay otro
         },
-        update: { syncedAt: new Date(), drivePath, driveUrl: driveUrl || '' },
+        update: { syncedAt: new Date(), drivePath },
     });
 
     // Link to CreativeArtifact if ID provided

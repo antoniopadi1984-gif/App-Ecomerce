@@ -178,86 +178,84 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
 
     // ── UPLOAD VIDEO ────────────────────────────────────────────────────────
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        if (file.size > 500 * 1024 * 1024) {
-            toast.error('El archivo es demasiado grande. Máximo 500MB.');
-            return;
-        }
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
 
         setUploadingVideo(true);
         setUploadProgress(0);
         
-        // Vamos a usar un Toast ID para actualizarlo dinámicamente
-        const toastId = toast.loading('Subiendo vídeo para procesamiento...');
+        const toastId = toast.loading(`Iniciando procesamiento de ${files.length} video(s)...`);
 
         try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('productId', productId.toString());
-            // Opcional: añadir hint de concept/funnel stage si los tienes en la UI
-            
-            const res = await fetch('/api/video-lab/process', {
-                method: 'POST',
-                headers: {
-                    'X-Store-Id': storeId
-                },
-                body: formData
-            });
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.size > 500 * 1024 * 1024) {
+                    toast.error(`El archivo ${file.name} es demasiado grande. Ignorado.`);
+                    continue;
+                }
 
-            if (!res.ok) {
-                throw new Error('Error al iniciar procesamiento de video');
-            }
+                toast.loading(`[${i+1}/${files.length}] Subiendo ${file.name}...`, { id: toastId });
 
-            const data = await res.json();
-            
-            if (data.jobId) {
-                toast.loading('Analizando el anuncio con la IA...', { id: toastId });
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('productId', productId.toString());
                 
-                // Empezar a hacer polling del jobId
-                const pollInterval = setInterval(async () => {
-                    const statusRes = await fetch(`/api/video-lab/process?jobId=${data.jobId}`);
-                    if (!statusRes.ok) return;
-                    
-                    const jobStatus = await statusRes.json();
-                    
-                    if (jobStatus) {
-                        setUploadProgress(jobStatus.progress || 0);
-                        
-                        // Si el frontend tiene un texto de step lo mostramos
-                        if (jobStatus.status) {
-                            toast.loading(`Procesando: ${STATUS_LABELS[jobStatus.status] || jobStatus.status}`, { id: toastId });
-                        }
-                        
-                        if (jobStatus.status === 'DONE') {
-                            clearInterval(pollInterval);
-                            toast.success(`Pipeline finalizado. ${jobStatus.fileName} analizado y dividido.`, { id: toastId });
+                const res = await fetch('/api/video-lab/process', {
+                    method: 'POST',
+                    headers: { 'X-Store-Id': storeId },
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    toast.error(`Error al iniciar ${file.name}`, { id: toastId });
+                    continue;
+                }
+
+                const data = await res.json();
+                
+                if (data.jobId) {
+                    // Polling for this specific job
+                    const jobDone = await new Promise<boolean>((resolve) => {
+                        const pollInterval = setInterval(async () => {
+                            const statusRes = await fetch(`/api/video-lab/process?jobId=${data.jobId}`);
+                            if (!statusRes.ok) return;
                             
-                            setTimeout(() => {
-                                setUploadingVideo(false);
-                                setUploadProgress(0);
-                                setView('WORKSPACE');
-                                fetchOwnCreatives();
-                            }, 1500);
-                        } else if (jobStatus.status === 'ERROR') {
-                            clearInterval(pollInterval);
-                            toast.error(jobStatus.error || 'Error en el procesamiento IA.', { id: toastId });
-                            setUploadingVideo(false);
-                            setUploadProgress(0);
-                        }
-                    }
-                }, 3000); // Polling cada 3 segundos
+                            const jobStatus = await statusRes.json();
+                            if (jobStatus) {
+                                setUploadProgress(jobStatus.progress || 0);
+                                if (jobStatus.status) {
+                                    toast.loading(`[${i+1}/${files.length}] ${STATUS_LABELS[jobStatus.status] || jobStatus.status}`, { id: toastId });
+                                }
+                                
+                                if (jobStatus.status === 'DONE') {
+                                    clearInterval(pollInterval);
+                                    resolve(true);
+                                } else if (jobStatus.status === 'ERROR') {
+                                    clearInterval(pollInterval);
+                                    toast.error(`Error en ${file.name}: ${jobStatus.error}`, { id: toastId });
+                                    resolve(false);
+                                }
+                            }
+                        }, 3000);
+                    });
+                }
             }
+
+            toast.success('Procesamiento de cola finalizado.', { id: toastId });
+            setTimeout(() => {
+                setUploadingVideo(false);
+                setUploadProgress(0);
+                setView('WORKSPACE');
+                fetchOwnCreatives();
+            }, 1500);
 
         } catch (e: any) {
             console.error(e);
             setUploadingVideo(false);
             setUploadProgress(0);
-            toast.error(e.message || 'Error al conectar con el servidor', { id: toastId });
+            toast.error(e.message || 'Error al procesar la cola', { id: toastId });
         }
 
-        // Reset input
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
@@ -604,6 +602,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                             ref={fileInputRef}
                                             type="file"
                                             accept="video/*"
+                                            multiple
                                             className="hidden"
                                             onChange={handleFileChange}
                                         />

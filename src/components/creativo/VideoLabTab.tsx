@@ -26,11 +26,11 @@ interface VideoCard {
 
 const STATUS_LABELS: Record<string, string> = {
     'PENDING': 'Preparando...',
-    'INGESTED': 'Adquiriendo archivo...',
-    'TRANSCRIBED': 'Transcribiendo audio...',
-    'ANALYZED': 'IA Analizando anuncio...',
-    'SPLIT': 'Dividiendo escenas...',
-    'ORGANIZED': 'Subiendo a Drive...',
+    'INGESTED': 'Transcribiendo audio...',
+    'TRANSCRIBED': 'IA Analizando anuncio...',
+    'ANALYZED': 'Dividiendo escenas...',
+    'SPLIT': 'Subiendo a Drive...',
+    'ORGANIZED': 'Sincronizando...',
     'DONE': 'Proceso completado',
     'ERROR': 'Hubo un error'
 };

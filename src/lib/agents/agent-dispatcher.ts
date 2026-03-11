@@ -146,7 +146,7 @@ export class AgentDispatcher {
     }
 
     /**
-     * Despachar a Gemini (Vertex AI)
+     * Despachar a Gemini (AI Studio primary, Vertex AI fallback)
      */
     private async dispatchToGemini(
         role: AgentRole,
@@ -154,171 +154,84 @@ export class AgentDispatcher {
         request: AgentRequest
     ): Promise<AgentResponse> {
 
-        // 1. Try Vertex AI (Preferred)
-        if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-            try {
-                const client = await this.googleAuth.getClient();
-                const token = await client.getAccessToken();
-                if (!token.token) throw new Error("Failed to get access token");
+        const culturalDirectives = this.getCulturalDirectives(request.locale);
+        const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt || ''}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
+        const parts: any[] = [{ text: fullPrompt }];
 
-                const culturalDirectives = this.getCulturalDirectives(request.locale);
-                const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt || ''}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
-
-                // Normalizar nombre del modelo para Vertex AI
-                // Usar modelos reales disponibles en Vertex AI
-                let vertexModel = config.model;
-
-                // Mapeo a nombres reales de Vertex AI
-                const MODEL_MAP: Record<string, string> = {
-                  'gemini-3.1-pro-preview':   'gemini-2.0-flash-001',
-                  'gemini-3.1-flash-lite-preview': 'gemini-2.0-flash-001',
-                  'gemini-3.1-flash-image':   'gemini-2.0-flash-001',
-                  'gemini-1.5-pro':            'gemini-1.5-pro-002',
-                  'gemini-1.5-flash':          'gemini-1.5-flash-002',
-                };
-                vertexModel = MODEL_MAP[vertexModel] || vertexModel;
-                // Si no tiene version suffix, añadir -001
-                if (!vertexModel.match(/-\d{3}$/) && !vertexModel.includes('preview')) {
-                  vertexModel = vertexModel + '-001';
-                }
-
-                const endpoint = `https://${API_CONFIG.vertexAI.location}-aiplatform.googleapis.com/v1/projects/${API_CONFIG.vertexAI.projectId}/locations/${API_CONFIG.vertexAI.location}/publishers/google/models/${vertexModel}:generateContent`;
-
-                const parts: any[] = [{ text: fullPrompt }];
-
-                // Add images if provided
-                if (request.images && request.images.length > 0) {
-                    for (const imgUrl of request.images) {
-                        try {
-                            if (imgUrl.startsWith('data:')) {
-                                const mimeType = imgUrl.split(';')[0].split(':')[1];
-                                const data = imgUrl.split(',')[1];
-                                parts.push({ inlineData: { mimeType, data } });
-                            } else if (imgUrl.startsWith('http')) {
-                                const imgRes = await fetch(imgUrl);
-                                const buffer = await imgRes.arrayBuffer();
-                                parts.push({
-                                    inlineData: {
-                                        mimeType: imgRes.headers.get('content-type') || 'image/jpeg',
-                                        data: Buffer.from(buffer).toString('base64')
-                                    }
-                                });
-                            }
-                        } catch (imgError) {
-                            console.error("[AgentDispatcher] Failed to process image:", imgUrl, imgError);
-                        }
+        // ── Imágenes ────────────────────────────────────────
+        if (request.images?.length) {
+            for (const imgUrl of request.images) {
+                try {
+                    if (imgUrl.startsWith('data:')) {
+                        parts.push({ inlineData: { mimeType: imgUrl.split(';')[0].split(':')[1], data: imgUrl.split(',')[1] } });
+                    } else if (imgUrl.startsWith('http')) {
+                        const imgRes = await fetch(imgUrl);
+                        const buffer = await imgRes.arrayBuffer();
+                        parts.push({ inlineData: { mimeType: imgRes.headers.get('content-type') || 'image/jpeg', data: Buffer.from(buffer).toString('base64') } });
                     }
-                }
-
-                // Add video if provided
-                if (request.video) {
-                    parts.push({
-                        inlineData: {
-                            mimeType: request.videoMimeType || "video/mp4",
-                            data: request.video.split(',').pop()
-                        }
-                    });
-                }
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            role: 'user',
-                            parts
-                        }],
-                        generationConfig: {
-                            temperature: request.temperature ?? config.temperature,
-                            maxOutputTokens: request.maxTokens || config.maxTokens,
-                            responseMimeType: request.jsonSchema ? "application/json" : "text/plain"
-                        }
-                    })
-                });
-
-                return await this.processGeminiResponse(response, role, config);
-
-            } catch (e: any) {
-                const errMsg = e.message || String(e);
-                console.error("[AgentDispatcher] Vertex AI failed:", errMsg);
-                // Re-throw so we don't silently fall through to a missing API key
-                throw new Error(`Vertex AI error: ${errMsg}`);
+                } catch (imgErr) { console.error('[Gemini] Image error:', imgErr); }
             }
         }
+        if (request.video) {
+            parts.push({ inlineData: { mimeType: request.videoMimeType || 'video/mp4', data: request.video.split(',').pop() } });
+        }
 
-        // 2. Fallback to AI Studio (API Key)
-        // Prefer GEMINI_API_KEY if VERTEX_AI_API_KEY doesn't look like a standard Google key
-        const apiKey = (process.env.VERTEX_AI_API_KEY?.startsWith('AIza') ? process.env.VERTEX_AI_API_KEY : process.env.GEMINI_API_KEY)
-            || process.env.VERTEX_AI_API_KEY;
-
-        if (apiKey) {
-            // Limpiar el nombre del modelo
-            let modelName = config.model.replace(/^models\//, '');
-            // Para AI Studio (v1beta), mantenemos los nombres estándar de 2.0
-            if (modelName.includes('gemini-2.0')) {
-                // Aseguramos que no tenga sufijos excesivos para Studio si no es necesario
-                modelName = modelName.replace(/-(001|002|003)$/, '');
+        const bodyPayload = {
+            contents: [{ role: 'user', parts }],
+            generationConfig: {
+                temperature: request.temperature ?? config.temperature,
+                maxOutputTokens: request.maxTokens || config.maxTokens,
+                responseMimeType: request.jsonSchema ? 'application/json' : 'text/plain',
             }
+        };
 
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-            const culturalDirectives = this.getCulturalDirectives(request.locale);
-            const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
-
-            const parts: any[] = [{ text: fullPrompt }];
-
-            if (request.images && request.images.length > 0) {
-                for (const imgUrl of request.images) {
-                    try {
-                        if (imgUrl.startsWith('data:')) {
-                            const mimeType = imgUrl.split(';')[0].split(':')[1];
-                            const data = imgUrl.split(',')[1];
-                            parts.push({ inlineData: { mimeType, data } });
-                        } else if (imgUrl.startsWith('http')) {
-                            const imgRes = await fetch(imgUrl);
-                            const buffer = await imgRes.arrayBuffer();
-                            const base64 = Buffer.from(buffer).toString('base64');
-                            const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
-                            parts.push({ inlineData: { mimeType, data: base64 } });
-                        }
-                    } catch (e) {
-                        console.error("[AgentDispatcher] AI Studio Image Error:", e);
-                    }
-                }
-            }
-
-            if (request.video) {
-                parts.push({
-                    inlineData: {
-                        mimeType: request.videoMimeType || "video/mp4",
-                        data: request.video.split(',').pop()
-                    }
-                });
-            }
+        // ── 1. AI Studio (GEMINI_API_KEY) — canal principal para gen-lang-client ──
+        const aiStudioKey = process.env.GEMINI_API_KEY || process.env.VERTEX_AI_API_KEY;
+        if (aiStudioKey) {
+            // AI Studio acepta el nombre tal cual: gemini-3.1-pro-preview, gemini-2.0-flash, etc.
+            const modelName = config.model.replace(/^models\//, '');
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${aiStudioKey}`;
+            console.log(`[Gemini] AI Studio → ${modelName}`);
 
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        role: 'user',
-                        parts
-                    }],
-                    generationConfig: {
-                        temperature: request.temperature ?? config.temperature,
-                        maxOutputTokens: request.maxTokens || config.maxTokens,
-                        responseMimeType: request.jsonSchema ? "application/json" : "text/plain"
-                    }
-                })
+                body: JSON.stringify(bodyPayload)
             });
-
             return this.processGeminiResponse(response, role, config);
         }
 
-        throw new Error("No valid credentials for Gemini (Service Account or API Key missing)");
+        // ── 2. Vertex AI (Service Account) — fallback ──────────────────────────
+        if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+            try {
+                const client = await this.googleAuth.getClient();
+                const token = await client.getAccessToken();
+                if (!token.token) throw new Error('Failed to get Vertex token');
+
+                // Vertex AI requiere nombres estables (sin -preview), mapeamos
+                const VERTEX_MAP: Record<string, string> = {
+                    'gemini-3.1-pro-preview':       'gemini-1.5-pro-002',
+                    'gemini-3.1-flash-lite-preview': 'gemini-1.5-flash-002',
+                    'gemini-2.0-flash':              'gemini-2.0-flash-001',
+                };
+                const vertexModel = VERTEX_MAP[config.model] || config.model.replace(/-preview$/, '-002').replace(/^models\//, '');
+                const { projectId, location } = API_CONFIG.vertexAI;
+                const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${vertexModel}:generateContent`;
+                console.log(`[Gemini] Vertex AI → ${vertexModel}`);
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyPayload)
+                });
+                return await this.processGeminiResponse(response, role, config);
+            } catch (e: any) {
+                console.error('[Gemini] Vertex AI failed:', e.message);
+                throw new Error(`Vertex AI error: ${e.message}`);
+            }
+        }
+
+        throw new Error('No Gemini credentials: add GEMINI_API_KEY to .env.local');
     }
 
     private async processGeminiResponse(response: Response, role: AgentRole, config: any): Promise<AgentResponse> {

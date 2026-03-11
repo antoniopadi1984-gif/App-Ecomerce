@@ -308,7 +308,7 @@ export default function AgentesPage() {
           </div>
 
           {/* Agent cards grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: '8px' }}>
             {agents.map((cfg: any) => (
               editing?.agentId === cfg.agentId ? (
                 /* ── Edit inline card ── */

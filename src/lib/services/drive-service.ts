@@ -95,8 +95,19 @@ export async function findOrCreateFolder(drive: any, name: string, parentId?: st
     });
     if (res.data.files?.length > 0) return res.data.files[0].id;
 
+    if (!parentId) {
+        // CRITICAL: Floating files/folders in Service Accounts have 0 quota.
+        // We MUST force them into the Root ID if no parent is provided.
+        parentId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8';
+        console.warn(`[DriveService] findOrCreateFolder('${name}') mandatory parent fallback to: ${parentId}`);
+    }
+
     const created = await drive.files.create({
-        requestBody: { name, mimeType: 'application/vnd.google-apps.folder', parents: parentId ? [parentId] : [] },
+        requestBody: { 
+            name, 
+            mimeType: 'application/vnd.google-apps.folder', 
+            parents: [parentId] 
+        },
         fields: 'id',
         supportsAllDrives: true
     });
@@ -113,18 +124,23 @@ export async function setupStoreDrive(storeId: string): Promise<string> {
         const drive = await getDriveClient();
 
         // Root: ECOMBOOM/
-        const rootParentId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
-        const rootId = await findOrCreateFolder(drive, 'ECOMBOOM', rootParentId);
-        // Store folder
+        const ROOT_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8';
+        console.log(`[DriveService] Absolute Root ID: ${ROOT_ID}`);
+        
+        // We assume the ROOT_ID provided IS the ECOMBOOM folder or its parent.
+        // To be safe, we always use ROOT_ID as the parent for the Store folder.
         const store = await (prisma as any).store.findUnique({ where: { id: storeId }, select: { name: true } });
         const storeName = store?.name?.replace(/\s+/g, '_').toUpperCase() ?? storeId;
-        const storeFolderId = await findOrCreateFolder(drive, `STORE_${storeName}`, rootId);
+        
+        // Use ROOT_ID as the container. We don't need a middle ECOMBOOM folder if it causes Quota issues.
+        const storeFolderId = await findOrCreateFolder(drive, `STORE_${storeName}`, ROOT_ID);
+        
         // Config folder
         await findOrCreateFolder(drive, '_CONFIG', storeFolderId);
 
         await (prisma as any).store.update({
             where: { id: storeId },
-            data: { driveFolderId: storeFolderId, driveSetupDone: true }
+            data: { driveRootFolderId: storeFolderId, driveSetupDone: true }
         });
 
         return storeFolderId;
@@ -144,14 +160,14 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
 
         const store = await (prisma as any).store.findUnique({
             where: { id: storeId },
-            select: { driveFolderId: true, name: true }
+            select: { driveRootFolderId: true, name: true }
         });
         const product = await (prisma as any).product.findUnique({
             where: { id: productId },
             select: { title: true, sku: true }
         });
 
-        let storeFolderId = store?.driveFolderId;
+        let storeFolderId = store?.driveRootFolderId;
         if (!storeFolderId) storeFolderId = await setupStoreDrive(storeId);
 
         const prodSku = NomenclatureService.extractSku(product?.title ?? productId, product?.sku);

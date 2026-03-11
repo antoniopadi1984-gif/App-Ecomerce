@@ -165,10 +165,21 @@ export class AgentDispatcher {
                 const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt || ''}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
 
                 // Normalizar nombre del modelo para Vertex AI
+                // Usar modelos reales disponibles en Vertex AI
                 let vertexModel = config.model;
 
-                if (vertexModel.includes('1.5-flash') || vertexModel.includes('1.5-pro')) {
-                    vertexModel = 'gemini-3.1-pro-preview'; // Upgrade automático a modelo actual
+                // Mapeo a nombres reales de Vertex AI
+                const MODEL_MAP: Record<string, string> = {
+                  'gemini-3.1-pro-preview':   'gemini-2.0-flash-001',
+                  'gemini-3.1-flash-lite-preview': 'gemini-2.0-flash-001',
+                  'gemini-3.1-flash-image':   'gemini-2.0-flash-001',
+                  'gemini-1.5-pro':            'gemini-1.5-pro-002',
+                  'gemini-1.5-flash':          'gemini-1.5-flash-002',
+                };
+                vertexModel = MODEL_MAP[vertexModel] || vertexModel;
+                // Si no tiene version suffix, añadir -001
+                if (!vertexModel.match(/-\d{3}$/) && !vertexModel.includes('preview')) {
+                  vertexModel = vertexModel + '-001';
                 }
 
                 const endpoint = `https://${API_CONFIG.vertexAI.location}-aiplatform.googleapis.com/v1/projects/${API_CONFIG.vertexAI.projectId}/locations/${API_CONFIG.vertexAI.location}/publishers/google/models/${vertexModel}:generateContent`;
@@ -231,12 +242,10 @@ export class AgentDispatcher {
                 return await this.processGeminiResponse(response, role, config);
 
             } catch (e: any) {
-                console.error("[AgentDispatcher] Vertex AI failed:", e.message);
-                if (e.response) {
-                    const errDetail = await (e.response as any).text().catch(() => '');
-                    console.error("[AgentDispatcher] Vertex AI Error Detail:", errDetail);
-                }
-                console.log("[AgentDispatcher] trying fallback to Gemini Studio...");
+                const errMsg = e.message || String(e);
+                console.error("[AgentDispatcher] Vertex AI failed:", errMsg);
+                // Re-throw so we don't silently fall through to a missing API key
+                throw new Error(`Vertex AI error: ${errMsg}`);
             }
         }
 

@@ -60,24 +60,40 @@ export default function ResearchLabPage() {
 
   useEffect(() => { loadResults(); }, [loadResults]);
 
-  // Lanzar pipeline
+  // Lanzar pipeline — llama al endpoint REAL /api/research/god-tier
   const runPipeline = async (step?: string) => {
-    if (!productId) return;
+    if (!productId || !activeStoreId) {
+      toast.error('Necesitas una tienda y un producto seleccionados');
+      return;
+    }
     setRunning(true);
+    const runId = `run_${Date.now()}`;
+    const stepsToRun = step ? [step] : ['P1', 'P2', 'P3', 'P4', 'P5'];
+
     try {
-      const res = await fetch('/api/research/run-pipeline', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, storeId: activeStoreId, steps: step ? [step] : ['P1','P2','P3','P4','P5'] }),
-      });
-      const d = await res.json();
-      if (d.error) throw new Error(d.error);
-      toast.success(step ? `✅ ${STEP_LABELS[step]?.label} completado` : '✅ Research completo');
+      for (const s of stepsToRun) {
+        toast.loading(`⏳ Ejecutando ${STEP_LABELS[s]?.label || s}...`, { id: `step-${s}` });
+        const res = await fetch('/api/research/god-tier', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId, storeId: activeStoreId, stepKey: s, runId }),
+        });
+        const d = await res.json();
+        toast.dismiss(`step-${s}`);
+        if (!d.ok) {
+          toast.error(`Error en ${s}: ${d.error || 'desconocido'}`);
+          break;
+        }
+        toast.success(`✅ ${STEP_LABELS[s]?.label || s} completado`);
+      }
       await loadResults();
     } catch (e: any) {
       toast.error('Error en research: ' + (e.message || ''));
-    } finally { setRunning(false); }
+    } finally {
+      setRunning(false);
+    }
   };
+
 
   const getResult = (key: string) => results.find(r => r.stepKey === key);
   const completedSteps = Object.keys(STEP_LABELS).filter(k => getResult(k));

@@ -87,6 +87,12 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
   const [creating, setCreating] = useState(false);
   const imageRef = useRef<HTMLInputElement>(null);
 
+  // ── Shopify landings (productos existentes = landing pages) ───
+  const [shopifyProducts, setShopifyProducts] = useState<any[]>([]);
+  const [loadingLandings, setLoadingLandings] = useState(false);
+  const [selectedLandings, setSelectedLandings] = useState<string[]>([]); // shopifyId[]
+  const [landingSearch, setLandingSearch] = useState('');
+
   const [form, setForm] = useState({
     nombre: '', sku: '', categoria: 'salud', pais: 'ES',
     idioma: 'ES', moneda: activeStore?.currency || 'EUR',
@@ -96,13 +102,36 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
     costeManipulacion: 0, costeDevolucion: 0,
     fulfillment: 'beeping',
     tasaEntrega: 100, tasaEnvio: 100, tasaConversion: 3,
-    paymentMode: 'card' as 'card' | 'hybrid', // card = solo tarjeta, hybrid = COD+tarjeta
+    paymentMode: 'card' as 'card' | 'hybrid',
     competidores: [] as any[],
   });
 
   useEffect(() => {
     if (activeStore?.currency) setForm(prev => ({ ...prev, moneda: activeStore.currency }));
   }, [activeStore?.currency]);
+
+  // Cargar productos de Shopify cuando abre el modal
+  useEffect(() => {
+    if (!showCreateModal || !activeStoreId) return;
+    setLoadingLandings(true);
+    fetch(`/api/shopify/products?storeId=${activeStoreId}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.products) setShopifyProducts(d.products);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingLandings(false));
+  }, [showCreateModal, activeStoreId]);
+
+  const toggleLanding = (shopifyId: string) => {
+    setSelectedLandings(prev =>
+      prev.includes(shopifyId) ? prev.filter(id => id !== shopifyId) : [...prev, shopifyId]
+    );
+  };
+
+  const filteredShopifyProducts = shopifyProducts.filter(p =>
+    !landingSearch || p.title?.toLowerCase().includes(landingSearch.toLowerCase())
+  );
 
   const update = (key: string, value: any) => setForm(f => ({ ...f, [key]: value }));
 
@@ -202,29 +231,42 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
   const handleCrear = async () => {
     setCreating(true);
     try {
+      // Build landings JSON from selected shopify products
+      const landings = selectedLandings.map(sid => {
+        const sp = shopifyProducts.find((p: any) => p.id?.toString() === sid || p.shopifyId === sid);
+        return sp ? { shopifyId: sid, title: sp.title, handle: sp.handle, url: sp.url || sp.onlineStoreUrl || '' } : { shopifyId: sid };
+      });
+
       const res = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Store-Id': activeStoreId || '' },
         body: JSON.stringify({
+          storeId: activeStoreId,
           title: form.nombre,
           sku: form.sku || 'PROD_' + form.nombre.toUpperCase().replace(/\s/g, '_') + '_01',
           country: form.pais, marketLanguage: form.idioma, currency: form.moneda,
           niche: form.categoria, pvpEstimated: form.precioVenta, price: form.precioVenta,
           unitCost: form.costeProducto, shippingCost: form.costeEnvio,
-          handlingCost: form.costeManipulacion, returnRate: form.costeDevolucion,
+          handlingCost: form.costeManipulacion, returnCost: form.costeDevolucion,
           fulfillment: form.fulfillment, deliveryRate: form.tasaEntrega,
           cvrExpected: form.tasaConversion, paymentMode: form.paymentMode,
           cpaMax: m.cpaMax, breakevenCPC: m.cpcBE, breakevenROAS: m.roasBE,
           imageUrl: form.imageUrl, googleDocUrl: form.googleDocUrl,
           competitors: form.competidores,
+          landingUrls: landings.length ? JSON.stringify(landings) : null,
+          landingUrl: landings[0]?.url || null,
         })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
+      toast.success('✅ Producto creado — Drive activado automáticamente');
       await refreshAllProducts();
       setProductId(data.product.id);
       setShowCreateModal(false);
-    } catch { toast.error('Error al crear el producto'); }
+    } catch (e: any) {
+      console.error('[createProduct]', e);
+      toast.error('Error al crear el producto: ' + (e.message || ''));
+    }
     finally { setCreating(false); }
   };
 
@@ -347,6 +389,62 @@ export function AddProductDialog({ showCreateModal, setShowCreateModal }: { show
               </div>
             </div>
           )}
+
+          {/* ── LANDINGS DE SHOPIFY ── */}
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <Label>🛍️ Landings de Shopify — selecciona las que venden este producto</Label>
+              {selectedLandings.length > 0 && (
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', background: '#f0fdf4', padding: '2px 8px', borderRadius: '20px' }}>
+                  {selectedLandings.length} seleccionada{selectedLandings.length > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+
+            {/* Buscador */}
+            <input
+              placeholder="🔍 Buscar producto en Shopify..."
+              value={landingSearch}
+              onChange={e => setLandingSearch(e.target.value)}
+              style={{ width: '100%', padding: '5px 10px', borderRadius: '7px', border: '1px solid #e2e8f0', fontSize: '12px', outline: 'none', marginBottom: '6px', boxSizing: 'border-box' }}
+            />
+
+            <div style={{ maxHeight: '120px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fafafa' }}>
+              {loadingLandings ? (
+                <p style={{ textAlign: 'center', padding: '16px', fontSize: '11px', color: '#94a3b8' }}>🔄 Cargando productos de Shopify...</p>
+              ) : filteredShopifyProducts.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '16px', fontSize: '11px', color: '#94a3b8' }}>Sin productos en Shopify — sincroniza primero</p>
+              ) : (
+                filteredShopifyProducts.map((sp: any) => {
+                  const sid = sp.id?.toString() || sp.shopifyId;
+                  const selected = selectedLandings.includes(sid);
+                  return (
+                    <div key={sid} onClick={() => toggleLanding(sid)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', cursor: 'pointer', background: selected ? '#eff6ff' : 'transparent', borderBottom: '1px solid #f1f5f9', transition: 'background 0.1s' }}>
+                      <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selected ? '#3b82f6' : '#cbd5e1'}`, background: selected ? '#3b82f6' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {selected && <span style={{ color: 'white', fontSize: '10px', lineHeight: 1 }}>✓</span>}
+                      </div>
+                      {sp.image && <img src={sp.image} alt="" style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sp.title}</div>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>{sp.handle || sp.shopifyId} {sp.price ? `· ${sp.price}` : ''}</div>
+                      </div>
+                      {selected && <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700, flexShrink: 0 }}>✓ Asignada</span>}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* ── DRIVE INDICATOR ── */}
+          <div style={{ padding: '6px 10px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '16px' }}>📁</span>
+            <div>
+              <p style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', margin: 0 }}>Google Drive se activará automáticamente al crear</p>
+              <p style={{ fontSize: '9px', color: '#64748b', margin: '1px 0 0' }}>Se creará la carpeta del producto con subcarpetas: Anuncios, Creatividades, Research, Doc</p>
+            </div>
+          </div>
 
           {/* COMPETIDORES */}
           <Label>Competidores</Label>

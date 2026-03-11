@@ -74,8 +74,8 @@ export async function getDriveClient() {
     // Build auth from GCP credentials
     const { google } = await import('googleapis');
     const auth = new google.auth.GoogleAuth({
-        credentials: process.env.GOOGLE_SERVICE_ACCOUNT ?
-            JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT) : undefined,
+        credentials: process.env.GOOGLE_SERVICE_ACCOUNT_KEY ?
+            JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY) : undefined,
         keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
         scopes: [
             'https://www.googleapis.com/auth/drive',

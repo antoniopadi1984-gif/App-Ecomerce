@@ -10,12 +10,12 @@ export interface AgentRequest {
     context?: string;
     temperature?: number;
     maxTokens?: number;
-    jsonSchema?: boolean; // Habilitar modo JSON
-    images?: string[];    // URLs o base64 de imágenes para visión
-    video?: string;       // Base64
+    jsonSchema?: boolean;
+    images?: string[];
+    video?: string;
     videoMimeType?: string;
-    model?: string;       // Overide model
-    locale?: string;      // Código de país (ES, MX, etc.) para localización
+    model?: string;
+    locale?: string;
 }
 
 export interface AgentResponse {
@@ -74,16 +74,11 @@ export class AgentDispatcher {
         return directives[country] || directives['ES'];
     }
 
-    /**
-     * Despachar a agente apropiado
-     */
     async dispatch(request: AgentRequest): Promise<AgentResponse> {
-        // Determinar agente
         const role = request.role || selectAgentForTask(request.taskDescription || request.prompt);
         const agentConfig = getAgentConfig(role);
         const provider = getAgentProvider(role);
 
-        // Model override support
         const modelToUse = request.model || agentConfig.model;
         const finalConfig = { ...agentConfig, model: modelToUse };
 
@@ -91,7 +86,6 @@ export class AgentDispatcher {
         console.log(`[AgentDispatcher] Provider: ${provider}`);
         console.log(`[AgentDispatcher] Model: ${modelToUse}`);
 
-        // Despachar según provider
         switch (provider) {
             case 'replicate-claude':
                 return this.dispatchToReplicate(role, finalConfig, request);
@@ -105,9 +99,6 @@ export class AgentDispatcher {
         }
     }
 
-    /**
-     * Despachar a Claude via Replicate (sin llamada directa a Anthropic)
-     */
     private async dispatchToReplicate(
         role: AgentRole,
         config: any,
@@ -146,7 +137,9 @@ export class AgentDispatcher {
     }
 
     /**
-     * Despachar a Gemini (AI Studio primary, Vertex AI fallback)
+     * Despachar a Gemini
+     * Canal 1: Vertex AI via Service Account (v1beta1 — soporta todos los modelos 2026)
+     * Canal 2: Gemini AI Studio via API Key (fallback automático)
      */
     private async dispatchToGemini(
         role: AgentRole,
@@ -154,12 +147,13 @@ export class AgentDispatcher {
         request: AgentRequest
     ): Promise<AgentResponse> {
 
+        // Preparar prompt y partes reutilizables para ambos canales
         const culturalDirectives = this.getCulturalDirectives(request.locale);
         const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt || ''}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
+
         const parts: any[] = [{ text: fullPrompt }];
 
-        // ── Imágenes ────────────────────────────────────────
-        if (request.images?.length) {
+        if (request.images && request.images.length > 0) {
             for (const imgUrl of request.images) {
                 try {
                     if (imgUrl.startsWith('data:')) {
@@ -169,11 +163,14 @@ export class AgentDispatcher {
                         const buffer = await imgRes.arrayBuffer();
                         parts.push({ inlineData: { mimeType: imgRes.headers.get('content-type') || 'image/jpeg', data: Buffer.from(buffer).toString('base64') } });
                     }
-                } catch (imgErr) { console.error('[Gemini] Image error:', imgErr); }
+                } catch (imgError) {
+                    console.error("[AgentDispatcher] Failed to process image:", imgUrl, imgError);
+                }
             }
         }
+
         if (request.video) {
-            parts.push({ inlineData: { mimeType: request.videoMimeType || 'video/mp4', data: request.video.split(',').pop() } });
+            parts.push({ inlineData: { mimeType: request.videoMimeType || "video/mp4", data: request.video.split(',').pop() } });
         }
 
         const bodyPayload = {
@@ -181,57 +178,67 @@ export class AgentDispatcher {
             generationConfig: {
                 temperature: request.temperature ?? config.temperature,
                 maxOutputTokens: request.maxTokens || config.maxTokens,
-                responseMimeType: request.jsonSchema ? 'application/json' : 'text/plain',
+                responseMimeType: request.jsonSchema ? "application/json" : "text/plain"
             }
         };
 
-        // ── 1. AI Studio (GEMINI_API_KEY) — canal principal para gen-lang-client ──
-        const aiStudioKey = process.env.GEMINI_API_KEY || process.env.VERTEX_AI_API_KEY;
-        if (aiStudioKey) {
-            // AI Studio acepta el nombre tal cual: gemini-3.1-pro-preview, gemini-2.0-flash, etc.
-            const modelName = config.model.replace(/^models\//, '');
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${aiStudioKey}`;
-            console.log(`[Gemini] AI Studio → ${modelName}`);
+        const modelName = config.model.replace(/^models\//, '');
+
+        // ── Canal 1: Vertex AI (Service Account) ─────────────────────────────
+        // Usa v1beta1 que soporta los modelos Gemini 2026 (gemini-3.1-pro-preview, etc.)
+        if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+            try {
+                const client = await this.googleAuth.getClient();
+                const token = await client.getAccessToken();
+                if (!token.token) throw new Error("Failed to get access token");
+
+                const { projectId, location } = API_CONFIG.vertexAI;
+                // v1beta1 es necesario para modelos preview y modelos 2026
+                const endpoint = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${projectId}/locations/${location}/publishers/google/models/${modelName}:generateContent`;
+                console.log(`[Gemini] Vertex AI (v1beta1) → ${modelName} @ ${location}`);
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bodyPayload)
+                });
+
+                // Si el modelo no está en esta región, caemos a AI Studio
+                if (response.status === 404) {
+                    const errBody = await response.text();
+                    console.warn(`[Gemini] Vertex 404 para ${modelName} en ${location}, usando AI Studio. ${errBody.slice(0, 200)}`);
+                    // fallthrough a Canal 2
+                } else {
+                    return await this.processGeminiResponse(response, role, config);
+                }
+
+            } catch (e: any) {
+                console.warn("[AgentDispatcher] Vertex AI error, usando AI Studio como fallback:", e.message);
+                // fallthrough a Canal 2
+            }
+        }
+
+        // ── Canal 2: AI Studio / Gemini API (API Key) ─────────────────────────
+        const apiKey = process.env.GEMINI_API_KEY
+            || (process.env.VERTEX_AI_API_KEY?.startsWith('AIza') ? process.env.VERTEX_AI_API_KEY : undefined);
+
+        if (apiKey) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            console.log(`[Gemini] AI Studio (v1beta) → ${modelName}`);
 
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bodyPayload)
             });
+
             return this.processGeminiResponse(response, role, config);
         }
 
-        // ── 2. Vertex AI (Service Account) — fallback ──────────────────────────
-        if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-            try {
-                const client = await this.googleAuth.getClient();
-                const token = await client.getAccessToken();
-                if (!token.token) throw new Error('Failed to get Vertex token');
-
-                // Vertex AI requiere nombres estables (sin -preview), mapeamos
-                const VERTEX_MAP: Record<string, string> = {
-                    'gemini-3.1-pro-preview':       'gemini-1.5-pro-002',
-                    'gemini-3.1-flash-lite-preview': 'gemini-1.5-flash-002',
-                    'gemini-2.0-flash':              'gemini-2.0-flash-001',
-                };
-                const vertexModel = VERTEX_MAP[config.model] || config.model.replace(/-preview$/, '-002').replace(/^models\//, '');
-                const { projectId, location } = API_CONFIG.vertexAI;
-                const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${vertexModel}:generateContent`;
-                console.log(`[Gemini] Vertex AI → ${vertexModel}`);
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bodyPayload)
-                });
-                return await this.processGeminiResponse(response, role, config);
-            } catch (e: any) {
-                console.error('[Gemini] Vertex AI failed:', e.message);
-                throw new Error(`Vertex AI error: ${e.message}`);
-            }
-        }
-
-        throw new Error('No Gemini credentials: add GEMINI_API_KEY to .env.local');
+        throw new Error("No Gemini credentials. Añade GEMINI_API_KEY en .env.local (obtén una en aistudio.google.com/apikey)");
     }
 
     private async processGeminiResponse(response: Response, role: AgentRole, config: any): Promise<AgentResponse> {
@@ -253,7 +260,7 @@ export class AgentDispatcher {
 
         const usage = data.usageMetadata || {};
         const isPro = config.model.includes('pro');
-        const costPerMillion = isPro ? 1.25 : 0.075; // Approx
+        const costPerMillion = isPro ? 1.25 : 0.075;
         const cost = (usage.promptTokenCount || 0) / 1000000 * costPerMillion;
 
         return {
@@ -270,9 +277,6 @@ export class AgentDispatcher {
         };
     }
 
-    /**
-     * Shortcuts para despacho directo
-     */
     async dispatchTo(role: AgentRole, prompt: string, context?: string): Promise<AgentResponse> {
         return this.dispatch({ role, prompt, context });
     }

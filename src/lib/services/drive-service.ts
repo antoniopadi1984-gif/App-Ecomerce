@@ -445,8 +445,8 @@ export async function uploadToProduct(
     mimeType: string,
     productId: string,
     storeId: string,
-    opts: { conceptCode?: string; funnelStage?: string; fileType?: string; creativeArtifactId?: string }
-): Promise<{ driveFileId: string; drivePath: string; driveUrl: string }> {
+    opts: { conceptCode?: string; funnelStage?: string; fileType?: string; creativeArtifactId?: string; subfolderName?: string; version?: number }
+): Promise<{ driveFileId: string; drivePath: string; driveUrl: string; parentFolderId: string }> {
     const drive = await getDriveClient();
     const product = await (prisma as any).product.findUnique({
         where: { id: productId },
@@ -456,24 +456,26 @@ export async function uploadToProduct(
     let folderId = product?.driveFolderId;
     if (!folderId) folderId = await setupProductDrive(productId, storeId);
 
-    // Determine target subfolder based on Nomenclature structure
+    // Determine target subfolder
     let subFolder = folderId;
 
-    if (opts.creativeArtifactId) {
-        // Find artifacts to get its nomenclature logic
-        const artifact = await (prisma as any).creativeArtifact.findUnique({
-            where: { id: opts.creativeArtifactId },
-            include: { concept: true }
-        });
+    if (opts.conceptCode) {
+        // 1. Concept Folder (e.g. C01_NOMBRE)
+        const conceptName = opts.conceptCode.startsWith('C') ? opts.conceptCode : `C01_${opts.conceptCode}`;
+        const conceptFolderId = await findOrCreateFolder(drive, conceptName.toUpperCase(), folderId);
+        
+        // 2. Funnel Stage Folder (e.g. TOFU, MOFU, BOFU)
+        const funnelFolderId = await findOrCreateFolder(drive, (opts.funnelStage || 'TOFU').toUpperCase(), conceptFolderId);
+        
+        // 3. Version Folder (e.g. V01, V02)
+        const versionNum = opts.version !== undefined ? String(opts.version).padStart(2, '0') : '01';
+        const versionFolderId = await findOrCreateFolder(drive, `V${versionNum}`, funnelFolderId);
+        
+        subFolder = versionFolderId;
 
-        if (artifact) {
-            const cNum = artifact.concept.number || 1;
-            const cName = artifact.concept.name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
-            const conceptFolderName = `C${cNum}_${cName}`;
-            const versionFolderName = `V${artifact.version}${artifact.variantSuffix || ''}`;
-
-            const conceptFolderId = await findOrCreateFolder(drive, conceptFolderName, folderId);
-            subFolder = await findOrCreateFolder(drive, versionFolderName, conceptFolderId);
+        // 4. Sub-elements (like CLIPS)
+        if (opts.subfolderName) {
+            subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), versionFolderId);
         }
     } else if (opts.fileType === 'IMAGE') {
         const assetsFolder = await findOrCreateFolder(drive, '06_ASSETS', folderId);
@@ -500,7 +502,7 @@ export async function uploadToProduct(
             funnelStage: opts.funnelStage,
             fileType: opts.fileType ?? 'VIDEO',
             mimeType,
-            nomenclature: fileName // Usamos el nombre del archivo como nomenclatura por defecto si no hay otro
+            nomenclature: fileName
         },
         update: { syncedAt: new Date(), drivePath },
     });
@@ -518,7 +520,42 @@ export async function uploadToProduct(
 
     invalidateProductIndex(productId);
     await syncProductIndex(productId, storeId);
-    return { driveFileId, drivePath, driveUrl: driveUrl || '' };
+    return { driveFileId, drivePath, driveUrl: driveUrl || '', parentFolderId: subFolder };
+}
+
+/**
+ * saveAnalysisDoc - Genera y sube un Google Doc con el análisis detallado.
+ */
+export async function saveAnalysisDoc(
+    productId: string,
+    storeId: string,
+    folderId: string,
+    fileName: string,
+    content: string
+) {
+    try {
+        const drive = await getDriveClient();
+        
+        // El contenido puede ser HTML o Texto. El Drive API lo convertirá si el mimeType del archivo destino es gdoc.
+        const res = await drive.files.create({
+            requestBody: {
+                name: fileName,
+                parents: [folderId],
+                mimeType: 'application/vnd.google-apps.document'
+            },
+            media: {
+                mimeType: 'text/plain',
+                body: content
+            },
+            fields: 'id,webViewLink',
+            supportsAllDrives: true
+        });
+
+        return { id: res.data.id, url: res.data.webViewLink };
+    } catch (e) {
+        console.error('[DriveService] saveAnalysisDoc failed:', e);
+        return null;
+    }
 }
 
 export async function downloadFile(fileId: string): Promise<Buffer> {

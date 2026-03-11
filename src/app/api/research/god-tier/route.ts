@@ -180,6 +180,26 @@ export async function POST(req: NextRequest) {
                 }
                 break;
 
+            case 'P7': // Landing Analyzer (Competidores)
+                const p7Prompt = GEMINI_PROMPTS_V3.COMPETITOR_ANALYSIS_V3
+                    .replace('{{competitorsJson}}', 'Usa tu conocimiento del mercado para este producto: ' + product.title + ' en el nicho: ' + ((product as any).niche || 'General'));
+                
+                const p7Result = await AiRouter.dispatch(
+                    storeId,
+                    TaskType.RESEARCH_FORENSIC, // Usar Gemini Pro para análisis de competencia
+                    p7Prompt,
+                    { jsonSchema: true }
+                );
+                try {
+                    const clean = p7Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+                    resultJson = JSON.parse(clean);
+                    resultText = JSON.stringify(resultJson);
+                } catch {
+                    resultText = p7Result.text;
+                    resultJson = { raw: p7Result.text };
+                }
+                break;
+
             default:
                 return NextResponse.json({ error: 'StepKey inválido' }, { status: 400 });
         }

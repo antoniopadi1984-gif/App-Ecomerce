@@ -18,7 +18,9 @@ const STEP_LABELS: Record<string, { label: string; emoji: string; color: string 
   P2: { label: 'Ángulos de Mensaje',  emoji: '💡', color: '#f59e0b' },
   P3: { label: 'Mecanismo Único',     emoji: '⚙️', color: '#10b981' },
   P4: { label: 'Offer Stack',         emoji: '🎁', color: '#3b82f6' },
-  P5: { label: 'Vector Competencia',  emoji: '🔬', color: '#ec4899' },
+  P5: { label: 'Combo Matrix',        emoji: '🧠', color: '#8b5cf6' },
+  P6: { label: 'Vector Mapping',      emoji: '🗺️', color: '#14b8a6' },
+  P7: { label: 'Landing Analyzer',    emoji: '💻', color: '#ec4899' },
 };
 
 const LS: React.CSSProperties = {
@@ -68,7 +70,7 @@ export default function ResearchLabPage() {
     }
     setRunning(true);
     const runId = `run_${Date.now()}`;
-    const stepsToRun = step ? [step] : ['P1', 'P2', 'P3', 'P4', 'P5'];
+    const stepsToRun = step ? [step] : ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7'];
 
     try {
       for (const s of stepsToRun) {

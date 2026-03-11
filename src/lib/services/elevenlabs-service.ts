@@ -104,8 +104,8 @@ export class ElevenLabsService {
 
     static async speechToText(audioBlob: Blob, options?: { language?: string }): Promise<{ text: string; words?: any[] }> {
         const formData = new FormData();
-        formData.append('audio', audioBlob, 'audio.mp3');
-        formData.append('model_id', 'scribe_v2');
+        formData.append('file', audioBlob, 'audio.mp3');
+        formData.append('model_id', 'scribe_v1');
         if (options?.language) formData.append('language_code', options.language);
 
         const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {

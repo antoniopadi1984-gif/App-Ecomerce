@@ -38,7 +38,7 @@ interface ShopifyProductItem {
     title: string;
     handle: string;
     image: string | null;
-    variants: { price: string }[];
+    variants: { price: string; sku: string }[];
     status: string;
     ecomBoomId: string | null;
 }
@@ -83,17 +83,46 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
             .finally(() => setShopifyLoading(false));
     }, [activeStoreId]);
 
-    // Merge lists: Shopify products enriched with ecomBoom link awareness
-    // If Shopify is connected, use that list as primary; then fall back to EcomBoom-only products.
-    const ecomBoomIds = new Set(allProducts.map(p => p.id));
+    // List of local product IDs for quick lookup
+    const localSkuMap = new Map(allProducts.map(p => [p.sku, p.id]));
+    const localShopifyIdMap = new Map(allProducts.map(p => [p.shopifyId, p.id]));
 
-    const filteredProducts = shopifyConnected
-        ? shopifyProducts.filter(p =>
-            p.title?.toLowerCase().includes(search.toLowerCase())
-        )
-        : allProducts.filter(p =>
-            p.title?.toLowerCase().includes(search.toLowerCase())
-        );
+    const filteredProducts = React.useMemo(() => {
+        if (!shopifyConnected) {
+            return allProducts.filter(p => 
+                p.title?.toLowerCase().includes(search.toLowerCase())
+            );
+        }
+
+        // Merge Shopify products with local awareness
+        const merged = shopifyProducts.map(sp => ({
+            id: sp.id,
+            title: sp.title,
+            handle: sp.handle,
+            image: sp.image,
+            variants: sp.variants,
+            status: sp.status,
+            ecomBoomId: sp.ecomBoomId || localShopifyIdMap.get(sp.id) || localSkuMap.get(sp.variants?.[0]?.sku) || null
+        }));
+
+        // Add any local products that weren't found in this Shopify batch
+        allProducts.forEach(lp => {
+            const alreadyIn = merged.find(m => m.ecomBoomId === lp.id);
+            if (!alreadyIn) {
+                merged.push({
+                    id: lp.id,
+                    title: lp.title,
+                    handle: lp.handle || '',
+                    image: lp.imageUrl,
+                    variants: [],
+                    status: lp.status,
+                    ecomBoomId: lp.id
+                } as any);
+            }
+        });
+
+        return merged.filter(p => p.title?.toLowerCase().includes(search.toLowerCase()));
+    }, [shopifyConnected, shopifyProducts, allProducts, search]);
 
 
     return (
@@ -238,97 +267,56 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
 
                                 <DropdownMenuSeparator className="bg-slate-100 my-2" />
 
-                                {/* ── Shopify-connected store: enhanced list ── */}
-                                {shopifyConnected ? (
-                                    shopifyLoading ? (
-                                        <div className="flex items-center justify-center py-6 text-slate-400">
-                                            <span className="text-[11px]">Cargando productos...</span>
-                                        </div>
-                                    ) : filteredProducts.length === 0 ? (
-                                        <div className="flex items-center justify-center py-6 text-slate-400">
-                                            <span className="text-[11px]">Sin productos en Shopify</span>
-                                        </div>
-                                    ) : (
-                                        (filteredProducts as ShopifyProductItem[]).map((p) => {
-                                            const activeId = p.ecomBoomId || p.id;
-                                            const isActive = productId === activeId;
-                                            return (
-                                                <DropdownMenuItem
-                                                    key={p.id}
-                                                    onClick={() => setProductId(p.ecomBoomId || p.id)}
-                                                    className={cn(
-                                                        "flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-all mb-1",
-                                                        isActive ? "bg-violet-50 border border-violet-100" : "hover:bg-slate-50 border border-transparent"
+                                {shopifyLoading && filteredProducts.length === 0 ? (
+                                    <div className="flex items-center justify-center py-6 text-slate-400">
+                                        <span className="text-[11px]">Cargando productos de Shopify...</span>
+                                    </div>
+                                ) : filteredProducts.length === 0 ? (
+                                    <div className="flex items-center justify-center py-6 text-slate-400">
+                                        <span className="text-[11px]">No se encontraron productos en esta tienda</span>
+                                    </div>
+                                ) : (
+                                    (filteredProducts as any[]).map((p) => {
+                                        const activeId = p.ecomBoomId || p.id;
+                                        const isActive = productId === activeId;
+                                        const hasResearch = !!p.ecomBoomId;
+
+                                        return (
+                                            <DropdownMenuItem
+                                                key={p.id}
+                                                onClick={() => setProductId(activeId)}
+                                                className={cn(
+                                                    "flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all mb-1",
+                                                    isActive ? "bg-rose-50 border border-rose-100" : "hover:bg-slate-50 border border-transparent"
+                                                )}
+                                            >
+                                                {/* Thumbnail */}
+                                                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                                    {p.image || p.imageUrl ? (
+                                                        <img src={p.image || p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <Package className="w-3.5 h-3.5 text-slate-300" />
                                                     )}
-                                                >
-                                                    {/* Thumbnail */}
-                                                    <div className="w-7 h-7 rounded-md bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                                                        {p.image ? (
-                                                            <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <Package className="w-3 h-3 text-slate-300" />
+                                                </div>
+
+                                                {/* Info */}
+                                                <div className="flex flex-col min-w-0 flex-1">
+                                                    <span className="text-[11px] font-bold truncate text-slate-900">{p.title}</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-[9px] text-slate-400 font-medium uppercase tracking-tighter">{p.status}</span>
+                                                        {hasResearch && (
+                                                            <span className="text-[8px] px-1 py-0 bg-violet-50 text-violet-600 rounded border border-violet-100 font-bold uppercase tracking-tight">Research ✓</span>
+                                                        )}
+                                                        {shopifyConnected && p.id.startsWith('gid://') && (
+                                                            <span className="text-[8px] px-1 py-0 bg-emerald-50 text-emerald-600 rounded border border-emerald-100 font-bold uppercase tracking-tight">Shopify</span>
                                                         )}
                                                     </div>
+                                                </div>
 
-                                                    {/* Info */}
-                                                    <div className="flex flex-col min-w-0 flex-1">
-                                                        <span className="text-[11px] font-bold truncate text-slate-900">{p.title}</span>
-                                                        <span className="text-[9px] text-slate-400 font-medium">
-                                                            €{p.variants[0]?.price || "—"}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Badge */}
-                                                    {p.ecomBoomId ? (
-                                                        <span style={{
-                                                            fontSize: "9px", fontWeight: 700, padding: "2px 6px",
-                                                            borderRadius: "10px", background: "#ede9fe", color: "#7c3aed",
-                                                            flexShrink: 0, whiteSpace: "nowrap"
-                                                        }}>Research ✓</span>
-                                                    ) : (
-                                                        <span style={{
-                                                            fontSize: "9px", fontWeight: 700, padding: "2px 6px",
-                                                            borderRadius: "10px", background: "#f1f5f9", color: "#94a3b8",
-                                                            flexShrink: 0, whiteSpace: "nowrap"
-                                                        }}>Sin research</span>
-                                                    )}
-
-                                                    {isActive && <Check className="w-3 h-3 ml-1 text-violet-500 shrink-0" />}
-                                                </DropdownMenuItem>
-                                            );
-                                        })
-                                    )
-                                ) : (
-                                    /* ── Fallback: EcomBoom-only products ── */
-                                    (filteredProducts as typeof allProducts).map((p) => (
-                                        <DropdownMenuItem
-                                            key={p.id}
-                                            onClick={() => setProductId(p.id)}
-                                            className={cn(
-                                                "flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all mb-1",
-                                                productId === p.id ? "bg-rose-50 border border-rose-100" : "hover:bg-slate-50 border border-transparent"
-                                            )}
-                                        >
-                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                                                {p.imageUrl ? (
-                                                    <Image
-                                                        src={p.imageUrl}
-                                                        alt={p.title || "Product"}
-                                                        width={32}
-                                                        height={32}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <Package className="w-3.5 h-3.5 text-slate-300" />
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col min-w-0 flex-1">
-                                                <span className="text-[11px] font-bold truncate text-slate-900">{p.title}</span>
-                                                <span className="text-[9px] text-slate-400 font-medium uppercase tracking-tighter">{p.status}</span>
-                                            </div>
-                                            {productId === p.id && <Check className="w-3 h-3 ml-auto text-primary" />}
-                                        </DropdownMenuItem>
-                                    ))
+                                                {isActive && <Check className="w-3 h-3 ml-auto text-primary" />}
+                                            </DropdownMenuItem>
+                                        );
+                                    })
                                 )}
                             </ScrollArea>
                         </DropdownMenuContent>

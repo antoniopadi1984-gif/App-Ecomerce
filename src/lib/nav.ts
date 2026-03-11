@@ -28,6 +28,7 @@ export const navigation = [
         colorMuted: 'rgba(16,185,129,0.12)',
         href: '/operaciones/pedidos',
         children: [
+            { label: 'Productos', emoji: '🛍️', href: '/operaciones/productos' },
             { label: 'Pedidos', emoji: '📦', href: '/operaciones/pedidos' },
             { label: 'Finanzas', emoji: '💰', href: '/finanzas' },
             { label: 'Comunicaciones', emoji: '💬', href: '/operaciones/comunicaciones' },

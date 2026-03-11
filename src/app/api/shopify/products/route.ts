@@ -54,15 +54,22 @@ export async function GET(req: NextRequest) {
         });
         const skuToId = new Map(ecomProducts.map(p => [p.sku, p.id]));
 
-        const products = (data.products || []).map((p: any) => ({
-            id: p.id,
-            title: p.title,
-            handle: p.handle,
-            image: p.images?.nodes?.[0]?.url || null,
-            variants: p.variants || [],
-            status: p.status,
-            ecomBoomId: skuToId.get(p.variants?.nodes?.[0]?.sku) || skuToId.get(p.variants?.[0]?.sku) || null
-        }));
+        const products = (data.products || []).map((p: any) => {
+            const variantList = p.variants?.nodes || p.variants || [];
+            return {
+                id: p.id,
+                title: p.title,
+                handle: p.handle,
+                image: p.images?.nodes?.[0]?.url || null,
+                variants: variantList.map((v: any) => ({
+                    id: v.id,
+                    price: v.price,
+                    sku: v.sku
+                })),
+                status: p.status,
+                ecomBoomId: skuToId.get(variantList[0]?.sku) || null
+            };
+        });
 
         return NextResponse.json({
             success: true,

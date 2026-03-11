@@ -20,8 +20,18 @@ export async function GET(request: Request) {
                 price: true,
                 country: true,
                 driveFolderId: true,
+                sku: true,
                 createdAt: true,
                 storeId: true,
+                _count: {
+                    select: {
+                        avatars: true,
+                        avatarResearches: true,
+                        videoAssets: true,
+                        creativeAssets: true,
+                        researchRuns: true,
+                    }
+                }
             },
             orderBy: { createdAt: 'desc' }
         });

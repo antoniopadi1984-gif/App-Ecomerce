@@ -35,10 +35,10 @@ export async function GET(request: Request) {
                 structure: analysis.structure || [],
                 productCount: analysis.productCount || 0,
                 productsFound: analysis.productsFound || [],
-                scores: analysis.scores || {
-                    hook: 0,
-                    mechanism: 0,
-                    offer: 0
+                scores: {
+                    hook: analysis.scores?.hook ?? 0,
+                    mechanism: analysis.scores?.mechanism ?? 0,
+                    offer: analysis.scores?.offer ?? 0
                 },
                 criticalPoints: analysis.criticalPoints || [],
                 recommendations: analysis.recommendations || [],

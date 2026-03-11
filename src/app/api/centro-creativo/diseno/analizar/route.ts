@@ -58,74 +58,66 @@ export async function POST(request: Request) {
 
         // 3. Extract Headings for Structure analysis
         let textContent = '';
-        $('h1, h2, h3, h4, h5, h6, strong').each((i, el) => {
-             textContent += $(el).text().trim() + ' | ';
+        $('h1, h2, h3, h4, h5, h6, strong, p, b, i, li, span').each((i, el) => {
+             const t = $(el).text().trim();
+             if (t && t.length > 3) textContent += t + ' | ';
         });
         
-        // Strip everything and just take a limited chunk of text (around 3000 chars) for prompt speed
-        let plainText = textContent + $('p, li').text().replace(/\s+/g, ' ').substring(0, 3000);
+        // Strip everything and just take a limited chunk of text (around 5000 chars) 
+        let plainText = textContent.replace(/\s+/g, ' ').substring(0, 5000);
+
+        console.log(`[ANALIZADOR] URL: ${url} | Content Length: ${plainText.length} | Assets: ${extractedAssets.length}`);
 
         // 4. Send to GPT/Gemini via AiRouter for deep marketing analysis
-        const prompt = `Analiza la siguiente estructura y copy de esta Landing Page: URL: ${url}. 
-        Estos son los títulos y textos extraídos: 
-        """${plainText.substring(0, 2500)}"""
+        const prompt = `Analiza la estructura de esta Landing Page: URL: ${url}. 
+        Texto extraído: 
+        """${plainText}"""
         
-        Extrajimos ${extractedAssets.length} assets multimedia.
+        Assets: ${extractedAssets.length} detectados.
         
-        Actúa como el mejor Marketer de Respuesta Directa del mundo. Evalúa cómo ataca los dolores, cómo presenta el mecanismo único, y detecta los puntos de fricción. En particular detecta cuántos y cuáles productos vende.
+        Actúa como Marketer Experto. Detecta mecanismo único, hook y sección de productos.
         
-        Devuelve ABSOLUTAMENTE en formato JSON con la siguiente estructura y formato estricto:
+        Devuelve JSON ESTRICTO:
         {
-           "scores": {
-               "hook": [Puntaje 0-100 para el gancho inicial (headline, primer scroll)],
-               "mechanism": [Puntaje 0-100 para la explicación del mecanismo único y demostración],
-               "offer": [Puntaje 0-100 para la claridad de la oferta y urgencia]
-           },
-           "productCount": [Número entero de productos distintos identificados],
-           "productsFound": ["Nombre producto 1", "Nombre producto 2"],
-           "structure": [
-               "1. Hook / Headline: [De qué habla]",
-               "2. Agitación / Problema: [De qué habla]",
-               "3. Mecanismo Único: [De qué habla]",
-               "4. Oferta: [De qué habla]"
-           ],
-           "criticalPoints": [
-               "Punto de fricción 1...",
-               "Punto de fricción 2..."
-           ],
-           "recommendations": [
-               "Recomendación Pro 1...",
-               "Recomendación Pro 2..."
-           ]
+           "scores": { "hook": 0-100, "mechanism": 0-100, "offer": 0-100 },
+           "productCount": número,
+           "productsFound": ["nombre"],
+           "structure": ["paso 1", "paso 2"],
+           "criticalPoints": ["punto 1"],
+           "recommendations": ["mejora 1"]
         }`;
 
-        let iaAnalysis: any = {};
+        let iaAnalysis: any = {
+            scores: { hook: 0, mechanism: 0, offer: 0 },
+            productCount: 0,
+            productsFound: [],
+            structure: [],
+            criticalPoints: [],
+            recommendations: []
+        };
+
         try {
+            console.log(`[ANALIZADOR] Calling AiRouter...`);
             const aiResponse = await AiRouter.dispatch(
                 storeId,
-                TaskType.RESEARCH_FORENSIC, // Or WRITER, we'll map to FORENSIC to deep dive
+                TaskType.RESEARCH_FORENSIC,
                 prompt,
                 { jsonSchema: true }
             );
 
-            // Clean json
+            console.log(`[ANALIZADOR] AI Response received. Length: ${aiResponse.text.length}`);
+
             let clean = aiResponse.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-            iaAnalysis = JSON.parse(clean);
-        } catch (aiErr) {
-            console.error('Error in AiRouter inside analizador landing:', aiErr);
-            // Fallback AI
-            iaAnalysis = {
-                scores: { hook: 0, mechanism: 0, offer: 0 },
-                productCount: 0,
-                productsFound: [],
-                structure: ['Error al extraer la estructura mediante IA'],
-                criticalPoints: ["Hubo un problema de conexión con la IA"],
-                recommendations: ["Por favor, intenta analizar esta URL de nuevo"]
-            };
+            const parsed = JSON.parse(clean);
+            iaAnalysis = { ...iaAnalysis, ...parsed };
+        } catch (aiErr: any) {
+            console.error('[ANALIZADOR] AI Error:', aiErr?.message || aiErr);
+            iaAnalysis.criticalPoints = ["No se pudo conectar con la IA para un análisis profundo."];
+            iaAnalysis.structure = ["Estructura detectada visualmente, pero análisis marketing falló."];
         }
 
         // Deduplicate assets by URL globally to save space
-        const uniqueAssets = Array.from(new Map(extractedAssets.map(item => [item.url, item])).values());
+        const uniqueAssets = Array.from(new Map(extractedAssets.map(item => [item.url, item])).values()).slice(0, 30);
 
         // 5. Store in Prisma
         const newLanding = await prisma.landingClone.create({
@@ -134,7 +126,7 @@ export async function POST(request: Request) {
                 productId,
                 originalUrl: url,
                 status: 'COMPLETED',
-                screenshotUrl: uniqueAssets.find(a => a.type === 'image')?.url, // We assume 1st img is the hero visual roughly
+                screenshotUrl: uniqueAssets.find(a => a.type === 'image' && !a.url.includes('logo'))?.url || uniqueAssets[0]?.url, 
                 assetsJson: JSON.stringify({
                     analysis: iaAnalysis,
                     assets: uniqueAssets,
@@ -142,6 +134,8 @@ export async function POST(request: Request) {
                 })
             }
         });
+
+        console.log(`[ANALIZADOR] Saved landing ID: ${newLanding.id}`);
 
         return NextResponse.json({
             success: true,

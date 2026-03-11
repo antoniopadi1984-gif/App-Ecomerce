@@ -14,6 +14,7 @@ export interface Product {
     driveDocId: string | null;
     driveDocUrl: string | null;
     storeId: string;
+    shopifyId: string | null;
     price?: number;
     country?: string;
     metaConfig?: {
@@ -22,6 +23,7 @@ export interface Product {
         adAccountId: string | null;
         status: string;
     } | null;
+    sku: string | null;
     metrics?: {
         roas: number;
         revenue: number;

@@ -13,6 +13,8 @@ import {
 
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useCreativePerformance, CreativePerformanceItem } from '@/hooks/useCreativePerformance';
+import { useGa4Metrics } from '@/hooks/useGa4Metrics';
 
 type RendimientoTabType = 'global' | 'creativo' | 'avatar' | 'concepto' | 'landing';
 
@@ -23,6 +25,22 @@ interface RendimientoTabProps {
 
 export function RendimientoTab({ storeId, productId }: RendimientoTabProps) {
     const [activeTab, setActiveTab] = useState<RendimientoTabType>('global');
+    const { data, isLoading: loadingMeta, error: errorMeta, refetch: refetchMeta } = useCreativePerformance(storeId, productId);
+    const { metrics: ga4Data, isLoading: loadingGa4 } = useGa4Metrics();
+
+    const isLoading = loadingMeta || loadingGa4;
+
+    // Enriquecer datos de Meta con GA4
+    const enrichedData = data.map(item => {
+        const ga4Match = ga4Data.find((m: any) => m.adName === item.name);
+        return {
+            ...item,
+            sessions: ga4Match?.sessions || 0,
+            revenueGA4: ga4Match?.revenue || 0,
+            purchasesGA4: ga4Match?.purchases || 0,
+            landingCVR: ga4Match?.sessions > 0 ? (ga4Match.purchases / ga4Match.sessions) * 100 : 0
+        };
+    });
 
     const TABS = [
         { id: 'global', label: 'Resumen Global', icon: BarChart3 },
@@ -32,20 +50,38 @@ export function RendimientoTab({ storeId, productId }: RendimientoTabProps) {
         { id: 'landing', label: 'Por Landing', icon: Globe },
     ];
 
+    // Calcular stats agregados si hay data
+    const totalSpend = enrichedData.reduce((acc, curr) => acc + curr.spend, 0);
+    const totalConversions = enrichedData.reduce((acc, curr) => acc + curr.conversions, 0);
+    const totalClicks = enrichedData.reduce((acc, curr) => acc + curr.clicks, 0);
+    const totalImpressions = enrichedData.reduce((acc, curr) => acc + curr.impressions, 0);
+    const totalSessions = enrichedData.reduce((acc, curr) => acc + (curr as any).sessions, 0);
+    
+    const avgRoas = totalSpend > 0 ? (enrichedData.reduce((acc, curr) => acc + (curr.roas * curr.spend), 0) / totalSpend) : 0;
+    const avgCtr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+    const avgHookRate = enrichedData.length > 0 ? (enrichedData.reduce((acc, curr) => acc + curr.hookRate, 0) / enrichedData.length) : 0;
+    const lpReachRate = totalClicks > 0 ? (totalSessions / totalClicks) * 100 : 0;
+
     const stats = [
-        { label: 'Hook Rate', value: '24.5%', trend: '+4.2%', ok: true },
-        { label: '3s View Rate', value: '42.1%', trend: '+1.5%', ok: true },
-        { label: 'CTR (Unique)', value: '1.85%', trend: '-0.2%', ok: false },
-        { label: 'ROAS', value: '3.42x', trend: '+0.8x', ok: true }
+        { label: 'Hook Rate', value: `${avgHookRate.toFixed(1)}%`, trend: '', ok: avgHookRate > 25 },
+        { label: 'CTR (Unique)', value: `${avgCtr.toFixed(2)}%`, trend: '', ok: avgCtr > 1.5 },
+        { label: 'LP Reach', value: `${lpReachRate.toFixed(1)}%`, trend: '', ok: lpReachRate > 80 },
+        { label: 'ROAS', value: `${avgRoas.toFixed(2)}x`, trend: '', ok: avgRoas > 2 }
     ];
 
     return (
         <div className="flex flex-col gap-4 animate-in fade-in duration-500">
             {/* Header & Global Filters */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-[18px] font-bold tracking-tight text-[var(--text-primary)]">Centro de Rendimiento</h2>
-                    <p className="text-[10px] text-[var(--text-tertiary)] mt-1 uppercase tracking-widest font-bold">Análisis de datos Meta & Shopify en tiempo real</p>
+                <div className="flex items-center gap-4">
+                    <div>
+                        <h2 className="text-[18px] font-bold tracking-tight text-[var(--text-primary)]">Centro de Rendimiento</h2>
+                        <p className="text-[10px] text-[var(--text-tertiary)] mt-1 uppercase tracking-widest font-bold">Análisis de datos Meta & Shopify en tiempo real</p>
+                    </div>
+                    {isLoading && <RefreshCcw size={16} className="animate-spin text-[var(--cre)]" />}
+                    <button onClick={() => refetchMeta()} className="p-2 hover:bg-[var(--bg)] rounded-full transition-colors">
+                        <RefreshCcw size={14} className="text-[var(--text-tertiary)]" />
+                    </button>
                 </div>
 
                 <div className="flex gap-0 border-b border-[var(--border)] bg-white px-6 -mx-6 mb-2">
@@ -65,12 +101,19 @@ export function RendimientoTab({ storeId, productId }: RendimientoTabProps) {
                 </div>
             </div>
 
+            {errorMeta && (
+                <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 text-xs font-bold uppercase tracking-tight">
+                    <AlertCircle size={16} />
+                    Error: {errorMeta}
+                </div>
+            )}
+
             {/* Content Switcher */}
             <div className="space-y-6">
-                {activeTab === 'global' && <GlobalSummary stats={stats} />}
-                {activeTab === 'creativo' && <CreativoPerformance />}
-                {activeTab === 'avatar' && <AvatarPerformance />}
-                {activeTab === 'concepto' && <ConceptoPerformance />}
+                {activeTab === 'global' && <GlobalSummary stats={stats} data={enrichedData} />}
+                {activeTab === 'creativo' && <CreativoPerformance data={enrichedData} />}
+                {activeTab === 'avatar' && <AvatarPerformance data={enrichedData} />}
+                {activeTab === 'concepto' && <ConceptoPerformance data={enrichedData} />}
                 {activeTab === 'landing' && <LandingPerformance />}
             </div>
         </div>
@@ -95,7 +138,7 @@ interface ChiefAgentOutput {
     };
 }
 
-function GlobalSummary({ stats }: { stats: any[] }) {
+function GlobalSummary({ stats, data }: { stats: any[], data: CreativePerformanceItem[] }) {
     const [sortMetric, setSortMetric] = useState('roas');
 
     // Learning Loop Maturity (Visual simulation based on creative count)
@@ -134,13 +177,10 @@ function GlobalSummary({ stats }: { stats: any[] }) {
         { date: '07 Mar', ctr: 1.85, cpa: 10.5, roas: 4.4 },
     ];
 
-    const leaderboard = [
-        { id: 1, name: 'VD_C03_COLD_H01_V1', ctr: 2.1, cpa: 8.5, roas: 5.2, hook: 34, w25: 45, w50: 22, status: 'ESCALANDO' },
-        { id: 2, name: 'VD_C01_WARM_H03_V2', ctr: 1.8, cpa: 11.2, roas: 4.1, hook: 28, w25: 38, w50: 18, status: 'ESTABLE' },
-        { id: 3, name: 'VD_C02_COLD_H02_V1', ctr: 1.5, cpa: 14.5, roas: 3.2, hook: 22, w25: 30, w50: 12, status: 'DECLINANDO' },
-        { id: 4, name: 'VD_C03_RT_H01_V3', ctr: 2.5, cpa: 6.2, roas: 6.8, hook: 41, w25: 52, w50: 28, status: 'ESCALANDO' },
-        { id: 5, name: 'VD_C01_COLD_H05_V1', ctr: 1.2, cpa: 19.8, roas: 2.1, hook: 18, w25: 25, w50: 8, status: 'DECLINANDO' },
-    ];
+    const leaderboard = data
+        .filter(item => item.spend > 0)
+        .sort((a, b) => b.roas - a.roas)
+        .slice(0, 5);
 
     const globalKPIs = [
         ...stats,
@@ -313,35 +353,35 @@ function GlobalSummary({ stats }: { stats: any[] }) {
                                         </div>
                                     </td>
                                     <td className="p-4 text-center">
-                                        <span className="text-xs font-bold text-[var(--text-secondary)]">{item.ctr}%</span>
+                                        <span className="text-xs font-bold text-[var(--text-secondary)]">{(item.ctr || 0).toFixed(2)}%</span>
                                     </td>
                                     <td className="p-4 text-center">
-                                        <span className="text-xs font-bold text-[var(--text-tertiary)]">€{item.cpa}</span>
+                                        <span className="text-xs font-bold text-[var(--text-tertiary)]">€{(item.cpa || 0).toFixed(2)}</span>
                                     </td>
                                     <td className="p-4 text-center">
-                                        <span className="text-sm font-bold text-[var(--cre)]">{item.roas}x</span>
+                                        <span className="text-sm font-bold text-[var(--cre)]">{(item.roas || 0).toFixed(2)}x</span>
                                     </td>
                                     <td className="p-4 text-center">
                                         <div className="w-full bg-[var(--bg)] h-1.5 rounded-full overflow-hidden max-w-[60px] mx-auto border border-[var(--border)]">
-                                            <div className="h-full bg-[var(--cre)]" style={{ width: `${item.hook}%` }} />
+                                            <div className="h-full bg-[var(--cre)]" style={{ width: `${item.hookRate || 0}%` }} />
                                         </div>
-                                        <span className="text-[9px] font-bold text-[var(--text-tertiary)] mt-1 block uppercase">{item.hook}% Hook</span>
+                                        <span className="text-[9px] font-bold text-[var(--text-tertiary)] mt-1 block uppercase">{(item.hookRate || 0).toFixed(1)}% Hook</span>
                                     </td>
                                     <td className="p-4 text-center">
-                                        <span className="text-[10px] font-mono font-bold text-[var(--text-secondary)]">{item.w25}%</span>
+                                        <span className="text-[10px] font-mono font-bold text-[var(--text-secondary)]">{(item.holdRate || 0).toFixed(1)}%</span>
                                     </td>
                                     <td className="p-4 text-center">
-                                        <span className="text-[10px] font-mono font-bold text-[var(--text-secondary)]">{item.w50}%</span>
+                                        <span className="text-[10px] font-mono font-bold text-[var(--text-secondary)]">0%</span>
                                     </td>
                                     <td className="p-4">
                                         <div className={cn(
                                             "flex items-center gap-1.5 px-3 py-0.5 rounded-full border text-[8px] font-bold uppercase w-fit tracking-tighter",
-                                            item.status === 'ESCALANDO' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                                                item.status === 'ESTABLE' ? "bg-sky-50 text-sky-600 border-sky-100" :
+                                            item.verdict === 'ESCALAR' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                                                item.verdict === 'MANTENER' ? "bg-sky-50 text-sky-600 border-sky-100" :
                                                     "bg-rose-50 text-rose-600 border-rose-100 animate-pulse"
                                         )}>
-                                            <TrendingUp size={10} className={item.status === 'DECLINANDO' ? 'rotate-180' : ''} />
-                                            {item.status}
+                                            <TrendingUp size={10} className={item.verdict === 'PAUSAR' ? 'rotate-180' : ''} />
+                                            {item.verdict}
                                         </div>
                                     </td>
                                 </tr>
@@ -368,78 +408,11 @@ function WinnerBadge({ label, value, color }: { label: string, value: string, co
     );
 }
 
-function CreativoPerformance() {
+function CreativoPerformance({ data }: { data: CreativePerformanceItem[] }) {
     const [selectedAdId, setSelectedAdId] = useState<string | null>(null);
     const [attributionWindow, setAttributionWindow] = useState('7d_click');
 
-    const creatives = [
-        {
-            id: 'VD_COLLAGEN_PAS_H01_V1',
-            concept: 'Mecanismo Único',
-            avatar: 'María 35',
-            phase: 'Frío',
-            framework: 'PAS',
-            hookType: 'Problema',
-            duration: '22s',
-            format: '9:16',
-            daysActive: 12,
-            metrics: {
-                impressions: '142.5k',
-                reach: '110.2k',
-                frequency: 1.29,
-                ctr: 2.15,
-                cpc: 0.85,
-                cpm: 12.40,
-                hookRate: 34.2,
-                w25: 48.5,
-                w50: 22.1,
-                thruplay: 12450,
-                clicks: 3064,
-                conversions: 124,
-                cvr: 4.05,
-                cpa: 8.42,
-                roas: 4.85,
-                spend: 1044.08
-            },
-            status: 'ACTIVO',
-            preLaunchScore: 88,
-            fatigue: 'ESTABLE',
-            driveUrl: '#'
-        },
-        {
-            id: 'VD_BOTOX_VIBE_H03_V2',
-            concept: 'Social Proof',
-            avatar: 'Elena 25',
-            phase: 'Warm',
-            framework: 'AIDA',
-            hookType: 'Resultados',
-            duration: '18s',
-            format: '9:16',
-            daysActive: 8,
-            metrics: {
-                impressions: '84.2k',
-                reach: '62.1k',
-                frequency: 1.35,
-                ctr: 1.82,
-                cpc: 1.12,
-                cpm: 15.20,
-                hookRate: 28.5,
-                w25: 38.2,
-                w50: 16.5,
-                thruplay: 6800,
-                clicks: 1532,
-                conversions: 42,
-                cvr: 2.74,
-                cpa: 14.50,
-                roas: 3.12,
-                spend: 609.00
-            },
-            status: 'FATIGADO',
-            preLaunchScore: 92,
-            fatigue: 'ALTA',
-            driveUrl: '#'
-        }
-    ];
+    const creatives = data;
 
     return (
         <div className="relative">
@@ -537,72 +510,72 @@ function CreativoPerformance() {
                                     </td>
                                     <td className="p-3 sticky left-[104px] bg-white group-hover:bg-[var(--bg)]/10 z-10 border-r border-[var(--border)]">
                                         <div className="w-48">
-                                            <p className="text-[10px] font-bold text-[var(--text-primary)] uppercase leading-none">{ad.id}</p>
-                                            <p className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest mt-1.5">{ad.concept}</p>
+                                            <p className="text-[10px] font-bold text-[var(--text-primary)] uppercase leading-none">{ad.name}</p>
+                                            <p className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest mt-1.5">{ad.conceptName}</p>
                                         </div>
                                     </td>
-                                    <td className="p-3 text-[10px] font-bold text-[var(--text-secondary)] italic">{ad.avatar}</td>
+                                    <td className="p-3 text-[10px] font-bold text-[var(--text-secondary)] italic">{ad.angle}</td>
                                     <td className="p-3">
                                         <div className="flex flex-col gap-1">
                                             <span className={cn("px-1.5 py-0.5 rounded text-[7px] font-bold w-fit uppercase border",
-                                                ad.phase === 'Frío' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-[var(--cre-bg)] text-[var(--cre)] border-[var(--cre)]/10')}>{ad.phase}</span>
-                                            <span className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest opacity-60">{ad.framework}</span>
+                                                ad.traffic === 'COLD' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-[var(--cre-bg)] text-[var(--cre)] border-[var(--cre)]/10')}>{ad.traffic}</span>
+                                            <span className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest opacity-60">{ad.awarenessName}</span>
                                         </div>
                                     </td>
-                                    <td className="p-3 text-[10px] font-bold text-[var(--text-secondary)] uppercase">{ad.hookType}</td>
-                                    <td className="p-3 text-[10px] font-bold text-[var(--text-secondary)]">{ad.duration} / {ad.format}</td>
-                                    <td className="p-3 text-[10px] font-bold text-[var(--text-primary)]">{ad.daysActive}d</td>
+                                    <td className="p-3 text-[10px] font-bold text-[var(--text-secondary)] uppercase">{ad.concept}</td>
+                                    <td className="p-3 text-[10px] font-bold text-[var(--text-secondary)]">- / 9:16</td>
+                                    <td className="p-3 text-[10px] font-bold text-[var(--text-primary)]">-</td>
 
-                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">{ad.metrics.impressions}</td>
-                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">{ad.metrics.reach}</td>
-                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">{ad.metrics.frequency}x</td>
+                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">{ad.impressions}</td>
+                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">-</td>
+                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">-</td>
 
-                                    <td className="p-3 text-[11px] font-bold text-[var(--cre)]">{ad.metrics.ctr}%</td>
-                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">€{ad.metrics.cpc}</td>
-                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">€{ad.metrics.cpm}</td>
+                                    <td className="p-3 text-[11px] font-bold text-[var(--cre)]">{ad.ctr.toFixed(2)}%</td>
+                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">€{ad.cpc.toFixed(2)}</td>
+                                    <td className="p-3 text-[11px] font-bold text-[var(--text-secondary)]">-</td>
 
                                     <td className="p-3 text-center">
                                         <div className="flex flex-col items-center gap-1">
-                                            <span className="text-[11px] font-bold text-[var(--text-primary)]">{ad.metrics.hookRate}%</span>
+                                            <span className="text-[11px] font-bold text-[var(--text-primary)]">{ad.hookRate.toFixed(1)}%</span>
                                             <div className="h-1 w-10 bg-[var(--border)] rounded-full overflow-hidden">
-                                                <div className="h-full bg-amber-500" style={{ width: `${ad.metrics.hookRate}%` }} />
+                                                <div className="h-full bg-amber-500" style={{ width: `${ad.hookRate}%` }} />
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-3 text-center text-[10px] font-bold text-[var(--text-secondary)]">{ad.metrics.w25}%</td>
-                                    <td className="p-3 text-center text-[10px] font-bold text-[var(--text-secondary)]">{ad.metrics.w50}%</td>
-                                    <td className="p-3 text-center text-[10px] font-bold text-[var(--text-secondary)]">{ad.metrics.thruplay.toLocaleString()}</td>
+                                    <td className="p-3 text-center text-[10px] font-bold text-[var(--text-secondary)]">{ad.holdRate.toFixed(1)}%</td>
+                                    <td className="p-3 text-center text-[10px] font-bold text-[var(--text-secondary)]">-</td>
+                                    <td className="p-3 text-center text-[10px] font-bold text-[var(--text-secondary)]">-</td>
 
-                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--text-secondary)]">{ad.metrics.clicks}</td>
-                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--s-ok)]">{ad.metrics.conversions}</td>
-                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--text-secondary)]">{ad.metrics.cvr}%</td>
+                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--text-secondary)]">{ad.clicks}</td>
+                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--s-ok)]">{ad.conversions}</td>
+                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--text-secondary)]">-</td>
 
-                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--text-primary)]">€{ad.metrics.cpa}</td>
+                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--text-primary)]">€{ad.cpa.toFixed(2)}</td>
                                     <td className="p-3 text-center border-x border-[var(--border)]">
                                         <div className="flex flex-col items-center">
-                                            <span className="text-[14px] font-bold text-[var(--text-primary)] tracking-tighter">{ad.metrics.roas}x</span>
-                                            {ad.metrics.roas >= 4 && <span className="text-[7px] font-bold text-[var(--s-ok)] uppercase tracking-widest mt-0.5 animate-pulse">Winner</span>}
+                                            <span className="text-[14px] font-bold text-[var(--text-primary)] tracking-tighter">{ad.roas.toFixed(2)}x</span>
+                                            {ad.roas >= 4 && <span className="text-[7px] font-bold text-[var(--s-ok)] uppercase tracking-widest mt-0.5 animate-pulse">Winner</span>}
                                         </div>
                                     </td>
-                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--text-primary)] tracking-tight">€{ad.metrics.spend.toFixed(2)}</td>
+                                    <td className="p-3 text-center text-[11px] font-bold text-[var(--text-primary)] tracking-tight">€{ad.spend.toFixed(2)}</td>
 
                                     <td className="p-3">
                                         <div className="flex items-center gap-2">
-                                            <div className={cn("w-1.5 h-1.5 rounded-full", ad.status === 'ACTIVO' ? "bg-[var(--s-ok)] shadow-[0_0_8px_var(--s-ok)]/40" : "bg-[var(--s-wa)] shadow-[0_0_8px_var(--s-wa)]/40")} />
-                                            <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">{ad.status}</span>
+                                            <div className={cn("w-1.5 h-1.5 rounded-full", ad.metaStatus === 'ACTIVE' ? "bg-[var(--s-ok)] shadow-[0_0_8px_var(--s-ok)]/40" : "bg-[var(--s-wa)] shadow-[0_0_8px_var(--s-wa)]/40")} />
+                                            <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">{ad.metaStatus}</span>
                                         </div>
                                     </td>
                                     <td className="p-3">
                                         <div className="w-7 h-7 rounded-full border border-[var(--border)] flex items-center justify-center text-[9px] font-bold text-[var(--cre)] shadow-sm bg-white">
-                                            {ad.preLaunchScore}
+                                            -
                                         </div>
                                     </td>
                                     <td className="p-3">
                                         <span className={cn(
                                             "px-1.5 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-widest border shadow-sm",
-                                            ad.fatigue === 'ESTABLE' ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-red-50 border-red-100 text-[var(--s-ko)]"
+                                            ad.verdict === 'ESCALAR' ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-red-50 border-red-100 text-[var(--s-ko)]"
                                         )}>
-                                            {ad.fatigue}
+                                            {ad.verdict}
                                         </span>
                                     </td>
                                     <td className="p-3 sticky right-0 bg-white group-hover:bg-[var(--bg)]/10 z-10 border-l border-[var(--border)]">
@@ -753,7 +726,7 @@ function FrameAnalysisPanel({ adId, onClose }: { adId: string, onClose: () => vo
     );
 }
 
-function AvatarPerformance() {
+function AvatarPerformance({ data }: { data: CreativePerformanceItem[] }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map(i => (
@@ -804,32 +777,60 @@ function AvatarPerformance() {
     );
 }
 
-function ConceptoPerformance() {
+function ConceptoPerformance({ data }: { data: CreativePerformanceItem[] }) {
+    // Agrupar por concepto
+    const conceptMap = new Map<string, any>();
+    data.forEach(item => {
+        const id = item.concept;
+        if (!conceptMap.has(id)) {
+            conceptMap.set(id, { 
+                id, 
+                name: item.conceptName || id, 
+                angle: item.angle,
+                spend: 0, 
+                roas: 0, 
+                count: 0,
+                hookRate: 0 
+            });
+        }
+        const c = conceptMap.get(id);
+        c.spend += item.spend;
+        c.roas += (item.roas * item.spend);
+        c.hookRate += item.hookRate;
+        c.count++;
+    });
+
+    const concepts = Array.from(conceptMap.values()).map(c => ({
+        ...c,
+        roas: c.spend > 0 ? c.roas / c.spend : 0,
+        hookRate: c.hookRate / c.count
+    }));
+
     return (
         <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white border border-[var(--border)] rounded-xl p-0 overflow-hidden group hover:border-[var(--cre)]/20 transition-all shadow-sm">
+            {concepts.map(c => (
+                <div key={c.id} className="bg-white border border-[var(--border)] rounded-xl p-0 overflow-hidden group hover:border-[var(--cre)]/20 transition-all shadow-sm">
                     <div className="p-5 flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg)]/10">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-lg bg-white border border-[var(--border)] flex items-center justify-center text-[var(--text-tertiary)]/40 group-hover:text-[var(--cre)] transition-colors">
                                 <Target size={20} />
                             </div>
                             <div>
-                                <h4 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-tight">C0{i}: {i === 1 ? 'Mecanismo Único' : i === 2 ? 'Prueba Social' : 'Problema-Solución'}</h4>
-                                <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest leading-none mt-1 italic opacity-60">Ángulo: {i === 1 ? 'Biotecnología' : 'Validación Médica'}</p>
+                                <h4 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-tight">{c.id}: {c.name}</h4>
+                                <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest leading-none mt-1 italic opacity-60">Ángulo Dominante: {c.angle}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-10">
                             <div className="text-right">
                                 <p className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest">Inversión</p>
-                                <p className="text-sm font-bold text-[var(--text-primary)]">€{2400 - i * 400}</p>
+                                <p className="text-sm font-bold text-[var(--text-primary)]">€{c.spend.toFixed(2)}</p>
                             </div>
                             <div className="text-right">
                                 <p className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest">ROAS</p>
-                                <p className="text-sm font-bold text-[var(--s-ok)]">{(4.8 - i * 0.6).toFixed(2)}x</p>
+                                <p className="text-sm font-bold text-[var(--s-ok)]">{c.roas.toFixed(2)}x</p>
                             </div>
                             <div className="w-9 h-9 rounded-full border border-[var(--border)] flex items-center justify-center text-[10px] font-bold text-[var(--cre)] shadow-sm bg-white">
-                                {95 - i * 8}%
+                                {c.hookRate.toFixed(0)}%
                             </div>
                         </div>
                     </div>

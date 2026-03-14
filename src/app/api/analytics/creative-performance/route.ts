@@ -31,7 +31,10 @@ export async function GET(req: NextRequest) {
 
     // 3. Construir tabla de rendimiento completa
     const table = assets.map((asset: any) => {
-        const meta = metaMap.get(asset.name) || {};
+        const meta = metaMap.get(asset.name) || {
+            spend: 0, impressions: 0, clicks: 0, ctr: 0, cpc: 0, roas: 0,
+            hookRate: 0, holdRate: 0, costPerResult: 0, results: 0, status: 'NO_DATA'
+        };
         const meta_parsed = asset.metadata ? JSON.parse(asset.metadata) : {};
 
         return {
@@ -50,17 +53,17 @@ export async function GET(req: NextRequest) {
             driveUrl: asset.driveUrl,
 
             // Métricas Meta (cruzadas por nombre)
-            spend: meta.spend || 0,
-            impressions: meta.impressions || 0,
-            clicks: meta.clicks || 0,
-            ctr: meta.ctr || 0,
-            cpc: meta.cpc || 0,
-            roas: meta.roas || 0,
-            hookRate: meta.hookRate || 0,
-            holdRate: meta.holdRate || 0,
-            cpa: meta.costPerResult || 0,
-            conversions: meta.results || 0,
-            metaStatus: meta.status || 'NO_DATA',
+            spend: (meta as any).spend || 0,
+            impressions: (meta as any).impressions || 0,
+            clicks: (meta as any).clicks || 0,
+            ctr: (meta as any).ctr || 0,
+            cpc: (meta as any).cpc || 0,
+            roas: (meta as any).roas || 0,
+            hookRate: (meta as any).hookRate || 0,
+            holdRate: (meta as any).holdRate || 0,
+            cpa: (meta as any).costPerResult || 0,
+            conversions: (meta as any).results || 0,
+            metaStatus: (meta as any).status || 'NO_DATA',
 
             // Veredicto automático
             verdict: getVerdict(meta),

@@ -6,7 +6,13 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { buildNomenclature } from '@/lib/creative/spencer-knowledge';
+import { 
+    buildNomenclature, 
+    CREATIVE_CONCEPTS, 
+    TRAFFIC_TEMPS, 
+    AWARENESS_LEVELS,
+    getDrivePath
+} from '@/lib/creative/spencer-knowledge';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface DriveFolder { id: string; name: string; path: string; }
@@ -239,20 +245,19 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
         }
 
         // ── ESTRUCTURA SPENCER C1-C9 ──────────────────────────────────
-        const { CREATIVE_CONCEPTS, TRAFFIC_TEMPS, AWARENESS_LEVELS } = await import('../creative/spencer-knowledge');
 
         for (const concept of CREATIVE_CONCEPTS) {
             const conceptFolderId = await findOrCreateFolder(drive, concept.driveFolder, centroId);
             
             for (const traffic of TRAFFIC_TEMPS) {
                 // Solo crear las combinaciones válidas para este concepto
-                if (!(concept.traffic as string[]).includes(traffic.id)) continue;
+                if (!(concept.traffic as unknown as string[]).includes(traffic.id)) continue;
                 
                 const trafficFolderId = await findOrCreateFolder(drive, traffic.folder, conceptFolderId);
                 
                 for (const awareness of AWARENESS_LEVELS) {
-                    if (!(concept.awareness as number[]).includes(awareness.level)) continue;
-                    if (!(traffic.awareness as number[]).includes(awareness.level)) continue;
+                    if (!(concept.awareness as unknown as number[]).includes(awareness.level)) continue;
+                    if (!(traffic.awareness as unknown as number[]).includes(awareness.level)) continue;
                     await findOrCreateFolder(drive, awareness.folder, trafficFolderId);
                 }
             }
@@ -649,4 +654,163 @@ export async function saveAnalysisDoc(
         console.error('[DriveService] saveAnalysisDoc failed:', e);
         return null;
     }
+}
+
+export async function downloadFile(fileId: string): Promise<Buffer> {
+    const drive = await getDriveClient();
+    const res = await (drive.files.get as any)({
+        fileId,
+        alt: 'media',
+        supportsAllDrives: true
+    }, { responseType: 'arraybuffer' });
+    return Buffer.from(res.data);
+}
+
+export async function getLandingAssets(productId: string): Promise<DriveFileEntry[]> {
+    const drive = await getDriveClient();
+    const product = await (prisma as any).product.findUnique({
+        where: { id: productId },
+        select: { driveFolderId: true }
+    });
+    if (!product?.driveFolderId) return [];
+
+    // Buscar en 05_LANDINGS/IMAGENES_LANDING o 06_ASSETS/IMAGENES_LANDING
+    const centroId = product.driveFolderId;
+    const assetsFolder = await findOrCreateFolder(drive, '06_ASSETS', centroId);
+    const landingImagesId = await findOrCreateFolder(drive, 'IMAGENES_LANDING', assetsFolder);
+
+    const res = await drive.files.list({
+        q: `'${landingImagesId}' in parents and trashed = false`,
+        fields: 'files(id,name,mimeType,size,thumbnailLink)',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true
+    });
+
+    return (res.data.files ?? []).map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        mimeType: f.mimeType,
+        size: f.size ? parseInt(f.size) : undefined,
+        path: `LANDING_IMAGES/${f.name}`,
+        thumbnailUrl: f.thumbnailLink,
+    }));
+}
+
+export async function saveLandingProject(
+    productId: string,
+    storeId: string,
+    type: string,
+    version: number,
+    content: any
+): Promise<{ ok: true; fileId: string }> {
+    const drive = await getDriveClient();
+    const product = await (prisma as any).product.findUnique({
+        where: { id: productId },
+        select: { driveFolderId: true }
+    });
+    
+    let folderId = product?.driveFolderId;
+    if (!folderId) folderId = await setupProductDrive(productId, storeId);
+
+    const landingsFolderId = await findOrCreateFolder(drive, '05_LANDINGS', folderId);
+    const typeFolderId = await findOrCreateFolder(drive, type.toUpperCase(), landingsFolderId);
+    
+    const fileName = `landing_v${version}.json`;
+    
+    const res = await drive.files.create({
+        requestBody: {
+            name: fileName,
+            parents: [typeFolderId],
+            mimeType: 'application/json'
+        },
+        media: {
+            mimeType: 'application/json',
+            body: JSON.stringify(content, null, 2)
+        },
+        fields: 'id',
+        supportsAllDrives: true
+    });
+
+    return { ok: true, fileId: res.data.id! };
+}
+
+export async function processInbox(productId: string, storeId: string) {
+    const drive = await getDriveClient();
+    const product = await (prisma as any).product.findUnique({
+        where: { id: productId },
+        select: { driveFolderId: true, sku: true }
+    });
+    
+    if (!product?.driveFolderId) return { error: 'No drive folder' };
+
+    const centroId = product.driveFolderId;
+    const inboxId = await findOrCreateFolder(drive, "00_INBOX_SIN_PROCESAR", centroId);
+
+    const res = await drive.files.list({
+        q: `'${inboxId}' in parents and trashed = false`,
+        fields: 'files(id,name,mimeType,size)',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true
+    });
+
+    const files = res.data.files || [];
+    const results: any[] = [];
+
+    for (const file of files) {
+        if (file.mimeType === 'application/vnd.google-apps.folder') continue;
+        if (!file.name || !file.id || !file.mimeType) continue;
+
+        // Parse nomenclature: SKU-C1-V1.mp4
+        const nameParts = file.name.split('-');
+        if (nameParts.length < 3) {
+             results.push({ name: file.name, status: 'SKIPPED', reason: 'Invalid nomenclature' });
+             continue;
+        }
+
+        const conceptCode = nameParts[1]; // C1, C2...
+        
+        // Determinar destino (Spencer logic)
+        const creativeConcept = CREATIVE_CONCEPTS.find((c: any) => (c as any).code === conceptCode);
+        if (!creativeConcept) {
+             results.push({ name: file.name, status: 'SKIPPED', reason: 'Concept not found' });
+             continue;
+        }
+
+        const traffic = (creativeConcept as any).traffic[0];
+        const awareness = (creativeConcept as any).awareness[0];
+        
+        const subPath = getDrivePath({ concept: conceptCode, traffic, awareness });
+        const targetFolderId = await findOrCreatePath(drive, subPath, centroId);
+
+        // Mover archivo
+        await drive.files.update({
+            fileId: file.id,
+            addParents: targetFolderId,
+            removeParents: inboxId,
+            supportsAllDrives: true
+        });
+
+        // Registrar en DB
+        await (prisma as any).creativeAsset.create({
+            data: {
+                storeId,
+                productId,
+                name: file.name.split('.')[0],
+                driveFileId: file.id,
+                drivePath: `${subPath}/${file.name}`,
+                driveUrl: `https://drive.google.com/uc?id=${file.id}`,
+                fileType: file.mimeType.startsWith('video/') ? 'VIDEO' : 'IMAGE',
+                conceptCode,
+                funnelStage: traffic,
+                processingStatus: 'READY'
+            }
+        });
+
+        results.push({ name: file.name, status: 'MOVED', target: subPath });
+    }
+
+    invalidateProductIndex(productId);
+    await syncProductIndex(productId, storeId);
+
+    return { ok: true, processed: results.length, results };
 }

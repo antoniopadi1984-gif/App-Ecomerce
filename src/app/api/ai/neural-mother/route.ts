@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     // Cargar contexto completo del negocio
     const [product, research, metaInsights, recentOrders, financials, branding] = await Promise.all([
-        productId ? prisma.product.findUnique({ where: { id: productId }, select: { title: true, description: true, category: true, breakevenROAS: true, cpaMax: true } }) : null,
+        productId ? prisma.product.findUnique({ where: { id: productId }, select: { title: true, description: true, productType: true, breakevenROAS: true, cpaMax: true } }) : null,
         productId ? prisma.researchStep.findMany({ where: { productId }, orderBy: { createdAt: 'desc' }, take: 7 }) : [],
         (prisma as any).adMetricDaily.findMany({ where: { storeId }, orderBy: { date: 'desc' }, take: 10 }),
         prisma.order.findMany({ where: { storeId, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }, select: { status: true, totalPrice: true, netProfit: true, fulfillmentStatus: true }, take: 100 }),

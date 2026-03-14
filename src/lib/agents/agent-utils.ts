@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma';
-import { AgentId } from '@prisma/client';
 
 /**
  * Obtiene el system prompt configurado para un agente en una tienda específica.
@@ -7,10 +6,10 @@ import { AgentId } from '@prisma/client';
  */
 export async function getAgentSystemPrompt(storeId: string, agentId: string): Promise<string> {
     try {
-        const config = await prisma.agentConfig.findFirst({
+        const config = await (prisma as any).agentConfig.findFirst({
             where: {
                 storeId,
-                agentId: agentId.toUpperCase() as AgentId
+                agentId: agentId.toUpperCase()
             },
         });
 

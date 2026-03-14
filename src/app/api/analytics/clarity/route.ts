@@ -1,51 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getAnalyticsConfig } from '@/lib/analytics/analytics-config';
 
 export const runtime = 'nodejs';
 
-// Mapeo storeId → proyecto Clarity
-const CLARITY_PROJECTS: Record<string, { projectId: string; token: string }> = {
-    'store-main':                    { projectId: process.env.CLARITY_PROJECT_STORE_MAIN!,    token: process.env.CLARITY_TOKEN_STORE_MAIN! },
-    'alecare-mx':                    { projectId: process.env.CLARITY_PROJECT_ALECARE_MX!,    token: process.env.CLARITY_TOKEN_ALECARE_MX! },
-    'cmlxrad5405b826d99j9kpgyy':     { projectId: process.env.CLARITY_PROJECT_ALECARE_UK!,    token: process.env.CLARITY_TOKEN_ALECARE_UK! },
-};
-
 export async function GET(req: NextRequest) {
     const storeId   = req.nextUrl.searchParams.get('storeId');
-    const startDate = req.nextUrl.searchParams.get('startDate') || new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
-    const endDate   = req.nextUrl.searchParams.get('endDate')   || new Date().toISOString().split('T')[0];
-    const adName    = req.nextUrl.searchParams.get('adName');     // MICR-C1-V1 para filtrar por UTM
+    const adName    = req.nextUrl.searchParams.get('adName');    // MICR-C1-V1
+    const startDate = req.nextUrl.searchParams.get('startDate') || getPastDate(7);
+    const endDate   = req.nextUrl.searchParams.get('endDate')   || getToday();
 
     if (!storeId) return NextResponse.json({ error: 'storeId requerido' }, { status: 400 });
 
-    const project = CLARITY_PROJECTS[storeId];
-    if (!project) return NextResponse.json({ error: 'Proyecto Clarity no configurado para esta tienda' }, { status: 404 });
+    const config = getAnalyticsConfig(storeId);
+    if (!config?.clarityProjectId) {
+        return NextResponse.json({ error: 'Clarity no configurado para esta tienda' }, { status: 404 });
+    }
 
-    const endpoint = process.env.CLARITY_ENDPOINT!;
+    const base = `${process.env.CLARITY_ENDPOINT}/${config.clarityProjectId}`;
+    const headers = {
+        Authorization: `Bearer ${config.clarityToken}`,
+        'Content-Type': 'application/json'
+    };
 
-    // 1. Métricas generales de sesión
-    const sessionRes = await fetch(`${endpoint}/${project.projectId}/sessions`, {
-        headers: { Authorization: `Bearer ${project.token}`, 'Content-Type': 'application/json' },
-    });
+    try {
+        // Métricas de sesión
+        const [sessionRes, pageRes, funnelRes] = await Promise.all([
+            fetch(`${base}/sessions?startDate=${startDate}&endDate=${endDate}`, { headers }),
+            fetch(`${base}/pages?startDate=${startDate}&endDate=${endDate}`, { headers }),
+            fetch(`${base}/funnels?startDate=${startDate}&endDate=${endDate}`, { headers }),
+        ]);
 
-    // 2. Métricas por página
-    const pageRes = await fetch(`${endpoint}/${project.projectId}/pages`, {
-        headers: { Authorization: `Bearer ${project.token}`, 'Content-Type': 'application/json' },
-    });
+        const [sessions, pages, funnels] = await Promise.all([
+            sessionRes.json(),
+            pageRes.json(),
+            funnelRes.json(),
+        ]);
 
-    const [sessions, pages] = await Promise.all([sessionRes.json(), pageRes.json()]);
+        // Filtrar por UTM ad_name si se pasa — utm_term={{ad.name}}
+        // Las UTMs llegan como: utm_term=MICR-C1-V1
+        const filteredSessions = adName && sessions.data
+            ? { ...sessions, filtered: sessions.data.filter((s: any) =>
+                s.utm_term === adName || s.utm_content === adName
+              )}
+            : sessions;
 
-    // 3. Filtrar por UTM ad_name si se proporciona
-    const filtered = adName
-        ? { ...sessions, filtered_by_ad: adName }
-        : sessions;
+        return NextResponse.json({
+            ok: true,
+            storeId,
+            projectId: config.clarityProjectId,
+            storeUrl: config.storeUrl,
+            dateRange: { startDate, endDate },
+            adFilter: adName || null,
+            sessions: filteredSessions,
+            pages,
+            funnels,
+            // Métricas clave extraídas
+            summary: {
+                totalSessions:    sessions.totalCount || 0,
+                avgScrollDepth:   sessions.avgScrollDepth || 0,
+                avgTimeOnPage:    sessions.avgTimeOnPage || 0,
+                bounceRate:       sessions.bounceRate || 0,
+                rageClicks:       sessions.rageClicks || 0,
+                deadClicks:       sessions.deadClicks || 0,
+                quickBacks:       sessions.quickBacks || 0,
+            }
+        });
 
-    return NextResponse.json({
-        ok: true,
-        storeId,
-        projectId: project.projectId,
-        dateRange: { startDate, endDate },
-        sessions: filtered,
-        pages,
-    });
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+function getPastDate(days: number) {
+    return new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
+}
+function getToday() {
+    return new Date().toISOString().split('T')[0];
 }

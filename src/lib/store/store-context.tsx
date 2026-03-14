@@ -42,23 +42,31 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const fetchStores = useCallback(async () => {
         try {
             const res = await fetch("/api/stores", { cache: "no-store" });
-            const data = await res.json();
-            if (res.ok && data.stores) {
-                setStores(data.stores);
 
-                // Si no hay activeStoreId guardado, usar el primero
-                const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-                if (saved && data.stores.some((s: StoreInfo) => s.id === saved)) {
-                    setActiveStoreIdState(saved);
-                } else if (data.stores.length > 0) {
-                    const firstId = data.stores[0].id;
-                    setActiveStoreIdState(firstId);
-                    if (typeof window !== "undefined") {
-                        localStorage.setItem(STORAGE_KEY, firstId);
-                        document.cookie = `activeStoreId=${firstId}; path=/; max-age=31536000; SameSite=Lax`;
-                    }
-                    // Registrar asignación automática
-                    logAudit("STORE_CONTEXT_SET", "STORE", firstId);
+            // Log para debug
+            if (!res.ok) {
+                console.error("[StoreContext] /api/stores respondió:", res.status, res.statusText);
+                return;
+            }
+
+            const data = await res.json();
+
+            if (!data.success || !data.stores?.length) {
+                console.warn("[StoreContext] No stores devueltos:", data);
+                return;
+            }
+
+            setStores(data.stores);
+
+            const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+            if (saved && data.stores.some((s: StoreInfo) => s.id === saved)) {
+                setActiveStoreIdState(saved);
+            } else if (data.stores.length > 0) {
+                const firstId = data.stores[0].id;
+                setActiveStoreIdState(firstId);
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(STORAGE_KEY, firstId);
+                    document.cookie = `activeStoreId=${firstId}; path=/; max-age=31536000; SameSite=Lax`;
                 }
             }
         } catch (err) {

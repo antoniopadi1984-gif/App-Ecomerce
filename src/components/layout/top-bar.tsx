@@ -215,11 +215,10 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className={cn(
-                                "flex items-center gap-2 px-2.5 py-1.5 bg-[var(--surface2)] border border-[var(--border)] rounded-xl hover:border-[var(--inv)]/40 transition-all group shrink min-w-0 max-w-[220px] shadow-sm",
-                                productId === 'GLOBAL' && "opacity-80 border-dashed"
+                                "flex items-center gap-2 px-2.5 py-1.5 bg-[var(--surface2)] border border-[var(--border)] rounded-xl hover:border-[var(--inv)]/40 transition-all group shrink min-w-0 max-w-[220px] shadow-sm"
                             )}>
                                 <div className="w-5 h-5 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center overflow-hidden shrink-0">
-                                    {(productId === 'GLOBAL' || !product) ? (
+                                    {!product ? (
                                         <Package className="w-3 h-3 text-[var(--text-dim)]" />
                                     ) : product.imageUrl ? (
                                         <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />
@@ -230,8 +229,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                 <div className="flex flex-col items-start min-w-0">
                                     <span className="text-[8px] font-bold text-[var(--text-dim)] uppercase tracking-widest leading-none mb-0.5">Producto</span>
                                     <span className="text-[11px] font-bold text-[var(--text)] truncate max-w-full tracking-tight leading-none">
-                                        {productId === 'GLOBAL' ? "SELECCIONAR PRODUCTO" : 
-                                         product?.title || 
+                                         {product?.title || 
                                          (shopifyProducts.find(sp => sp.id === productId)?.title) || 
                                          "SELECCIONAR..."}
                                     </span>
@@ -257,24 +255,6 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                             </div>
 
                             <ScrollArea className="h-[300px] px-1 no-scrollbar">
-                                <DropdownMenuItem
-                                    onClick={() => setProductId('GLOBAL')}
-                                    className={cn(
-                                        "flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all mb-1",
-                                        productId === 'GLOBAL' ? "bg-rose-50 border border-rose-100" : "hover:bg-slate-50 border border-transparent"
-                                    )}
-                                >
-                                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0 shadow-sm">
-                                        <LayoutDashboard className="w-4 h-4 text-primary" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[11px] font-bold text-slate-900">Contexto Global</span>
-                                        <span className="text-[9px] text-slate-400 font-medium">Vista unificada</span>
-                                    </div>
-                                    {productId === 'GLOBAL' && <Check className="w-3 h-3 ml-auto text-primary" />}
-                                </DropdownMenuItem>
-
-                                <DropdownMenuSeparator className="bg-slate-100 my-2" />
 
                                 {shopifyLoading && filteredProducts.length === 0 ? (
                                     <div className="flex items-center justify-center py-6 text-slate-400">

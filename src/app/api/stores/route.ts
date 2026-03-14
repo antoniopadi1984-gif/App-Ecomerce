@@ -12,8 +12,15 @@ export async function GET() {
             },
             orderBy: { name: 'asc' }
         });
+
+        console.log(`[API/stores] Devolviendo ${stores.length} tiendas:`, stores.map(s => s.id));
+
         return NextResponse.json({ success: true, stores });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: 'Failed to fetch stores' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[API/stores] Error:', error.message);
+        return NextResponse.json(
+            { success: false, error: error.message, stores: [] },
+            { status: 500 }
+        );
     }
 }

@@ -1,9 +1,9 @@
-import { VideoProcessingPipeline } from '../video/processing-pipeline';
-import { AdvancedVideoClassifier } from '../video/advanced-classifier';
-import { GoogleSheetsService } from '../google-sheets';
-import { generateNomenclature, getDriveFolderPath, CREATIVE_CONCEPTS } from './spencer-knowledge';
+import { buildNomenclature, getDrivePath, CREATIVE_CONCEPTS } from './spencer-knowledge';
 import { prisma } from '../prisma';
 import { SemanticIndexService } from '../services/semantic-index-service';
+import { AiRouter } from '../ai/router';
+import { TaskType } from '../ai/providers/interfaces';
+import { GoogleSheetsService } from '../google-sheets';
 
 /**
  * BULK UPLOAD PIPELINE
@@ -83,6 +83,10 @@ export class BulkUploadPipeline {
         const startTime = Date.now();
 
         try {
+            // Import dynamically to avoid circular dependencies
+            const { VideoProcessingPipeline } = await import('../video/processing-pipeline');
+            const { AdvancedVideoClassifier } = await import('../video/advanced-classifier');
+
             // 1. Use existing VideoProcessingPipeline (strip → STT → concept → drive → DB)
             const pipelineResult = await VideoProcessingPipeline.processVideo(
                 params.buffer,
@@ -108,18 +112,21 @@ export class BulkUploadPipeline {
             }
 
             // 3. Generate IA nomenclature
-            const store = await prisma.store.findFirst({
-                where: { id: params.storeId },
-                select: { name: true },
+            const conceptCode = `C${classification?.concept || pipelineResult.concept || 3}`;
+            const conceptData = CREATIVE_CONCEPTS.find(c => c.code === conceptCode);
+
+            const product = await prisma.product.findUnique({
+                where: { id: params.productId },
+                select: { sku: true },
             });
 
-            const conceptData = CREATIVE_CONCEPTS.find(c => c.id === (classification?.concept || pipelineResult.concept || 3));
-            const nomenclatura = generateNomenclature({
-                type: 'VID',
-                conceptNum: classification?.concept || pipelineResult.concept || 3,
-                subType: classification?.funnelStage || 'FRIO',
-                numOrHook: pipelineResult.script?.hook?.slice(0, 15) || 'HOOK',
-                variant: 'A'
+            const ext = params.fileName.split('.').pop()?.toLowerCase() || 'mp4';
+
+            const nomenclatura = buildNomenclature({
+                sku: product?.sku || 'PROD',
+                concept: conceptCode,
+                version: (pipelineResult as any).version || 1,
+                ext: ext
             });
 
             // 4. Update asset in DB with full classification
@@ -128,7 +135,7 @@ export class BulkUploadPipeline {
                     where: { id: pipelineResult.videoId },
                     data: {
                         concept: classification.concept,
-                        category: `C${classification.concept}_${conceptData?.name}`,
+                        category: `C${classification.concept}_${conceptData?.name || 'Concept'}`,
                     },
                 });
             }
@@ -197,13 +204,16 @@ export class BulkUploadPipeline {
             const { MetadataRemover } = await import('../media/metadata');
             const cleanBuffer = await MetadataRemover.stripImage(params.buffer);
 
-            const { generateNomenclature } = await import('./spencer-knowledge');
-            const nomenclatura = generateNomenclature({
-                type: 'IMG',
-                conceptNum: 3,
-                subType: 'VISUAL',
-                formato: '9X16',
-                variant: 'A'
+            const product = await prisma.product.findUnique({
+                where: { id: params.productId },
+                select: { sku: true },
+            });
+
+            const nomenclatura = buildNomenclature({
+                sku: product?.sku || 'PROD',
+                concept: 'C3', // Default concept for images if not specified
+                version: 1,
+                ext: 'webp'
             });
 
             const asset = await (prisma as any).creativeAsset.create({

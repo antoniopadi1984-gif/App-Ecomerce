@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { elevenLabs } from '@/lib/elevenlabs';
 import { agentDispatcher } from '@/lib/agents/agent-dispatcher';
-import { SPENCER_CORE_KNOWLEDGE } from './spencer-knowledge';
+import { DEFAULT_AGENT_PROMPTS } from '@/lib/ai/defaults/agent-prompts';
 import { uploadToProduct } from '@/lib/services/drive-service';
 import { writeFile, unlink, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
@@ -82,7 +82,7 @@ export async function processCompetitorVideo(
 
         const analysisPrompt = `
         CORE METHODOLOGY:
-        ${SPENCER_CORE_KNOWLEDGE}
+        ${DEFAULT_AGENT_PROMPTS.VIDEO_INTELLIGENCE}
 
         TASK:
         Analyze this competitor video for the product "${product?.title}".

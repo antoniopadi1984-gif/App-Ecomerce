@@ -6,6 +6,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { buildNomenclature } from '@/lib/creative/spencer-knowledge';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface DriveFolder { id: string; name: string; path: string; }
@@ -52,8 +53,6 @@ export function invalidateStoreCache(storeId: string) {
     }
   }
 }
-
-import { NomenclatureService } from './nomenclature-service';
 
 // ── Folder path builders ──────────────────────────────────────────────────────
 export const DrivePaths = {
@@ -161,12 +160,9 @@ export async function setupStoreDrive(storeId: string): Promise<string> {
         const ROOT_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8';
         console.log(`[DriveService] Absolute Root ID: ${ROOT_ID}`);
         
-        // We assume the ROOT_ID provided IS the ECOMBOOM folder or its parent.
-        // To be safe, we always use ROOT_ID as the parent for the Store folder.
         const store = await (prisma as any).store.findUnique({ where: { id: storeId }, select: { name: true } });
         const storeName = store?.name?.replace(/\s+/g, '_').toUpperCase() ?? storeId;
         
-        // Use ROOT_ID as the container. We don't need a middle ECOMBOOM folder if it causes Quota issues.
         const storeFolderId = await findOrCreateFolder(drive, storeName, ROOT_ID);
         
         // Config folder
@@ -204,17 +200,78 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
         let storeFolderId = store?.driveRootFolderId;
         if (!storeFolderId) storeFolderId = await setupStoreDrive(storeId);
 
-        const prodSku = NomenclatureService.extractSku(product?.title ?? productId, product?.sku);
+        // Nomenclature build for SKU
+        const prodSku = product?.sku || product?.title?.toUpperCase().replace(/\s+/g, '_').slice(0, 10) || productId;
         const prodFolderId = await findOrCreateFolder(drive, prodSku, storeFolderId);
 
-        // --- SIMPLIFIED STRUCTURE ---
-        // Put core utility folders directly under the product
-        await findOrCreateFolder(drive, "INBOX", prodFolderId);
-        await findOrCreateFolder(drive, "CONCEPTOS", prodFolderId);
-        await findOrCreateFolder(drive, "LANDINGS", prodFolderId);
-        await findOrCreateFolder(drive, "ASSETS", prodFolderId);
-        await findOrCreateFolder(drive, "RESEARCH", prodFolderId);
-        // --- END SIMPLIFIED STRUCTURE ---
+        // ── ESTRUCTURA IA PRO — INMUTABLE ──────────────────────────────
+        const centroId = await findOrCreateFolder(drive, 'CENTRO_CREATIVO', prodFolderId);
+
+        // 00_INBOX
+        await findOrCreateFolder(drive, '00_INBOX_SIN_PROCESAR', centroId);
+
+        // 01_ESTUDIO
+        const estudioId = await findOrCreateFolder(drive, '01_ESTUDIO_PRODUCCION', centroId);
+        await findOrCreateFolder(drive, '01_IA_VILLAGES', estudioId);
+        await findOrCreateFolder(drive, '02_AUDIO', estudioId);
+        await findOrCreateFolder(drive, '03_RAW', estudioId);
+        await findOrCreateFolder(drive, '04_PROYECTOS', estudioId);
+
+        // 02_BIBLIOTECA
+        const biblioId = await findOrCreateFolder(drive, '02_BIBLIOTECA_LISTOS_PARA_ADS', centroId);
+        const retargetId = await findOrCreateFolder(drive, '01_RETARGETING', biblioId);
+        await findOrCreateFolder(drive, 'R10_COPY_DIRECTO', retargetId);
+        await findOrCreateFolder(drive, 'R20_COPY_PROBLEMA', retargetId);
+        await findOrCreateFolder(drive, 'R30_COPY_STORY', retargetId);
+        await findOrCreateFolder(drive, '02_CONCEPTOS', biblioId);
+        await findOrCreateFolder(drive, '03_ESTATICOS', biblioId);
+
+        // 03_ESTATICOS (ads)
+        const staticId = await findOrCreateFolder(drive, '03_ESTATICOS', centroId);
+        for (let i = 1; i <= 6; i++) {
+            await findOrCreateFolder(drive, `ANGULO_${i}`, staticId);
+        }
+
+        // 04_CARROUSEL
+        const carrouselId = await findOrCreateFolder(drive, '04_CARROUSEL', centroId);
+        for (let s = 1; s <= 7; s++) {
+            await findOrCreateFolder(drive, `SLIDE_${s}`, carrouselId);
+        }
+
+        // ── ESTRUCTURA SPENCER C1-C9 ──────────────────────────────────
+        const { CREATIVE_CONCEPTS, TRAFFIC_TEMPS, AWARENESS_LEVELS } = await import('../creative/spencer-knowledge');
+
+        for (const concept of CREATIVE_CONCEPTS) {
+            const conceptFolderId = await findOrCreateFolder(drive, concept.driveFolder, centroId);
+            
+            for (const traffic of TRAFFIC_TEMPS) {
+                // Solo crear las combinaciones válidas para este concepto
+                if (!(concept.traffic as string[]).includes(traffic.id)) continue;
+                
+                const trafficFolderId = await findOrCreateFolder(drive, traffic.folder, conceptFolderId);
+                
+                for (const awareness of AWARENESS_LEVELS) {
+                    if (!(concept.awareness as number[]).includes(awareness.level)) continue;
+                    if (!(traffic.awareness as number[]).includes(awareness.level)) continue;
+                    await findOrCreateFolder(drive, awareness.folder, trafficFolderId);
+                }
+            }
+        }
+        // ── FIN ESTRUCTURA SPENCER ────────────────────────────────────
+
+        // 05_LANDINGS
+        const landingsId = await findOrCreateFolder(drive, '05_LANDINGS', centroId);
+        await findOrCreateFolder(drive, 'SPY', landingsId);
+        await findOrCreateFolder(drive, 'CLONES', landingsId);
+        await findOrCreateFolder(drive, 'ADVERTORIAL', landingsId);
+        await findOrCreateFolder(drive, 'LISTICLE', landingsId);
+
+        // 06_ASSETS
+        const assetsId = await findOrCreateFolder(drive, '06_ASSETS', centroId);
+        await findOrCreateFolder(drive, 'PACKAGING', assetsId);
+        await findOrCreateFolder(drive, 'TRUST_BADGES', assetsId);
+        await findOrCreateFolder(drive, 'IMAGENES_LANDING', assetsId);
+        // ── FIN ESTRUCTURA IA PRO ──────────────────────────────────────
 
         // Create empty index.json
         const emptyIndex: ProductIndex = {
@@ -239,10 +296,11 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
             supportsAllDrives: true
         });
 
+        // Guardar centroId como driveFolderId del producto
         await (prisma as any).product.update({
             where: { id: productId },
             data: {
-                driveFolderId: prodFolderId,
+                driveFolderId: centroId,
                 driveSetupDone: true,
                 driveIndexPath: `${prodSku}/index.json`,
             }
@@ -309,7 +367,6 @@ export async function syncProductIndex(productId: string, storeId: string) {
             }
         };
 
-        // Find index.json
         const res = await drive.files.list({
             q: `name = 'index.json' and '${product.driveFolderId}' in parents and trashed = false`,
             fields: 'files(id)',
@@ -365,7 +422,6 @@ export async function getProductIndex(productId: string, storeId: string): Promi
 
         if (!product?.driveFolderId) return null;
 
-        // Find index.json in product folder
         const res = await drive.files.list({
             q: `name = 'index.json' and '${product.driveFolderId}' in parents and trashed = false`,
             fields: 'files(id)',
@@ -393,7 +449,6 @@ export function invalidateProductIndex(productId: string) {
     indexCache.delete(productId);
 }
 
-// ── List files in a product folder ────────────────────────────────────────────
 export async function listProductFolder(
     productId: string,
     subPath?: string
@@ -408,7 +463,6 @@ export async function listProductFolder(
 
         let parentId = product.driveFolderId;
 
-        // Navigate to subPath if specified
         if (subPath) {
             const parts = subPath.split('/');
             for (const part of parts) {
@@ -447,7 +501,6 @@ export async function listProductFolder(
     }
 }
 
-// ── Upload file to correct folder ─────────────────────────────────────────────
 export async function uploadToProduct(
     fileBuffer: Buffer,
     fileName: string,
@@ -465,43 +518,34 @@ export async function uploadToProduct(
     let folderId = product?.driveFolderId;
     if (!folderId) folderId = await setupProductDrive(productId, storeId);
 
-    // Determine target subfolder
     let subFolder = folderId;
 
     if (opts.conceptCode) {
-        console.log(`[DriveService] Navigating hierarchy for concept: ${opts.conceptCode}`);
-        // Hierarchical structure: CONCEPTOS / [CONCEPT] / [STAGE] / [ANGLE]
-        const parentConceptsId = await findOrCreateFolder(drive, "CONCEPTOS", folderId);
+        const biblioId = await findOrCreateFolder(drive, "02_BIBLIOTECA_LISTOS_PARA_ADS", folderId);
+        const parentConceptsId = await findOrCreateFolder(drive, "02_CONCEPTOS", biblioId);
         
-        // 1. Concept Folder
         const conceptName = opts.conceptCode.toUpperCase().replace(/\s+/g, '_');
         const conceptFolderId = await findOrCreateFolder(drive, conceptName, parentConceptsId);
         
-        // 2. Funnel Stage Folder
         const stageName = (opts.funnelStage || 'TOFU').toUpperCase();
         const stageFolderId = await findOrCreateFolder(drive, stageName, conceptFolderId);
         
-        // 3. Angle Folder
         const angleName = (opts.angle || 'GENERAL').toUpperCase().replace(/\s+/g, '_');
         const angleFolderId = await findOrCreateFolder(drive, angleName, stageFolderId);
 
         subFolder = angleFolderId;
-        console.log(`[DriveService] Target subFolder set to: ${subFolder} (Angle: ${angleName})`);
 
         if (opts.subfolderName) {
             if (opts.subfolderName.includes('/')) {
-                // If path is absolute-ish (starts with folderId structure)
                 subFolder = await findOrCreatePath(drive, opts.subfolderName.toUpperCase(), folderId);
             } else {
                 subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), subFolder);
             }
         }
     } else if (opts.fileType === 'IMAGE') {
-        const assetsFolder = await findOrCreateFolder(drive, 'ASSETS', folderId);
-        subFolder = await findOrCreateFolder(drive, 'IMAGENES', assetsFolder);
+        const assetsFolder = await findOrCreateFolder(drive, '06_ASSETS', folderId);
+        subFolder = await findOrCreateFolder(drive, 'IMAGENES_LANDING', assetsFolder);
     }
-
-    console.log(`[DriveService] Final subFolder: ${subFolder}. Uploading ${fileName}...`);
 
     const res = await drive.files.create({
         requestBody: { name: fileName, parents: [subFolder] },
@@ -511,11 +555,10 @@ export async function uploadToProduct(
     });
 
     const driveFileId = res.data.id!;
-    const driveUrl = res.data.webContentLink; // URL de descarga directa
+    const driveUrl = res.data.webContentLink;
     const thumbnailUrl = res.data.thumbnailLink;
     const drivePath = `${opts.conceptCode ?? ''}/${opts.funnelStage ?? ''}/${fileName}`;
 
-    // Save to DriveFile DB table
     await (prisma as any).driveFile.upsert({
         where: { driveFileId },
         create: {
@@ -529,7 +572,6 @@ export async function uploadToProduct(
         update: { syncedAt: new Date(), drivePath },
     });
 
-    // Link to CreativeArtifact if ID provided
     if (opts.creativeArtifactId) {
         await (prisma as any).creativeArtifact.update({
             where: { id: opts.creativeArtifactId },
@@ -545,9 +587,6 @@ export async function uploadToProduct(
     return { driveFileId, drivePath, driveUrl: driveUrl || '', parentFolderId: subFolder, thumbnailUrl: thumbnailUrl || undefined };
 }
 
-/**
- * uploadToInbox - Sube un archivo a la carpeta INBOX del producto.
- */
 export async function uploadToInbox(
     fileBuffer: Buffer,
     fileName: string,
@@ -565,7 +604,7 @@ export async function uploadToInbox(
     let folderId = product?.driveFolderId;
     if (!folderId) folderId = await setupProductDrive(productId, storeId);
 
-    const inboxId = await findOrCreateFolder(drive, "INBOX", folderId);
+    const inboxId = await findOrCreateFolder(drive, "00_INBOX_SIN_PROCESAR", folderId);
     const targetFolderId = await findOrCreateFolder(drive, subfolder, inboxId);
 
     const res = await drive.files.create({
@@ -581,9 +620,6 @@ export async function uploadToInbox(
     };
 }
 
-/**
- * saveAnalysisDoc - Genera y sube un Google Doc con el análisis detallado.
- */
 export async function saveAnalysisDoc(
     productId: string,
     storeId: string,
@@ -594,7 +630,6 @@ export async function saveAnalysisDoc(
     try {
         const drive = await getDriveClient();
         
-        // El contenido puede ser HTML o Texto. El Drive API lo convertirá si el mimeType del archivo destino es gdoc.
         const res = await drive.files.create({
             requestBody: {
                 name: fileName,
@@ -609,166 +644,9 @@ export async function saveAnalysisDoc(
             supportsAllDrives: true
         });
 
-        return { id: res.data.id, url: res.data.webViewLink };
+        return { driveFileId: res.data.id, driveUrl: res.data.webViewLink };
     } catch (e) {
         console.error('[DriveService] saveAnalysisDoc failed:', e);
         return null;
-    }
-}
-
-export async function downloadFile(fileId: string): Promise<Buffer> {
-    const drive = await getDriveClient();
-    const res = await drive.files.get({ fileId, alt: 'media', supportsAllDrives: true }, { responseType: 'arraybuffer' });
-    return Buffer.from(res.data as ArrayBuffer);
-}
-
-/**
- * ── Inbox Processing ────────────────────────────────────────────────────────
- * Moves files from 00_INBOX to studies (03_RAW/02_AUDIO) with nomenclature.
- */
-export async function processInbox(productId: string, storeId: string) {
-    try {
-        const drive = await getDriveClient();
-        const product = await (prisma as any).product.findUnique({
-            where: { id: productId },
-            select: { driveFolderId: true, sku: true, vendor: true }
-        });
-
-        if (!product?.driveFolderId) return { success: false, error: "Drive not setup" };
-
-        const inboxId = await findOrCreateFolder(drive, "INBOX", product.driveFolderId);
-        const assetsFolderId = await findOrCreateFolder(drive, "ASSETS", product.driveFolderId);
-        const rawFolderId = await findOrCreateFolder(drive, "RAW", assetsFolderId);
-        const audioFolderId = await findOrCreateFolder(drive, "AUDIO", assetsFolderId);
-
-        const res = await drive.files.list({
-            q: `'${inboxId}' in parents and trashed = false`,
-            fields: 'files(id, name, mimeType)',
-            supportsAllDrives: true,
-            includeItemsFromAllDrives: true
-        });
-
-        const processed = [];
-        const files = res.data.files || [];
-
-        const brand = (product.vendor || product.sku || 'PROD')
-            .toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9]/g, '').slice(0, 6);
-
-        for (const file of files) {
-            if (!file.id || !file.name) continue;
-
-            const isVideo = file.mimeType?.startsWith('video/');
-            const isAudio = file.mimeType?.startsWith('audio/');
-            const targetFolderId = isVideo ? rawFolderId : (isAudio ? audioFolderId : null);
-
-            if (targetFolderId) {
-                const timestamp = new Date().getTime();
-                const ext = file.name.split('.').pop();
-                const newName = `${brand}_RAW_${timestamp}.${ext}`;
-
-                await drive.files.update({
-                    fileId: file.id,
-                    addParents: targetFolderId,
-                    removeParents: inboxId,
-                    requestBody: { name: newName },
-                    supportsAllDrives: true
-                } as any);
-
-                processed.push({ original: file.name, processed: newName });
-            }
-        }
-
-        if (processed.length > 0) {
-            await syncProductIndex(productId, storeId);
-        }
-
-        return { success: true, processed };
-    } catch (e: any) {
-        console.error('[DriveService] processInbox failed:', e);
-        return { success: false, error: e.message };
-    }
-}
-
-/**
- * ── Landing Builder Integration ─────────────────────────────────────────────
- */
-
-export async function getLandingAssets(productId: string) {
-    try {
-        const drive = await getDriveClient();
-        const product = await (prisma as any).product.findUnique({
-            where: { id: productId },
-            select: { driveFolderId: true }
-        });
-
-        if (!product?.driveFolderId) return [];
-
-        const assetsId = await findOrCreateFolder(drive, "ASSETS", product.driveFolderId);
-        const imagesId = await findOrCreateFolder(drive, "IMAGENES_LANDING", assetsId);
-
-        const res = await drive.files.list({
-            q: `'${imagesId}' in parents and trashed = false and mimeType contains 'image/'`,
-            fields: 'files(id, name, webContentLink, webViewLink, thumbnailLink)',
-            supportsAllDrives: true,
-            includeItemsFromAllDrives: true
-        });
-
-        return (res.data.files || []).map(f => ({
-            id: f.id,
-            name: f.name,
-            url: f.webContentLink || f.webViewLink,
-            thumbnail: f.thumbnailLink
-        }));
-    } catch (e) {
-        console.error('[DriveService] getLandingAssets failed:', e);
-        return [];
-    }
-}
-
-export async function saveLandingProject(productId: string, storeId: string, type: string, version: number, content: any) {
-    try {
-        const drive = await getDriveClient();
-        const product = await (prisma as any).product.findUnique({
-            where: { id: productId },
-            select: { driveFolderId: true }
-        });
-
-        if (!product?.driveFolderId) throw new Error("Drive no configurado");
-
-        const landingsId = await findOrCreateFolder(drive, "LANDINGS", product.driveFolderId);
-        const typeId = await findOrCreateFolder(drive, type.toUpperCase(), landingsId);
-        const versionId = await findOrCreateFolder(drive, `V${String(version)}`, typeId);
-
-        // Save index.json for the landing
-        const fileName = 'landing_data.json';
-        const search = await drive.files.list({
-            q: `name = '${fileName}' and '${versionId}' in parents and trashed = false`,
-            fields: 'files(id)',
-            supportsAllDrives: true,
-            includeItemsFromAllDrives: true
-        });
-
-        const fileMetadata = { name: fileName, parents: [versionId], mimeType: 'application/json' };
-        const media = { mimeType: 'application/json', body: JSON.stringify(content, null, 2) };
-
-        if (search.data.files && search.data.files.length > 0) {
-            await drive.files.update({
-                fileId: search.data.files[0].id,
-                media: media,
-                supportsAllDrives: true
-            } as any);
-        } else {
-            await drive.files.create({
-                requestBody: fileMetadata,
-                media: media,
-                supportsAllDrives: true
-            });
-        }
-
-        await syncProductIndex(productId, storeId);
-        return { success: true, folderId: versionId };
-    } catch (e: any) {
-        console.error('[DriveService] saveLandingProject failed:', e);
-        return { success: false, error: e.message };
     }
 }

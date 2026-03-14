@@ -26,6 +26,7 @@ import { ElevenLabsService } from '@/lib/services/elevenlabs-service';
 import { AiRouter } from '@/lib/ai/router';
 import { TaskType } from '@/lib/ai/providers/interfaces';
 import { generateSRT } from '@/lib/video/subtitle-utils';
+import { DEFAULT_AGENT_PROMPTS } from '@/lib/ai/defaults/agent-prompts';
 
 const execAsync = promisify(exec);
 
@@ -206,59 +207,97 @@ async function processVideoBackground(
     
     updateJob(jobId, { status: 'TRANSCRIBED', progress: 45 });
  
-    // PASO 3: Análisis con Gemini (Deep Marketer)
-    // Generamos un preview ligero para que la IA lo vea sin explotar la memoria
-    const previewPath = path.join(tmpDir, 'gemini_preview.mp4');
-    await execAsync(`ffmpeg -i '${strippedPath}' -s 480x270 -r 5 -c:v libx264 -crf 30 -an '${previewPath}' -y`);
-    const videoPreviewBase64 = (await fs.readFile(previewPath)).toString('base64');
+    // PASO 3: Análisis con VIDEO_INTELLIGENCE agent
+    const product = await (prisma as any).product.findUnique({
+        where: { id: productId },
+        select: { sku: true, title: true }
+    });
 
-    const product = await prisma.product.findUnique({ where: { id: productId }, select: { sku: true, title: true } });
+    const analysisPrompt = `${DEFAULT_AGENT_PROMPTS.VIDEO_INTELLIGENCE}
 
-    const analysisResult = await AiRouter.dispatch(
-      storeId, TaskType.PERFORMANCE_ADS, 
-      `ACTÚA COMO UN DIRECTOR CREATIVO DE PERFORMANCE (CMO).
-      Analiza el video y la transcripción: "${transcription}". 
-      PRODUCTO: "${product?.title || 'GENERAL'}" (SKU: ${product?.sku || 'N/A'})
-      ORIGINAL: "${file.name}"
-      
-      OBJETIVO: Identificar la estructura de venta y diseccionar el video en hooks, cuerpo y CTA.
-      
-      TAREA:
-      1. CONCEPT: Debe ser descriptivo (Ej: "DEMOSTRACION_RESISTENCIA", "UNBOXING_ESTILO_VIDA"). NO USAR "CREATIVO_IA".
-      2. STAGE: Clasifica en TOFU (Frío), MOFU (Media), BOFU (Venta), RETARGETING.
-      3. ANGLE: Identifica el disparador psicológico (FOMO, STATUS, LOGICA, PLACER, MIEDO).
-      4. CLIPS: Identifica exactamente los tiempos de:
-         - HOOK: Los primeros 1-3 segundos impactantes.
-         - BODY: Argumentos de venta o beneficios.
-         - CTA: Llamada a la acción final.
-      
-      FORMATO JSON:
-      { 
-        "conceptSuggestion": "NOMBRE_DESC_CONCEPTO",
-        "funnelStage": "TOFU|MOFU|BOFU|RETARGETING", 
-        "angle": "NOMBRE_DEL_ANGULO",
-        "type": "UGC|REVIEW|DTC_AD", 
-        "hookScore": 8,
-        "hook": "Análisis experto del gancho...",
-        "avatarMatch": "Público ideal...",
-        "improvementSuggestions": "Consejos tácticos...",
-        "clips": [ 
-           { "start": 0, "end": 3, "name": "HOOK_INTERRUCION" },
-           { "start": 3, "end": 12, "name": "BODY_PROBLEM_SOLUTION" },
-           { "start": 12, "end": 15, "name": "CTA_OFERTA" }
-        ]
-      }`,
-      { 
-        jsonSchema: true,
-        video: `data:video/mp4;base64,${videoPreviewBase64}`,
-        videoMimeType: 'video/mp4'
-      }
-    );
-    let analysis: any = {};
-    try { analysis = JSON.parse(analysisResult.text.replace(/```json|```/g, '').trim()); } catch {}
+DATOS DEL VÍDEO:
+Producto: "${product?.title}"
+SKU: "${product?.sku || 'PROD'}"
+Transcripción: "${transcription}"
+
+CONCEPTOS CREATIVOS DISPONIBLES (Spencer Pawling):
+C1 — Problema: identifica y agita el dolor del avatar
+C2 — Falsa Solución: por qué lo que probaron no funciona
+C3 — Mecanismo: por qué SÍ funciona, mecanismo único
+C4 — Prueba: testimonios, demos, resultados reales
+C5 — Autoridad: experto, estudio, comparativa
+C6 — Historia: narrativa personal de transformación
+C7 — Identidad: lifestyle, aspiracional, estatus
+C8 — Resultado: before/after, transformación visual
+C9 — Oferta: CTA directo, urgencia, escasez
+
+TRÁFICO (Spencer):
+COLD: audiencia fría, no conoce la marca
+WARM: ha interactuado, conoce el problema
+HOT_RETARGET: listo para comprar o retargeting
+
+CONSCIENCIA (Schwartz 1-5):
+1 — Unaware: no sabe que tiene el problema
+2 — Problem_Aware: sabe el problema, no la solución
+3 — Solution_Aware: sabe que hay soluciones, no conoce tu producto
+4 — Product_Aware: conoce tu producto, no está convencido
+5 — Most_Aware: listo para comprar
+
+Devuelve SOLO este JSON:
+{
+  "concept": "C1",
+  "conceptName": "Problema",
+  "traffic": "COLD",
+  "awareness": 2,
+  "awarenessName": "Problem_Aware",
+  "drivePath": "C1_Problema/COLD/2_Problem_Aware",
+  "hookScore": 7,
+  "hookType": "Social Witness",
+  "framework": "PAS",
+  "angle": "mirada cansada",
+  "avatar": "mujer 45+",
+  "emotionPillar": "miedo",
+  "clips": [
+    {"name": "HOOK", "start": 0, "end": 3},
+    {"name": "PROBLEMA", "start": 3, "end": 15},
+    {"name": "MECANISMO", "start": 15, "end": 35},
+    {"name": "CTA", "start": 50, "end": 60}
+  ],
+  "improvements": "análisis de mejoras concretas",
+  "replicableTemplate": "estructura abstracta replicable"
+}`;
+
+    const analysisResult = await AiRouter.dispatch(storeId, TaskType.PERFORMANCE_ADS, analysisPrompt, { jsonSchema: true });
+
+    let analysis: any = {
+        concept: 'C3',
+        conceptName: 'Mecanismo',
+        traffic: 'COLD',
+        awareness: 3,
+        awarenessName: 'Solution_Aware',
+        drivePath: 'C3_Mecanismo/COLD/3_Solution_Aware',
+        hookScore: 5,
+        hookType: 'General',
+        framework: 'PAS',
+        angle: 'General',
+        avatar: 'No detectado',
+        emotionPillar: 'curiosidad',
+        clips: [],
+        improvements: 'Análisis no disponible',
+        replicableTemplate: ''
+    };
+
+    try {
+        const raw = analysisResult.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(raw);
+        // Merge con defaults para garantizar que ningún campo sea undefined
+        analysis = { ...analysis, ...parsed };
+    } catch (e) {
+        console.warn('[VideoLab] JSON parse failed, usando defaults:', e);
+    }
     
-    const conceptCode = hints.conceptCode || analysis.conceptSuggestion || file.name.split('.')[0].toUpperCase().replace(/[^A-Z0-9]/g, '_');
-    const funnelStage = analysis.funnelStage || hints.funnelStage || 'TOFU';
+    const conceptCode = hints.conceptCode || analysis.concept || file.name.split('.')[0].toUpperCase().replace(/[^A-Z0-9]/g, '_');
+    const funnelStage = analysis.traffic || hints.funnelStage || 'COLD';
     const psychologyAngle = analysis.angle || 'GENERAL';
 
     updateJob(jobId, { status: 'ANALYZED', progress: 65, hook: analysis.hook, funnelStage });
@@ -286,22 +325,25 @@ async function processVideoBackground(
     }
     updateJob(jobId, { status: 'SPLIT', progress: 80 });
  
-    // Standardized Nomenclature: [SKU]_V[VERSION]_[CONCEPT]_[STAGE]_[ANGLE].mp4
+    // Nomenclatura Spencer: SKU-C1-V1.mp4
+    const sku = product?.sku || productCode(product?.title ?? 'PRD');
+    // conceptCode ya está definido arriba
     const existingVersions = await (prisma as any).creativeAsset.count({
         where: { productId, conceptCode }
     });
-    const versionNum = existingVersions + 1;
-    const sku = product?.sku || 'PRD';
-    const psychologyAngleClean = psychologyAngle.toUpperCase().replace(/\s+/g, '_');
-    const generatedNomen = `${sku}_V${versionNum}_${conceptCode}_${funnelStage}_${psychologyAngleClean}.mp4`.toUpperCase();
- 
-    // 5.1 Subir Video Principal
+    const version = existingVersions + 1;
+    const generatedNomen = `${sku}-${conceptCode}-V${version}.mp4`;
+
+    // Subir al path correcto en Drive
+    const drivePath = analysis.drivePath || `${conceptCode}/COLD`;
+    
     let driveOptions: any = { 
+        subfolderName: drivePath,
         conceptCode, 
-        funnelStage, 
-        angle: psychologyAngle,
+        funnelStage: analysis.traffic, 
+        angle: analysis.angle,
         fileType: 'VIDEO', 
-        version: versionNum 
+        version 
     };
 
     if (hints.competitorSource) {
@@ -320,29 +362,45 @@ async function processVideoBackground(
 
     // 5.2 Subir Documento de Análisis (Google Doc)
     const analysisDocContent = `
-ANÁLISIS ESTRATÉGICO IA PRO
-===========================
-Creativo: ${generatedNomen}
-Concepto: ${conceptCode}
-Fase: ${funnelStage} | Tipo: ${analysis.type}
+ANÁLISIS CREATIVO — SPENCER PAWLING METHODOLOGY
+================================================
+Archivo: ${generatedNomen}
+Ruta Drive: ${drivePath}/
+
+CLASIFICACIÓN SPENCER
+─────────────────────
+Concepto: ${analysis.concept} — ${analysis.conceptName}
+Tráfico: ${analysis.traffic}
+Consciencia: ${analysis.awareness} — ${analysis.awarenessName}
+
+ANÁLISIS DEL HOOK
+─────────────────
+Score: ${analysis.hookScore}/10
+Tipo: ${analysis.hookType}
+Framework: ${analysis.framework}
 Ángulo: ${analysis.angle}
+Avatar: ${analysis.avatar}
+Emoción Pilar: ${analysis.emotionPillar}
 
-1. EVALUACIÓN DEL GANCHO (Score: ${analysis.hookScore}/10):
-${analysis.hook}
+TRANSCRIPCIÓN
+─────────────
+${transcription}
 
-2. ÁNGULO Y AVATAR:
-- Ángulo: ${analysis.angle}
-- Avatar: ${analysis.avatarMatch}
+SHOT BREAKDOWN
+──────────────
+${(analysis.clips || []).map((c: any) => `[${c.start}s → ${c.end}s] ${c.name}`).join('\n')}
 
-3. ESTRUCTURA DE DISECCIONES (CLIPS):
-${(analysis.clips || []).map((c: any) => `- [${c.start}s - ${c.end}s]: ${c.name}`).join('\n')}
+MEJORAS CONCRETAS
+─────────────────
+${analysis.improvements}
 
-4. ANÁLISIS ESTRATÉGICO Y MEJORAS:
-${analysis.improvementSuggestions}
+PLANTILLA REPLICABLE
+────────────────────
+${analysis.replicableTemplate}
 
----------------------------------------------------
-Generado por el Agente Director Creativo IA Pro
-    `.trim();
+────────────────────────────────────────
+EcomBoom — Creative Forensic Agent
+`.trim();
 
     await saveAnalysisDoc(productId, storeId, mainVideoUpload.parentFolderId, `ANALISIS_${generatedNomen.replace('.mp4', '')}`, analysisDocContent);
 
@@ -353,7 +411,7 @@ Generado por el Agente Director Creativo IA Pro
         const clipFile = clipsFiles[i];
         const clipBuffer = await fs.readFile(path.join(clipsDir, clipFile));
         const clipNameTag = clipFile.replace('.mp4', '').split('_').slice(2).join('_');
-        const clipNomen = `${sku}_V${versionNum}_${conceptCode}_${clipNameTag}.mp4`.toUpperCase();
+        const clipNomen = `${sku}-${conceptCode}-V${version}-${clipNameTag}.mp4`.toUpperCase();
         
         const clipUpload = await uploadToProduct(
             clipBuffer,
@@ -366,7 +424,7 @@ Generado por el Agente Director Creativo IA Pro
               funnelStage, 
               angle: psychologyAngle,
               fileType: 'VIDEO', 
-              version: versionNum,
+              version,
               subfolderName: 'CLIPS'
             }
         );
@@ -387,7 +445,7 @@ Generado por el Agente Director Creativo IA Pro
                 thumbnailUrl: clipUpload.thumbnailUrl,
                 type: 'VIDEO_CLIP',
                 processingStatus: 'DONE',
-                versionNumber: versionNum
+                versionNumber: version
             }
         });
 
@@ -410,40 +468,43 @@ Generado por el Agente Director Creativo IA Pro
               funnelStage, 
               angle: psychologyAngle,
               fileType: 'DOCUMENT', 
-              version: versionNum 
+              version 
             }
         );
         srtUrl = `https://drive.google.com/file/d/${srtUpload.driveFileId}/view`;
     }
 
-    // Actualizar asset en BD con campos correctos del schema
-    await (prisma as any).creativeAsset.update({
-      where: { id: assetId },
-      data: {
-        transcription, 
-        conceptCode, 
-        funnelStage, 
-        type: analysis.type, 
-        versionNumber: versionNum,
-        hookText: analysis.hook, 
-        angulo: analysis.angle,
-        driveFileId: mainVideoUpload.driveFileId, 
-        drivePath: mainVideoUpload.drivePath, 
-        driveUrl: `https://drive.google.com/file/d/${mainVideoUpload.driveFileId}/view`, 
-        thumbnailUrl: mainVideoUpload.thumbnailUrl,
-        processingStatus: 'DONE', 
-        nomenclatura: generatedNomen,
-        clipsJson: JSON.stringify(uploadedClips),
-        scriptEs: transcription, // Guardamos la transcripción original aquí también
-        tagsJson: JSON.stringify({ 
-            hookScore: analysis.hookScore, 
-            avatar: analysis.avatarMatch, 
-            suggestions: analysis.improvementSuggestions,
-            srtUrl,
-            words // Store for precise bulk subtitle generation later
-        })
-      }
-    });
+  // Actualizar asset en BD con campos correctos del schema
+  await (prisma as any).creativeAsset.update({
+    where: { id: assetId },
+    data: {
+      transcription, 
+      conceptCode, 
+      funnelStage, 
+      type: analysis.framework || 'UGC', 
+      versionNumber: version,
+      hookText: analysis.hookType, 
+      angulo: analysis.angle,
+      driveFileId: mainVideoUpload.driveFileId, 
+      drivePath: mainVideoUpload.drivePath, 
+      driveUrl: `https://drive.google.com/file/d/${mainVideoUpload.driveFileId}/view`, 
+      thumbnailUrl: mainVideoUpload.thumbnailUrl,
+      processingStatus: 'DONE', 
+      nomenclatura: generatedNomen,
+      clipsJson: JSON.stringify(uploadedClips),
+      scriptEs: transcription, // Guardamos la transcripción original aquí también
+      tagsJson: JSON.stringify({ 
+          hookScore: analysis.hookScore, 
+          hookType: analysis.hookType,
+          avatar: analysis.avatar, 
+          awareness: analysis.awarenessName,
+          traffic: analysis.traffic,
+          suggestions: analysis.improvements,
+          srtUrl,
+          words // Store for precise bulk subtitle generation later
+      })
+    }
+  });
  
     // Auto-trigger réplica si es vídeo de competencia
     const assetRecord = await (prisma as any).creativeAsset.findUnique({ 

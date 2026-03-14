@@ -6,8 +6,8 @@ export const ANALYTICS_CONFIG: Record<string, {
     storeUrl: string;
 }> = {
     'store-main': {
-        ga4MeasurementId: process.env.GA4_MEASUREMENT_ID_ALEESSENCE || '',
-        ga4PropertyId:    process.env.GA4_PROPERTY_ID_ALEESSENCE    || '',
+        ga4MeasurementId: process.env.GA4_MEASUREMENT_ID_STORE_MAIN || '',
+        ga4PropertyId:    process.env.GA4_PROPERTY_ID_STORE_MAIN    || '',
         clarityProjectId: process.env.CLARITY_PROJECT_ALEESSENCE    || '',
         clarityToken:     process.env.CLARITY_TOKEN_ALEESSENCE      || '',
         storeUrl:         'https://aleessence.es',
@@ -19,7 +19,7 @@ export const ANALYTICS_CONFIG: Record<string, {
         clarityToken:     process.env.CLARITY_TOKEN_ALECARE_MX      || '',
         storeUrl:         'https://alecare.es',
     },
-    'cmlxrad5405b826d99j9kpgyy': {
+    'store-alecare-uk': {
         ga4MeasurementId: process.env.GA4_MEASUREMENT_ID_ALECARE_UK || '',
         ga4PropertyId:    process.env.GA4_PROPERTY_ID_ALECARE_UK    || '',
         clarityProjectId: process.env.CLARITY_PROJECT_ALECARE_UK    || '',

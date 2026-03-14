@@ -17,6 +17,7 @@ export interface AgentRequest {
     model?: string;
     locale?: string;
     storeId?: string;
+    systemPromptOverride?: string;
 }
 
 export interface AgentResponse {
@@ -81,7 +82,12 @@ export class AgentDispatcher {
         const provider = getAgentProvider(role);
 
         const modelToUse = request.model || agentConfig.model;
-        const finalConfig = { ...agentConfig, model: modelToUse };
+        let finalConfig = { ...agentConfig, model: modelToUse };
+
+        // Si hay override de systemPrompt, aplicarlo
+        if (request.systemPromptOverride) {
+            finalConfig = { ...finalConfig, systemPrompt: request.systemPromptOverride };
+        }
 
         console.log(`[AgentDispatcher] Task → Agent: ${role}`);
         console.log(`[AgentDispatcher] Provider: ${provider}`);

@@ -1,52 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { AgentId } from '@prisma/client';
-import { getAgentSystemPrompt } from '@/lib/agents/agent-utils';
+import { DEFAULT_AGENT_PROMPTS } from '@/lib/ai/defaults/agent-prompts';
 
-const ALL_AGENT_IDS = Object.values(AgentId);
-
-// Store module/label/description in examples array as a meta entry
-function extractMeta(examples: unknown[]): { module?: string; label?: string; description?: string } {
-    try {
-        const entry = (examples || []).find((e: any) => e?.__meta === true);
-        return (entry as any) || {};
-    } catch { return {}; }
-}
-
-function buildExamples(examples: unknown[], mod?: string, label?: string, description?: string) {
-    const cleaned = (examples || []).filter((e: any) => !e?.__meta);
-    const meta: Record<string, unknown> = { __meta: true };
-    if (mod)         meta.module      = mod;
-    if (label)       meta.label       = label;
-    if (description) meta.description = description;
-    if (Object.keys(meta).length > 1) cleaned.push(meta);
-    return cleaned;
-}
+// Metadatos de los agentes del sistema para cuando no están en la BD
+const SYSTEM_AGENTS_META: Record<string, { label: string; description: string; module: string; emoji: string }> = {
+    NEURAL_MOTHER:      { label: 'Neural Mother',       description: 'Agente Jefe — diagnóstico ejecutivo y coordinación total',        module: 'mando',         emoji: '🧠' },
+    FUNNEL_ARCHITECT:   { label: 'Funnel Architect',    description: 'Landing + Advertorial + Listicle + Oferta + CRO',                module: 'creativo',      emoji: '🏗️' },
+    VIDEO_INTELLIGENCE: { label: 'Video Intelligence',  description: 'Análisis + guión + dirección + UGC — todo sobre vídeo',           module: 'creativo',      emoji: '🎬' },
+    IMAGE_DIRECTOR:     { label: 'Image Director',      description: 'Imágenes estáticas + carruseles + JSON para IA',                  module: 'creativo',      emoji: '🎨' },
+    CREATIVE_FORENSIC:  { label: 'Creative Forensic',   description: 'Disección forense de vídeos, landings y carruseles',              module: 'investigacion', emoji: '🔍' },
+    RESEARCH_CORE:      { label: 'Research Core',       description: 'Investigación P1-P7: producto, avatares, ángulos',               module: 'investigacion', emoji: '🔬' },
+    MEDIA_BUYER:        { label: 'Media Buyer',          description: 'Meta Ads: análisis, escalado, diagnóstico de creativos',         module: 'marketing',     emoji: '📡' },
+    OPS_COMMANDER:      { label: 'Ops Commander',        description: 'Pedidos, incidencias, equipo, postventa',                       module: 'operaciones',   emoji: '⚙️' },
+    DRIVE_INTELLIGENCE: { label: 'Drive Intelligence',  description: 'Organización automática, nomenclatura y clasificación',          module: 'drive',         emoji: '📁' },
+};
 
 /**
  * GET /api/agents/config?storeId=X
- * Returns all AgentConfig for a store. Falls back to default prompt if not configured.
  */
 export async function GET(req: NextRequest) {
     const storeId = req.nextUrl.searchParams.get('storeId');
     if (!storeId) return NextResponse.json({ error: 'storeId is required' }, { status: 400 });
 
     try {
-        const existingConfigs = await prisma.agentConfig.findMany({ where: { storeId } });
+        const existingConfigs = await (prisma as any).agentConfig.findMany({ where: { storeId } });
 
-        const fullConfigs = await Promise.all(ALL_AGENT_IDS.map(async (agentId) => {
-            const config = existingConfigs.find(c => c.agentId === agentId);
-            const meta   = config ? extractMeta(config.examples as unknown[]) : {};
-            const examples = (config?.examples as unknown[] || []).filter((e: any) => !e?.__meta);
+        // Añadir los agentes del sistema que no estén en BD
+        const systemAgentIds = Object.keys(SYSTEM_AGENTS_META);
+        const existingIds = new Set(existingConfigs.map((c: any) => c.agentId));
 
-            if (config) {
-                return { agentId, systemPrompt: config.systemPrompt, examples, updatedAt: config.updatedAt, ...meta };
-            }
-            const defaultPrompt = await getAgentSystemPrompt(storeId, agentId);
-            return { agentId, systemPrompt: defaultPrompt, examples: [], updatedAt: new Date() };
-        }));
+        const systemDefaults = systemAgentIds
+            .filter(id => !existingIds.has(id))
+            .map(id => ({
+                agentId: id,
+                systemPrompt: DEFAULT_AGENT_PROMPTS[id] || '',
+                label: SYSTEM_AGENTS_META[id].label,
+                description: SYSTEM_AGENTS_META[id].description,
+                module: SYSTEM_AGENTS_META[id].module,
+                emoji: SYSTEM_AGENTS_META[id].emoji,
+                isCustom: false,
+                isSystem: true,
+                isActive: true
+            }));
 
-        return NextResponse.json(fullConfigs);
+        const result = [
+            ...existingConfigs.map((c: any) => ({ 
+                ...c, 
+                isSystem: !!SYSTEM_AGENTS_META[c.agentId],
+                // Si es de sistema pero está en BD, usamos los datos de la BD (permitiendo overrides)
+            })), 
+            ...systemDefaults
+        ];
+
+        return NextResponse.json(result);
     } catch (e: any) {
         console.error('[API Config GET]', e);
         return NextResponse.json({ error: e.message }, { status: 500 });
@@ -55,36 +61,42 @@ export async function GET(req: NextRequest) {
 
 /**
  * PUT /api/agents/config
- * Upsert AgentConfig. Also persists module/label/description in examples metadata.
  */
 export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
-        const { storeId, agentId, systemPrompt, examples, module: mod, label, description } = body;
+        const { storeId, agentId, systemPrompt, label, description, module: mod, emoji, isCustom, isActive } = body;
 
         if (!storeId || !agentId) {
             return NextResponse.json({ error: 'storeId and agentId are required' }, { status: 400 });
         }
 
-        if (!ALL_AGENT_IDS.includes(agentId as AgentId)) {
-            return NextResponse.json({ error: `'${agentId}' no es un AgentId válido` }, { status: 400 });
-        }
-
-        const builtExamples = buildExamples(examples || [], mod, label, description) as any[];
-
-        const config = await prisma.agentConfig.upsert({
-            where: { storeId_agentId: { storeId, agentId: agentId as AgentId } },
-            update: { systemPrompt, examples: builtExamples, updatedAt: new Date() },
+        const config = await (prisma as any).agentConfig.upsert({
+            where: { storeId_agentId: { storeId, agentId } },
+            update: { 
+                systemPrompt, 
+                label, 
+                description, 
+                module: mod, 
+                emoji, 
+                isCustom: isCustom ?? true,
+                isActive: isActive ?? true,
+                updatedAt: new Date() 
+            },
             create: {
                 storeId,
-                agentId: agentId as AgentId,
-                systemPrompt: systemPrompt || await getAgentSystemPrompt(storeId, agentId),
-                examples: builtExamples,
+                agentId,
+                systemPrompt: systemPrompt || DEFAULT_AGENT_PROMPTS[agentId] || '',
+                label,
+                description,
+                module: mod,
+                emoji,
+                isCustom: isCustom ?? true,
+                isActive: isActive ?? true,
             },
         });
 
-        const savedMeta = extractMeta(config.examples as unknown[]);
-        return NextResponse.json({ ...config, ...savedMeta });
+        return NextResponse.json(config);
 
     } catch (e: any) {
         console.error('[API Config PUT]', e);
@@ -96,7 +108,6 @@ export const POST = PUT;
 
 /**
  * DELETE /api/agents/config
- * Removes the AgentConfig for a given storeId + agentId (resets to default).
  */
 export async function DELETE(req: NextRequest) {
     try {
@@ -104,9 +115,12 @@ export async function DELETE(req: NextRequest) {
         if (!storeId || !agentId) {
             return NextResponse.json({ error: 'storeId and agentId required' }, { status: 400 });
         }
-        await prisma.agentConfig.deleteMany({
-            where: { storeId, agentId: agentId as AgentId }
+        
+        // No permitimos borrar agentes de sistema de la lista, pero si se borran de la BD vuelven a su estado default
+        await (prisma as any).agentConfig.delete({
+            where: { storeId_agentId: { storeId, agentId } }
         });
+        
         return NextResponse.json({ ok: true });
     } catch (e: any) {
         console.error('[API Config DELETE]', e);

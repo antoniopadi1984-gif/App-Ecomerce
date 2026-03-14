@@ -2831,11 +2831,19 @@ model MediaJob {
 model AgentConfig {
   id           String   @id @default(cuid())
   storeId      String   @map("store_id")
-  agentId      AgentId  @map("agent_id")
+  agentId      String   @map("agent_id")   // ← String libre, no enum
   systemPrompt String   @map("system_prompt")
+  label        String?
+  description  String?
+  module       String?  @default("sistema")
+  emoji        String?  @default("🤖")
+  isCustom     Boolean  @default(false)
+  isActive     Boolean  @default(true)
   examples     Json?    @map("examples")
   updatedAt    DateTime @updatedAt @map("updated_at")
-  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@unique([storeId, agentId])
   @@map("agent_configs")
@@ -2936,16 +2944,3 @@ enum RelationType {
   USED_IN
 }
 
-enum AgentId {
-  FINANZAS
-  CRM
-  CREATIVO
-  INVESTIGACION
-  MARKETING
-  MANDO
-  OPERACIONES
-  DIRECTOR
-  ESPECIALISTA_CREATIVO
-  DIRECTOR_MARKETING
-  AGENTE_OPERACIONES
-}

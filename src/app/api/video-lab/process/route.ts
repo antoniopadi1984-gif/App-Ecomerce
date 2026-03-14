@@ -66,11 +66,11 @@ export async function POST(request: NextRequest) {
             if (action === 'generate_video') {
                 const videoUrl = await generateVideo({
                     prompt: body.prompt,
-                    mode: body.imageUrl ? 'image2video' : 'text2video',
+                    mode: body.imageUrl ? 'image2video' : 'standard',
                     imageUrl: body.imageUrl,
                     duration: body.duration || 5,
                     aspectRatio: body.aspectRatio || '9:16',
-                    quality: 'pro',
+                    quality: 'premium',
                 });
                 return NextResponse.json({ ok: true, videoUrl });
             }
@@ -102,24 +102,33 @@ export async function POST(request: NextRequest) {
         if (!storeId) return NextResponse.json({ error: 'Store ID required' }, { status: 400 });
 
         const formData = await request.formData();
-        const file = formData.get('file') as File | null;
+        const file = formData.get('video') as File | null; // Cambiado de 'file' a 'video' para mayor claridad
         const productId = formData.get('productId') as string;
+        const assetIdHint = formData.get('assetId') as string | null;
         const conceptCodeHint = formData.get('conceptCode') as string | null;
         const funnelHint = formData.get('funnelStage') as string | null;
+        const competitorSource = formData.get('competitorSource') === 'true';
 
         if (!file || !productId) {
             return NextResponse.json({ error: 'file and productId required' }, { status: 400 });
         }
 
-        const asset = await (prisma as any).creativeAsset.create({
-            data: {
-                productId,
-                storeId,
-                type: 'VIDEO',
-                name: file.name,
-                processingStatus: 'PENDING',
-            }
-        });
+        let asset;
+        if (assetIdHint) {
+            asset = await (prisma as any).creativeAsset.findUnique({ where: { id: assetIdHint } });
+        }
+
+        if (!asset) {
+            asset = await (prisma as any).creativeAsset.create({
+                data: {
+                    productId,
+                    storeId,
+                    type: 'VIDEO',
+                    name: file.name,
+                    processingStatus: 'PENDING',
+                }
+            });
+        }
 
         const jobId = `job_${Date.now()}_${asset.id.slice(0, 8)}`;
         const job: JobStatus = {
@@ -136,6 +145,7 @@ export async function POST(request: NextRequest) {
         processVideoBackground(file, asset.id, productId, storeId, jobId, {
             conceptCode: conceptCodeHint,
             funnelStage: funnelHint,
+            competitorSource
         }).catch(e => {
             const j = jobs.get(jobId);
             if (j) { j.status = 'ERROR'; j.error = e.message; j.updatedAt = new Date().toISOString(); }
@@ -161,7 +171,7 @@ export async function GET(request: NextRequest) {
 // ── Background processing ─────────────────────────────────────────────────────
 async function processVideoBackground(
   file: File, assetId: string, productId: string, storeId: string,
-  jobId: string, hints: { conceptCode?: string | null; funnelStage?: string | null }
+  jobId: string, hints: { conceptCode?: string | null; funnelStage?: string | null; competitorSource?: boolean }
 ) {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vlab-'));
   const inputPath = path.join(tmpDir, file.name);
@@ -286,19 +296,26 @@ async function processVideoBackground(
     const generatedNomen = `${sku}_V${versionNum}_${conceptCode}_${funnelStage}_${psychologyAngleClean}.mp4`.toUpperCase();
  
     // 5.1 Subir Video Principal
+    let driveOptions: any = { 
+        conceptCode, 
+        funnelStage, 
+        angle: psychologyAngle,
+        fileType: 'VIDEO', 
+        version: versionNum 
+    };
+
+    if (hints.competitorSource) {
+        const brand = conceptCode.replace('SPY_', '') || 'UNKNOWN';
+        driveOptions.subfolderName = `00_INBOX/SPY/COMPETENCIA/${brand}`;
+    }
+
     const mainVideoUpload = await uploadToProduct(
       Buffer.from(await fs.readFile(strippedPath)),
       generatedNomen,
       file.type,
       productId,
       storeId,
-      { 
-        conceptCode, 
-        funnelStage, 
-        angle: psychologyAngle,
-        fileType: 'VIDEO', 
-        version: versionNum 
-      }
+      driveOptions
     );
 
     // 5.2 Subir Documento de Análisis (Google Doc)
@@ -428,6 +445,22 @@ Generado por el Agente Director Creativo IA Pro
       }
     });
  
+    // Auto-trigger réplica si es vídeo de competencia
+    const assetRecord = await (prisma as any).creativeAsset.findUnique({ 
+        where: { id: assetId }, select: { tagsJson: true } 
+    });
+    const assetMeta = JSON.parse(assetRecord?.tagsJson || '{}');
+
+    if (assetMeta.source === 'COMPETITOR' || hints.competitorSource) {
+        // Fire & forget — generar réplica automáticamente
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        fetch(`${appUrl}/api/spy/replicate-with-product`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Store-Id': storeId },
+            body: JSON.stringify({ competitorAssetId: assetId, productId })
+        }).catch(() => {});
+    }
+
     updateJob(jobId, { status: 'DONE', progress: 100, nomenclature: generatedNomen });
  
   } catch (err: any) {

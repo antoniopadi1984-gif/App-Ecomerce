@@ -136,6 +136,18 @@ export async function findOrCreateFolder(drive: any, name: string, parentId?: st
     }
 }
 
+/**
+ * findOrCreatePath - Crea una serie de carpetas anidadas a partir de un path 'A/B/C'.
+ */
+export async function findOrCreatePath(drive: any, path: string, rootId: string): Promise<string> {
+    const parts = path.split('/').filter(Boolean);
+    let currentParentId = rootId;
+    for (const part of parts) {
+        currentParentId = await findOrCreateFolder(drive, part, currentParentId);
+    }
+    return currentParentId;
+}
+
 // ── Setup functions ───────────────────────────────────────────────────────────
 /**
  * Creates the full Drive folder structure for a store.
@@ -477,7 +489,12 @@ export async function uploadToProduct(
         console.log(`[DriveService] Target subFolder set to: ${subFolder} (Angle: ${angleName})`);
 
         if (opts.subfolderName) {
-            subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), subFolder);
+            if (opts.subfolderName.includes('/')) {
+                // If path is absolute-ish (starts with folderId structure)
+                subFolder = await findOrCreatePath(drive, opts.subfolderName.toUpperCase(), folderId);
+            } else {
+                subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), subFolder);
+            }
         }
     } else if (opts.fileType === 'IMAGE') {
         const assetsFolder = await findOrCreateFolder(drive, 'ASSETS', folderId);
@@ -526,6 +543,42 @@ export async function uploadToProduct(
     invalidateProductIndex(productId);
     await syncProductIndex(productId, storeId);
     return { driveFileId, drivePath, driveUrl: driveUrl || '', parentFolderId: subFolder, thumbnailUrl: thumbnailUrl || undefined };
+}
+
+/**
+ * uploadToInbox - Sube un archivo a la carpeta INBOX del producto.
+ */
+export async function uploadToInbox(
+    fileBuffer: Buffer,
+    fileName: string,
+    mimeType: string,
+    productId: string,
+    storeId: string,
+    subfolder: string = 'VIDEOS'
+): Promise<{ driveFileId: string; drivePath: string }> {
+    const drive = await getDriveClient();
+    const product = await (prisma as any).product.findUnique({
+        where: { id: productId },
+        select: { driveFolderId: true }
+    });
+
+    let folderId = product?.driveFolderId;
+    if (!folderId) folderId = await setupProductDrive(productId, storeId);
+
+    const inboxId = await findOrCreateFolder(drive, "INBOX", folderId);
+    const targetFolderId = await findOrCreateFolder(drive, subfolder, inboxId);
+
+    const res = await drive.files.create({
+        requestBody: { name: fileName, parents: [targetFolderId] },
+        media: { mimeType, body: require('stream').Readable.from(fileBuffer) },
+        fields: 'id',
+        supportsAllDrives: true
+    });
+
+    return { 
+        driveFileId: res.data.id!, 
+        drivePath: `INBOX/${subfolder}/${fileName}` 
+    };
 }
 
 /**

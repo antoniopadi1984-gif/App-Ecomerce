@@ -118,6 +118,9 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
     const [extensionInstalled, setExtensionInstalled] = useState(true);
     const [showVOModal, setShowVOModal] = useState(false);
     const [isProcessingVO, setIsProcessingVO] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<{file: string, status: string}[]>([]);
+    const [competitorName, setCompetitorName] = useState('');
 
     const selectedVideo = videos.find(v => v.id === selectedVideoId);
 
@@ -332,6 +335,39 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
         }
     };
 
+    const handleMassiveUpload = async (files: FileList) => {
+        if (!productId || !storeId || !files.length) return;
+        setUploading(true);
+        
+        const formData = new FormData();
+        formData.append('productId', productId);
+        formData.append('competitorName', competitorName || 'COMPETIDOR');
+        
+        const fileList = Array.from(files);
+        setUploadProgress(fileList.map(f => ({ file: f.name, status: 'en cola' })));
+        
+        for (const file of fileList) {
+            formData.append('videos', file);
+        }
+
+        try {
+            const res = await fetch('/api/spy/bulk-ingest', {
+                method: 'POST',
+                headers: { 'X-Store-Id': storeId },
+                body: formData
+            });
+            const data = await res.json();
+            if (data.ok) {
+                toast.success(`${data.totalQueued} vídeos en procesamiento — la IA está analizando`);
+                setUploadProgress(data.jobs.map((j: any) => ({ file: j.fileName, status: 'procesando...' })));
+            }
+        } catch (e) {
+            toast.error('Error al subir vídeos');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     return (
         <div className="flex gap-4 h-[calc(100vh-140px)] animate-in fade-in duration-500">
             {/* COLUMN LEFT */}
@@ -382,10 +418,46 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
                             </div>
                         </div>
 
-                        <div className="h-20 border-2 border-dashed border-[var(--border)] rounded-lg bg-[var(--bg)] flex flex-col items-center justify-center p-4 text-center hover:border-[var(--cre)]/40 hover:bg-[var(--cre-bg)]/20 transition-all cursor-pointer relative group">
-                            <Upload size={16} className="text-[var(--text-tertiary)] mb-1 group-hover:text-[var(--cre)]" />
-                            <p className="text-[10px] font-bold uppercase text-[var(--text-secondary)]">Subir Vídeos</p>
-                            <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" multiple />
+                        {/* Área de upload masivo */}
+                        <div className="border-2 border-dashed border-[var(--border)] rounded-xl p-4 text-center bg-[var(--bg)]/30">
+                            <input type="text" 
+                                placeholder="Nombre del competidor (ej: BRAND_X)"
+                                value={competitorName}
+                                onChange={e => setCompetitorName(e.target.value)}
+                                className="w-full mb-3 px-3 py-1.5 rounded-lg bg-white border border-[var(--border)] text-[10px] uppercase font-bold text-[var(--text-primary)] outline-none focus:border-[var(--cre)]"
+                            />
+                            <label className="cursor-pointer block group">
+                                <input type="file" accept="video/*" multiple className="hidden"
+                                    onChange={e => e.target.files && handleMassiveUpload(e.target.files)}
+                                    disabled={uploading}
+                                />
+                                <div className="flex flex-col items-center gap-1">
+                                    <Upload className={`w-5 h-5 ${uploading ? 'animate-bounce text-[var(--cre)]' : 'text-[var(--text-tertiary)] group-hover:text-[var(--cre)]'}`} />
+                                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                                        {uploading ? 'Procesando...' : 'Subida Masiva'}
+                                    </span>
+                                    <span className="text-[8px] text-[var(--text-tertiary)] uppercase tracking-tight">
+                                        La IA analiza y organiza automáticamente
+                                    </span>
+                                </div>
+                            </label>
+                            
+                            {/* Progress list */}
+                            {uploadProgress.length > 0 && (
+                                <div className="mt-3 space-y-1 text-left max-h-[100px] overflow-y-auto custom-scrollbar pr-1">
+                                    {uploadProgress.map((item, i) => (
+                                        <div key={i} className="flex items-center gap-2 text-[8px] font-bold uppercase">
+                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                                item.status === 'procesando...' ? 'bg-yellow-400 animate-pulse' :
+                                                item.status.includes('INGESTING') ? 'bg-blue-400 animate-pulse' : 
+                                                'bg-[var(--border)]'
+                                            }`} />
+                                            <span className="text-[var(--text-tertiary)] truncate flex-1">{item.file}</span>
+                                            <span className="text-[var(--text-tertiary)]">{item.status}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

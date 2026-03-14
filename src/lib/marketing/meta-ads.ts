@@ -1,7 +1,7 @@
 
 import { getConnectionSecret } from '../server/connections';
 
-const META_API_VERSION = 'v25.0';
+const META_API_VERSION = 'v22.0';
 const BASE_URL = `https://graph.facebook.com/${META_API_VERSION}`;
 
 export interface MetaAdAccount {
@@ -179,21 +179,56 @@ export class MetaAdsService {
     }
 
     /**
-     * Search Ads Library for Competition
+     * Search Ads Library for Competition by Keyword
      */
     async searchAdsLibrary(searchTerms: string) {
         const params = {
             search_terms: searchTerms,
+            ad_reached_countries: "['ES', 'US', 'MX', 'CO', 'CL', 'BR']",
             ad_type: 'ALL',
             ad_active_status: 'ACTIVE',
             fields: [
                 'id', 'ad_creative_bodies', 'ad_creative_link_captions',
                 'ad_creative_link_titles', 'page_name', 'page_id',
-                'ad_delivery_start_time', 'ad_delivery_stop_time'
+                'ad_snapshot_url', 'ad_delivery_start_time', 'ad_delivery_stop_time'
             ].join(',')
         };
         const data = await this.fetch('ads_archive', params);
-        return data.data;
+        return data.data || [];
+    }
+
+    /**
+     * Search Ads Library specifically for a Page ID
+     */
+    async searchAdsLibraryByPageId(pageId: string) {
+        const params = {
+            search_page_ids: pageId,
+            ad_reached_countries: "['ES', 'US', 'MX', 'CO', 'CL', 'BR']",
+            ad_type: 'ALL',
+            ad_active_status: 'ACTIVE',
+            fields: [
+                'id', 'ad_creative_bodies', 'ad_creative_link_captions',
+                'ad_creative_link_titles', 'page_name', 'page_id',
+                'ad_snapshot_url', 'ad_delivery_start_time', 'ad_delivery_stop_time'
+            ].join(',')
+        };
+        const data = await this.fetch('ads_archive', params);
+        return data.data || [];
+    }
+
+    /**
+     * Get a specific ad from library to resolve its Page ID
+     */
+    async getAdFromLibrary(adId: string) {
+        const params = {
+            ids: adId,
+            ad_reached_countries: "['ALL']",
+            ad_type: 'ALL',
+            ad_active_status: 'ALL',
+            fields: ['id', 'page_id', 'page_name', 'ad_snapshot_url'].join(',')
+        };
+        const data = await this.fetch('ads_archive', params);
+        return data.data?.[0];
     }
 
     /**

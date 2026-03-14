@@ -14,7 +14,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { uploadToProduct } from '@/lib/services/drive-service';
+import crypto from 'crypto';
+import { uploadToProduct, saveAnalysisDoc } from '@/lib/services/drive-service';
 import { invalidateProductCache } from '@/lib/services/product-index';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -24,6 +25,7 @@ import * as os from 'os';
 import { ElevenLabsService } from '@/lib/services/elevenlabs-service';
 import { AiRouter } from '@/lib/ai/router';
 import { TaskType } from '@/lib/ai/providers/interfaces';
+import { generateSRT } from '@/lib/video/subtitle-utils';
 
 const execAsync = promisify(exec);
 
@@ -181,8 +183,17 @@ async function processVideoBackground(
     await execAsync(`ffmpeg -i '${strippedPath}' -vn -acodec mp3 '${audioPath}' -y`);
     const audioBuffer = await fs.readFile(audioPath);
     const audioBlob = new Blob([audioBuffer], { type: 'audio/mp3' });
-    const transcriptionResult = await ElevenLabsService.speechToText(audioBlob);
-    const transcription = transcriptionResult?.text || '';
+    
+    let transcription = '';
+    let words: any[] = [];
+    try {
+        const transcriptionResult = await ElevenLabsService.speechToText(audioBlob, { storeId });
+        transcription = transcriptionResult?.text || '';
+        words = transcriptionResult?.words || [];
+    } catch (sttError: any) {
+        console.warn(`[VideoLab] Transcription failed (continuing without it): ${sttError.message}`);
+    }
+    
     updateJob(jobId, { status: 'TRANSCRIBED', progress: 45 });
  
     // PASO 3: Análisis con Gemini (Deep Marketer)
@@ -191,20 +202,41 @@ async function processVideoBackground(
     await execAsync(`ffmpeg -i '${strippedPath}' -s 480x270 -r 5 -c:v libx264 -crf 30 -an '${previewPath}' -y`);
     const videoPreviewBase64 = (await fs.readFile(previewPath)).toString('base64');
 
+    const product = await prisma.product.findUnique({ where: { id: productId }, select: { sku: true, title: true } });
+
     const analysisResult = await AiRouter.dispatch(
       storeId, TaskType.PERFORMANCE_ADS, 
-      `Eres un Marketer Senior de Respuesta Directa. Analiza este video y su transcripción "${transcription}".
-      Responde JSON: 
+      `ACTÚA COMO UN DIRECTOR CREATIVO DE PERFORMANCE (CMO).
+      Analiza el video y la transcripción: "${transcription}". 
+      PRODUCTO: "${product?.title || 'GENERAL'}" (SKU: ${product?.sku || 'N/A'})
+      ORIGINAL: "${file.name}"
+      
+      OBJETIVO: Identificar la estructura de venta y diseccionar el video en hooks, cuerpo y CTA.
+      
+      TAREA:
+      1. CONCEPT: Debe ser descriptivo (Ej: "DEMOSTRACION_RESISTENCIA", "UNBOXING_ESTILO_VIDA"). NO USAR "CREATIVO_IA".
+      2. STAGE: Clasifica en TOFU (Frío), MOFU (Media), BOFU (Venta), RETARGETING.
+      3. ANGLE: Identifica el disparador psicológico (FOMO, STATUS, LOGICA, PLACER, MIEDO).
+      4. CLIPS: Identifica exactamente los tiempos de:
+         - HOOK: Los primeros 1-3 segundos impactantes.
+         - BODY: Argumentos de venta o beneficios.
+         - CTA: Llamada a la acción final.
+      
+      FORMATO JSON:
       { 
-        "conceptSuggestion": "NOMBRE_DEL_CONCEPTO",
+        "conceptSuggestion": "NOMBRE_DESC_CONCEPTO",
         "funnelStage": "TOFU|MOFU|BOFU|RETARGETING", 
-        "type": "UGC|REVIEW|COMERCIAL", 
-        "hookScore": 1-10, 
-        "hook": "Análisis del gancho", 
-        "angle": "Ángulo psicológico (ej: Lógica, Miedo, Status...)",
-        "avatarMatch": "Perfil psicográfico",
-        "clips": [{"name": "HOOK", "start": 0, "end": 3}, ...],
-        "improvementSuggestions": "Análisis marketer profundo..." 
+        "angle": "NOMBRE_DEL_ANGULO",
+        "type": "UGC|REVIEW|DTC_AD", 
+        "hookScore": 8,
+        "hook": "Análisis experto del gancho...",
+        "avatarMatch": "Público ideal...",
+        "improvementSuggestions": "Consejos tácticos...",
+        "clips": [ 
+           { "start": 0, "end": 3, "name": "HOOK_INTERRUCION" },
+           { "start": 3, "end": 12, "name": "BODY_PROBLEM_SOLUTION" },
+           { "start": 12, "end": 15, "name": "CTA_OFERTA" }
+        ]
       }`,
       { 
         jsonSchema: true,
@@ -215,8 +247,9 @@ async function processVideoBackground(
     let analysis: any = {};
     try { analysis = JSON.parse(analysisResult.text.replace(/```json|```/g, '').trim()); } catch {}
     
-    const conceptCode = hints.conceptCode || analysis.conceptSuggestion || 'CREATIVO_IA';
+    const conceptCode = hints.conceptCode || analysis.conceptSuggestion || file.name.split('.')[0].toUpperCase().replace(/[^A-Z0-9]/g, '_');
     const funnelStage = analysis.funnelStage || hints.funnelStage || 'TOFU';
+    const psychologyAngle = analysis.angle || 'GENERAL';
 
     updateJob(jobId, { status: 'ANALYZED', progress: 65, hook: analysis.hook, funnelStage });
  
@@ -243,15 +276,14 @@ async function processVideoBackground(
     }
     updateJob(jobId, { status: 'SPLIT', progress: 80 });
  
-    // PASO 5: Subir a Drive con nomenclatura IA y organización granular
-    const product = await prisma.product.findUnique({ where: { id: productId }, select: { sku: true, title: true } });
-    
-    // Simplificar versión: V1, V2... (sin ceros)
+    // Standardized Nomenclature: [SKU]_V[VERSION]_[CONCEPT]_[STAGE]_[ANGLE].mp4
     const existingVersions = await (prisma as any).creativeAsset.count({
         where: { productId, conceptCode }
     });
     const versionNum = existingVersions + 1;
-    const generatedNomen = `${productCode(product?.title ?? 'PRD')}_V${versionNum}_${conceptCode}.mp4`;
+    const sku = product?.sku || 'PRD';
+    const psychologyAngleClean = psychologyAngle.toUpperCase().replace(/\s+/g, '_');
+    const generatedNomen = `${sku}_V${versionNum}_${conceptCode}_${funnelStage}_${psychologyAngleClean}.mp4`.toUpperCase();
  
     // 5.1 Subir Video Principal
     const mainVideoUpload = await uploadToProduct(
@@ -263,7 +295,7 @@ async function processVideoBackground(
       { 
         conceptCode, 
         funnelStage, 
-        angle: analysis.angle,
+        angle: psychologyAngle,
         fileType: 'VIDEO', 
         version: versionNum 
       }
@@ -276,6 +308,7 @@ ANÁLISIS ESTRATÉGICO IA PRO
 Creativo: ${generatedNomen}
 Concepto: ${conceptCode}
 Fase: ${funnelStage} | Tipo: ${analysis.type}
+Ángulo: ${analysis.angle}
 
 1. EVALUACIÓN DEL GANCHO (Score: ${analysis.hookScore}/10):
 ${analysis.hook}
@@ -294,39 +327,104 @@ ${analysis.improvementSuggestions}
 Generado por el Agente Director Creativo IA Pro
     `.trim();
 
-    await (import('@/lib/services/drive-service')).then(m => 
-        m.saveAnalysisDoc(productId, storeId, mainVideoUpload.parentFolderId, `ANALISIS_${generatedNomen.replace('.mp4', '')}`, analysisDocContent)
-    );
+    await saveAnalysisDoc(productId, storeId, mainVideoUpload.parentFolderId, `ANALISIS_${generatedNomen.replace('.mp4', '')}`, analysisDocContent);
 
-    // 5.3 Subir Clips detectados (Disecciones)
+    // 5.3 Subir Clips detectados (Disecciones) y Guardar en DB
     const clipsFiles = (await fs.readdir(clipsDir)).filter(f => f.endsWith('.mp4'));
-    for (const clipFile of clipsFiles) {
+    const uploadedClips = [];
+    for (let i = 0; i < clipsFiles.length; i++) {
+        const clipFile = clipsFiles[i];
         const clipBuffer = await fs.readFile(path.join(clipsDir, clipFile));
-        await uploadToProduct(
+        const clipNameTag = clipFile.replace('.mp4', '').split('_').slice(2).join('_');
+        const clipNomen = `${sku}_V${versionNum}_${conceptCode}_${clipNameTag}.mp4`.toUpperCase();
+        
+        const clipUpload = await uploadToProduct(
             clipBuffer,
-            clipFile, 
+            clipNomen, 
             'video/mp4',
             productId,
             storeId,
             { 
               conceptCode, 
               funnelStage, 
-              angle: analysis.angle,
+              angle: psychologyAngle,
               fileType: 'VIDEO', 
               version: versionNum,
               subfolderName: 'CLIPS'
             }
         );
+
+        // CREAR ASSET EN DB PARA EL CLIP (para que aparezca en la biblioteca)
+        await (prisma as any).creativeAsset.create({
+            data: {
+                id: crypto.randomUUID(),
+                storeId,
+                productId,
+                name: clipNomen,
+                conceptCode,
+                funnelStage: funnelStage,
+                angulo: psychologyAngle, // Mantenemos angulo como se llame en DB
+                nomenclatura: clipNomen,
+                driveFileId: clipUpload.driveFileId,
+                driveUrl: clipUpload.driveUrl,
+                thumbnailUrl: clipUpload.thumbnailUrl,
+                type: 'VIDEO_CLIP',
+                processingStatus: 'DONE',
+                versionNumber: versionNum
+            }
+        });
+
+        uploadedClips.push(clipUpload.driveFileId);
     }
  
-    // Actualizar asset en BD
+    // 5.4 Subir Subtítulos (SRT) si hay palabras
+    let srtUrl = '';
+    if (words.length > 0) {
+        const srtContent = generateSRT(words.map(w => ({ text: w.text, start: w.start, end: w.end })));
+        const srtNomen = generatedNomen.replace('.mp4', '.srt');
+        const srtUpload = await uploadToProduct(
+            Buffer.from(srtContent),
+            srtNomen,
+            'text/plain',
+            productId,
+            storeId,
+            { 
+              conceptCode, 
+              funnelStage, 
+              angle: psychologyAngle,
+              fileType: 'DOCUMENT', 
+              version: versionNum 
+            }
+        );
+        srtUrl = `https://drive.google.com/file/d/${srtUpload.driveFileId}/view`;
+    }
+
+    // Actualizar asset en BD con campos correctos del schema
     await (prisma as any).creativeAsset.update({
       where: { id: assetId },
       data: {
-        transcription, conceptCode, funnelStage, type: analysis.type, versionNumber: versionNum,
-        hook: analysis.hook, hookScore: analysis.hookScore, angle: analysis.angle,
-        driveFileId: mainVideoUpload.driveFileId, drivePath: mainVideoUpload.drivePath, driveUrl: `https://drive.google.com/file/d/${mainVideoUpload.driveFileId}/view`, processingStatus: 'READY', nomenclature: generatedNomen,
-        metadata: JSON.stringify({ analysis, clipsCount: clipsFiles.length })
+        transcription, 
+        conceptCode, 
+        funnelStage, 
+        type: analysis.type, 
+        versionNumber: versionNum,
+        hookText: analysis.hook, 
+        angulo: analysis.angle,
+        driveFileId: mainVideoUpload.driveFileId, 
+        drivePath: mainVideoUpload.drivePath, 
+        driveUrl: `https://drive.google.com/file/d/${mainVideoUpload.driveFileId}/view`, 
+        thumbnailUrl: mainVideoUpload.thumbnailUrl,
+        processingStatus: 'DONE', 
+        nomenclatura: generatedNomen,
+        clipsJson: JSON.stringify(uploadedClips),
+        scriptEs: transcription, // Guardamos la transcripción original aquí también
+        tagsJson: JSON.stringify({ 
+            hookScore: analysis.hookScore, 
+            avatar: analysis.avatarMatch, 
+            suggestions: analysis.improvementSuggestions,
+            srtUrl,
+            words // Store for precise bulk subtitle generation later
+        })
       }
     });
  
@@ -334,6 +432,11 @@ Generado por el Agente Director Creativo IA Pro
  
   } catch (err: any) {
     console.error('[VideoLab] Pipeline error:', err);
+    // Emergency log to file
+    try {
+      await fs.appendFile('/tmp/vlab_error.log', `[${new Date().toISOString()}] Asset ${assetId}: ${err.message}\n${err.stack}\n`);
+    } catch (logErr) {}
+    
     updateJob(jobId, { status: 'ERROR', progress: 0, error: err.message });
     await (prisma as any).creativeAsset.update({
       where: { id: assetId },

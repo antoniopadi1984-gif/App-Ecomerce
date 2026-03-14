@@ -1,10 +1,44 @@
 'use client';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import {
-    UploadCloud, FileVideo, Loader2, CheckCircle2, AlertCircle,
-    Play, Mic, Languages, Scissors, Music, Layers, Copy,
-    ChevronRight, Clock, Tag, Plus, Video, HardDrive, Sparkles,
-    Link, Download, Package, ExternalLink, RefreshCw, X, Zap
+import { 
+    Layout, 
+    Upload, 
+    Layers, 
+    Sparkles, 
+    Play, 
+    Trash2, 
+    Plus, 
+    Search, 
+    Filter, 
+    MoreVertical, 
+    ChevronRight, 
+    Clock, 
+    Loader2, 
+    RefreshCcw, 
+    Globe, 
+    Languages,
+    User,
+    CheckCircle2,
+    XCircle,
+    Download,
+    Eye,
+    Target,
+    UploadCloud,
+    FileVideo,
+    Mic,
+    X,
+    Zap,
+    ExternalLink,
+    Video,
+    HardDrive,
+    RefreshCw,
+    Link,
+    AlertCircle,
+    Tag,
+    Package,
+    Music,
+    Scissors,
+    Copy
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -65,6 +99,79 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     // WORKSPACE load (my own videos from library)
     const [ownCreatives, setOwnCreatives] = useState<any[]>([]);
     const [loadingWorkspace, setLoadingWorkspace] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [viewingAnalysis, setViewingAnalysis] = useState<any | null>(null);
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const handleBulkSubtitles = async () => {
+        if (selectedIds.size === 0) return;
+        toast.promise(Promise.all(Array.from(selectedIds).map(id => 
+            fetch(`/api/video-lab/subtitles`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetId: id, storeId })
+            })
+        )), {
+            loading: `Generando subtítulos para ${selectedIds.size} videos...`,
+            success: 'Subtítulos generados con éxito',
+            error: 'Error al generar algunos subtítulos'
+        });
+        setSelectedIds(new Set());
+    };
+
+    const handleBulkTranslate = async () => {
+        if (selectedIds.size === 0) return;
+        toast.promise(Promise.all(Array.from(selectedIds).map(id => 
+            fetch(`/api/video-lab/translate-audio`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetId: id, storeId, targetLang: marketLang || 'en' })
+            })
+        )), {
+            loading: `Traduciendo audio para ${selectedIds.size} videos...`,
+            success: 'Audios traducidos con éxito. Disponibles en Drive.',
+            error: 'Error al traducir algunos audios'
+        });
+        setSelectedIds(new Set());
+    };
+
+    const handleSubtitles = async (assetId: string) => {
+        toast.promise(
+            fetch(`/api/video-lab/subtitles`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetId, storeId })
+            }).then(r => r.json()),
+            {
+                loading: 'Generando subtítulos...',
+                success: 'Subtítulos quemados con éxito. Revisa el historial.',
+                error: 'Error al procesar subtítulos'
+            }
+        );
+    };
+
+    const handleTranslate = async (assetId: string) => {
+        toast.promise(
+            fetch(`/api/video-lab/translate-audio`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetId, storeId, targetLang: marketLang || 'en' })
+            }).then(r => r.json()),
+            {
+                loading: 'Traduciendo audio...',
+                success: 'Audio traducido con éxito. Revisa tu carpeta en Drive.',
+                error: 'Error al traducir el audio'
+            }
+        );
+    };
 
     // Fetch own creatives (WORKSPACE view)
     const fetchOwnCreatives = useCallback(async () => {
@@ -95,7 +202,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                 const mapped = data.ads.map((ad: any) => ({
                     id: ad.id,
                     concept: ad.title || 'Anuncio Competencia',
-                    thumbnailUrl: null, // Si Meta nos da imagen
+                    thumbnailUrl: ad.thumbnailUrl,
                     videoUrl: ad.url,
                     stage: ad.analysisJson ? JSON.parse(ad.analysisJson).awareness : 'COLD',
                     status: ad.status || 'ACTIVE',
@@ -162,10 +269,12 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
             });
             const data = await res.json();
             if (data.ok) {
-                toast.success('Anuncio importado. La IA está analizando la estructura...');
+                const count = Array.isArray(data.ad) ? data.ad.length : 1;
+                toast.success(count > 1 
+                    ? `Importando ${count} anuncios de la biblioteca...`
+                    : 'Anuncio importado. La IA está analizando la estructura...');
                 setMetaUrl('');
-                // Refresh library after a delay (analysis takes time)
-                setTimeout(fetchMetaLibrary, 3000);
+                setTimeout(fetchMetaLibrary, count > 1 ? 5000 : 3000);
             } else {
                 throw new Error(data.error || 'Error al importar');
             }
@@ -173,6 +282,20 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
             toast.error(e.message || 'Error al importar el anuncio');
         } finally {
             setImportingUrl(false);
+        }
+    };
+
+    const handleDeleteCreative = async (id: string) => {
+        if (!confirm('¿Seguro que quieres borrar este creativo?')) return;
+        try {
+            const res = await fetch(`/api/creative/library?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                toast.success('Creativo eliminado');
+                fetchOwnCreatives();
+                fetchMetaLibrary();
+            }
+        } catch (e) {
+            toast.error('Error al eliminar');
         }
     };
 
@@ -298,7 +421,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
             toast.info('Sube un video primero para analizar su gancho');
             return;
         }
-        const lastVideo = ownCreatives[0];
+    const lastVideo = ownCreatives[0];
         setAnalyzingHook(true);
         setHookAnalysis(null);
         try {
@@ -328,6 +451,20 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     };
 
     const STANDARD_FOLDERS = ['01_HOOKS', '02_CRUDE_CONTENT', '03_EDITS', '04_RESOURCES'];
+
+    if (!storeId || !productId || productId === 'GLOBAL') {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center py-20 gap-4">
+                <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300">
+                    <Sparkles size={32} />
+                </div>
+                <h2 className="text-sm font-bold text-slate-900 uppercase">Selecciona Producto</h2>
+                <p className="text-[10px] text-slate-400 uppercase max-w-xs mx-auto">
+                    Usa el selector superior para activar el Video Lab en un producto específico.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-[calc(100vh-140px)] animate-in fade-in duration-500">
@@ -524,41 +661,164 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2">
                                         {ownCreatives.map(creative => (
-                                            <div key={creative.id} className="bg-white border border-slate-100 rounded-2xl group overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
+                                            <div key={creative.id} className="bg-white border border-slate-100 rounded-2xl group overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 relative">
                                                 <div className="aspect-[9/16] bg-slate-900 relative">
-                                                    {creative.thumbnailUrl ? (
-                                                        <img src={creative.thumbnailUrl} alt={creative.concept} className="w-full h-full object-cover" />
+                                                    {(creative.driveFileId || creative.thumbnailUrl) ? (
+                                                        <img 
+                                                            src={creative.driveFileId ? `/api/drive/thumbnail?fileId=${creative.driveFileId}` : creative.thumbnailUrl} 
+                                                            alt={creative.concept} 
+                                                            className="w-full h-full object-cover" 
+                                                            onError={(e) => {
+                                                                // Fallback to placeholder if proxy/img fails
+                                                                e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex flex-col items-center justify-center p-4 text-center opacity-30"><div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-2">🎞️</div><div class="text-[7px] text-white uppercase font-bold tracking-tighter">Miniatura en proceso</div></div>';
+                                                            }}
+                                                        />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center">
-                                                            <Play size={32} className="text-white opacity-20" />
+                                                        <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+                                                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                                                                <Play size={16} className="text-white opacity-40 ml-0.5" />
+                                                            </div>
+                                                            <div className="text-[7px] text-white/30 uppercase font-bold tracking-tighter">Sin Miniatura</div>
                                                         </div>
                                                     )}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
-                                                        {creative.videoUrl && (
-                                                            <a href={creative.videoUrl} target="_blank" rel="noopener noreferrer"
-                                                                className="w-full py-1.5 bg-white text-slate-900 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1">
-                                                                <Play size={10} fill="currentColor" /> Ver Video
-                                                            </a>
-                                                        )}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 gap-1.5 translate-y-2 group-hover:translate-y-0 duration-300">
+                                                        <div className="flex flex-col gap-1">
+                                                            {(creative.driveUrl || creative.videoUrl) && (
+                                                                <a href={creative.driveUrl || creative.videoUrl} target="_blank" rel="noopener noreferrer"
+                                                                    className="w-full py-1.5 bg-white text-slate-900 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-slate-100 transition-colors">
+                                                                    <Play size={10} fill="currentColor" /> Ver Video
+                                                                </a>
+                                                            )}
+                                                            <div className="grid grid-cols-2 gap-1">
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleSubtitles(creative.id); }}
+                                                                    className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all"
+                                                                >
+                                                                    <Languages size={10} /> Subs
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleTranslate(creative.id); }}
+                                                                    className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all"
+                                                                >
+                                                                    <Globe size={10} /> Trans
+                                                                </button>
+                                                            </div>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); setViewingAnalysis(creative); }}
+                                                                className="w-full py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all font-mono"
+                                                            >
+                                                                <Eye size={10} /> Data
+                                                            </button>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteCreative(creative.id); }}
+                                                                className="w-full py-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all"
+                                                            >
+                                                                <Trash2 size={10} /> Borrar
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <div className="absolute top-2 right-2">
-                                                        <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[8px] font-black rounded uppercase">
-                                                            {creative.status === 'GENERATED' ? 'Listo' : creative.status}
+                                                    <div className="absolute top-2 right-2 flex gap-1">
+                                                        <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[7px] font-black rounded uppercase shadow-sm">
+                                                            REAL
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div className="p-3">
-                                                    <div className="text-[10px] font-bold text-slate-900 uppercase truncate">{creative.concept}</div>
-                                                    <div className="text-[8px] text-slate-400 uppercase font-bold mt-1 flex items-center gap-1">
-                                                        <Clock size={9} />{new Date(creative.createdAt).toLocaleDateString()}
+                                                <div className="p-2 space-y-1">
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <div className="text-[9px] font-bold text-slate-900 uppercase truncate flex-1" title={creative.concept}>{creative.concept}</div>
+                                                        {creative.stage && (
+                                                            <span className={cn(
+                                                                "px-1 py-0.5 rounded text-[6px] font-black uppercase",
+                                                                creative.stage === 'TOFU' ? "bg-blue-100 text-blue-600" :
+                                                                creative.stage === 'MOFU' ? "bg-amber-100 text-amber-600" :
+                                                                "bg-rose-100 text-rose-600"
+                                                            )}>
+                                                                {creative.stage}
+                                                            </span>
+                                                        )}
                                                     </div>
+                                                    
+                                                    {creative.angle && (
+                                                        <div className="text-[7px] text-slate-500 font-medium uppercase tracking-tighter flex items-center gap-1 bg-slate-50 px-1 py-0.5 rounded w-fit">
+                                                            <Target size={7} /> {creative.angle}
+                                                        </div>
+                                                    )}
+
+                                                    {creative.tagsJson && (
+                                                        <div className="pt-1 mt-1 border-t border-slate-50 flex items-center justify-between">
+                                                            <div className="flex items-center gap-1">
+                                                                <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                                                                <span className="text-[7px] font-bold text-slate-400 uppercase">Analizado</span>
+                                                            </div>
+                                                            {(() => {
+                                                                try {
+                                                                    const tags = JSON.parse(creative.tagsJson);
+                                                                    return tags.hookScore && (
+                                                                        <div className="text-[7px] font-black text-emerald-600 px-1 bg-emerald-50 rounded">
+                                                                            HOOK: {tags.hookScore}/10
+                                                                        </div>
+                                                                    );
+                                                                } catch { return null; }
+                                                            })()}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="text-[7px] text-slate-400 uppercase font-bold mt-1 flex items-center gap-1">
+                                                        <Clock size={8} />{new Date(creative.createdAt).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                                <div className="absolute top-2 left-2 z-10">
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); toggleSelect(creative.id); }}
+                                                        className={cn(
+                                                            "w-4 h-4 rounded-full border transition-all flex items-center justify-center shadow-sm",
+                                                            selectedIds.has(creative.id) 
+                                                                ? "bg-[var(--cre)] border-[var(--cre)] text-white" 
+                                                                : "bg-white/50 border-white/80 text-transparent hover:bg-white"
+                                                        )}
+                                                    >
+                                                        <CheckCircle2 size={10} strokeWidth={3} />
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Bulk Action Bar */}
+                        {selectedIds.size > 0 && (
+                            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 duration-300">
+                                <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6">
+                                    <div className="flex flex-col">
+                                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Seleccionados</span>
+                                        <span className="text-sm font-black text-white">{selectedIds.size} Creativos</span>
+                                    </div>
+                                    <div className="h-8 w-px bg-white/10" />
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={handleBulkSubtitles}
+                                            className="px-4 py-2 bg-[var(--cre)] text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:brightness-110 transition-all hover:scale-105"
+                                        >
+                                            <Languages size={14} /> Subtítulos (Bulk)
+                                        </button>
+                                        <button 
+                                            onClick={handleBulkTranslate}
+                                            className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:brightness-110 transition-all hover:scale-105"
+                                        >
+                                            <Globe size={14} /> Traducir (Bulk)
+                                        </button>
+                                        <button 
+                                            onClick={() => setSelectedIds(new Set())}
+                                            className="px-4 py-2 bg-rose-500/10 text-rose-500 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-500/20 transition-all"
+                                        >
+                                            <X size={14} /> Cancelar
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -667,7 +927,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                 </div>
 
                                 {/* Creatives grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 pb-12">
                                     {loadingMeta ? (
                                         <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
                                             <Loader2 className="w-10 h-10 text-[var(--cre)] animate-spin opacity-40" />
@@ -687,52 +947,43 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                                         <img src={creative.thumbnailUrl} alt={creative.concept} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center">
-                                                            <Play size={32} className="text-white opacity-20" />
+                                                            <Play size={24} className="text-white opacity-20" />
                                                         </div>
                                                     )}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 gap-2">
                                                         <button
                                                             onClick={() => creative.videoUrl && window.open(creative.videoUrl, '_blank')}
-                                                            className="w-full py-2 bg-white text-slate-900 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+                                                            className="w-full py-1.5 bg-white text-slate-900 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-slate-100"
                                                         >
-                                                            <Play size={12} fill="currentColor" /> Ver Video
+                                                            <Play size={10} fill="currentColor" /> Ver Video
+                                                        </button>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteCreative(creative.id); }}
+                                                            className="w-full py-1.5 bg-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all"
+                                                        >
+                                                            <Trash2 size={10} /> Borrar
                                                         </button>
                                                     </div>
-                                                    <div className="absolute top-3 left-3 flex gap-1">
+                                                    <div className="absolute top-2 left-2 flex gap-1">
                                                         <span className={cn(
-                                                            "px-2 py-0.5 text-[8px] font-black rounded uppercase shadow-sm text-white",
-                                                            creative.stage === 'COLD' ? "bg-blue-500" : creative.stage === 'WARM' ? "bg-orange-500" : "bg-rose-500"
+                                                            "px-1.5 py-0.5 text-[7px] font-black rounded uppercase shadow-sm text-white",
+                                                            creative.stage === 'COLD' || creative.stage === '1' ? "bg-blue-500" : 
+                                                            creative.stage === 'WARM' || creative.stage === '2' || creative.stage === '3' ? "bg-orange-500" : 
+                                                            "bg-rose-500"
                                                         )}>
-                                                            {creative.stage || 'TEST'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="absolute top-3 right-3">
-                                                        <span className="px-2 py-0.5 bg-emerald-500 text-white text-[8px] font-black rounded uppercase shadow-sm">
-                                                            {creative.status === 'GENERATED' ? 'Listo' : creative.status}
+                                                            {creative.stage === '1' ? 'COLD' : creative.stage === '2' ? 'WARM' : creative.stage === '3' ? 'HOT' : (creative.stage || 'TEST')}
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div className="p-4 space-y-3">
+                                                <div className="p-2 space-y-2">
                                                     <div>
-                                                        <div className="text-[11px] font-bold text-slate-900 uppercase truncate mb-1">
+                                                        <div className="text-[9px] font-bold text-slate-900 uppercase truncate mb-0.5">
                                                             {creative.concept}
                                                         </div>
-                                                        <div className="text-[8px] text-slate-400 uppercase font-black tracking-widest flex items-center gap-2">
-                                                            <Clock size={10} /> {new Date(creative.createdAt).toLocaleDateString()}
+                                                        <div className="text-[7px] text-slate-400 uppercase font-black tracking-widest flex items-center gap-1">
+                                                            <Clock size={8} /> {new Date(creative.createdAt).toLocaleDateString()}
                                                         </div>
                                                     </div>
-                                                    {creative.ctr !== null && (
-                                                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50">
-                                                            <div className="bg-slate-50 p-2 rounded-lg">
-                                                                <div className="text-[8px] font-black text-slate-400 uppercase mb-0.5">CTR</div>
-                                                                <div className="text-xs font-black text-emerald-600">{creative.ctr?.toFixed(2)}%</div>
-                                                            </div>
-                                                            <div className="bg-slate-50 p-2 rounded-lg">
-                                                                <div className="text-[8px] font-black text-slate-400 uppercase mb-0.5">ROAS</div>
-                                                                <div className="text-xs font-black text-slate-900">{(creative.revenue / (creative.spend || 1)).toFixed(1)}x</div>
-                                                            </div>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
                                         ))
@@ -784,6 +1035,124 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                         )}
                     </div>
                 </main>
+
+                {/* Bulk Action Bar */}
+                {selectedIds.size > 0 && (
+                    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 duration-300">
+                        <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6">
+                            <div className="flex flex-col">
+                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Seleccionados</span>
+                                <span className="text-sm font-black text-white">{selectedIds.size} Creativos</span>
+                            </div>
+                            <div className="h-8 w-px bg-white/10" />
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={handleBulkSubtitles}
+                                    className="px-4 py-2 bg-[var(--cre)] text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:brightness-110 transition-all hover:scale-105"
+                                >
+                                    <Languages size={14} /> Subtítulos (Bulk)
+                                </button>
+                                <button className="px-4 py-2 bg-white/5 text-white/50 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 cursor-not-allowed">
+                                    <Globe size={14} /> Traducir (Bulk)
+                                </button>
+                                <button 
+                                    onClick={() => setSelectedIds(new Set())}
+                                    className="px-4 py-2 bg-rose-500/10 text-rose-500 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-500/20 transition-all"
+                                >
+                                    <X size={14} /> Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Analysis Modal */}
+                {viewingAnalysis && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setViewingAnalysis(null)} />
+                        <div className="bg-white rounded-3xl w-full max-w-xl max-h-[85vh] overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200 flex flex-col">
+                            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest">Deep Analysis</h2>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{viewingAnalysis.concept}</p>
+                                </div>
+                                <button onClick={() => setViewingAnalysis(null)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            <div className="p-6 overflow-y-auto space-y-6">
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="p-3 bg-blue-50 rounded-2xl">
+                                        <div className="text-[7px] font-black text-blue-400 uppercase tracking-widest mb-1">Stage</div>
+                                        <div className="text-[10px] font-black text-blue-700">{viewingAnalysis.stage || 'TOFU'}</div>
+                                    </div>
+                                    <div className="p-3 bg-rose-50 rounded-2xl">
+                                        <div className="text-[7px] font-black text-rose-400 uppercase tracking-widest mb-1">Angle</div>
+                                        <div className="text-[10px] font-black text-rose-700 leading-tight">{viewingAnalysis.angle || 'GENERAL'}</div>
+                                    </div>
+                                    <div className="p-3 bg-emerald-50 rounded-2xl">
+                                        <div className="text-[7px] font-black text-emerald-400 uppercase tracking-widest mb-1">SKU</div>
+                                        <div className="text-[10px] font-black text-emerald-700 truncate">{productId}</div>
+                                    </div>
+                                </div>
+
+                                {viewingAnalysis.tagsJson && (() => {
+                                    try {
+                                        const tags = JSON.parse(viewingAnalysis.tagsJson);
+                                        return (
+                                            <div className="space-y-6">
+                                                <div className="space-y-2">
+                                                    <h4 className="text-[9px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                                       <Sparkles size={12} className="text-amber-500" /> Hook Analysis
+                                                    </h4>
+                                                    <div className="p-4 bg-amber-50 rounded-2xl text-[11px] text-amber-900 italic font-medium leading-relaxed border border-amber-100">
+                                                        "{viewingAnalysis.hook}"
+                                                    </div>
+                                                </div>
+                                                {tags.avatar && (
+                                                    <div className="space-y-2">
+                                                        <h4 className="text-[9px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                                           <User size={12} className="text-blue-500" /> Target Avatar
+                                                        </h4>
+                                                        <div className="p-4 bg-slate-50 rounded-2xl text-[10px] text-slate-600 leading-relaxed">
+                                                            {tags.avatar}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {tags.suggestions && (
+                                                    <div className="space-y-2">
+                                                        <h4 className="text-[9px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                                           <Zap size={12} className="text-emerald-500" /> Optimization
+                                                        </h4>
+                                                        <div className="p-4 bg-emerald-50 rounded-2xl text-[10px] text-emerald-700 whitespace-pre-wrap leading-relaxed">
+                                                            {tags.suggestions}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    } catch { return null; }
+                                })()}
+                            </div>
+                            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+                                <button 
+                                    onClick={() => window.open(viewingAnalysis.driveUrl || viewingAnalysis.videoUrl, '_blank')}
+                                    className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+                                >
+                                    <Play size={14} fill="currentColor" /> Ver Video Original
+                                </button>
+                                {viewingAnalysis.driveFileId && (
+                                    <button 
+                                        onClick={() => window.open(`https://drive.google.com/file/d/${viewingAnalysis.driveFileId}/view`, '_blank')}
+                                        className="w-12 h-12 bg-white border border-slate-200 text-slate-400 rounded-xl flex items-center justify-center hover:text-slate-900 transition-all shadow-sm"
+                                    >
+                                        <HardDrive size={18} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

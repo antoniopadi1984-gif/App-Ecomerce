@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
-import dynamic from 'next/dynamic';
 
-const VideoLabTab = dynamic(() => import('@/components/creativo/VideoLabTab').then(m => ({ default: m.VideoLabTab })), { ssr: false });
+import { VideoLabTab } from '@/components/creativo/VideoLabTab';
 
 export default function VideoLabPage() {
     const { activeStoreId: storeId } = useStore();
@@ -20,7 +19,5 @@ export default function VideoLabPage() {
             .catch(() => { });
     }, [productId]);
 
-    if (!storeId || !productId || productId === 'GLOBAL') return null;
-
-    return <VideoLabTab storeId={storeId} productId={productId} marketLang={marketLang} />;
+    return <VideoLabTab storeId={storeId || ''} productId={productId || ''} marketLang={marketLang} />;
 }

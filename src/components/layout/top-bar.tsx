@@ -95,15 +95,20 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
         }
 
         // Merge Shopify products with local awareness
-        const merged = shopifyProducts.map(sp => ({
-            id: sp.id,
-            title: sp.title,
-            handle: sp.handle,
-            image: sp.image,
-            variants: sp.variants,
-            status: sp.status,
-            ecomBoomId: sp.ecomBoomId || localShopifyIdMap.get(sp.id) || localSkuMap.get(sp.variants?.[0]?.sku) || null
-        }));
+        const merged = shopifyProducts.map(sp => {
+            const variantSku = sp.variants?.[0]?.sku;
+            const ecomBoomId = sp.ecomBoomId || localShopifyIdMap.get(sp.id) || (variantSku ? localSkuMap.get(variantSku) : null) || null;
+            return {
+                id: sp.id,
+                title: sp.title,
+                handle: sp.handle,
+                image: sp.image,
+                variants: sp.variants,
+                status: sp.status,
+                ecomBoomId,
+                isShopifyOnly: !ecomBoomId
+            };
+        });
 
         // Add any local products that weren't found in this Shopify batch
         allProducts.forEach(lp => {
@@ -116,13 +121,14 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                     image: lp.imageUrl,
                     variants: [],
                     status: lp.status,
-                    ecomBoomId: lp.id
+                    ecomBoomId: lp.id,
+                    isShopifyOnly: false
                 } as any);
             }
         });
 
         return merged.filter(p => p.title?.toLowerCase().includes(search.toLowerCase()));
-    }, [shopifyConnected, shopifyProducts, allProducts, search]);
+    }, [shopifyConnected, shopifyProducts, allProducts, search, localShopifyIdMap, localSkuMap]);
 
 
     return (
@@ -224,7 +230,10 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                 <div className="flex flex-col items-start min-w-0">
                                     <span className="text-[8px] font-bold text-[var(--text-dim)] uppercase tracking-widest leading-none mb-0.5">Producto</span>
                                     <span className="text-[11px] font-bold text-[var(--text)] truncate max-w-full tracking-tight leading-none">
-                                        {productId === 'GLOBAL' ? "SELECCIONAR PRODUCTO" : product?.title || "SELECCIONAR..."}
+                                        {productId === 'GLOBAL' ? "SELECCIONAR PRODUCTO" : 
+                                         product?.title || 
+                                         (shopifyProducts.find(sp => sp.id === productId)?.title) || 
+                                         "SELECCIONAR..."}
                                     </span>
                                 </div>
                                 <ChevronDown className="w-3 h-3 text-[var(--text-dim)] group-hover:text-[var(--inv)] transition-colors shrink-0" />
@@ -280,22 +289,32 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                         const activeId = p.ecomBoomId || p.id;
                                         const isActive = productId === activeId;
                                         const hasResearch = !!p.ecomBoomId;
+                                        const isShopify = p.id.startsWith('gid://');
 
                                         return (
                                             <DropdownMenuItem
                                                 key={p.id}
-                                                onClick={() => setProductId(activeId)}
+                                                onClick={() => {
+                                                    setProductId(activeId);
+                                                    if (!hasResearch && isShopify) {
+                                                        // Si es solo Shopify, avisar o mover a pagina de creacion
+                                                        router.push('/investigacion');
+                                                    }
+                                                }}
                                                 className={cn(
                                                     "flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all mb-1",
                                                     isActive ? "bg-rose-50 border border-rose-100" : "hover:bg-slate-50 border border-transparent"
                                                 )}
                                             >
                                                 {/* Thumbnail */}
-                                                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative">
                                                     {p.image || p.imageUrl ? (
                                                         <img src={p.image || p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <Package className="w-3.5 h-3.5 text-slate-300" />
+                                                    )}
+                                                    {isShopify && !hasResearch && (
+                                                        <div className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 border border-white rounded-full" title="Solo en Shopify" />
                                                     )}
                                                 </div>
 
@@ -307,8 +326,8 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
                                                         {hasResearch && (
                                                             <span className="text-[8px] px-1 py-0 bg-violet-50 text-violet-600 rounded border border-violet-100 font-bold uppercase tracking-tight">Research ✓</span>
                                                         )}
-                                                        {shopifyConnected && p.id.startsWith('gid://') && (
-                                                            <span className="text-[8px] px-1 py-0 bg-emerald-50 text-emerald-600 rounded border border-emerald-100 font-bold uppercase tracking-tight">Shopify</span>
+                                                        {!hasResearch && isShopify && (
+                                                            <span className="text-[8px] px-1 py-0 bg-emerald-50 text-emerald-600 rounded border border-emerald-100 font-bold uppercase tracking-tight">Ready for Research</span>
                                                         )}
                                                     </div>
                                                 </div>

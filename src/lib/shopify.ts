@@ -99,6 +99,35 @@ export class ShopifyClient {
   }
 
   /**
+   * LEER UN PRODUCTO ESPECÍFICO (por ID)
+   */
+  async getProduct(id: string) {
+    const query = `
+          query GetProduct($id: ID!) {
+            product(id: $id) {
+              id
+              title
+              handle
+              status
+              productType
+              vendor
+              tags
+              images(first: 1) { nodes { url } }
+              variants(first: 5) {
+                nodes {
+                  id
+                  sku
+                  price
+                }
+              }
+              onlineStoreUrl
+            }
+          }
+        `;
+    return this.graphql(query, { id });
+  }
+
+  /**
    * STOCK REAL (Urgencia legítima)
    */
   async getInventory(variantId: string) {

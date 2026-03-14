@@ -210,6 +210,72 @@ export class GeminiProvider implements AIProvider {
         };
     }
 
+    /**
+     * Helper de alto nivel que invoca Video y espera el resultado (polling).
+     * Usado por replicate-client para abstraer la complejidad de Vertex LROs.
+     */
+    async generateVideo(params: {
+        prompt: string;
+        model: string;
+        aspectRatio: string;
+        durationSeconds: number;
+    }): Promise<string> {
+        const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        if (!saKey) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_KEY for Gemini GCP");
+        const key = JSON.parse(saKey);
+        const projectId = key.project_id;
+        const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+
+        const token = await this.getAccessToken();
+        const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${params.model}:predictLongRunning`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                instances: [{
+                    prompt: params.prompt,
+                }],
+                parameters: {
+                    aspectRatio: params.aspectRatio,
+                    durationSeconds: params.durationSeconds,
+                    sampleCount: 1,
+                }
+            })
+        });
+
+        const op = await res.json();
+        if (op.error) throw new Error(`Veo 3 error: ${op.error.message}`);
+
+        // Poll operation hasta completar
+        const opName = op.name;
+        console.log(`[GeminiProvider] ⏳ Polling LRO: ${opName}...`);
+
+        for (let i = 0; i < 60; i++) {
+            await new Promise(r => setTimeout(r, 10000)); // 10s entre polls
+            const pollRes = await fetch(
+                `https://${location}-aiplatform.googleapis.com/v1/${opName}`,
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+            const pollData = await pollRes.json();
+            if (pollData.done) {
+                if (pollData.error) throw new Error(`Veo 3 error: ${pollData.error.message}`);
+                
+                const videoUri = pollData.response?.videos?.[0]?.uri
+                    || pollData.response?.predictions?.[0]?.videoUrl
+                    || pollData.response?.video?.uri;
+                
+                if (!videoUri) {
+                    console.error("[GeminiProvider] No video URI in response:", JSON.stringify(pollData, null, 2));
+                    throw new Error('Veo 3: no video URI in response');
+                }
+                return videoUri;
+            }
+        }
+        throw new Error('Veo 3: timeout esperando vídeo');
+    }
+
     async invokeMusic(options: any): Promise<AIResponse> {
         const token = await this.getAccessToken();
         const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;

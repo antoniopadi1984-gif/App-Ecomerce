@@ -12,10 +12,56 @@ export class CompetitorService {
         brandId?: string,
         cloneMode?: boolean
     }) {
-        // 1. Crear el registro inicial
+        const { getMetaAdsService } = await import('../marketing/meta-ads');
+        const metaService = await getMetaAdsService(prisma, data.storeId);
+
+        console.log(`📡 [CompetitorService] Importing URL: ${data.url}`);
+
+        // 1. DETECCIÓN DE BIBLIOTECA ENTERA POR PAGE ID
+        const pageIdMatch = data.url.match(/[?&]view_all_page_id=(\d+)/);
+        if (pageIdMatch) {
+            const pageId = pageIdMatch[1];
+            console.log(`🚀 [CompetitorService] Library URL detected. Bulk importing Page ID: ${pageId}`);
+            return this.syncMetaLibraryByPageId(data.storeId, pageId, data.productId);
+        }
+
+        // 2. DETECCIÓN POR BÚSQUEDA (Keyword)
+        const qMatch = data.url.match(/[?&]q=([^&]+)/) || data.url.match(/[?&]search_terms=([^&]+)/);
+        if (qMatch) {
+            const keyword = decodeURIComponent(qMatch[1]);
+            console.log(`🔍 [CompetitorService] Search URL detected. Importing by keyword: ${keyword}`);
+            return this.syncMetaAdsLibraryByKeyword(data.storeId, keyword, data.productId);
+        }
+
+        // 3. SI ES UN ANUNCIO INDIVIDUAL, INTENTAR ENCONTRAR SU PÁGINA PARA IMPORTAR TODO
+        const adIdMatch = data.url.match(/[?&]id=(\d+)/);
+        if (adIdMatch) {
+            const adId = adIdMatch[1];
+            console.log(`🎯 [CompetitorService] Single Ad URL detected: ${adId}. Trying to resolve Page ID...`);
+            try {
+                const adData = await metaService.getAdFromLibrary(adId);
+                console.log(`📦 [CompetitorService] Ad Data from Meta:`, adData);
+                
+                if (adData && adData.page_id) {
+                    console.log(`✅ [CompetitorService] Resolved Page ID ${adData.page_id} from Ad ID ${adId}. Switching to bulk import.`);
+                    return this.syncMetaLibraryByPageId(data.storeId, adData.page_id, data.productId);
+                }
+
+                // Si no tiene page_id pero tenemos datos, guardamos el thumbnail para el fallback
+                if (adData && adData.ad_snapshot_url) {
+                    (data as any).thumbnailUrl = adData.ad_snapshot_url;
+                }
+            } catch (e: any) {
+                console.warn(`[CompetitorService] Could not resolve Page ID for ad ${adId}: ${e.message}`);
+                console.log('Falling back to single import...');
+            }
+        }
+
+        // FALLBACK: Importar como anuncio individual si nada de lo anterior disparó una importación masiva
         const ad = await (prisma as any).competitorAd.create({
             data: {
                 url: data.url,
+                thumbnailUrl: (data as any).thumbnailUrl,
                 storeId: data.storeId,
                 productId: data.productId,
                 brandId: data.brandId,
@@ -25,16 +71,70 @@ export class CompetitorService {
             }
         });
 
-        // 2. Ejecutar análisis IA (Gemini 3.1 Pro)
-        const analysis = await this.analyzeAd(ad.id);
-
-        if (data.cloneMode && analysis) {
-            // Generar Blueprint de estructura
-            await this.generateBlueprint(ad.id);
-        }
+        // Análisis IA en background
+        this.analyzeAd(ad.id).catch(() => {});
+        if (data.cloneMode) this.generateBlueprint(ad.id).catch(() => {});
 
         return ad;
     }
+
+    /**
+     * Importa por palabra clave (desde URL de búsqueda)
+     */
+    static async syncMetaAdsLibraryByKeyword(storeId: string, keyword: string, productId?: string) {
+        const { getMetaAdsService } = await import('../marketing/meta-ads');
+        const metaService = await getMetaAdsService(prisma, storeId);
+        
+        const ads = await metaService.searchAdsLibrary(keyword);
+        return this.processMetaAdsList(storeId, ads, productId);
+    }
+
+    /**
+     * Helper para procesar una lista de anuncios de Meta
+     */
+    private static async processMetaAdsList(storeId: string, ads: any[], productId?: string) {
+        const results = [];
+        for (const metaAd of ads) {
+            const existing = await (prisma as any).competitorAd.findFirst({
+                where: { storeId, url: { contains: metaAd.id } }
+            });
+
+            if (!existing) {
+                const newAd = await (prisma as any).competitorAd.create({
+                    data: {
+                        storeId,
+                        productId,
+                        title: metaAd.ad_creative_link_titles?.[0] || `Meta Ad: ${metaAd.page_name}`,
+                        url: `https://www.facebook.com/ads/library/?id=${metaAd.id}`,
+                        thumbnailUrl: metaAd.ad_snapshot_url, // We'll try to use this or another field if detected
+                        platform: 'META',
+                        status: 'ACTIVE',
+                        source: 'AUTO_TRACKING',
+                        firstSeen: new Date()
+                    }
+                });
+                console.log(`[CompetitorService] Created Ad: ${newAd.id} for Page: ${metaAd.page_name}`);
+                this.analyzeAd(newAd.id).catch(() => {});
+                results.push(newAd);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Importa toda la biblioteca de una página de Meta específica
+     */
+    static async syncMetaLibraryByPageId(storeId: string, pageId: string, productId?: string) {
+        const { getMetaAdsService } = await import('../marketing/meta-ads');
+        const metaService = await getMetaAdsService(prisma, storeId);
+
+        console.log(`🔍 [CompetitorService] Syncing Meta Ads Library for Page ID: ${pageId}`);
+
+        // 1. Buscar en Meta Ads Library por Page ID
+        const ads = await metaService.searchAdsLibraryByPageId(pageId);
+        return this.processMetaAdsList(storeId, ads, productId);
+    }
+
 
     /**
      * Análisis profundo del anuncio

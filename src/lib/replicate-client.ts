@@ -177,23 +177,42 @@ Genera el ${params.task === 'landing' ? 'copy completo de landing page' :
 
 export async function generateVideo(params: {
     prompt: string;
-    mode: 'text2video' | 'image2video' | 'omni'; // omni = con audio nativo
-    imageUrl?: string; // para image2video
-    duration?: 5 | 10;
-    aspectRatio?: '16:9' | '9:16' | '1:1';
-    quality?: 'standard' | 'pro';
-}): Promise<string> { // retorna URL del vídeo
+    mode?: 'standard' | 'omni' | 'image2video' | 'veo3' | 'veo3-fast';
+    model?: string;               // override manual
+    imageUrl?: string;
+    duration?: 5 | 8 | 10;
+    aspectRatio?: '9:16' | '16:9' | '1:1';
+    quality?: 'fast' | 'balanced' | 'premium';
+}): Promise<string> {
 
-    const model = params.mode === 'omni' ? 'kwaivgi/kling-v3-omni-video' :
-                  params.mode === 'image2video' ? 'kwaivgi/kling-o1' :
-                  params.quality === 'pro' ? 'kwaivgi/kling-v3-video' : 'kwaivgi/kling-v3-video';
+    // Veo 3 — via Vertex AI
+    if (params.mode === 'veo3' || params.mode === 'veo3-fast') {
+        const { GeminiProvider } = await import('@/lib/ai/providers/gemini');
+        const gemini = new GeminiProvider();
+        // Veo 3 usa el endpoint de Vertex AI
+        const model = params.mode === 'veo3-fast'
+            ? 'veo-3.0-fast-generate-preview'
+            : 'veo-3.0-generate-preview';
+        return (gemini as any).generateVideo({
+            prompt: params.prompt,
+            model,
+            aspectRatio: params.aspectRatio || '9:16',
+            durationSeconds: params.duration || 8,
+        });
+    }
+
+    const model = params.model ||
+        (params.mode === 'omni'        ? 'kwaivgi/kling-v3-omni-video' :
+         params.mode === 'image2video' ? 'kwaivgi/kling-o1' :
+         params.quality === 'premium'  ? 'kwaivgi/kling-v3-video' :
+         params.quality === 'fast'     ? 'kwaivgi/kling-v2-6' :
+         'kwaivgi/kling-v3-video');
 
     const input: any = {
         prompt: params.prompt,
         duration: params.duration || 5,
         aspect_ratio: params.aspectRatio || '9:16',
     };
-
     if (params.imageUrl) input.image = params.imageUrl;
 
     const pred = await replicateRequest(`/models/${model}/predictions`, { input });
@@ -205,22 +224,45 @@ export async function generateVideo(params: {
 
 export async function generateImage(params: {
     prompt: string;
-    mode: 'generate' | 'edit' | 'svg';
-    referenceImageUrl?: string; // para edit (flux-kontext)
+    mode: 'generate' | 'edit' | 'svg' | 'ideogram' | 'imagen3' | 'gemini-image';
+    model?: string;               // override manual del modelo
+    referenceImageUrl?: string;   // para mode='edit' con flux-kontext
     aspectRatio?: '1:1' | '4:5' | '9:16' | '16:9';
+    negativePrompt?: string;
+    jsonPrompt?: any;             // para ideogram que acepta JSON nativo
 }): Promise<string> {
 
-    const model = params.mode === 'svg' ? 'recraft-ai/recraft-v4-pro-svg' :
-                  params.mode === 'edit' && params.referenceImageUrl ? 'black-forest-labs/flux-kontext-pro' :
-                  'black-forest-labs/flux-2-pro';
+    // Selección de modelo
+    const model = params.model ||
+        (params.mode === 'svg'      ? 'recraft-ai/recraft-v3-svg' :
+         params.mode === 'ideogram' ? 'ideogram-ai/ideogram-v3' :
+         params.mode === 'imagen3'  ? null :  // va por Vertex
+         params.mode === 'edit' && params.referenceImageUrl ? 'black-forest-labs/flux-kontext-pro' :
+         'black-forest-labs/flux-2-pro');
 
-    const input: any = { prompt: params.prompt };
+    // Imagen 3 (Nano Banana) — via Vertex AI
+    if (params.mode === 'imagen3' || model?.startsWith('vertex:')) {
+        const { ImageGenerator } = await import('@/lib/creative/generators/image-generator');
+        const gen = new ImageGenerator();
+        return gen.generate({
+            prompt: params.prompt,
+            aspectRatio: (params.aspectRatio as any),
+            negativePrompt: params.negativePrompt,
+        });
+    }
+
+    // Ideogram — acepta JSON prompt nativo
+    const input: any = params.jsonPrompt && params.mode === 'ideogram'
+        ? params.jsonPrompt
+        : { prompt: params.prompt };
+
     if (params.aspectRatio) input.aspect_ratio = params.aspectRatio;
     if (params.referenceImageUrl) input.input_image = params.referenceImageUrl;
+    if (params.negativePrompt) input.negative_prompt = params.negativePrompt;
 
     const pred = await replicateRequest(`/models/${model}/predictions`, { input });
     const output = pred.status === 'succeeded' ? pred.output : await pollPrediction(pred.id, 120_000);
-    return typeof output === 'string' ? output : output?.[0];
+    return typeof output === 'string' ? output : output?.[0] || output?.images?.[0]?.url;
 }
 
 // ─── AVATAR + LIPSYNC ─────────────────────────────────────────────────────────

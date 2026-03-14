@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
 import { toast } from 'sonner';
@@ -39,18 +39,36 @@ export default function ResearchLabPage() {
   const [activeStep, setActiveStep]   = useState<string | null>(null);
   const [product, setProduct]         = useState<any>(null);
 
+  const [shopifyLoading, setShopifyLoading] = useState(false);
+  const [shopifyInfo, setShopifyInfo] = useState<any>(null);
+
   // Cargar producto seleccionado
   useEffect(() => {
-    if (!productId) { setProduct(null); setResults([]); return; }
-    fetch(`/api/products/${productId}`)
-      .then(r => r.json())
-      .then(d => setProduct(d.product || d))
-      .catch(() => {});
-  }, [productId]);
+    if (!productId) { setProduct(null); setResults([]); setShopifyInfo(null); return; }
+    
+    setProduct(null);
+    setResults([]);
+    setShopifyInfo(null);
+
+    if (!productId.startsWith('gid://')) {
+      fetch(`/api/products/${productId}`)
+        .then(r => r.json())
+        .then(d => { if (d.success) setProduct(d.product); })
+        .catch(() => {});
+    } else {
+        if (activeStoreId) {
+            setShopifyLoading(true);
+            fetch(`/api/shopify/product/${encodeURIComponent(productId)}?storeId=${activeStoreId}`)
+                .then(r => r.json())
+                .then(d => { if (d.success) setShopifyInfo(d.product); })
+                .finally(() => setShopifyLoading(false));
+        }
+    }
+  }, [productId, activeStoreId]);
 
   // Cargar resultados de research
   const loadResults = useCallback(async () => {
-    if (!productId) return;
+    if (!productId || productId.startsWith('gid://')) return;
     setLoading(true);
     try {
       const r = await fetch(`/api/research/results?productId=${productId}`);
@@ -64,8 +82,8 @@ export default function ResearchLabPage() {
 
   // Lanzar pipeline — llama al endpoint REAL /api/research/god-tier
   const runPipeline = async (step?: string) => {
-    if (!productId || !activeStoreId) {
-      toast.error('Necesitas una tienda y un producto seleccionados');
+    if (!productId || !activeStoreId || productId.startsWith('gid://')) {
+      toast.error('Necesitas una investigación activa para lanzar el pipeline');
       return;
     }
     setRunning(true);
@@ -96,23 +114,73 @@ export default function ResearchLabPage() {
     }
   };
 
+  const handleStartResearchFromShopify = async () => {
+    if (!shopifyInfo || !activeStoreId) return;
+    const tId = toast.loading(`Importando ${shopifyInfo.title} a EcomBoom...`);
+    try {
+        const res = await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Store-Id': activeStoreId },
+            body: JSON.stringify({
+                storeId: activeStoreId,
+                title: shopifyInfo.title,
+                sku: shopifyInfo.sku || `SP_${shopifyInfo.handle.toUpperCase()}`,
+                imageUrl: shopifyInfo.image,
+                shopifyId: shopifyInfo.id,
+                price: parseFloat(shopifyInfo.price || '0'),
+                status: 'ACTIVE',
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            toast.success("¡Producto importado! Iniciando investigación...", { id: tId });
+            window.location.reload();
+        } else {
+             throw new Error(data.error);
+        }
+    } catch (e: any) {
+        toast.error("Error: " + e.message, { id: tId });
+    }
+  };
 
   const getResult = (key: string) => results.find(r => r.stepKey === key);
-  const completedSteps = Object.keys(STEP_LABELS).filter(k => getResult(k));
+  const completedSteps = useMemo(() => Object.keys(STEP_LABELS).filter(k => getResult(k)), [results]);
 
   // ── EMPTY — sin producto ──────────────────────────────────────────
-  if (!productId) {
+  if (!productId || (!product && !shopifyInfo && !shopifyLoading)) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', maxWidth: '380px' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔬</div>
           <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px' }}>Research Lab</h2>
           <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6 }}>
-            Selecciona o crea un producto desde el selector superior para analizar su potencial de mercado.
+            Selecciona un producto desde el selector superior para iniciar o visualizar el análisis.
           </p>
         </div>
       </div>
     );
+  }
+
+  // ── SHOPIFY ONLY — no research yet ────────────────────────────────
+  if (shopifyInfo && !product) {
+    return (
+        <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', maxWidth: '440px', background: 'white', padding: '40px', borderRadius: '24px', border: '1px solid #e2e8f0', boxShadow: '0 10px 40px rgba(0,0,0,0.03)' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '20px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <span style={{ fontSize: '32px' }}>🛍️</span>
+            </div>
+            <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '0 0 8px' }}>{shopifyInfo.title}</h2>
+            <p style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.6, marginBottom: '24px' }}>
+              Este producto viene de Shopify pero aún no tienes una investigación iniciada en EcomBoom. 
+              Convierte este producto en un objeto de investigación para empezar a analizar avatares, ángulos y crear vídeos.
+            </p>
+            <button onClick={handleStartResearchFromShopify}
+              style={{ padding: '12px 30px', borderRadius: '12px', border: 'none', background: '#7c3aed', color: 'white', fontSize: '14px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)' }}>
+              🚀 Iniciar Research God Tier
+            </button>
+          </div>
+        </div>
+      );
   }
 
   // ── MAIN ──────────────────────────────────────────────────────────

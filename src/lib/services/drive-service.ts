@@ -86,32 +86,54 @@ export async function getDriveClient() {
 }
 
 export async function findOrCreateFolder(drive: any, name: string, parentId?: string): Promise<string> {
-    const q = [`name = '${name}'`, `mimeType = 'application/vnd.google-apps.folder'`, `trashed = false`];
+    const q = [
+        `name = '${name.replace(/'/g, "\\'")}'`, 
+        `mimeType = 'application/vnd.google-apps.folder'`, 
+        `trashed = false`
+    ];
     if (parentId) q.push(`'${parentId}' in parents`);
 
+    console.log(`[DriveService] Searching folder: "${name}" (Parent: ${parentId || 'ROOT'})`);
+    
     const res = await drive.files.list({ 
-        q: q.join(' and '), fields: 'files(id,name)', pageSize: 5,
-        supportsAllDrives: true, includeItemsFromAllDrives: true
+        q: q.join(' and '), 
+        fields: 'files(id,name)', 
+        pageSize: 1,
+        supportsAllDrives: true, 
+        includeItemsFromAllDrives: true,
+        corpora: 'allDrives'
     });
-    if (res.data.files?.length > 0) return res.data.files[0].id;
 
-    if (!parentId) {
-        // CRITICAL: Floating files/folders in Service Accounts have 0 quota.
-        // We MUST force them into the Root ID if no parent is provided.
-        parentId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8';
-        console.warn(`[DriveService] findOrCreateFolder('${name}') mandatory parent fallback to: ${parentId}`);
+    if (res.data.files?.length > 0) {
+        const foundId = res.data.files[0].id;
+        console.log(`[DriveService] Found folder: "${name}" -> ${foundId}`);
+        return foundId;
     }
 
-    const created = await drive.files.create({
-        requestBody: { 
-            name, 
-            mimeType: 'application/vnd.google-apps.folder', 
-            parents: [parentId] 
-        },
-        fields: 'id',
-        supportsAllDrives: true
-    });
-    return created.data.id!;
+    const effectiveParentId = parentId || process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8';
+    
+    console.log(`[DriveService] Creating folder: "${name}" inside ${effectiveParentId}`);
+
+    try {
+        const created = await drive.files.create({
+            requestBody: { 
+                name, 
+                mimeType: 'application/vnd.google-apps.folder', 
+                parents: [effectiveParentId] 
+            },
+            fields: 'id',
+            supportsAllDrives: true
+        });
+        
+        console.log(`[DriveService] ✅ Created: "${name}" -> ${created.data.id}`);
+        return created.data.id!;
+    } catch (createErr: any) {
+        if (createErr.code === 403 || createErr.message.includes('permission')) {
+            console.error(`[DriveService] PERMISSION ERROR: Service account cannot write to folder ${effectiveParentId}.`);
+            console.error(`Please add app-ecombom@gen-lang-client-0246473908.iam.gserviceaccount.com as Contributor.`);
+        }
+        throw createErr;
+    }
 }
 
 // ── Setup functions ───────────────────────────────────────────────────────────
@@ -421,7 +443,7 @@ export async function uploadToProduct(
     productId: string,
     storeId: string,
     opts: { conceptCode?: string; funnelStage?: string; angle?: string; fileType?: string; creativeArtifactId?: string; subfolderName?: string; version?: number }
-): Promise<{ driveFileId: string; drivePath: string; driveUrl: string; parentFolderId: string }> {
+): Promise<{ driveFileId: string; drivePath: string; driveUrl: string; parentFolderId: string; thumbnailUrl?: string }> {
     const drive = await getDriveClient();
     const product = await (prisma as any).product.findUnique({
         where: { id: productId },
@@ -435,41 +457,45 @@ export async function uploadToProduct(
     let subFolder = folderId;
 
     if (opts.conceptCode) {
+        console.log(`[DriveService] Navigating hierarchy for concept: ${opts.conceptCode}`);
         // Hierarchical structure: CONCEPTOS / [CONCEPT] / [STAGE] / [ANGLE]
         const parentConceptsId = await findOrCreateFolder(drive, "CONCEPTOS", folderId);
         
         // 1. Concept Folder
-        const conceptName = opts.conceptCode.toUpperCase();
+        const conceptName = opts.conceptCode.toUpperCase().replace(/\s+/g, '_');
         const conceptFolderId = await findOrCreateFolder(drive, conceptName, parentConceptsId);
         
-        // 2. Funnel Stage Folder (TOFU, MOFU, BOFU, RETARGETING)
+        // 2. Funnel Stage Folder
         const stageName = (opts.funnelStage || 'TOFU').toUpperCase();
         const stageFolderId = await findOrCreateFolder(drive, stageName, conceptFolderId);
         
-        // 3. Angle Folder (Inside Stage)
+        // 3. Angle Folder
         const angleName = (opts.angle || 'GENERAL').toUpperCase().replace(/\s+/g, '_');
         const angleFolderId = await findOrCreateFolder(drive, angleName, stageFolderId);
 
         subFolder = angleFolderId;
+        console.log(`[DriveService] Target subFolder set to: ${subFolder} (Angle: ${angleName})`);
 
-        // 4. Sub-elements (like CLIPS) - Inside the Angle folder
         if (opts.subfolderName) {
-            subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), angleFolderId);
+            subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), subFolder);
         }
     } else if (opts.fileType === 'IMAGE') {
         const assetsFolder = await findOrCreateFolder(drive, 'ASSETS', folderId);
         subFolder = await findOrCreateFolder(drive, 'IMAGENES', assetsFolder);
     }
 
+    console.log(`[DriveService] Final subFolder: ${subFolder}. Uploading ${fileName}...`);
+
     const res = await drive.files.create({
         requestBody: { name: fileName, parents: [subFolder] },
         media: { mimeType, body: require('stream').Readable.from(fileBuffer) },
-        fields: 'id,name,webViewLink,webContentLink',
+        fields: 'id,name,webViewLink,webContentLink,thumbnailLink',
         supportsAllDrives: true
     });
 
     const driveFileId = res.data.id!;
     const driveUrl = res.data.webContentLink; // URL de descarga directa
+    const thumbnailUrl = res.data.thumbnailLink;
     const drivePath = `${opts.conceptCode ?? ''}/${opts.funnelStage ?? ''}/${fileName}`;
 
     // Save to DriveFile DB table
@@ -499,7 +525,7 @@ export async function uploadToProduct(
 
     invalidateProductIndex(productId);
     await syncProductIndex(productId, storeId);
-    return { driveFileId, drivePath, driveUrl: driveUrl || '', parentFolderId: subFolder };
+    return { driveFileId, drivePath, driveUrl: driveUrl || '', parentFolderId: subFolder, thumbnailUrl: thumbnailUrl || undefined };
 }
 
 /**

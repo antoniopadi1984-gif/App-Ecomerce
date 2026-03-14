@@ -102,14 +102,14 @@ export class ElevenLabsService {
         return response.data.voice_id;
     }
 
-    static async speechToText(audioBlob: Blob, options?: { language?: string }): Promise<{ text: string; words?: any[] }> {
+    static async speechToText(audioBlob: Blob, options?: { language?: string, storeId?: string }): Promise<{ text: string; words?: any[] }> {
         const formData = new FormData();
         const file = new File([audioBlob], 'audio.mp3', { type: 'audio/mp3' });
         formData.append('file', file);
         formData.append('model_id', 'scribe_v1');
         if (options?.language) formData.append('language_code', options.language);
 
-        const apiKey = await getConnectionSecret('store-main', 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY;
+        const apiKey = await getConnectionSecret(options?.storeId || 'store-main', 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY;
         if (!apiKey) throw new Error("ELEVENLABS_API_KEY no configurado");
 
         const controller = new AbortController();

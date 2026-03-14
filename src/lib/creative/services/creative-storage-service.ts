@@ -81,15 +81,58 @@ export class CreativeStorageService {
         generatedBy?: string;
         limit?: number;
     }) {
-        return prisma.generatedCreative.findMany({
-            where: {
-                productId,
-                ...(options?.type && { type: options.type }),
-                ...(options?.generatedBy && { generatedBy: options.generatedBy })
-            },
-            orderBy: { createdAt: 'desc' },
-            take: options?.limit
-        });
+        const [generated, assets] = await Promise.all([
+            prisma.generatedCreative.findMany({
+                where: {
+                    productId,
+                    ...(options?.type && { type: options.type }),
+                    ...(options?.generatedBy && { generatedBy: options.generatedBy })
+                },
+                orderBy: { createdAt: 'desc' },
+                take: options?.limit
+            }),
+            prisma.creativeAsset.findMany({
+                where: {
+                    productId,
+                    processingStatus: 'DONE',
+                    ...(options?.type && { type: options.type })
+                },
+                orderBy: { createdAt: 'desc' },
+                take: options?.limit
+            })
+        ]);
+
+        // Map assets to match UI (labeling as REAL)
+        const mappedAssets = assets.map((a: any) => ({
+            id: a.id,
+            productId: a.productId,
+            storeId: a.storeId,
+            type: a.type || 'VIDEO',
+            videoUrl: a.driveUrl || `https://drive.google.com/file/d/${a.driveFileId}/view`,
+            concept: a.nomenclatura || a.name,
+            createdAt: a.createdAt,
+            status: 'REAL',
+            isReal: true,
+            angle: a.angulo,
+            stage: a.funnelStage,
+            hook: a.hookText,
+            thumbnailUrl: a.thumbnailUrl,
+            driveFileId: a.driveFileId,
+            ctr: a.ctr,
+            revenue: a.revenue,
+            spend: a.spend,
+            tagsJson: a.tagsJson
+        }));
+
+        const mappedGenerated = generated.map((g: any) => ({
+            ...g,
+            status: 'AI_VARIANT',
+            isReal: false
+        }));
+
+        return [...mappedAssets, ...mappedGenerated].sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ).slice(0, options?.limit || 50);
     }
 
     /**
@@ -123,14 +166,49 @@ export class CreativeStorageService {
      * Obtener creativos recientes
      */
     static async getRecent(limit: number = 50) {
-        return prisma.generatedCreative.findMany({
-            orderBy: { createdAt: 'desc' },
-            take: limit,
-            include: {
-                product: { select: { title: true, id: true } },
-                store: { select: { name: true, id: true } }
-            }
-        });
+        const [generated, assets] = await Promise.all([
+            prisma.generatedCreative.findMany({
+                orderBy: { createdAt: 'desc' },
+                take: limit,
+                include: {
+                    product: { select: { title: true, id: true } },
+                    store: { select: { name: true, id: true } }
+                }
+            }),
+            prisma.creativeAsset.findMany({
+                where: { processingStatus: 'DONE' },
+                orderBy: { createdAt: 'desc' },
+                take: limit,
+                include: {
+                    product: { select: { title: true, id: true } },
+                    store: { select: { name: true, id: true } }
+                }
+            })
+        ]);
+
+        const mappedAssets = assets.map((a: any) => ({
+            id: a.id,
+            type: a.type || 'VIDEO',
+            videoUrl: a.driveUrl || `https://drive.google.com/file/d/${a.driveFileId}/view`,
+            concept: a.nomenclatura || a.name,
+            createdAt: a.createdAt,
+            status: 'REAL',
+            isReal: true,
+            product: a.product,
+            store: a.store,
+            thumbnailUrl: a.thumbnailUrl,
+            tagsJson: a.tagsJson
+        }));
+
+        const mappedGenerated = generated.map((g: any) => ({
+            ...g,
+            status: 'AI_VARIANT',
+            isReal: false
+        }));
+
+        return [...mappedAssets, ...mappedGenerated].sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ).slice(0, limit);
     }
 
     /**
@@ -144,8 +222,16 @@ export class CreativeStorageService {
     }
 
     /**
-     * Actualizar métricas de performance
+     * Eliminar creativo
      */
+    static async deleteCreative(id: string) {
+        // Intentar borrar de ambos lugares por si acaso
+        const [res1, res2] = await Promise.allSettled([
+            prisma.generatedCreative.delete({ where: { id } }),
+            prisma.creativeAsset.delete({ where: { id } })
+        ]);
+        return res1.status === 'fulfilled' || res2.status === 'fulfilled';
+    }
     static async updatePerformance(
         creativeId: string,
         metrics: {

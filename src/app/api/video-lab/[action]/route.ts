@@ -5,6 +5,7 @@ import { ElevenLabsService } from '@/lib/services/elevenlabs-service';
 import { AiRouter } from '@/lib/ai/router';
 import { TaskType } from '@/lib/ai/providers/interfaces';
 import { replicateRequest } from '@/lib/replicate-client';
+import { generateSRT } from '@/lib/video/subtitle-utils';
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -133,21 +134,41 @@ export async function POST(
                 const srtPath = path.join(tmpDir, 'subs.srt');
                 const outputPath = path.join(tmpDir, 'subtitled.mp4');
                 await fs.writeFile(videoPath, videoBuffer);
-                // Generar SRT básico desde transcripción
-                const words = asset.transcription.split(' ');
-                const srtLines: string[] = [];
-                const wordsPerLine = 6;
-                for (let i = 0; i < words.length; i += wordsPerLine) {
-                    const idx = Math.floor(i / wordsPerLine) + 1;
-                    const startSec = (i / words.length) * 30;
-                    const endSec = Math.min(((i + wordsPerLine) / words.length) * 30, 30);
-                    const toTime = (s: number) => `00:00:${String(Math.floor(s)).padStart(2, '0')},000`;
-                    srtLines.push(`${idx}\n${toTime(startSec)} --> ${toTime(endSec)}\n${words.slice(i, i + wordsPerLine).join(' ')}\n`);
+                
+                // Generar SRT: Intentar usar palabras precisas de tagsJson si existen
+                let srtContent = '';
+                try {
+                    const tags = JSON.parse(asset.tagsJson || '{}');
+                    if (tags.words && Array.isArray(tags.words)) {
+                        srtContent = generateSRT(tags.words);
+                    }
+                } catch (e) {}
+
+                if (!srtContent) {
+                    // Fallback a generación básica por palabras si no hay timestamps precisos
+                    const words = asset.transcription.split(' ');
+                    const srtLines: string[] = [];
+                    const wordsPerLine = 6;
+                    for (let i = 0; i < words.length; i += wordsPerLine) {
+                        const idx = Math.floor(i / wordsPerLine) + 1;
+                        const startSec = (i / words.length) * 30; // Estimación 30s
+                        const endSec = Math.min(((i + wordsPerLine) / words.length) * 30, 30);
+                        const toTime = (s: number) => {
+                            const d = new Date(0); d.setSeconds(s);
+                            const ms = Math.floor((s % 1) * 1000);
+                            return d.toISOString().substr(11, 8) + ',' + String(ms).padStart(3, '0');
+                        };
+                        srtLines.push(`${idx}\n${toTime(startSec)} --> ${toTime(endSec)}\n${words.slice(i, i + wordsPerLine).join(' ')}\n`);
+                    }
+                    srtContent = srtLines.join('\n');
                 }
-                await fs.writeFile(srtPath, srtLines.join('\n'));
+                
+                await fs.writeFile(srtPath, srtContent);
+
                 // Quemar subtítulos con FFmpeg
+                // Usamos un estilo más moderno y legible
                 await execAsync(
-                    `ffmpeg -i '${videoPath}' -vf subtitles='${srtPath}':force_style='Fontsize=24,PrimaryColour=&HFFFFFF,Bold=1,Outline=2,Shadow=1' -c:a copy '${outputPath}' -y`
+                    `ffmpeg -i '${videoPath}' -vf "subtitles='${srtPath}':force_style='Alignment=2,OutlineColour=&H10000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=30,Fontname=Impact,Fontsize=18'" -c:a copy '${outputPath}' -y`
                 );
                 const outputBuffer = await fs.readFile(outputPath);
                 const product = await prisma.product.findUnique({ where: { id: asset.productId || '' }, select: { sku: true } });

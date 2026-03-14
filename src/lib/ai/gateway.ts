@@ -114,12 +114,19 @@ class AIGateway {
      * Usa Claude via Replicate por defecto.
      */
     async runText(options: RunTextOptions): Promise<GatewayResponse> {
-        const model = options.modelHint || DEFAULT_MODELS.TEXT;
-        const isGeminiModel = model.startsWith("gemini") || model.startsWith("imagegeneration") || model.startsWith("veo") || model.startsWith("lyria");
+        const fullModelName = options.modelHint || DEFAULT_MODELS.TEXT;
+        const isVertexModel = 
+            fullModelName.startsWith("vertex:") || 
+            fullModelName.startsWith("google/") || 
+            fullModelName.startsWith("gemini") || 
+            fullModelName.startsWith("imagegeneration") || 
+            fullModelName.startsWith("veo") || 
+            fullModelName.startsWith("lyria");
+        const model = fullModelName.replace("vertex:", "").replace("google/", "");
 
-        console.log(`[AIGateway] runText → ${model} (${isGeminiModel ? 'GEMINI' : 'REPLICATE'})`);
+        console.log(`[AIGateway] runText → ${model} (${isVertexModel ? 'GEMINI/VERTEX' : 'REPLICATE'})`);
 
-        if (isGeminiModel) {
+        if (isVertexModel) {
             const result = await this.gemini.invokeText({
                 model,
                 prompt: options.prompt,
@@ -159,16 +166,32 @@ class AIGateway {
      * Usa Flux via Replicate por defecto.
      */
     async runImage(options: RunImageOptions): Promise<GatewayResponse> {
-        const model = options.modelHint || DEFAULT_MODELS.IMAGE;
+        const fullModelName = options.modelHint || DEFAULT_MODELS.IMAGE;
+        const isVertexModel = fullModelName.startsWith("vertex:") || fullModelName.startsWith("google/") || fullModelName.startsWith("imagegeneration");
+        const model = fullModelName.replace("vertex:", "").replace("google/", "");
 
-        console.log(`[AIGateway] runImage → ${model}`);
+        console.log(`[AIGateway] runImage → ${model} (${isVertexModel ? 'GEMINI/VERTEX' : 'REPLICATE'})`);
+
+        if (isVertexModel) {
+            const result = await this.gemini.invokeImage({
+                model,
+                prompt: options.prompt,
+            });
+
+            return {
+                text: result.text,
+                provider: "GEMINI",
+                model,
+                usage: result.usage,
+                raw: result.raw,
+            };
+        }
 
         // Replicate image models use a different input schema
         // We delegate to the provider but wrap the response
-        const result = await this.replicate.invokeText({
+        const result = await this.replicate.invokeImage({
             model,
             prompt: options.prompt,
-            maxTokens: 1,
         });
 
         return {
@@ -185,14 +208,30 @@ class AIGateway {
      * Usa Luma/MiniMax via Replicate, o Engine Python según pipeline.
      */
     async runVideo(options: RunVideoOptions): Promise<GatewayResponse> {
-        const model = options.modelHint || DEFAULT_MODELS.VIDEO;
+        const fullModelName = options.modelHint || DEFAULT_MODELS.VIDEO;
+        const isVertexModel = fullModelName.startsWith("vertex:") || fullModelName.startsWith("google/") || fullModelName.startsWith("veo");
+        const model = fullModelName.replace("vertex:", "").replace("google/", "");
 
-        console.log(`[AIGateway] runVideo → ${model}`);
+        console.log(`[AIGateway] runVideo → ${model} (${isVertexModel ? 'GEMINI/VERTEX' : 'REPLICATE'})`);
 
-        const result = await this.replicate.invokeText({
+        if (isVertexModel) {
+            const result = await this.gemini.invokeVideo({
+                model,
+                prompt: options.prompt,
+            });
+
+            return {
+                text: result.text,
+                provider: "GEMINI",
+                model,
+                usage: result.usage,
+                raw: result.raw,
+            };
+        }
+
+        const result = await this.replicate.invokeVideo({
             model,
             prompt: options.prompt,
-            maxTokens: 1,
         });
 
         return {

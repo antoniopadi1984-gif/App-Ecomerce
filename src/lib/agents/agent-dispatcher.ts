@@ -16,6 +16,7 @@ export interface AgentRequest {
     videoMimeType?: string;
     model?: string;
     locale?: string;
+    storeId?: string;
 }
 
 export interface AgentResponse {

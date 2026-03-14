@@ -6,31 +6,33 @@ import { AgentRole } from "../agents/agent-registry";
 
 // Mapeo de TaskType a AgentRole (Tiered Architecture)
 const TASK_TO_AGENT: Record<string, AgentRole> = {
-    [TaskType.RESEARCH_DEEP]: 'research-lab',
-    [TaskType.RESEARCH_FAST]: 'general',
-    [TaskType.VISION_PRODUCT]: 'research-lab',
-    [TaskType.COPY_LONGFORM]: 'copywriter-elite',
-    [TaskType.COPY_SHORT]: 'copywriter-elite',
-    [TaskType.SCRIPT_VIDEO]: 'script-generator',
-    [TaskType.COPYWRITING_DEEP]: 'copywriter-elite',
-    [TaskType.COPYWRITING_PAGES]: 'landing-creator',
-    [TaskType.SCRIPTS_ADVANCED]: 'script-generator',
-    [TaskType.CRO_AUDIT]: 'cro-optimizer',
-    [TaskType.RESEARCH_FORENSIC]: 'competitor-analyst',
-    [TaskType.PERFORMANCE_ADS]: 'video-director',
-    // Operaciones (Mapeo de strings si no están en Enum)
-    'CUSTOMER_SUPPORT': 'customer-support',
-    'CART_RECOVERY': 'cart-recovery',
-    'ORDER_TRACKING': 'order-tracker',
-    'SHIPPING_ALERT': 'shipping-alert',
-    'INCIDENT_MANAGE': 'incident-manager',
-    'DAILY_ACCOUNTING': 'daily-accountant',
-    'METRICS_ANALYSIS': 'metrics-analyzer',
-    'PERFORMANCE_TRACK': 'performance-tracker',
-    'DRIVE_ORGANIZE': 'drive-organizer',
-    'LEAD_NURTURE': 'lead-nurturer',
-    'EBOOK_WRITE': 'ebook-writer',
-    'OFFER_CONFIG': 'offer-configurator'
+    [TaskType.RESEARCH_DEEP]:     'research-core',
+    [TaskType.RESEARCH_FAST]:     'general',
+    [TaskType.VISION_PRODUCT]:    'research-core',
+    [TaskType.COPY_LONGFORM]:     'funnel-architect',
+    [TaskType.COPY_SHORT]:        'funnel-architect',
+    [TaskType.SCRIPT_VIDEO]:      'video-intelligence',
+    [TaskType.COPYWRITING_DEEP]:  'funnel-architect',
+    [TaskType.COPYWRITING_PAGES]: 'funnel-architect',
+    [TaskType.SCRIPTS_ADVANCED]:  'video-intelligence',
+    [TaskType.CRO_AUDIT]:         'funnel-architect',
+    [TaskType.RESEARCH_FORENSIC]: 'research-core',
+    [TaskType.PERFORMANCE_ADS]:   'media-buyer',
+    [TaskType.IMAGE_ASSETS]:      'image-director',
+    
+    // Operaciones
+    'CUSTOMER_SUPPORT':  'ops-commander',
+    'CART_RECOVERY':     'ops-commander',
+    'ORDER_TRACKING':    'ops-commander',
+    'SHIPPING_ALERT':    'ops-commander',
+    'INCIDENT_MANAGE':   'ops-commander',
+    'DAILY_ACCOUNTING':  'ops-commander',
+    'METRICS_ANALYSIS':  'media-buyer',
+    'PERFORMANCE_TRACK': 'media-buyer',
+    'DRIVE_ORGANIZE':    'drive-intelligence',
+    'LEAD_NURTURE':      'ops-commander',
+    'EBOOK_WRITE':       'funnel-architect',
+    'OFFER_CONFIG':      'funnel-architect'
 };
 
 export class AiRouter {
@@ -123,6 +125,29 @@ export class AiRouter {
                 console.error("Failed to log AI usage", logParams);
             }
         }
+
+        return {
+            text: result.text,
+            usage: {
+                inputTokens: result.usage?.promptTokens || 0,
+                outputTokens: result.usage?.completionTokens || 0,
+                costEur: result.cost || 0
+            },
+            raw: result
+        };
+    }
+
+    static async dispatchToAgent(
+        agentRole: AgentRole,
+        storeId: string,
+        userMessage: string,
+        context?: Record<string, any>
+    ): Promise<AIResponse> {
+        const contextStr = context ? `\n\nCONTEXTO DISPONIBLE:\n${JSON.stringify(context, null, 2)}` : '';
+        const result = await agentDispatcher.dispatch({
+            role: agentRole,
+            prompt: userMessage + contextStr
+        });
 
         return {
             text: result.text,

@@ -19,15 +19,14 @@ const MODULES = [
 
 // ── Agentes predefinidos (sistema) ────────────────────────────────
 const SYSTEM_AGENTS: Record<string, { label: string; description: string; module: string; emoji: string }> = {
-  DIRECTOR_CREATIVO:      { label: 'Director Creativo',      description: 'Analiza creativos y sugiere mejoras de hook y retención', module: 'creativo',      emoji: '🎨' },
-  ESPECIALISTA_META:      { label: 'Especialista Meta Ads',  description: 'Optimiza campañas, presupuesto y targeting',              module: 'marketing',     emoji: '📡' },
-  ANALISTA_INVESTIGACION: { label: 'Analista Research',      description: 'Extrae avatares, ángulos y copy de producto',            module: 'investigacion', emoji: '🔭' },
-  GESTOR_OPERACIONES:     { label: 'Gestor Operaciones',     description: 'Supervisa pedidos, incidencias y logística',             module: 'operaciones',   emoji: '⚙️' },
-  ASESOR_FINANCIERO:      { label: 'Asesor Financiero',      description: 'Analiza márgenes, ROAS y rentabilidad',                  module: 'finanzas',      emoji: '💰' },
-  AGENTE_CRM:             { label: 'Agente CRM',             description: 'Analiza comportamiento de clientes y cohortes',          module: 'crm',           emoji: '🔬' },
-  COPYWRITER:             { label: 'Copywriter',             description: 'Genera hooks, scripts y copy de respuesta directa',      module: 'creativo',      emoji: '✍️' },
-  AGENTE_JEFE:            { label: 'Agente Jefe',            description: 'Análisis semanal ejecutivo y alertas críticas',          module: 'mando',         emoji: '🎛️' },
-  AGENTE_EQUIPO:          { label: 'Agente RRHH',            description: 'Analiza rendimiento del equipo y sugiere mejoras',       module: 'operaciones',   emoji: '👥' },
+  NEURAL_MOTHER:       { label: 'Neural Mother',        description: 'Agente Jefe — diagnóstico ejecutivo y coordinación total',         module: 'mando',         emoji: '🧠' },
+  FUNNEL_ARCHITECT:    { label: 'Funnel Architect',      description: 'Landing + Advertorial + Listicle + Oferta + CRO — máximo nivel',   module: 'creativo',      emoji: '🏗️' },
+  VIDEO_INTELLIGENCE:  { label: 'Video Intelligence',    description: 'Análisis + guión + dirección + UGC — todo sobre vídeo',            module: 'creativo',      emoji: '🎬' },
+  IMAGE_DIRECTOR:      { label: 'Image Director',        description: 'Imágenes estáticas + carruseles + JSON para generación IA',        module: 'creativo',      emoji: '🎨' },
+  RESEARCH_CORE:       { label: 'Research Core',         description: 'Investigación P1-P7: producto, avatares, ángulos, competencia',    module: 'investigacion', emoji: '🔬' },
+  MEDIA_BUYER:         { label: 'Media Buyer',           description: 'Meta Ads: análisis, escalado, diagnóstico de creativos',          module: 'marketing',     emoji: '📡' },
+  OPS_COMMANDER:       { label: 'Ops Commander',         description: 'Pedidos, incidencias, equipo, postventa — todo operacional',       module: 'operaciones',   emoji: '⚙️' },
+  DRIVE_INTELLIGENCE:  { label: 'Drive Intelligence',    description: 'Organización automática, nomenclatura y clasificación de Drive',   module: 'drive',         emoji: '📁' },
 };
 
 interface AgentConfig {

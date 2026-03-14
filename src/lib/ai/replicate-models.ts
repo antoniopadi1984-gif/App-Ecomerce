@@ -2,6 +2,7 @@ export const REPLICATE_MODELS = {
     TEXT: {
         CLAUDE_SONNET: "anthropic/claude-sonnet-4-6",
         CLAUDE_OPUS: "anthropic/claude-opus-4-6",
+        CLAUDE_DEFAULT: "anthropic/claude-sonnet-4-6",
     },
     IMAGE: {
         // Flux — Replicate

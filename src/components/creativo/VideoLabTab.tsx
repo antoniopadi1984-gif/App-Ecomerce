@@ -86,9 +86,21 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const [driveFolders, setDriveFolders] = useState<any[]>([]);
     const [loadingDrive, setLoadingDrive] = useState(false);
 
-    // UPLOAD - Progress tracking
-    const [uploadingVideo, setUploadingVideo] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
+    // Estado drag & drop
+    const [isDragging, setIsDragging]   = useState(false);
+    const [bulkQueue, setBulkQueue]     = useState<Array<{
+        fileName: string;
+        status: 'pending' | 'processing' | 'done' | 'error';
+        name?: string;     // MICR-C1-V1
+        concept?: string;  // C1
+        conceptName?: string;
+        traffic?: string;
+        awareness?: string;
+        drivePath?: string;
+        error?: string;
+    }>>([]);
+    const [bulkProcessing, setBulkProcessing] = useState(false);
+    const dropZoneRef = useRef<HTMLDivElement>(null);
 
     // AI GENERATION
     const [generatingVariants, setGeneratingVariants] = useState(false);
@@ -300,86 +312,85 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     };
 
     // ── UPLOAD VIDEO ────────────────────────────────────────────────────────
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = () => setIsDragging(false);
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = Array.from(e.dataTransfer.files);
+        await processBulk(files);
+    };
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-        if (files.length === 0) return;
+        await processBulk(files);
+    };
 
-        setUploadingVideo(true);
-        setUploadProgress(0);
-        
-        const toastId = toast.loading(`Iniciando procesamiento de ${files.length} video(s)...`);
-
-        try {
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                if (file.size > 500 * 1024 * 1024) {
-                    toast.error(`El archivo ${file.name} es demasiado grande. Ignorado.`);
-                    continue;
-                }
-
-                toast.loading(`[${i+1}/${files.length}] Subiendo ${file.name}...`, { id: toastId });
-
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('productId', productId.toString());
-                
-                const res = await fetch('/api/video-lab/process', {
-                    method: 'POST',
-                    headers: { 'X-Store-Id': storeId },
-                    body: formData
-                });
-
-                if (!res.ok) {
-                    toast.error(`Error al iniciar ${file.name}`, { id: toastId });
-                    continue;
-                }
-
-                const data = await res.json();
-                
-                if (data.jobId) {
-                    // Polling for this specific job
-                    const jobDone = await new Promise<boolean>((resolve) => {
-                        const pollInterval = setInterval(async () => {
-                            const statusRes = await fetch(`/api/video-lab/process?jobId=${data.jobId}`);
-                            if (!statusRes.ok) return;
-                            
-                            const jobStatus = await statusRes.json();
-                            if (jobStatus) {
-                                setUploadProgress(jobStatus.progress || 0);
-                                if (jobStatus.status) {
-                                    toast.loading(`[${i+1}/${files.length}] ${STATUS_LABELS[jobStatus.status] || jobStatus.status}`, { id: toastId });
-                                }
-                                
-                                if (jobStatus.status === 'DONE') {
-                                    clearInterval(pollInterval);
-                                    resolve(true);
-                                } else if (jobStatus.status === 'ERROR') {
-                                    clearInterval(pollInterval);
-                                    toast.error(`Error en ${file.name}: ${jobStatus.error}`, { id: toastId });
-                                    resolve(false);
-                                }
-                            }
-                        }, 3000);
-                    });
-                }
-            }
-
-            toast.success('Procesamiento de cola finalizado.', { id: toastId });
-            setTimeout(() => {
-                setUploadingVideo(false);
-                setUploadProgress(0);
-                setView('WORKSPACE');
-                fetchOwnCreatives();
-            }, 1500);
-
-        } catch (e: any) {
-            console.error(e);
-            setUploadingVideo(false);
-            setUploadProgress(0);
-            toast.error(e.message || 'Error al procesar la cola', { id: toastId });
+    const processBulk = async (files: File[]) => {
+        if (!productId || !storeId || files.length === 0) {
+            toast.error('Selecciona un producto primero');
+            return;
         }
 
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        const valid = files.filter(f =>
+            f.type.startsWith('video/') || f.type.startsWith('image/')
+        );
+
+        if (valid.length === 0) {
+            toast.error('Solo se admiten vídeos e imágenes');
+            return;
+        }
+
+        // Inicializar queue visual
+        setBulkQueue(valid.map(f => ({ fileName: f.name, status: 'pending' })));
+        setBulkProcessing(true);
+
+        // Marcar como procesando
+        setBulkQueue(q => q.map(item => ({ ...item, status: 'processing' })));
+
+        try {
+            const formData = new FormData();
+            formData.append('productId', productId);
+            valid.forEach(f => formData.append('files', f));
+
+            const res = await fetch('/api/creative/bulk-upload', {
+                method: 'POST',
+                headers: { 'X-Store-Id': storeId },
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (data.ok) {
+                // Actualizar queue con resultados
+                setBulkQueue(data.results.map((r: any) => ({
+                    fileName:    r.fileName,
+                    status:      r.success ? 'done' : 'error',
+                    name:        r.name,
+                    concept:     r.concept,
+                    conceptName: r.conceptName,
+                    traffic:     r.traffic,
+                    awareness:   r.awareness,
+                    drivePath:   r.drivePath,
+                    error:       r.error,
+                })));
+
+                toast.success(
+                    `${data.summary.success}/${data.summary.total} archivos procesados`
+                );
+                fetchOwnCreatives();
+            }
+        } catch (err: any) {
+            toast.error('Error en el procesamiento masivo');
+            setBulkQueue(q => q.map(i => ({ ...i, status: 'error', error: err.message })));
+        } finally {
+            setBulkProcessing(false);
+        }
     };
 
     // ── GENERAR VARIANTES ───────────────────────────────────────────────────
@@ -824,7 +835,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
 
                         {/* ── UPLOAD VIEW ────────────────────────────────── */}
                         {view === 'UPLOAD' && (
-                            <div className="animate-in slide-in-from-bottom-2 duration-500 max-w-2xl mx-auto space-y-8">
+                            <div className="animate-in slide-in-from-bottom-2 duration-500 max-w-2xl mx-auto space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-primary)]">Subir Nuevo Video</h3>
                                     <div className="flex bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)]">
@@ -843,42 +854,141 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                     </div>
                                 </div>
 
-                                {uploadingVideo ? (
-                                    <div className="p-16 border-2 border-dashed border-[var(--cre)]/40 rounded-xl text-center bg-[var(--cre-bg)]/5 space-y-4">
-                                        <Loader2 size={40} className="mx-auto text-[var(--cre)] animate-spin" />
-                                        <p className="text-[11px] font-bold uppercase text-[var(--text-primary)]">Subiendo video...</p>
-                                        <div className="w-full bg-slate-100 rounded-full h-2">
-                                            <div className="h-2 bg-[var(--cre)] rounded-full transition-all duration-500"
-                                                style={{ width: `${uploadProgress}%` }} />
-                                        </div>
-                                        <p className="text-[9px] text-[var(--text-tertiary)] uppercase">{uploadProgress}%</p>
+                                {/* ── ZONA DRAG & DROP ── */}
+                                <div
+                                    ref={dropZoneRef}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    style={{
+                                        border: `2px dashed ${isDragging ? 'var(--cre)' : 'var(--border)'}`,
+                                        borderRadius: '16px',
+                                        padding: '40px 20px',
+                                        textAlign: 'center',
+                                        background: isDragging ? 'var(--cre-bg)' : 'var(--bg)',
+                                        transition: 'all 0.2s',
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        multiple
+                                        accept="video/*,image/*"
+                                        style={{ display: 'none' }}
+                                        onChange={handleFileSelect}
+                                    />
+                                    <UploadCloud size={32} color={isDragging ? 'var(--cre)' : '#94a3b8'} style={{ margin: '0 auto 12px' }} />
+                                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>
+                                        {isDragging ? 'Suelta aquí' : 'Arrastra tu carpeta o archivos'}
                                     </div>
-                                ) : (
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="p-20 border-2 border-dashed border-[var(--border)] rounded-xl text-center relative group bg-[var(--bg)]/10 hover:bg-[var(--cre-bg)]/20 transition-all cursor-pointer"
-                                    >
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept="video/*"
-                                            multiple
-                                            className="hidden"
-                                            onChange={handleFileChange}
-                                        />
-                                        <UploadCloud size={40} className="mx-auto text-[var(--cre)] opacity-40 mb-4 group-hover:scale-110 transition-transform" />
-                                        <p className="text-[11px] font-bold uppercase text-[var(--text-primary)]">Arrastra tu video {videoType} aquí</p>
-                                        <p className="text-[9px] font-bold uppercase text-[var(--text-tertiary)] mt-2 italic opacity-60">Soporta MP4, MOV, WEBM (Max 500MB)</p>
+                                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                        Vídeos e imágenes — la IA clasifica, limpia y organiza todo automáticamente
                                     </div>
-                                )}
+                                </div>
 
-                                {!uploadingVideo && (
-                                    <button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-full h-11 bg-[var(--cre)] text-white rounded-lg font-bold uppercase text-[10px] tracking-widest shadow-sm hover:bg-[var(--cre)]/90 transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <UploadCloud size={16} />Seleccionar Archivo Local
-                                    </button>
+                                {/* ── COLA DE PROCESAMIENTO ── */}
+                                {bulkQueue.length > 0 && (
+                                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <div style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8',
+                                            textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+                                            {bulkProcessing ? 'Procesando...' : `${bulkQueue.filter(q => q.status === 'done').length}/${bulkQueue.length} completados`}
+                                        </div>
+                                        {bulkQueue.map((item, i) => (
+                                            <div key={i} style={{
+                                                display: 'flex', alignItems: 'center', gap: '10px',
+                                                padding: '10px 12px', borderRadius: '10px',
+                                                background: item.status === 'done'  ? '#f0fdf4' :
+                                                            item.status === 'error' ? '#fef2f2' :
+                                                            item.status === 'processing' ? '#eff6ff' : 'var(--bg)',
+                                                border: `1px solid ${
+                                                    item.status === 'done'  ? '#bbf7d0' :
+                                                    item.status === 'error' ? '#fecaca' :
+                                                    item.status === 'processing' ? '#bfdbfe' : 'var(--border)'
+                                                }`
+                                            }}>
+                                                {/* Icono estado */}
+                                                <div style={{ flexShrink: 0 }}>
+                                                    {item.status === 'done'       && <CheckCircle2 size={16} color="#16a34a" />}
+                                                    {item.status === 'error'      && <AlertCircle  size={16} color="#ef4444" />}
+                                                    {item.status === 'processing' && <Loader2      size={16} color="#3b82f6" className="animate-spin" />}
+                                                    {item.status === 'pending'    && <Clock        size={16} color="#94a3b8" />}
+                                                </div>
+
+                                                {/* Info */}
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text)',
+                                                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {item.name || item.fileName}
+                                                    </div>
+                                                    {item.status === 'done' && (
+                                                        <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px',
+                                                            display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                            {item.concept && (
+                                                                <span style={{ background: '#eef2ff', color: '#6366f1',
+                                                                    padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                                                    {item.concept} — {item.conceptName}
+                                                                </span>
+                                                            )}
+                                                            {item.traffic && (
+                                                                <span style={{ background: '#f0fdf4', color: '#16a34a',
+                                                                    padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                                                    {item.traffic}
+                                                                </span>
+                                                            )}
+                                                            {item.awareness && (
+                                                                <span style={{ background: '#fffbeb', color: '#d97706',
+                                                                    padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                                                    {item.awareness}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    {item.status === 'error' && (
+                                                        <div style={{ fontSize: '10px', color: '#ef4444', marginTop: '2px' }}>
+                                                            {item.error}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Link Drive si está listo */}
+                                                {item.status === 'done' && item.drivePath && (
+                                                    <a
+                                                        href={`https://drive.google.com/drive/search?q=${encodeURIComponent(item.name || '')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        style={{ flexShrink: 0 }}
+                                                        onClick={e => e.stopPropagation()}
+                                                    >
+                                                        <ExternalLink size={13} color="#6366f1" />
+                                                    </a>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        {/* Resumen final */}
+                                        {!bulkProcessing && bulkQueue.length > 0 && (
+                                            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                                <button
+                                                    onClick={() => setBulkQueue([])}
+                                                    style={{ fontSize: '11px', fontWeight: 700, color: '#64748b',
+                                                        background: 'none', border: '1px solid var(--border)',
+                                                        borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }}
+                                                >
+                                                    Limpiar lista
+                                                </button>
+                                                <button
+                                                    onClick={() => setView('WORKSPACE')}
+                                                    style={{ fontSize: '11px', fontWeight: 700, color: 'white',
+                                                        background: 'var(--cre)', border: 'none',
+                                                        borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }}
+                                                >
+                                                    Ver en biblioteca
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         )}

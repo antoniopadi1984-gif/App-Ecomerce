@@ -112,31 +112,52 @@ export class BulkUploadPipeline {
             }
 
             // 3. Generate IA nomenclature
-            const conceptCode = `C${classification?.concept || pipelineResult.concept || 3}`;
-            const conceptData = CREATIVE_CONCEPTS.find(c => c.code === conceptCode);
-
             const product = await prisma.product.findUnique({
                 where: { id: params.productId },
-                select: { sku: true },
+                select: { sku: true, title: true }
             });
+            const sku = product?.sku || (product?.title?.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase() || 'PROD');
+            const conceptNum = classification?.concept || pipelineResult.concept || 1;
+            const conceptCode = `C${conceptNum}`;
+            const conceptData = CREATIVE_CONCEPTS.find(c => c.code === conceptCode);
 
-            const ext = params.fileName.split('.').pop()?.toLowerCase() || 'mp4';
+            // Contar versiones existentes para este concepto
+            const existingCount = await (prisma as any).creativeAsset.count({
+                where: { productId: params.productId, conceptCode }
+            });
+            const version = existingCount + 1;
 
             const nomenclatura = buildNomenclature({
-                sku: product?.sku || 'PROD',
+                sku,
                 concept: conceptCode,
-                version: (pipelineResult as any).version || 1,
-                ext: ext
+                version,
+                ext: 'mp4'
             });
 
             // 4. Update asset in DB with full classification
-            if (pipelineResult.videoId && classification) {
-                await (prisma as any).driveAsset.update({
+            if (pipelineResult.videoId) {
+                await (prisma as any).creativeAsset.update({
                     where: { id: pipelineResult.videoId },
                     data: {
-                        concept: classification.concept,
-                        category: `C${classification.concept}_${conceptData?.name || 'Concept'}`,
-                    },
+                        name: nomenclatura,
+                        nomenclatura,
+                        conceptCode,
+                        funnelStage: classification?.audienceType || 'COLD',
+                        // Guardar awareness como número en metadata
+                        metadata: JSON.stringify({
+                            concept: conceptCode,
+                            conceptName: conceptData?.name,
+                            traffic: classification?.audienceType,
+                            awareness: classification?.awarenessLevel,
+                            angle: classification?.angle,
+                            hookScore: classification?.hookScore,
+                            drivePath: getDrivePath({
+                                concept: conceptCode,
+                                traffic: classification?.audienceType || 'COLD',
+                                awareness: parseInt(classification?.awarenessLevel || '2')
+                            })
+                        })
+                    }
                 });
             }
 

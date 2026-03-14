@@ -1,59 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { BulkUploadPipeline } from '@/lib/creative/bulk-upload-pipeline';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300;
+export const maxDuration = 300; // 5 min para lotes grandes
 
 export async function POST(req: NextRequest) {
     const storeId   = req.headers.get('X-Store-Id');
     const formData  = await req.formData();
     const productId = formData.get('productId') as string;
+    const isCompetitor = formData.get('isCompetitor') === 'true';
     const files     = formData.getAll('files') as File[];
 
-    if (!productId || !files.length) {
-        return NextResponse.json({ error: 'productId y archivos requeridos' }, { status: 400 });
+    if (!productId || !files.length || !storeId) {
+        return NextResponse.json(
+            { error: 'productId, storeId y al menos un archivo son requeridos' },
+            { status: 400 }
+        );
     }
 
-    const queued: any[] = [];
+    // Convertir Files a Buffers
+    const fileBuffers = await Promise.all(
+        files.map(async (file) => ({
+            buffer: Buffer.from(await file.arrayBuffer()),
+            fileName: file.name,
+        }))
+    );
 
-    for (const file of files) {
-        const isVideo = file.type.startsWith('video/');
-        const isImage = file.type.startsWith('image/');
-        if (!isVideo && !isImage) continue;
-
-        // Crear registro inmediato
-        const asset = await (prisma as any).creativeAsset.create({
-            data: {
-                productId,
-                storeId: storeId || '',
-                type: isVideo ? 'VIDEO' : 'IMAGE',
-                name: file.name,
-                processingStatus: 'INGESTING',
-                metadata: JSON.stringify({ originalName: file.name, fileSize: file.size })
-            }
-        });
-
-        // Lanzar pipeline en background
-        const pipelineForm = new FormData();
-        pipelineForm.append(isVideo ? 'video' : 'image', file);
-        pipelineForm.append('productId', productId);
-        pipelineForm.append('assetId', asset.id);
-
-        const endpoint = isVideo ? '/api/video-lab/process' : '/api/creative/generate-image';
-
-        fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}${endpoint}`, {
-            method: 'POST',
-            headers: { 'X-Store-Id': storeId || '' },
-            body: pipelineForm
-        }).catch(() => {});
-
-        queued.push({ assetId: asset.id, fileName: file.name, type: isVideo ? 'VIDEO' : 'IMAGE' });
-    }
+    // Procesar en lote
+    const { results, summary } = await BulkUploadPipeline.processBatch({
+        files: fileBuffers,
+        productId,
+        storeId,
+        source: 'UPLOAD',
+        isCompetitor,
+    });
 
     return NextResponse.json({
         ok: true,
-        queued: queued.length,
-        jobs: queued,
-        message: `${queued.length} archivos en procesamiento — la IA los clasificará automáticamente`
+        summary,
+        results: results.map(r => ({
+            fileName:    r.fileName,
+            success:     r.success,
+            name:        r.nomenclatura,       // MICR-C1-V1.mp4
+            concept:     r.concept ? `C${r.concept}` : null,
+            conceptName: r.conceptName,
+            traffic:     r.audienceType,
+            awareness:   r.awarenessLevel,
+            drivePath:   r.drivePath,
+            assetId:     r.assetId,
+            clips:       r.clips,
+            error:       r.error,
+        }))
     });
 }

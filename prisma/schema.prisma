@@ -350,7 +350,7 @@ model Customer {
 model Product {
   id                  String                 @id @default(cuid())
   storeId             String
-  shopifyId           String?                @unique
+  shopifyId           String?
   title               String
   description         String?
   price               Float                  @default(0)
@@ -468,6 +468,8 @@ model Product {
   competitorLibraries CompetitorLibrary[]
   extensionCaptures   ExtensionCapture[]
   landingClones       LandingClone[]
+
+  @@unique([shopifyId, storeId])
 }
 
 model Order {

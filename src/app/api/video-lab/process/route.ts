@@ -404,6 +404,39 @@ EcomBoom — Creative Forensic Agent
 
     await saveAnalysisDoc(productId, storeId, mainVideoUpload.parentFolderId, `ANALISIS_${generatedNomen.replace('.mp4', '')}`, analysisDocContent);
 
+    // Actualizar DriveAsset con análisis forense completo — agentes pueden leerlo
+    await (prisma as any).driveAsset.updateMany({
+        where: { driveFileId: mainVideoUpload.driveFileId },
+        data: {
+            conceptCode,
+            funnelStage: analysis.traffic,
+            awarenessLevel: analysis.awareness,
+            angle: analysis.angle,
+            hookScore: analysis.hookScore,
+            transcription,
+            nomenclature: generatedNomen,
+            analysisJson: JSON.stringify({
+                concept: analysis.concept,
+                conceptName: analysis.conceptName,
+                traffic: analysis.traffic,
+                awareness: analysis.awareness,
+                awarenessName: analysis.awarenessName,
+                hookScore: analysis.hookScore,
+                hookType: analysis.hookType,
+                framework: analysis.framework,
+                angle: analysis.angle,
+                avatar: analysis.avatar,
+                emotionPillar: analysis.emotionPillar,
+                clips: analysis.clips,
+                improvements: analysis.improvements,
+                replicableTemplate: analysis.replicableTemplate,
+                drivePath: `${analysis.drivePath}/`,
+            }),
+            organized: true,
+            agentReadable: true,
+        }
+    });
+
     // 5.3 Subir Clips detectados (Disecciones) y Guardar en DB
     const clipsFiles = (await fs.readdir(clipsDir)).filter(f => f.endsWith('.mp4'));
     const uploadedClips = [];

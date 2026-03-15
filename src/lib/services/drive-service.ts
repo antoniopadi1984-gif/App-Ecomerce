@@ -572,17 +572,39 @@ export async function uploadToProduct(
     const thumbnailUrl = res.data.thumbnailLink;
     const drivePath = `${opts.conceptCode ?? ''}/${opts.funnelStage ?? ''}/${fileName}`;
 
-    await (prisma as any).driveFile.upsert({
+    await (prisma as any).driveAsset.upsert({
         where: { driveFileId },
         create: {
-            storeId, productId, driveFileId, drivePath, fileName,
-            conceptCode: opts.conceptCode,
-            funnelStage: opts.funnelStage,
-            fileType: opts.fileType ?? 'VIDEO',
+            productId,
+            storeId,
+            driveFileId,
+            driveUrl: res.data.webViewLink || '',
+            drivePath,
+            fileName,
             mimeType,
-            nomenclature: fileName
+            assetType: opts.fileType || 'VIDEO',
+            fileType: opts.fileType || 'VIDEO',
+            conceptCode: opts.conceptCode || null,
+            funnelStage: opts.funnelStage || null,
+            angle: opts.angle || null,
+            nomenclature: fileName,
+            organized: true,
+            syncedAt: new Date(),
+            agentReadable: true,
+            metadata: {
+                webViewLink: res.data.webViewLink,
+                webContentLink: res.data.webContentLink,
+                thumbnailLink: res.data.thumbnailLink,
+                version: opts.version,
+            }
         },
-        update: { syncedAt: new Date(), drivePath },
+        update: {
+            driveUrl: res.data.webViewLink || '',
+            drivePath,
+            syncedAt: new Date(),
+            conceptCode: opts.conceptCode || undefined,
+            funnelStage: opts.funnelStage || undefined,
+        }
     });
 
     if (opts.creativeArtifactId) {

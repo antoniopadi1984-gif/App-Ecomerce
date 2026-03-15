@@ -67,7 +67,7 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Load Shopify products whenever active store changes
+    // Load products — Shopify first, fallback a BD local
     useEffect(() => {
         if (!activeStoreId) return;
         setShopifyLoading(true);
@@ -76,10 +76,24 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
         fetch(`/api/shopify/products?storeId=${activeStoreId}`)
             .then(r => r.json())
             .then(data => {
-                setShopifyConnected(data.connected ?? false);
-                setShopifyProducts(data.products ?? []);
+                if (data.connected && data.products?.length > 0) {
+                    setShopifyConnected(true);
+                    setShopifyProducts(data.products ?? []);
+                } else {
+                    return fetch(`/api/products?storeId=${activeStoreId}`)
+                        .then(r => r.json())
+                        .then(local => {
+                            setShopifyConnected(false);
+                            setShopifyProducts(local.products ?? []);
+                        });
+                }
             })
-            .catch(() => setShopifyConnected(false))
+            .catch(() => {
+                fetch(`/api/products?storeId=${activeStoreId}`)
+                    .then(r => r.json())
+                    .then(local => setShopifyProducts(local.products ?? []))
+                    .catch(() => {});
+            })
             .finally(() => setShopifyLoading(false));
     }, [activeStoreId]);
 

@@ -84,8 +84,13 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
     }, [activeStoreId]);
 
     // List of local product IDs for quick lookup
+    const normalizeId = (id: string | null | undefined) =>
+        id?.includes('gid://') ? id.split('/').pop() : id;
+
     const localSkuMap = new Map(allProducts.map(p => [p.sku, p.id]));
-    const localShopifyIdMap = new Map(allProducts.map(p => [p.shopifyId, p.id]));
+    const localShopifyIdMap = new Map(
+        allProducts.map(p => [normalizeId(p.shopifyId), p.id])
+    );
 
     const filteredProducts = React.useMemo(() => {
         if (!shopifyConnected) {
@@ -97,7 +102,12 @@ export function TopBar({ onMenuClick, isExpanded }: { onMenuClick: () => void; i
         // Merge Shopify products with local awareness
         const merged = shopifyProducts.map(sp => {
             const variantSku = sp.variants?.[0]?.sku;
-            const ecomBoomId = sp.ecomBoomId || localShopifyIdMap.get(sp.id) || (variantSku ? localSkuMap.get(variantSku) : null) || null;
+            const normalizedSpId = normalizeId(sp.id);
+            const ecomBoomId = sp.ecomBoomId 
+                || localShopifyIdMap.get(normalizedSpId)
+                || localShopifyIdMap.get(sp.id)
+                || (variantSku ? localSkuMap.get(variantSku) : null) 
+                || null;
             return {
                 id: sp.id,
                 title: sp.title,

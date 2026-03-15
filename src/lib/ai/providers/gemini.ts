@@ -88,8 +88,17 @@ export class GeminiProvider implements AIProvider {
             }],
             generationConfig: {
                 temperature: options.temperature || 0.7,
-                maxOutputTokens: options.maxTokens || 4096,
-            }
+                maxOutputTokens: options.maxTokens || 8192,
+                topP: 0.95,
+                topK: 40,
+                candidateCount: 1,
+            },
+            safetySettings: [
+                { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+            ]
         };
 
         if (options.jsonSchema) {
@@ -122,8 +131,17 @@ export class GeminiProvider implements AIProvider {
             }],
             generationConfig: {
                 temperature: options.temperature || 0.7,
-                maxOutputTokens: options.maxTokens || 4096,
-            }
+                maxOutputTokens: options.maxTokens || 8192,
+                topP: 0.95,
+                topK: 40,
+                candidateCount: 1,
+            },
+            safetySettings: [
+                { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+            ]
         };
 
         if (options.jsonSchema) {
@@ -382,8 +400,18 @@ export class GeminiProvider implements AIProvider {
             contents: [{ role: "user", parts }],
             generationConfig: {
                 temperature: options.temperature || 0.4,
+                maxOutputTokens: 8192,
+                topP: 0.95,
+                topK: 40,
+                candidateCount: 1,
                 responseMimeType: "application/json"
-            }
+            },
+            safetySettings: [
+                { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+            ]
         };
 
         const res = await fetch(url, {
@@ -425,8 +453,18 @@ export class GeminiProvider implements AIProvider {
             contents: [{ role: "user", parts }],
             generationConfig: {
                 temperature: options.temperature || 0.4,
+                maxOutputTokens: 8192,
+                topP: 0.95,
+                topK: 40,
+                candidateCount: 1,
                 responseMimeType: "application/json"
-            }
+            },
+            safetySettings: [
+                { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+            ]
         };
 
         const res = await fetch(url, {

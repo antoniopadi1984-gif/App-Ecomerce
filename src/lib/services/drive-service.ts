@@ -85,6 +85,8 @@ export async function getDriveClient() {
         scopes: [
             'https://www.googleapis.com/auth/drive',
             'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/drive.metadata',
+            'https://www.googleapis.com/auth/drive.metadata.readonly',
         ],
     });
     return google.drive({ version: 'v3', auth });

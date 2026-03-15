@@ -20,8 +20,8 @@ export interface Voice {
 }
 
 export class ElevenLabsService {
-    private static async getHeaders() {
-        const apiKey = await getConnectionSecret('store-main', 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY;
+    private static async getHeaders(): Promise<Record<string, string>> {
+        const apiKey = (await getConnectionSecret('store-main', 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY) ?? '';
         return {
             'xi-api-key': apiKey,
             'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ export class ElevenLabsService {
         const formData = new FormData();
         const file = new File([audioBlob], 'audio.mp3', { type: 'audio/mp3' });
         formData.append('file', file);
-        formData.append('model_id', 'scribe_v1');
+        formData.append('model_id', 'scribe_v2');  // más preciso, timestamps por palabra
         if (options?.language) formData.append('language_code', options.language);
 
         const apiKey = await getConnectionSecret(options?.storeId || 'store-main', 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY;
@@ -159,5 +159,82 @@ export class ElevenLabsService {
         }
 
         return response.arrayBuffer();
+    }
+
+    /**
+     * Dubbing — traduce un vídeo manteniendo la voz original del locutor.
+     * Devuelve un dubbingId que se puede consultar con getDubbingStatus().
+     */
+    static async dubVideo(
+        videoUrl: string,
+        targetLang: string,
+        sourceLanguage?: string
+    ): Promise<{ dubbing_id: string; expected_duration_sec: number }> {
+        const headers = await this.getHeaders();
+        const res = await fetch('https://api.elevenlabs.io/v1/dubbing', {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                source_url: videoUrl,
+                target_lang: targetLang,
+                source_lang: sourceLanguage || 'auto',
+                num_speakers: 0,  // auto-detect
+                watermark: false,
+                highest_resolution: true
+            })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(`ElevenLabs dubbing error: ${err.detail || res.statusText}`);
+        }
+        return res.json();
+    }
+
+    /**
+     * Obtener el estado de un job de dubbing.
+     * status: 'dubbing' | 'dubbed' | 'failed'
+     */
+    static async getDubbingStatus(dubbingId: string): Promise<{
+        dubbing_id: string;
+        name: string;
+        status: string;
+        target_languages: string[];
+        num_speakers: number;
+        error?: string;
+    }> {
+        const headers = await this.getHeaders();
+        const res = await fetch(
+            `https://api.elevenlabs.io/v1/dubbing/${dubbingId}`,
+            { headers }
+        );
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(`ElevenLabs dubbing status error: ${err.detail || res.statusText}`);
+        }
+        return res.json();
+    }
+
+    /**
+     * Voice Design — crea una nueva voz desde una descripción en texto.
+     * Devuelve el voiceId generado y un preview de audio.
+     */
+    static async designVoice(params: {
+        voiceDescription: string;
+        text: string;
+    }): Promise<{ voice_id: string; previews: any[] }> {
+        const headers = await this.getHeaders();
+        const res = await fetch('https://api.elevenlabs.io/v1/voice-generation/generate-voice', {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                voice_description: params.voiceDescription,
+                text: params.text
+            })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(`ElevenLabs voice design error: ${err.detail || res.statusText}`);
+        }
+        return res.json();
     }
 }

@@ -77,7 +77,7 @@ export function normalizeLogisticsStatus(source: string, externalStatus: string 
  */
 export async function recordOrderEvent(params: {
     orderId: string,
-    source: 'SHOPIFY' | 'BEEPING' | 'DROPPI' | 'WHATSAPP' | 'AGENT' | 'ZADARMA',
+    source: 'SHOPIFY' | 'BEEPING' | 'DROPPI' | 'WHATSAPP' | 'AGENT' | 'ZADARMA' | '17TRACK',
     type: string,
     externalEventId?: string,
     description: string,

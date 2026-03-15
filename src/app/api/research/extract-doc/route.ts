@@ -10,9 +10,37 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Faltan parámetros URL o storeId' }, { status: 400 });
         }
 
-        // In a real scenario, this would extract doc content. 
-        // We will simulate fetching the google doc.
-        const mockContent = `[Contenido importado de ${url}]\nProducto de ejemplo encontrado.`;
+        // Extraer contenido real — Google Doc o URL normal
+        let content = '';
+
+        if (url.includes('docs.google.com')) {
+            // Extraer ID del doc desde la URL
+            const docId = url.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1];
+            if (!docId) {
+                return NextResponse.json({ error: 'No se pudo extraer el ID del Google Doc' }, { status: 400 });
+            }
+            const { google } = await import('googleapis');
+            const { getGoogleAuth } = await import('@/lib/google-auth');
+            const auth = await getGoogleAuth(storeId);
+            const docs = google.docs({ version: 'v1', auth: auth as any });
+            const doc = await docs.documents.get({ documentId: docId });
+            content = doc.data.body?.content
+                ?.map((b: any) => b.paragraph?.elements?.map((e: any) => e.textRun?.content).join(''))
+                .filter(Boolean)
+                .join('\n') || '';
+        } else {
+            // URL normal — fetch + limpiar HTML
+            const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            const html = await res.text();
+            content = html
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .slice(0, 10000);
+        }
+
+        if (!content.trim()) {
+            return NextResponse.json({ error: 'No se pudo extraer contenido del documento' }, { status: 400 });
+        }
 
         const prompt = `
 Analiza este documento de investigación de producto y extrae en JSON:
@@ -59,7 +87,7 @@ Analiza este documento de investigación de producto y extrae en JSON:
     No inventes nada que no esté explícitamente en el documento.
     
     ---- CONTENIDO DEL DOCUMENTO ----
-    ${mockContent}
+    ${content}
     `;
 
         const extractedTextRes = await AiRouter.dispatch(

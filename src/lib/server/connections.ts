@@ -59,7 +59,7 @@ export async function getConnectionSecret(storeId: string, provider: string): Pr
         };
 
         const targetProvider = canonicalProvider(provider);
-        const isolatedProviders = ['SHOPIFY', 'META', 'BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
+        const isolatedProviders = ['SHOPIFY', 'BEEPING', 'DROPPI', 'DROPEA', 'STRIPE']; // META fuera → fallback a store-main para todas las tiendas
         const isIsolated = isolatedProviders.includes(targetProvider);
 
         let conn = await (prisma as any).connection.findFirst({
@@ -120,7 +120,7 @@ export async function getConnectionMeta(storeId: string, provider: string) {
         }
     });
 
-    const isolatedProviders = ['SHOPIFY', 'META', 'BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
+    const isolatedProviders = ['SHOPIFY', 'BEEPING', 'DROPPI', 'DROPEA', 'STRIPE']; // META fuera → fallback a store-main para todas las tiendas
     const isIsolated = isolatedProviders.includes(provider.toUpperCase());
 
     if (!meta && storeId !== 'store-main' && !isIsolated) {

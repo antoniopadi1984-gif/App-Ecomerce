@@ -69,19 +69,19 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // Simular guardado masivo en base de datos de los Folders IDs generados por Drive
-        const dbOperations = foldersToCreate.map((path) => {
-            return prisma.driveFolder.create({
-                data: {
-                    storeId,
-                    productId,
-                    path,
-                    driveFolderId: `mock_folder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                }
-            });
-        });
+        // Crear estructura real en Google Drive y persistir folder IDs en BD
+        const { setupProductDrive } = await import('@/lib/services/drive-service');
+        const realFolderId = await setupProductDrive(productId, storeId);
 
-        await prisma.$transaction(dbOperations);
+        // setupProductDrive ya crea los driveFolder records en BD internamente
+        // Registrar el folder raíz si no existe aún
+        if (realFolderId) {
+            try {
+                await prisma.driveFolder.create({
+                    data: { storeId, productId, path: 'ROOT', driveFolderId: realFolderId }
+                });
+            } catch { /* ya existe — ignorar */ }
+        }
 
         // 2. Trigger auto-import for Competitors with Meta/TikTok URLs
         const origin = req.headers.get('origin') || 'http://localhost:3000';

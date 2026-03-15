@@ -1,65 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getMetaAdsService } from '@/lib/marketing/meta-ads';
+import { getConnectionSecret } from '@/lib/server/connections';
+
+export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const storeId = searchParams.get('storeId');
+    const storeId = req.headers.get('X-Store-Id') || 'store-main';
 
-    if (!storeId) {
-        return NextResponse.json({ error: "Missing storeId" }, { status: 400 });
+    const token = await getConnectionSecret(storeId, 'META');
+    if (!token) return NextResponse.json({ error: 'Meta token no configurado' }, { status: 401 });
+
+    // 1. Descubrir todas las cuentas publicitarias accesibles
+    const accountsRes = await fetch(
+        `https://graph.facebook.com/v19.0/me/adaccounts?fields=id,name,account_id,account_status,currency,timezone_name,business,spend_cap,amount_spent&limit=100`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const accountsData = await accountsRes.json();
+
+    if (accountsData.error) {
+        return NextResponse.json({ error: accountsData.error.message }, { status: 400 });
     }
 
-    try {
-        const metaService = await getMetaAdsService(prisma, storeId);
-        const accounts = await metaService.getAdAccounts();
+    // 2. Para cada cuenta, obtener páginas e Instagram asociadas
+    const accounts = await Promise.all(
+        (accountsData.data || []).map(async (account: any) => {
+            // Páginas de Facebook asociadas
+            const pagesRes = await fetch(
+                `https://graph.facebook.com/v19.0/${account.id}/pages?fields=id,name,fan_count,instagram_business_account`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            ).then(r => r.json()).catch(() => ({ data: [] }));
 
-        // Sync with BD
-        for (const acc of accounts) {
-            await (prisma as any).metaAdAccount.upsert({
-                where: { storeId_accountId: { storeId, accountId: acc.id } },
-                update: {
-                    name: acc.name,
-                    currency: acc.currency,
-                    status: acc.account_status === 1 ? 'ACTIVE' : 'INACTIVE'
-                },
-                create: {
-                    storeId,
-                    accountId: acc.id,
-                    name: acc.name,
-                    currency: acc.currency,
-                    status: acc.account_status === 1 ? 'ACTIVE' : 'INACTIVE',
-                    isActive: false
-                }
-            });
-        }
+            return {
+                id: account.id,
+                accountId: account.account_id,
+                name: account.name,
+                status: account.account_status,
+                currency: account.currency,
+                timezone: account.timezone_name,
+                amountSpent: account.amount_spent,
+                business: account.business?.name,
+                pages: pagesRes.data || [],
+            };
+        })
+    );
 
-        const dbAccounts = await (prisma as any).metaAdAccount.findMany({
-            where: { storeId }
-        });
-
-        return NextResponse.json({ success: true, accounts: dbAccounts });
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
-    }
-}
-
-export async function PUT(req: NextRequest) {
-    try {
-        const body = await req.json();
-        const { storeId, accountId, isActive } = body;
-
-        if (!storeId || !accountId) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-        }
-
-        const updated = await (prisma as any).metaAdAccount.update({
-            where: { storeId_accountId: { storeId, accountId } },
-            data: { isActive: !!isActive }
-        });
-
-        return NextResponse.json({ success: true, account: updated });
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
-    }
+    return NextResponse.json({ ok: true, accounts, total: accounts.length });
 }

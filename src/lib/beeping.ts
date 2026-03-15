@@ -10,9 +10,10 @@ export class BeepingClient {
     private async fetchBeeping(endpoint: string, options: RequestInit = {}) {
         const url = `${this.apiUrl}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
 
-        const authHeader = this.apiKey.startsWith('Bearer ')
-            ? this.apiKey
-            : `Bearer ${this.apiKey}`;
+        let authHeader = this.apiKey;
+        if (authHeader && !authHeader.startsWith('Bearer ')) {
+            authHeader = `Bearer ${authHeader}`;
+        }
 
         console.log(`[Beeping API] ${options.method || 'GET'} ${url}`);
 

@@ -24,13 +24,13 @@ export const FEATURE_FLAGS = {
     },
     CONNECTIONS: {
         SHOPIFY_ENABLED: true,
-        META_ENABLED: false, // Phase 5 target
-        TIKTOK_ENABLED: false, // Phase 5 target
+        META_ENABLED: true,
+        TIKTOK_ENABLED: false,
         BEEPING_ENABLED: true,
-        DROPEA_ENABLED: true,
-        WHATSAPP_ENABLED: false, // Phase 8 target
-        ZADARMA_ENABLED: false,  // Phase 8 target
-        DRIVE_ORG_ENABLED: false, // Phase 11 target
+        DROPEA_ENABLED: false,
+        WHATSAPP_ENABLED: true,
+        ZADARMA_ENABLED: false,
+        DRIVE_ORG_ENABLED: true,
     }
 };
 

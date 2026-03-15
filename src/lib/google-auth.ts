@@ -5,15 +5,25 @@ import { getConnectionSecret } from '@/lib/server/connections';
  * GOOGLE CLOUD UNIFIED AUTHENTICATION
  * 
  * Centralized utility to get a GoogleAuth instance with all required scopes 
- * for the application: Sheets, Drive, Docs, and Analytics.
+ * for the application: Sheets, Drive, Docs, Analytics, Gmail, Calendar, Cloud Platform.
  */
 
 export const GOOGLE_SCOPES = [
+    // Workspace
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/documents',
+    // Analytics
     'https://www.googleapis.com/auth/analytics.readonly',
-    'https://www.googleapis.com/auth/analytics'
+    'https://www.googleapis.com/auth/analytics',
+    // Gmail
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/gmail.readonly',
+    // Calendar
+    'https://www.googleapis.com/auth/calendar.readonly',
+    // Cloud Platform
+    'https://www.googleapis.com/auth/cloud-platform',
 ];
 
 export async function getGoogleAuth(storeId: string = 'store-main') {

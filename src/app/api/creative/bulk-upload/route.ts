@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BulkUploadPipeline } from '@/lib/creative/bulk-upload-pipeline';
+import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300; // 5 min para lotes grandes
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-    const storeId   = req.headers.get('X-Store-Id');
-    const formData  = await req.formData();
-    const productId = formData.get('productId') as string;
+    const storeId  = req.headers.get('X-Store-Id');
+    const formData = await req.formData();
+    const productId    = formData.get('productId') as string;
     const isCompetitor = formData.get('isCompetitor') === 'true';
-    const files     = formData.getAll('files') as File[];
+    const files        = formData.getAll('files') as File[];
 
     if (!productId || !files.length || !storeId) {
         return NextResponse.json(
@@ -18,38 +18,92 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    // Convertir Files a Buffers
-    const fileBuffers = await Promise.all(
-        files.map(async (file) => ({
-            buffer: Buffer.from(await file.arrayBuffer()),
+    const queued: any[] = [];
+
+    for (const file of files) {
+        const isVideo = file.type.startsWith('video/');
+        const isImage = file.type.startsWith('image/');
+        if (!isVideo && !isImage) continue;
+
+        // 1. Crear registro inmediato en BD
+        const asset = await (prisma as any).creativeAsset.create({
+            data: {
+                productId,
+                storeId,
+                type: isVideo ? 'VIDEO' : 'IMAGE',
+                name: file.name,
+                processingStatus: 'PENDING',
+                metadata: JSON.stringify({
+                    originalName: file.name,
+                    fileSize: file.size,
+                    isCompetitor
+                })
+            }
+        });
+
+        // 2. Lanzar pipeline en background — NO awaitar
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const fileName = file.name;
+        const assetId = asset.id;
+
+        // Fire and forget
+        ;(async () => {
+            try {
+                await (prisma as any).creativeAsset.update({
+                    where: { id: assetId },
+                    data: { processingStatus: 'PROCESSING' }
+                });
+
+                if (isVideo) {
+                    // Llamar al pipeline de vídeo existente
+                    const fd = new FormData();
+                    const blob = new Blob([buffer], { type: file.type });
+                    fd.append('file', blob, fileName);
+                    fd.append('productId', productId);
+                    fd.append('assetId', assetId);
+
+                    await fetch(
+                        `${process.env.NEXT_PUBLIC_APP_URL}/api/video-lab/process`,
+                        {
+                            method: 'POST',
+                            headers: { 'X-Store-Id': storeId },
+                            body: fd
+                        }
+                    );
+                } else {
+                    // Imagen — limpiar metadata y subir a Drive
+                    const { BulkUploadPipeline } = await import('@/lib/creative/bulk-upload-pipeline');
+                    await BulkUploadPipeline.processImage({
+                        buffer, fileName, productId, storeId, isCompetitor
+                    });
+
+                    await (prisma as any).creativeAsset.update({
+                        where: { id: assetId },
+                        data: { processingStatus: 'DONE' }
+                    });
+                }
+            } catch (err: any) {
+                console.error(`[BulkUpload] Error procesando ${fileName}:`, err.message);
+                await (prisma as any).creativeAsset.update({
+                    where: { id: assetId },
+                    data: { processingStatus: 'ERROR', metadata: JSON.stringify({ error: err.message }) }
+                }).catch(() => {});
+            }
+        })();
+
+        queued.push({
+            assetId,
             fileName: file.name,
-        }))
-    );
+            type: isVideo ? 'VIDEO' : 'IMAGE',
+            status: 'PENDING'
+        });
+    }
 
-    // Procesar en lote
-    const { results, summary } = await BulkUploadPipeline.processBatch({
-        files: fileBuffers,
-        productId,
-        storeId,
-        source: 'UPLOAD',
-        isCompetitor,
-    });
-
+    // Responder inmediatamente sin esperar el procesamiento
     return NextResponse.json({
         ok: true,
-        summary,
-        results: results.map(r => ({
-            fileName:    r.fileName,
-            success:     r.success,
-            name:        r.nomenclatura,       // MICR-C1-V1.mp4
-            concept:     r.concept ? `C${r.concept}` : null,
-            conceptName: r.conceptName,
-            traffic:     r.audienceType,
-            awareness:   r.awarenessLevel,
-            drivePath:   r.drivePath,
-            assetId:     r.assetId,
-            clips:       r.clips,
-            error:       r.error,
-        }))
+        queued: queued.length,
+        jobs: queued,
+        message: `${queued.length} archivos en cola — la IA los clasifica automáticamente`
     });
 }

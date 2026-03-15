@@ -98,6 +98,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
         awareness?: string;
         drivePath?: string;
         error?: string;
+        assetId?: string; // para polling de estado
     }>>([]);
     const [bulkProcessing, setBulkProcessing] = useState(false);
     const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -367,29 +368,59 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
             const data = await res.json();
 
             if (data.ok) {
-                // Actualizar queue con resultados
-                setBulkQueue(data.results.map((r: any) => ({
-                    fileName:    r.fileName,
-                    status:      r.success ? 'done' : 'error',
-                    name:        r.name,
-                    concept:     r.concept,
-                    conceptName: r.conceptName,
-                    traffic:     r.traffic,
-                    awareness:   r.awareness,
-                    drivePath:   r.drivePath,
-                    error:       r.error,
+                // Actualizar cola con estado inicial (processing)
+                setBulkQueue(data.jobs.map((j: any) => ({
+                    fileName: j.fileName,
+                    status: 'processing',
+                    assetId: j.assetId
                 })));
 
-                toast.success(
-                    `${data.summary.success}/${data.summary.total} archivos procesados`
-                );
-                fetchOwnCreatives();
+                // Polling cada 5 segundos para actualizar estado
+                const poll = setInterval(async () => {
+                    setBulkQueue(currentQueue => {
+                        const stillProcessing = currentQueue.filter(q => q.status === 'processing');
+                        if (stillProcessing.length === 0) {
+                            clearInterval(poll);
+                            setBulkProcessing(false);
+                            fetchOwnCreatives();
+                        }
+                        return currentQueue;
+                    });
+
+                    // Consultar estado de cada item en procesamiento
+                    setBulkQueue(currentQueue => {
+                        const stillProcessing = currentQueue.filter(q => q.status === 'processing');
+                        stillProcessing.forEach(async (item) => {
+                            if (!item.assetId) return;
+                            const statusRes = await fetch(
+                                `/api/creative/asset-status?assetId=${item.assetId}`
+                            ).then(r => r.json()).catch(() => null);
+
+                            if (statusRes?.status === 'DONE' || statusRes?.status === 'ERROR') {
+                                setBulkQueue(q => q.map(qi => qi.assetId === item.assetId ? {
+                                    ...qi,
+                                    status: statusRes.status === 'DONE' ? 'done' : 'error',
+                                    name:        statusRes.name,
+                                    concept:     statusRes.concept,
+                                    conceptName: statusRes.conceptName,
+                                    traffic:     statusRes.traffic,
+                                    awareness:   statusRes.awareness,
+                                    drivePath:   statusRes.drivePath,
+                                    error:        statusRes.error
+                                } : qi));
+                            }
+                        });
+                        return currentQueue;
+                    });
+                }, 5000);
+
+                toast.success(`${data.queued} archivos en procesamiento`);
             }
         } catch (err: any) {
             toast.error('Error en el procesamiento masivo');
             setBulkQueue(q => q.map(i => ({ ...i, status: 'error', error: err.message })));
         } finally {
-            setBulkProcessing(false);
+            // NO poner setBulkProcessing(false) aquí — lo hace el polling cuando termina
         }
     };
 

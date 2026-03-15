@@ -72,7 +72,7 @@ export class GeminiProvider implements AIProvider {
 
         const project = key.project_id;
         const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
-        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "europe-west1";
         const model = options.model;
 
         const token = await this.getAccessToken();
@@ -162,7 +162,7 @@ export class GeminiProvider implements AIProvider {
         const key = JSON.parse(saKey!);
         const project = key.project_id;
         const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
-        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "europe-west1";
         const model = options.model || "imagegeneration@006";
 
         const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predict`;
@@ -196,7 +196,7 @@ export class GeminiProvider implements AIProvider {
         const key = JSON.parse(saKey!);
         const project = key.project_id;
         const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
-        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "europe-west1";
         const model = options.model || "veo-3.1";
 
         // VEO 3.1 Long Running Operation Pattern
@@ -240,7 +240,7 @@ export class GeminiProvider implements AIProvider {
         const key = JSON.parse(saKey);
         const projectId = key.project_id;
         const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
-        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "europe-west1";
 
         const token = await this.getAccessToken();
         const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${params.model}:predictLongRunning`;
@@ -297,7 +297,7 @@ export class GeminiProvider implements AIProvider {
         const key = JSON.parse(saKey!);
         const project = key.project_id;
         const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
-        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "europe-west1";
         const model = options.model || "lyria-002";
 
         // LYRIA 2 pattern
@@ -364,7 +364,7 @@ export class GeminiProvider implements AIProvider {
     private async invokeVertexVision(options: VisionOptions): Promise<AIResponse> {
         const token = await this.getAccessToken();
         const gcpMeta = await getConnectionMeta('store-main', 'VERTEX');
-        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "us-central1";
+        const location = gcpMeta?.VERTEX_LOCATION || process.env.GOOGLE_LOCATION || "europe-west1";
         const saKey = await getConnectionSecret('store-main', 'GCP') || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
         const key = JSON.parse(saKey!);
         const project = key.project_id;

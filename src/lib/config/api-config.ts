@@ -9,7 +9,7 @@ export const API_CONFIG = {
     // ============================================
     vertexAI: {
         projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',
-        location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
+        location: process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1',
         apiKey: process.env.VERTEX_AI_API_KEY || '',
 
         models: {
@@ -45,8 +45,8 @@ export const API_CONFIG = {
         apiToken: process.env.REPLICATE_API_TOKEN || '',
 
         models: {
-            livePortrait: process.env.REPLICATE_LIVEPORTRAIT || 'fofr/live-portrait:89629de4f370173b28ccf588d19540a7c349cf3cc9a1935b22cd45f9b2b55a11',
-            sadTalker: process.env.REPLICATE_SADTALKER || 'cjwbw/sadtalker:3aa3dac9353cc4d6bd62a35e0f571bf7ce2b05b8e0b8b9de0e4e472f8de50f26',
+            livePortrait: process.env.REPLICATE_LIVEPORTRAIT || 'sync/lipsync-2-pro',
+            sadTalker: process.env.REPLICATE_SADTALKER || 'bytedance/omni-human',
             fluxDev: process.env.REPLICATE_FLUX_DEV || 'black-forest-labs/flux-dev'
         }
     },

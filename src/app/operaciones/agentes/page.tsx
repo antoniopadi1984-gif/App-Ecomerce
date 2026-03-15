@@ -79,7 +79,20 @@ export default function AgentesPage() {
     if (!activeStoreId) return;
     fetch(`/api/agents/config?storeId=${activeStoreId}`)
       .then(r => r.json())
-      .then(d => setConfigs(Array.isArray(d) ? d : []));
+      .then(d => {
+        if (!Array.isArray(d)) { setConfigs([]); return; }
+        const normalized = d.filter(Boolean).map((item: any) => ({
+          agentId: item.agentId || item.role || item.id || 'unknown',
+          label: item.label || item.name || item.role || item.agentId || 'Agente',
+          description: item.description || '',
+          module: item.module || 'sistema',
+          systemPrompt: item.systemPrompt || '',
+          isCustom: item.isCustom ?? false,
+          emoji: item.emoji || '🤖',
+          ...item,
+        }));
+        setConfigs(normalized);
+      });
   };
 
   useEffect(() => { loadConfigs(); }, [activeStoreId]);

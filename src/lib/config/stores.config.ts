@@ -12,19 +12,19 @@ export const STORES_CONFIG: Record<string, { name: string; domain: string; curre
         name: 'AleEssence',
         domain: 'f7z7nn-ei.myshopify.com',
         currency: 'EUR',
-        supportEmail: 'soporte@aleessence.com'
+        supportEmail: 'soporte@aleessence.es'  // ← .es
     },
     'alecare-mx': {
         name: 'AleCare MX',
         domain: 'im8zf5-6c.myshopify.com',
         currency: 'MXN',
-        supportEmail: 'soporte@alecare.mx'
+        supportEmail: 'soporte@alecare.es'     // ← alecare.es
     },
     'cmlxrad5405b826d99j9kpgyy': {
         name: 'AleCare UK',
-        domain: 'v1etfu-he.myshopify.com',  // ← v1etfu (verificado y funcional)
-        currency: 'GBP',
-        supportEmail: 'support@alecare.co.uk'
+        domain: 'v1ethu-he.myshopify.com',
+        currency: 'EUR',
+        supportEmail: 'support@alecareshop.com' // ← alecareshop.com
     }
 } as const;
 

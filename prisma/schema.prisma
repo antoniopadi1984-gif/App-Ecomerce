@@ -523,6 +523,9 @@ model Order {
   trackingUrl            String?
   logisticsStatus        String?
   finalStatus            String?
+  trackingLastEvent      String?
+  trackingLastLocation   String?
+  trackingLastUpdate     DateTime?
   confirmationDate       DateTime?
   confirmationAttempts   Int                  @default(0)
   incidenceResult        String?

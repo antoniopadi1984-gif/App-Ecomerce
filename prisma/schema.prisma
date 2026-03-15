@@ -468,6 +468,7 @@ model Product {
   competitorLibraries CompetitorLibrary[]
   extensionCaptures   ExtensionCapture[]
   landingClones       LandingClone[]
+  copyVariants        CopyVariant[]
 
   @@unique([shopifyId, storeId])
 }
@@ -2961,5 +2962,24 @@ enum RelationType {
   VERSION_OF
   CLONE_OF
   USED_IN
+}
+
+model CopyVariant {
+  id          String   @id @default(cuid())
+  productId   String
+  storeId     String
+  versionId   String?
+  avatarId    String?
+  angleId     String?
+  format      String
+  content     String
+  wordCount   Int      @default(0)
+  driveFileId String?
+  driveUrl    String?
+  createdAt   DateTime @default(now())
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@index([productId, format])
+  @@index([storeId])
 }
 

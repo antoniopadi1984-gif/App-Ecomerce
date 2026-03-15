@@ -844,3 +844,25 @@ export async function processInbox(productId: string, storeId: string) {
 
     return { ok: true, processed: results.length, results };
 }
+
+/**
+ * Sube texto plano como archivo .txt a Drive bajo la carpeta del producto.
+ */
+export async function uploadTextToDrive(
+    productId: string,
+    storeId: string,
+    fileName: string,
+    content: string,
+    opts: { subfolderName?: string } = {}
+): Promise<{ driveFileId: string; driveUrl: string }> {
+    const buffer = Buffer.from(content, 'utf-8');
+    const result = await uploadToProduct(
+        buffer,
+        fileName,
+        'text/plain',
+        productId,
+        storeId,
+        { fileType: 'DOCUMENT', subfolderName: opts.subfolderName }
+    );
+    return { driveFileId: result.driveFileId, driveUrl: result.driveUrl };
+}

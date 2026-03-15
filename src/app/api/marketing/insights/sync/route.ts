@@ -31,11 +31,40 @@ export async function POST(req: NextRequest) {
                 time_range: JSON.stringify({ since: dateStr, until: dateStr }),
                 level: 'ad', // most granular
                 fields: [
-                    'impressions', 'reach', 'frequency', 'spend', 'clicks', 'ctr', 'cpc', 'cpm',
-                    'actions', 'action_values', 'video_thruplay_watched_actions',
-                    'video_continuous_2_sec_watched_actions', 'ad_id', 'ad_name'
+                    // Básicos
+                    'impressions', 'reach', 'frequency', 'spend',
+                    'clicks', 'unique_clicks', 'ctr', 'cpc', 'cpm', 'cpp',
+                    // Acciones
+                    'actions', 'action_values', 'unique_actions',
+                    'cost_per_action_type', 'cost_per_unique_action_type',
+                    // Video
+                    'video_thruplay_watched_actions',
+                    'video_continuous_2_sec_watched_actions',
+                    'video_p25_watched_actions',
+                    'video_p50_watched_actions',
+                    'video_p75_watched_actions',
+                    'video_p95_watched_actions',
+                    'video_play_actions',
+                    // Landing
+                    'outbound_clicks', 'outbound_clicks_ctr',
+                    'landing_page_views',
+                    'cost_per_outbound_click',
+                    // Identificación
+                    'objective', 'optimization_goal',
+                    'ad_id', 'ad_name', 'adset_id', 'adset_name',
+                    'campaign_id', 'campaign_name',
+                    'account_id', 'account_name',
+                    'status', 'delivery_info',
+                    // Presupuesto
+                    'budget_remaining', 'budget_limit',
+                    // Conversiones
+                    'website_purchase_roas', 'purchase_roas',
+                    'conversion_rate_ranking', 'quality_ranking',
+                    'engagement_rate_ranking'
                 ].join(','),
-                action_attribution_windows: JSON.stringify(["1d_click", "7d_click", "28d_click", "1d_engaged_view"])
+                action_attribution_windows: JSON.stringify([
+                    "1d_click", "7d_click", "28d_click", "1d_engaged_view"
+                ]),
             });
 
             if (rawInsights.data) {

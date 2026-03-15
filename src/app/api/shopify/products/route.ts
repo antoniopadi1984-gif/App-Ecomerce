@@ -50,12 +50,22 @@ export async function GET(req: NextRequest) {
         // Get info about synced products in EcomBoom
         const ecomProducts = await prisma.product.findMany({
             where: { storeId },
-            select: { id: true, sku: true }
+            select: { id: true, sku: true, shopifyId: true }
         });
+
+        // Mapas de lookup por SKU y por shopifyId (normalizado, sin prefijo GID)
         const skuToId = new Map(ecomProducts.map(p => [p.sku, p.id]));
+        const shopifyIdToId = new Map(ecomProducts.map(p => {
+            if (!p.shopifyId) return [null, p.id] as [null, string];
+            const normalized = p.shopifyId.includes('gid://')
+                ? p.shopifyId.split('/').pop()!
+                : p.shopifyId;
+            return [normalized, p.id] as [string, string];
+        }));
 
         const products = (data.products || []).map((p: any) => {
             const variantList = p.variants?.nodes || p.variants || [];
+            const normalizedPid = p.id?.includes('gid://') ? p.id.split('/').pop() : p.id;
             return {
                 id: p.id,
                 title: p.title,
@@ -67,7 +77,9 @@ export async function GET(req: NextRequest) {
                     sku: v.sku
                 })),
                 status: p.status,
-                ecomBoomId: skuToId.get(variantList[0]?.sku) || null
+                ecomBoomId: shopifyIdToId.get(normalizedPid)
+                    || skuToId.get(variantList[0]?.sku)
+                    || null
             };
         });
 

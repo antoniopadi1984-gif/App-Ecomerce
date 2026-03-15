@@ -191,7 +191,7 @@ export class AgentDispatcher {
 
         const modelName = config.model.replace(/^models\//, '');
 
-        // ── Canal 1: Vertex AI (Service Account) ─────────────────────────────
+        // Canal 1: Vertex AI (Service Account) ─────────────────────────────
         // Usa v1beta1 que soporta los modelos Gemini 2026 (gemini-3.1-pro-preview, etc.)
         if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
             try {

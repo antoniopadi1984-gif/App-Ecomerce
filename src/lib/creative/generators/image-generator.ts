@@ -26,7 +26,7 @@ export class ImageGenerator {
 
         const output = await replicate.run(model as any, { input });
         this.generatedCount++;
-        return Array.isArray(output) ? output[0] : output as string;
+        return (Array.isArray(output) ? output[0] : output) as string;
     }
 
     async generateBatch(configs: { prompt: string; aspectRatio: string; style: string; imageUrl?: string }[]): Promise<string[]> {

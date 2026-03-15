@@ -9,7 +9,7 @@ export class VoiceGenerator {
             || process.env.ELEVENLABS_VOICE_FEMALE
             || '21m00Tcm4TlvDq8ikWAM';
 
-        // SIEMPRE eleven_v3 — NO eleven_multilingual_v1
+        // SIEMPRE eleven_v3 — NO eleven_v3
         const audioBuffer = await ElevenLabsService.textToSpeech(
             opts.text, voiceId, {
                 stability: 0.5,

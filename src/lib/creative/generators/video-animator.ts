@@ -27,6 +27,20 @@ export class VideoAnimator {
             }
         });
 
-        return Array.isArray(output) ? output[0] : output as string;
+        return (Array.isArray(output) ? output[0] : output) as string;
+    }
+
+    async animateBatch(configs: { imageUrl: string; audioUrl: string; cropFactor?: number; quality?: 'standard' | 'premium' }[]): Promise<string[]> {
+        return Promise.all(configs.map(c => this.animate(c)));
+    }
+
+    calculateCost(durationSeconds: number): number {
+        // $0.05 por cada segundo de video animado (basado en mmaudio/omni-human)
+        return durationSeconds * 0.05;
+    }
+
+    estimateDuration(charCount: number): number {
+        // ~15 caracteres por segundo en locución normal
+        return Math.ceil(charCount / 15);
     }
 }

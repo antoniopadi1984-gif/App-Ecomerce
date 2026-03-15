@@ -1,69 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { agentDispatcher } from '@/lib/agents/agent-dispatcher';
-import { DEFAULT_AGENT_PROMPTS } from '@/lib/ai/defaults/agent-prompts';
+import { AgentRole } from '@/lib/agents/agent-registry';
+import prisma from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
     try {
-        const { storeId, agentId, message, context, history = [] } = await req.json();
+        const { role, prompt, context, storeId, productId } = await req.json();
+        if (!prompt) return NextResponse.json({ error: 'prompt requerido' }, { status: 400 });
 
-        if (!storeId || !agentId || !message) {
-            return NextResponse.json({ error: 'storeId, agentId y message son requeridos' }, { status: 400 });
-        }
-
-        // 1. Buscar config del agente en BD (string libre, no enum)
-        let agentConfig = await (prisma as any).agentConfig.findFirst({
-            where: { storeId, agentId }
+        // Crear registro inicial de la ejecución
+        // Nota: Adaptado al esquema actual (input/output/status)
+        const agentRun = await prisma.agentRun.create({
+            data: {
+                storeId: storeId || 'store-main',
+                agentProfileId: role || 'general',
+                input: prompt.slice(0, 2000),
+                status: 'RUNNING',
+            }
         });
 
-        // 2. Si no existe, buscar en DEFAULT_AGENT_PROMPTS por el agentId
-        let systemPrompt = agentConfig?.systemPrompt;
-        if (!systemPrompt) {
-            // Buscar en prompts por defecto (case insensitive)
-            const key = Object.keys(DEFAULT_AGENT_PROMPTS).find(
-                k => k.toLowerCase() === agentId.toLowerCase().replace(/-/g, '_')
-            );
-            systemPrompt = key ? DEFAULT_AGENT_PROMPTS[key] : `Eres un asistente especializado llamado ${agentId}.`;
-        }
+        const result = await agentDispatcher.dispatch({ 
+            role: role as AgentRole, 
+            prompt, 
+            context,
+            storeId 
+        });
 
-        // 3. Construir mensaje con historial y contexto
-        const contextStr = context
-            ? `\n\nCONTEXTO DISPONIBLE:\n${typeof context === 'string' ? context : JSON.stringify(context, null, 2)}`
-            : '';
-
-        const historyStr = history.length > 0
-            ? '\n\nHISTORIAL PREVIO:\n' + history.map((h: any) => `${h.role === 'user' ? 'Usuario' : 'Agente'}: ${h.content}`).join('\n')
-            : '';
-
-        const fullMessage = `${historyStr}${contextStr}\n\nUsuario: ${message}`;
-
-        // 4. Determinar provider y modelo según agentId
-        const geminiAgents = ['research-core', 'video-intelligence', 'creative-forensic', 'drive-intelligence', 'INVESTIGACION', 'CREATIVO', 'MARKETING'];
-        const isGemini = geminiAgents.some(g => agentId.toUpperCase().includes(g.toUpperCase()));
-
-        const result = await agentDispatcher.dispatch({
-            role: isGemini ? 'research-lab' : 'copywriter-elite',
-            prompt: fullMessage,
-            storeId,
-            // Override systemPrompt con el del agente real
-            systemPromptOverride: systemPrompt
-        } as any);
-
-        // 5. Guardar AgentRun
-        await prisma.agentRun.create({
+        // Actualizar con el resultado
+        await prisma.agentRun.update({
+            where: { id: agentRun.id },
             data: {
-                storeId,
-                agentProfileId: agentConfig?.id || agentId,
-                input: message,
-                output: result.text,
-                status: 'SUCCESS'
+                status: 'SUCCESS',
+                output: result.text.slice(0, 5000),
+                latency: result.usage?.totalTokens || 0, // Usamos latency para guardar tokens si no existe tokensUsed
             }
-        }).catch(() => {});
+        });
 
-        return NextResponse.json({ response: result.text, agentId });
+        return NextResponse.json({
+            success: true,
+            runId: agentRun.id,
+            role: result.role,
+            model: result.model,
+            content: result.text, // Mapeamos result.text -> content para la respuesta esperada
+            usage: result.usage,
+            cost: result.cost,
+        });
+    } catch (e: any) {
+        console.error('[Agent Chat API Error]:', e);
+        return NextResponse.json({ error: e.message }, { status: 500 });
+    }
+}
 
-    } catch (error: any) {
-        console.error('[Agents Chat]', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+export async function GET(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const storeId = searchParams.get('storeId');
+        const runs = await prisma.agentRun.findMany({
+            where: storeId ? { storeId } : {},
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+        });
+        return NextResponse.json(runs);
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

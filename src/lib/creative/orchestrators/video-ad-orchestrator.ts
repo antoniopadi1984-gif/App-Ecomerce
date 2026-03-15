@@ -1,6 +1,7 @@
 import { ImageGenerator } from '../generators/image-generator';
 import { VoiceGenerator } from '../generators/voice-generator';
 import { VideoAnimator } from '../generators/video-animator';
+import { uploadBufferToGCS } from '../../services/gcs-upload-service';
 
 export interface VideoAdConfig {
     avatarPrompt: string;
@@ -53,10 +54,14 @@ export class VideoAdOrchestrator {
 
             // PASO 2: Generar voz
             console.log('[VideoAdOrchestrator] 🎙️ Paso 2/3: Generando voz...');
-            const audioUrl = await this.voiceGen.generate({
+            const audioBuffer = await this.voiceGen.generate({
                 text: config.script,
                 voiceId: config.voiceId
             });
+            const audioUrl = await uploadBufferToGCS(
+                audioBuffer,
+                `audio/v_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`
+            );
 
             // PASO 3: Animar video
             console.log('[VideoAdOrchestrator] 🎬 Paso 3/3: Animando video...');
@@ -69,7 +74,7 @@ export class VideoAdOrchestrator {
             const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
             const cost = {
-                image: this.imageGen.calculateCost(),
+                image: this.imageGen.calculateCost(1),
                 voice: this.voiceGen.calculateCost(config.script.length),
                 video: this.animator.calculateCost(
                     this.animator.estimateDuration(config.script.length)
@@ -115,11 +120,18 @@ export class VideoAdOrchestrator {
 
             // FASE 2: Generar TODAS las voces en paralelo
             console.log('[VideoAdOrchestrator] 🎙️ FASE 2/3: Generando voces en paralelo...');
-            const audioUrls = await this.voiceGen.generateBatch(
+            const audioBuffers = await this.voiceGen.generateBatch(
                 configs.map(c => ({
                     text: c.script,
                     voiceId: c.voiceId
                 }))
+            );
+
+            const audioUrls = await Promise.all(
+                audioBuffers.map((buffer, i) => uploadBufferToGCS(
+                    buffer,
+                    `audio/batch_${Date.now()}_${i}.mp3`
+                ))
             );
 
             // FASE 3: Animar TODOS los videos en paralelo
@@ -137,7 +149,7 @@ export class VideoAdOrchestrator {
             // Crear resultados
             const results: VideoAdResult[] = configs.map((config, i) => {
                 const cost = {
-                    image: this.imageGen.calculateCost(),
+                    image: this.imageGen.calculateCost(1),
                     voice: this.voiceGen.calculateCost(config.script.length),
                     video: this.animator.calculateCost(
                         this.animator.estimateDuration(config.script.length)

@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         // Si autoReply=true, el agente IA genera la respuesta
         if (autoReply) {
             const result = await agentDispatcher.dispatch({
-                role: 'copywriter',
+                role: 'ops-commander',
                 storeId,
                 prompt: `Redacta una respuesta profesional y empática a este correo de cliente.
 

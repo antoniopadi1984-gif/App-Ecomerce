@@ -7,9 +7,9 @@ import { prisma } from '@/lib/prisma';
  */
 
 const DEPRECATED_MODELS = [
-  'gemini-1.5-pro', 'gemini-1.5-pro-002', 'gemini-1.5-flash-002',
-  'gemini-1.5-flash', 'gemini-3-flash-preview', 'gemini-1.5-pro-latest',
-  'eleven_multilingual_v1', 'eleven_multilingual_v2'
+  'gemini-3.1-pro-preview', 'gemini-3.1-pro-preview-002', 'gemini-3.1-flash-lite-preview',
+  'gemini-3.1-flash-lite-preview', 'gemini-3-flash-preview', 'gemini-3.1-pro-preview-latest',
+  'eleven_v3', 'eleven_v3'
 ];
 
 export async function GET(req: NextRequest) {

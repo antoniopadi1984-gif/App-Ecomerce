@@ -125,7 +125,8 @@ export class VideoVariationGenerator {
         const avatarUrls = await imageGen.generateBatch(
             selectedPrompts.map(prompt => ({
                 prompt,
-                aspectRatio: '9:16' as const
+                aspectRatio: '9:16' as const,
+                style: 'realistic' as const
             }))
         );
 

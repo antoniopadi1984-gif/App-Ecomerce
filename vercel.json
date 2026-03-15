@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/full-sync",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 * * * *"
     },
     {
       "path": "/api/cron/weekly-agent",
@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/postv-sequences",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/competitor-spy",
+      "schedule": "0 3 * * *"
     }
   ]
 }

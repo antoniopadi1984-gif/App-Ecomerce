@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store/store-context';
-import ComunicacionesLayout from '../_layout';
+import ComunicacionesLayout from '../ComunicacionesLayout';
 
 interface GmailMessage {
     id: string;

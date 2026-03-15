@@ -1,5 +1,5 @@
 'use client';
-import ComunicacionesLayout from '../_layout';
+import ComunicacionesLayout from '../ComunicacionesLayout';
 
 export default function BusinessPage() {
     return (

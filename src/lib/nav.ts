@@ -28,13 +28,13 @@ export const navigation = [
         colorMuted: 'rgba(16,185,129,0.12)',
         href: '/operaciones/pedidos',
         children: [
-            { label: 'Productos', emoji: '🛍️', href: '/operaciones/productos' },
-            { label: 'Pedidos', emoji: '📦', href: '/operaciones/pedidos' },
-            { label: 'Finanzas', emoji: '💰', href: '/finanzas' },
-            { label: 'Comunicaciones', emoji: '💬', href: '/operaciones/comunicaciones' },
-            { label: 'Automatizaciones', emoji: '🤖', href: '/operaciones/automatizaciones' },
-            { label: 'Agentes IA', emoji: '🧠', href: '/operaciones/agentes' },
-            { label: 'Valor Percibido', emoji: '👑', href: '/operaciones/valor-percibido' },
+            { label: 'Productos',        emoji: '🛍️', href: '/operaciones/productos' },
+            { label: 'Pedidos',          emoji: '📦', href: '/operaciones/pedidos' },
+            { label: 'Finanzas',         emoji: '💰', href: '/operaciones/finanzas' },
+            { label: 'Comunicaciones',   emoji: '💬', href: '/operaciones/comunicaciones/whatsapp' },
+            { label: 'Automatizaciones', emoji: '🤖', href: '/operaciones/automatizaciones/reglas' },
+            { label: 'Agentes IA',       emoji: '🧠', href: '/operaciones/agentes' },
+            { label: 'Valor Percibido',  emoji: '👑', href: '/operaciones/valor-percibido' },
         ]
     },
     {

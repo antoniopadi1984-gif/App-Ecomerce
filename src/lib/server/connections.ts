@@ -49,58 +49,59 @@ export async function saveConnectionSecret({
  * Soporta ALIAS de proveedores maestros para alimentar múltiples servicios.
  */
 export async function getConnectionSecret(storeId: string, provider: string): Promise<string | null> {
-    const canonicalProvider = (provider: string) => {
-        const p = provider.toUpperCase();
-        if (['ANTHROPIC'].includes(p)) return 'REPLICATE';
-        if (['VERTEX', 'GA4', 'GCP', 'GOOGLE', 'GOOGLE_MAPS', 'GOOGLE_SERVICE_ACCOUNT'].includes(p)) return 'GOOGLE_CLOUD';
-        if (['META_ADS', 'FACEBOOK', 'FACEBOOK_ADS', 'FB'].includes(p)) return 'META';
-        return p;
-    };
-
-    const targetProvider = canonicalProvider(provider);
-
-    let conn = await (prisma as any).connection.findFirst({
-        where: { storeId, provider: targetProvider }
-    });
-
-    const isolatedProviders = ['SHOPIFY', 'META', 'BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
-    const isIsolated = isolatedProviders.includes(targetProvider);
-
-    // FALLBACK TO GLOBAL/MAIN STORE if not found for the specific store
-    if (!conn && storeId !== 'store-main' && !isIsolated) {
-        conn = await (prisma as any).connection.findFirst({
-            where: { storeId: 'store-main', provider: targetProvider }
-        });
-    }
-
-    if (!conn) return null;
-
-    // Handle JSON keys (Google) differently if needed? No, encryptSecret handles strings.
-    // If the provider is GOOGLE_CLOUD, the secret is usually the Service Account JSON.
-
-    if (!conn.secretEnc || !conn.secretIv || !conn.secretTag) {
-        // Fallback to legacy fields if migration hasn't run
-        return (conn.apiKey || conn.accessToken || conn.apiSecret || null);
-    }
-
     try {
-        const decrypted = decryptSecret({
-            enc: conn.secretEnc,
-            iv: conn.secretIv,
-            tag: conn.secretTag
+        const canonicalProvider = (p: string) => {
+            const up = p.toUpperCase();
+            if (['ANTHROPIC'].includes(up)) return 'REPLICATE';
+            if (['VERTEX', 'GA4', 'GCP', 'GOOGLE', 'GOOGLE_MAPS', 'GOOGLE_SERVICE_ACCOUNT'].includes(up)) return 'GOOGLE_CLOUD';
+            if (['META_ADS', 'FACEBOOK', 'FACEBOOK_ADS', 'FB'].includes(up)) return 'META';
+            return up;
+        };
+
+        const targetProvider = canonicalProvider(provider);
+        const isolatedProviders = ['SHOPIFY', 'META', 'BEEPING', 'DROPPI', 'DROPEA', 'STRIPE'];
+        const isIsolated = isolatedProviders.includes(targetProvider);
+
+        let conn = await (prisma as any).connection.findFirst({
+            where: { storeId, provider: targetProvider, isActive: true }
         });
-        if (decrypted) return decrypted;
-    } catch (err) {
-        console.error(`[getConnectionSecret] Error decrypting for ${provider}:`, err);
-    }
 
-    // Fallback: legacy fields si el decrypt falla (key distinta, campo corrupto, etc.)
-    if (conn.accessToken || conn.apiKey || conn.apiSecret) {
-        console.warn(`[getConnectionSecret] decrypt falló para ${provider}, usando legacy fields`);
-        return conn.accessToken || conn.apiKey || conn.apiSecret;
-    }
+        // Fallback al store global si no es una conexión aislada (como Shopify)
+        if (!conn && storeId !== 'store-main' && !isIsolated) {
+            conn = await (prisma as any).connection.findFirst({
+                where: { storeId: 'store-main', provider: targetProvider, isActive: true }
+            });
+        }
 
-    return null;
+        if (!conn) return null;
+
+        // Lógica de Blindaje: Buscar token en todos los campos posibles con el orden de prioridad definido
+        
+        // 1. Si hay metadatos de cifrado, intentamos descifrar secretEnc
+        if (conn.secretEnc && conn.secretIv && conn.secretTag) {
+            try {
+                const decrypted = decryptSecret({
+                    enc: conn.secretEnc,
+                    iv: conn.secretIv,
+                    tag: conn.secretTag
+                });
+                if (decrypted) return decrypted;
+            } catch (err) {
+                console.warn(`[getConnectionSecret] Error descifrando ${targetProvider}, usando fallbacks en crudo.`);
+            }
+        }
+
+        // 2. Si no es cifrado o falló, devolvemos el primer campo con contenido (Prioridad: secretEnc > accessToken > apiKey)
+        return conn.secretEnc 
+            || conn.accessToken 
+            || conn.apiKey 
+            || conn.apiSecret 
+            || null;
+
+    } catch (e) {
+        console.error(`[getConnectionSecret] Error crítico recuperando secreto para ${storeId}/${provider}:`, e);
+        return null;
+    }
 }
 
 /**

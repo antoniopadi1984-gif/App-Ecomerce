@@ -109,7 +109,11 @@ export async function syncProductsToDb(storeId: string, products: any[]) {
 
     for (const prod of products) {
         try {
-            const mainVariant = prod.variants?.nodes?.[0];
+            console.log(`[Shopify Sync] Processing product: ${prod.title} (ID: ${prod.id})`);
+            
+            // Flexibilidad para nodos de variants (GraphQL vs REST)
+            const variantNodes = prod.variants?.nodes || (Array.isArray(prod.variants) ? prod.variants : []);
+            const mainVariant = variantNodes[0];
 
             const productData: any = {
                 storeId,
@@ -117,12 +121,12 @@ export async function syncProductsToDb(storeId: string, products: any[]) {
                 title: prod.title,
                 handle: prod.handle,
                 status: prod.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
-                price: parseFloat(mainVariant?.price?.amount || 0),
+                price: parseFloat(mainVariant?.price?.amount || mainVariant?.price || 0),
                 sku: mainVariant?.sku,
-                image: prod.images?.nodes?.[0]?.url,
-                category: prod.productType,
+                imageUrl: prod.images?.nodes?.[0]?.url || (Array.isArray(prod.images) ? prod.images[0]?.url : null),
+                productType: prod.productType,
                 vendor: prod.vendor,
-                tags: prod.tags?.join(','),
+                tags: Array.isArray(prod.tags) ? prod.tags.join(',') : prod.tags,
                 updatedAt: new Date()
             };
 
@@ -132,9 +136,10 @@ export async function syncProductsToDb(storeId: string, products: any[]) {
                 create: productData
             });
 
+            console.log(`[Shopify Sync] ✅ Product synced: ${prod.title}`);
             syncedCount++;
-        } catch (e) {
-            console.error(`🛑 [Shopify Sync] Error syncing product ${prod.title}:`, e);
+        } catch (e: any) {
+            console.error(`🛑 [Shopify Sync] Error syncing product ${prod.title}:`, e.message);
         }
     }
 

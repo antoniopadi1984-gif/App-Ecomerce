@@ -342,6 +342,7 @@ model Customer {
   updatedAt    DateTime  @updatedAt
   store        Store     @relation(fields: [storeId], references: [id])
   orders       Order[]
+  ltv          CustomerLTV?
 
   @@unique([storeId, phone])
   @@index([email])
@@ -469,6 +470,7 @@ model Product {
   extensionCaptures   ExtensionCapture[]
   landingClones       LandingClone[]
   copyVariants        CopyVariant[]
+  stockAlerts         StockAlert[]
 
   @@unique([shopifyId, storeId])
 }
@@ -915,6 +917,7 @@ model CreativeAsset {
   store               Store?              @relation(fields: [storeId], references: [id])
   product             Product             @relation(fields: [productId], references: [id])
   dailyStats          CreativeDailyStat[]
+  viralityScore       ViralityScore?
 }
 
 model CreativeProject {
@@ -2983,3 +2986,61 @@ model CopyVariant {
   @@index([storeId])
 }
 
+
+// ══════════════════════════════════════════════
+// INTELLIGENCE MODELS
+// ══════════════════════════════════════════════
+
+model ViralityScore {
+  id              String        @id @default(cuid())
+  creativeAssetId String        @unique
+  predictedCtr    Float
+  predictedRoas   Float
+  confidence      Float
+  basedOnSamples  Int
+  createdAt       DateTime      @default(now())
+  asset           CreativeAsset @relation(fields: [creativeAssetId], references: [id])
+}
+
+model StockAlert {
+  id            String   @id @default(cuid())
+  productId     String
+  storeId       String
+  currentStock  Int
+  dailyVelocity Float
+  daysLeft      Int
+  leadTimeDays  Int      @default(14)
+  alertSent     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  product       Product  @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@index([storeId, daysLeft])
+}
+
+model CustomerLTV {
+  id              String   @id @default(cuid())
+  customerId      String   @unique
+  storeId         String
+  predictedLtv12m Float
+  rfmScore        Float
+  segment         String
+  lastCalculated  DateTime @default(now())
+  customer        Customer @relation(fields: [customerId], references: [id])
+
+  @@index([storeId, segment])
+}
+
+model BudgetAllocation {
+  id              String   @id @default(cuid())
+  storeId         String
+  campaignId      String
+  currentBudget   Float
+  suggestedBudget Float
+  reason          String
+  roasActual      Float
+  roasTarget      Float
+  createdAt       DateTime @default(now())
+
+  @@index([storeId])
+}

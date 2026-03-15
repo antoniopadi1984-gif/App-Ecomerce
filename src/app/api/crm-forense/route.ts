@@ -118,14 +118,36 @@ export async function GET(req: NextRequest) {
             case 'TRANSPORTISTAS':
             case 'EMPLEADOS':
             case 'AGENTES':
-            default:
+            default: {
+                // Datos reales de órdenes agrupados por hora del día
+                const ordersByHour = await (prisma as any).order.findMany({
+                    where: { storeId, createdAt: { gte: start, lt: end } },
+                    select: { createdAt: true, status: true }
+                });
+
+                const slots = buildSlotsArray();
                 data = {
                     metrics: [
-                        { label: 'Volumen', values: buildSlotsArray().map(() => Math.floor(Math.random() * 50)) },
-                        { label: 'Eficiencia', values: buildSlotsArray().map(() => Math.floor(Math.random() * 100)) }
+                        {
+                            label: 'Volumen',
+                            values: slots.map((_: any, i: number) =>
+                                ordersByHour.filter((o: any) => new Date(o.createdAt).getHours() === i).length
+                            )
+                        },
+                        {
+                            label: 'Eficiencia',
+                            values: slots.map((_: any, i: number) => {
+                                const hourOrders = ordersByHour.filter((o: any) => new Date(o.createdAt).getHours() === i);
+                                const total = hourOrders.length;
+                                return total > 0
+                                    ? Math.round((hourOrders.filter((o: any) => o.status === 'DELIVERED').length / total) * 100)
+                                    : 0;
+                            })
+                        }
                     ]
-                }
+                };
                 break;
+            }
         }
 
         return NextResponse.json({ ok: true, data, slotsCount, isAnnual });

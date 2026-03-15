@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import * as cheerio from 'cheerio';
 import { AiRouter } from '@/lib/ai/router';
 import { TaskType } from '@/lib/ai/providers/interfaces';
+import { DEFAULT_AGENT_PROMPTS } from '@/lib/ai/defaults/agent-prompts';
+
 
 export const maxDuration = 60; // Set to 60s for deep AI analysis and scraping
 
@@ -69,23 +71,22 @@ export async function POST(request: Request) {
         console.log(`[ANALIZADOR] URL: ${url} | Content Length: ${plainText.length} | Assets: ${extractedAssets.length}`);
 
         // 4. Send to GPT/Gemini via AiRouter for deep marketing analysis
-        const prompt = `Analiza la estructura de esta Landing Page: URL: ${url}. 
-        Texto extraído: 
-        """${plainText}"""
-        
-        Assets: ${extractedAssets.length} detectados.
-        
-        Actúa como Marketer Experto. Detecta mecanismo único, hook y sección de productos.
-        
-        Devuelve JSON ESTRICTO:
-        {
-           "scores": { "hook": 0-100, "mechanism": 0-100, "offer": 0-100 },
-           "productCount": número,
-           "productsFound": ["nombre"],
-           "structure": ["paso 1", "paso 2"],
-           "criticalPoints": ["punto 1"],
-           "recommendations": ["mejora 1"]
-        }`;
+        const analysisPrompt = `
+${DEFAULT_AGENT_PROMPTS.CREATIVE_FORENSIC}
+
+LANDING A ANALIZAR:
+URL: ${url}
+TEXTO EXTRAÍDO:
+"""${plainText}"""
+
+HTML (primeros 8000 chars):
+${html.slice(0, 8000)}
+
+Assets detectados: ${extractedAssets.length}
+
+Aplica el análisis forense completo de 10 niveles para LANDING PAGE.
+Devuelve SOLO el JSON estructurado.`;
+
 
         let iaAnalysis: any = {
             scores: { hook: 0, mechanism: 0, offer: 0 },
@@ -101,9 +102,10 @@ export async function POST(request: Request) {
             const aiResponse = await AiRouter.dispatch(
                 storeId,
                 TaskType.RESEARCH_FORENSIC,
-                prompt,
+                analysisPrompt,
                 { jsonSchema: true }
             );
+
 
             console.log(`[ANALIZADOR] AI Response received. Length: ${aiResponse.text.length}`);
 

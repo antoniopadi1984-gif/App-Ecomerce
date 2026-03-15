@@ -2,104 +2,144 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { ComunicacionesTabs } from '@/components/operaciones/ComunicacionesTabs';
-
-const TRIGGERS = ['CONFIRMATION', 'PREPARATION', 'TRACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'INCIDENCE'];
+import { MessageSquare, Loader2, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function WhatsAppPage() {
     const { activeStore } = useStore();
-    const [templates, setTemplates] = useState<any[]>([]);
-    const [messages, setMessages] = useState<any[]>([]);
-    const [editing, setEditing] = useState<any | null>(null);
-    const [tab, setTab] = useState<'templates' | 'historial'>('templates');
+    const storeId = activeStore?.id;
+    const [messages, setMessages]   = useState<any[]>([]);
+    const [loading, setLoading]     = useState(false);
+    const [subTab, setSubTab]       = useState<'bandeja' | 'config'>('bandeja');
+    const [config, setConfig]       = useState({ phoneNumberId: '', accessToken: '', businessId: '' });
+    const [saving, setSaving]       = useState(false);
 
     useEffect(() => {
-        if (!activeStore?.id) return;
-        fetch(`/api/notifications/templates?storeId=${activeStore.id}`)
-            .then(r => r.json()).then(d => setTemplates(d.templates || []));
-        fetch(`/api/notifications/history?storeId=${activeStore.id}`)
-            .then(r => r.json()).then(d => setMessages(d.messages || []));
-    }, [activeStore?.id]);
+        if (!storeId) return;
+        setLoading(true);
+        fetch(`/api/notifications/history?storeId=${storeId}`)
+            .then(r => r.json())
+            .then(d => setMessages(d.messages || []))
+            .finally(() => setLoading(false));
+    }, [storeId]);
 
-    const saveTemplate = async (t: any) => {
-        await fetch('/api/notifications/templates', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...t, storeId: activeStore?.id })
-        });
-        setEditing(null);
-        fetch(`/api/notifications/templates?storeId=${activeStore?.id}`)
-            .then(r => r.json()).then(d => setTemplates(d.templates || []));
+    const saveConfig = async () => {
+        setSaving(true);
+        try {
+            await fetch('/api/communications/whatsapp/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ storeId, ...config })
+            });
+            toast.success('Configuración guardada');
+        } catch {
+            toast.error('Error guardando');
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
         <ComunicacionesTabs>
-            <div className="flex gap-3 mb-6">
-                {(['templates', 'historial'] as const).map(t => (
-                    <button key={t} onClick={() => setTab(t)}
-                        className={`px-4 py-2 rounded-lg font-medium capitalize text-sm transition-all ${tab === t
-                            ? 'bg-green-600 text-white shadow-lg shadow-green-900/30'
-                            : 'bg-[#1a1f2e] text-gray-400 hover:text-white border border-white/5'}`}>
-                        {t === 'templates' ? '📝 Plantillas' : '📋 Historial'}
+            {/* Sub-tabs */}
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
+                {(['bandeja', 'config'] as const).map(t => (
+                    <button key={t} onClick={() => setSubTab(t)}
+                        style={{
+                            padding: '5px 12px', borderRadius: '6px', fontSize: '10px', fontWeight: 700,
+                            textTransform: 'uppercase', cursor: 'pointer',
+                            border: `1px solid ${subTab === t ? 'var(--mkt)' : 'var(--border)'}`,
+                            background: subTab === t ? 'var(--mkt-bg)' : 'transparent',
+                            color: subTab === t ? 'var(--mkt)' : 'var(--text-muted)',
+                        }}>
+                        {t === 'bandeja' ? 'Bandeja' : 'Configuración'}
                     </button>
                 ))}
             </div>
 
-            {tab === 'templates' && (
-                <div className="grid gap-3">
-                    {TRIGGERS.map(trigger => {
-                        const t = templates.find((x: any) => x.trigger === trigger)
-                            || { trigger, body: '', channel: 'WHATSAPP', isEnabled: false };
-                        return editing?.trigger === trigger ? (
-                            <div key={trigger} className="bg-[#1a1f2e] border border-green-500/20 rounded-xl p-4">
-                                <h3 className="text-green-400 font-bold text-sm mb-3">{trigger}</h3>
-                                <textarea
-                                    value={editing.body}
-                                    onChange={e => setEditing({ ...editing, body: e.target.value })}
-                                    className="w-full bg-[#111827] text-white rounded-lg p-3 text-sm h-24 mb-3 border border-white/10 resize-none focus:outline-none focus:border-green-500/50"
-                                    placeholder="Usa {{name}}, {{order_number}}, {{tracking}}, {{tracking_url}}" />
-                                <div className="flex gap-2">
-                                    <button onClick={() => saveTemplate(editing)}
-                                        className="px-4 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-medium transition-colors">
-                                        Guardar
-                                    </button>
-                                    <button onClick={() => setEditing(null)}
-                                        className="px-4 py-1.5 bg-[#111827] text-gray-400 hover:text-white rounded-lg text-sm border border-white/10 transition-colors">
-                                        Cancelar
-                                    </button>
+            {subTab === 'bandeja' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', overflowY: 'auto', maxHeight: 'calc(100% - 50px)' }}>
+                    {loading ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: '8px' }}>
+                            <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} color="var(--mkt)" />
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Cargando mensajes...</span>
+                        </div>
+                    ) : messages.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                            <MessageSquare size={24} style={{ margin: '0 auto 8px' }} />
+                            <div style={{ fontSize: '12px', fontWeight: 600 }}>Sin mensajes</div>
+                        </div>
+                    ) : messages.map((msg: any) => (
+                        <div key={msg.id} className="ds-card" style={{ padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                            <div style={{
+                                width: '32px', height: '32px', borderRadius: '50%', background: 'var(--mkt-bg)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                            }}>
+                                <MessageSquare size={14} color="var(--mkt)" />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text)' }}>
+                                        {msg.customerContact}
+                                    </span>
+                                    <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+                                        {new Date(msg.timestamp).toLocaleString('es')}
+                                    </span>
                                 </div>
+                                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>{msg.content}</p>
                             </div>
-                        ) : (
-                            <div key={trigger} className="bg-[#1a1f2e] border border-white/5 rounded-xl p-4 flex items-start justify-between hover:border-white/10 transition-colors">
-                                <div className="flex-1 min-w-0 mr-4">
-                                    <span className="text-green-400 font-bold text-xs uppercase tracking-wide">{trigger}</span>
-                                    <p className="text-gray-300 text-sm mt-1 truncate">{t.body || 'Sin configurar'}</p>
-                                </div>
-                                <button onClick={() => setEditing({ ...t })}
-                                    className="px-3 py-1.5 bg-[#111827] hover:bg-green-900/30 text-gray-400 hover:text-green-400 rounded-lg text-xs border border-white/5 hover:border-green-500/30 transition-all shrink-0">
-                                    Editar
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            {tab === 'historial' && (
-                <div className="grid gap-2">
-                    {messages.length === 0 && (
-                        <p className="text-gray-500 text-sm text-center py-8">No hay mensajes en el historial</p>
-                    )}
-                    {messages.map((m: any) => (
-                        <div key={m.id} className="bg-[#1a1f2e] border border-white/5 rounded-xl p-3 flex justify-between items-center">
-                            <div>
-                                <span className="text-gray-500 text-xs">{new Date(m.timestamp).toLocaleString()}</span>
-                                <p className="text-white text-sm mt-0.5">{m.content}</p>
-                            </div>
-                            <span className={`text-xs px-2 py-1 rounded-lg shrink-0 ml-3 ${m.status === 'SENT' ? 'bg-green-900/40 text-green-400' : 'bg-red-900/40 text-red-400'}`}>
-                                {m.status}
+                            <span style={{
+                                fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', flexShrink: 0,
+                                background: msg.status === 'SENT' ? 'var(--mkt-bg)' : '#fef2f2',
+                                color: msg.status === 'SENT' ? 'var(--mkt)' : 'var(--s-ko)',
+                            }}>
+                                {msg.status}
                             </span>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {subTab === 'config' && (
+                <div style={{ maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="ds-card" style={{ padding: '16px', borderLeft: '3px solid var(--mkt)' }}>
+                        <div style={{
+                            fontSize: '10px', fontWeight: 800, color: 'var(--mkt)',
+                            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px'
+                        }}>
+                            WhatsApp Business API — Meta
+                        </div>
+                        {[
+                            { key: 'phoneNumberId', label: 'Phone Number ID', placeholder: '214259458320498'  },
+                            { key: 'accessToken',   label: 'Access Token',    placeholder: 'EAAxxxx...'        },
+                            { key: 'businessId',    label: 'Business ID',     placeholder: 'ID de cuenta Business' },
+                        ].map(field => (
+                            <div key={field.key} style={{ marginBottom: '10px' }}>
+                                <label style={{
+                                    fontSize: '10px', fontWeight: 700, color: 'var(--text)',
+                                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                                    display: 'block', marginBottom: '4px'
+                                }}>
+                                    {field.label}
+                                </label>
+                                <input
+                                    className="ds-input"
+                                    placeholder={field.placeholder}
+                                    value={(config as any)[field.key]}
+                                    onChange={e => setConfig(p => ({ ...p, [field.key]: e.target.value }))}
+                                    style={{ width: '100%', fontSize: '12px', fontFamily: 'monospace' }}
+                                />
+                            </div>
+                        ))}
+                        <button onClick={saveConfig} disabled={saving} className="ds-btn"
+                            style={{ background: 'var(--mkt)', color: 'white', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {saving
+                                ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
+                                : <Check size={12} />
+                            }
+                            Guardar configuración
+                        </button>
+                    </div>
                 </div>
             )}
         </ComunicacionesTabs>

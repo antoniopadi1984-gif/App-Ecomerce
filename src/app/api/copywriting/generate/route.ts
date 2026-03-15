@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const formatInstruction = FORMAT_INSTRUCTIONS[format] || FORMAT_INSTRUCTIONS.ADVERTORIAL;
     const finalCopy = result.copy
         ? `${result.copy}\n\n---\nFORMATO APLICADO: ${format}\n${formatInstruction}`
-        : result.raw || '';
+        : (result as any).raw || '';
 
     const wordCount = finalCopy.split(/\s+/).length;
 
@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
             productId,
             storeId,
             versionId: versionId || null,
-            avatarId: result.metadata?.avatar?.name || `avatar_${avatarIdx}`,
-            angleId: result.metadata?.angle?.code || `angle_${angleIdx}`,
+            avatarId: (result as any).metadata?.avatar?.name || `avatar_${avatarIdx}`,
+            angleId: (result as any).metadata?.angle?.code || `angle_${angleIdx}`,
             format,
             content: finalCopy,
             wordCount

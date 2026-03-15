@@ -22,7 +22,7 @@ export class AlmanacGenerator {
             // 1. Generate Background with AI
             const bgUrl = await imageGen.generate({
                 prompt: `High-end aesthetic background for a 30-day transformation ritual related to ${goal}, soft colors, minimalistic, premium textures`,
-                aspectRatio: '1:1'
+                style: 'photo', aspectRatio: '1:1'
             });
 
             // 2. Fetch image buffer (assuming it's a URL or needs download)

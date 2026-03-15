@@ -246,8 +246,9 @@ export async function generateImage(params: {
         const gen = new ImageGenerator();
         return gen.generate({
             prompt: params.prompt,
+            style: (params as any).style || 'photo',
             aspectRatio: (params.aspectRatio as any),
-            negativePrompt: params.negativePrompt,
+            // negativePrompt: params.negativePrompt,
         });
     }
 

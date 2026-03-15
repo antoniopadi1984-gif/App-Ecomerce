@@ -158,7 +158,7 @@ async function handleCourse(templateId: string, onProgress: any) {
     const imageGen = new ImageGenerator();
     const voiceGen = new VoiceGenerator();
 
-    const imagePromises = content.lessons.map((l: any) => imageGen.generate({ prompt: l.imagePrompt, aspectRatio: '9:16' }));
+    const imagePromises = content.lessons.map((l: any) => imageGen.generate({ prompt: l.imagePrompt, style: 'photo', aspectRatio: '9:16' }));
     const voicePromises = content.lessons.map((l: any) => voiceGen.generate({ text: l.script }));
 
     const images = await Promise.all(imagePromises);

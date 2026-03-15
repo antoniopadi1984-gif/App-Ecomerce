@@ -201,7 +201,7 @@ export default function AgentesPage() {
   };
 
   // ── Enriquecer agentes con info del sistema ────────────────────
-  const enriched = configs.map(cfg => {
+  const enriched = (configs || []).filter(Boolean).map(cfg => {
     const sys = SYSTEM_AGENTS[cfg.agentId];
     return {
       ...cfg,

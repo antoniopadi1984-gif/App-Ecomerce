@@ -214,8 +214,8 @@ export default function AgentesPage() {
   });
 
   const grouped = MODULES.map(mod => ({
-    mod, agents: enriched.filter(a => a.module === mod.id),
-  })).filter(g => g.agents.length > 0);
+    mod, agents: enriched.filter(a => a && a.module === mod.id),
+  })).filter(g => g && g.mod && g.agents.length > 0);
 
   // ═══════════════════ RENDER ═══════════════════
   return (
@@ -315,7 +315,7 @@ export default function AgentesPage() {
               <span>{mod.emoji}</span> {mod.label}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {agents.map(agent => (
+              {agents.filter(Boolean).map(agent => agent && (
                 <div key={agent.agentId}>
                   {/* ── Tarjeta agente ── */}
                   {editing?.agentId === agent.agentId ? (

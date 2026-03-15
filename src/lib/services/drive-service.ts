@@ -92,23 +92,31 @@ export async function getDriveClient() {
     return google.drive({ version: 'v3', auth });
 }
 
-export async function findOrCreateFolder(drive: any, name: string, parentId?: string): Promise<string> {
-    const q = [
-        `name = '${name.replace(/'/g, "\\'")}'`, 
-        `mimeType = 'application/vnd.google-apps.folder'`, 
-        `trashed = false`
-    ];
-    if (parentId) q.push(`'${parentId}' in parents`);
+export async function findOrCreateFolder(
+    drive: any,
+    name: string,
+    parentId?: string
+): Promise<string> {
+    const ROOT_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '0AKpcFZDnKLgZUk9PVA';
+    const effectiveParentId = parentId || ROOT_ID;
 
-    console.log(`[DriveService] Searching folder: "${name}" (Parent: ${parentId || 'ROOT'})`);
-    
-    const res = await drive.files.list({ 
-        q: q.join(' and '), 
-        fields: 'files(id,name)', 
-        pageSize: 1,
-        supportsAllDrives: true, 
+    const safeName = name.replace(/'/g, "\\'");
+    const q = [
+        `name = '${safeName}'`,
+        `mimeType = 'application/vnd.google-apps.folder'`,
+        `'${effectiveParentId}' in parents`,
+        `trashed = false`
+    ].join(' and ');
+
+    console.log(`[DriveService] Searching folder: "${name}" (Parent: ${effectiveParentId})`);
+
+    const res = await drive.files.list({
+        q,
+        fields: 'files(id, name)',
+        supportsAllDrives: true,
         includeItemsFromAllDrives: true,
-        corpora: 'allDrives'
+        corpora: 'allDrives',
+        pageSize: 1,
     });
 
     if (res.data.files?.length > 0) {
@@ -117,27 +125,25 @@ export async function findOrCreateFolder(drive: any, name: string, parentId?: st
         return foundId;
     }
 
-    const effectiveParentId = parentId || process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8';
-    
     console.log(`[DriveService] Creating folder: "${name}" inside ${effectiveParentId}`);
 
     try {
         const created = await drive.files.create({
-            requestBody: { 
-                name, 
-                mimeType: 'application/vnd.google-apps.folder', 
-                parents: [effectiveParentId] 
+            requestBody: {
+                name,
+                mimeType: 'application/vnd.google-apps.folder',
+                parents: [effectiveParentId],
             },
             fields: 'id',
-            supportsAllDrives: true
+            supportsAllDrives: true,
         });
-        
+
         console.log(`[DriveService] ✅ Created: "${name}" -> ${created.data.id}`);
         return created.data.id!;
     } catch (createErr: any) {
-        if (createErr.code === 403 || createErr.message.includes('permission')) {
-            console.error(`[DriveService] PERMISSION ERROR: Service account cannot write to folder ${effectiveParentId}.`);
-            console.error(`Please add app-ecombom@gen-lang-client-0246473908.iam.gserviceaccount.com as Contributor.`);
+        if (createErr.code === 403 || createErr.message?.includes('permission')) {
+            console.error(`[DriveService] PERMISSION ERROR: Service account cannot write to ${effectiveParentId}.`);
+            console.error(`Add ${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL} as Content Manager in the Shared Drive.`);
         }
         throw createErr;
     }
@@ -165,7 +171,7 @@ export async function setupStoreDrive(storeId: string): Promise<string> {
         const drive = await getDriveClient();
 
         // Root: ECOMBOOM/
-        const ROOT_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8';
+        const ROOT_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '0AKpcFZDnKLgZUk9PVA';
         console.log(`[DriveService] Absolute Root ID: ${ROOT_ID}`);
         
         const store = await (prisma as any).store.findUnique({ where: { id: storeId }, select: { name: true } });

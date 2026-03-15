@@ -1,80 +1,66 @@
-// src/app/api/tracking/sync/route.ts
-// Sync polling — llamado por cron cada 4h
-// Procesa en lotes de 40 (límite de la API)
-
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { get17trackClient } from '@/lib/17track';
+import { getAllStores, get17trackClient } from '@/lib/helpers/get-store-connections';
 
-const BATCH_SIZE = 40; // límite hard de 17track
+const BATCH_SIZE = 40;
 
 export async function POST(req: NextRequest) {
-    const { storeId, limit = 200 } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const targetStoreId = body.storeId; // opcional — si se pasa, solo procesa esa tienda
 
-    const store = storeId
-        ? await prisma.store.findUnique({ where: { id: storeId } })
-        : await prisma.store.findFirst();
-    if (!store) return NextResponse.json({ error: 'Store not found' }, { status: 404 });
+    const stores = targetStoreId
+        ? await prisma.store.findMany({ where: { id: targetStoreId }, include: { connections: true } })
+        : await getAllStores();
 
-    const client = get17trackClient(store);
-    if (!client) return NextResponse.json(
-        { error: 'TRACK17_API_KEY no configurada para esta tienda' },
-        { status: 400 }
-    );
+    const results: any[] = [];
 
-    // Pedidos con tracking activo (no finalizados)
-    const orders = await prisma.order.findMany({
-        where: {
-            storeId: store.id,
-            trackingCode: { not: null },
-            logisticsStatus: {
-                notIn: ['DELIVERED', 'RETURNED', 'CANCELLED', 'RETURN_TO_SENDER']
-            }
-        },
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        select: { id: true, trackingCode: true, logisticsStatus: true, shopifyId: true }
-    });
-
-    if (!orders.length) {
-        return NextResponse.json({ success: true, checked: 0, updated: 0, registered: 0 });
-    }
-
-    // PASO 1 — Registrar trackings nuevos en 17track (idempotente: ignora duplicados)
-    // Incluir orderId como tag para correlacionar en webhook
-    let registered = 0;
-    for (let i = 0; i < orders.length; i += BATCH_SIZE) {
-        const batch = orders.slice(i, i + BATCH_SIZE);
-        try {
-            const result = await client.register(
-                batch.map(o => ({
-                    number: o.trackingCode!,
-                    tag: o.id, // orderId de EcomBoom — lo recibimos de vuelta en el webhook
-                    lang: 'es',
-                }))
-            );
-            registered += result.accepted.length;
-        } catch (e: any) {
-            console.error(`[17track] Register batch ${i} error:`, e.message);
+    for (const store of stores) {
+        const client = get17trackClient(store);
+        if (!client) {
+            results.push({ store: store.name, skipped: true, reason: 'Sin conexión 17TRACK' });
+            continue;
         }
 
-        // Rate limit: 3 req/s
-        if (i + BATCH_SIZE < orders.length) await sleep(400);
-    }
+        const orders = await prisma.order.findMany({
+            where: {
+                storeId: store.id,
+                trackingCode: { not: null },
+                logisticsStatus: {
+                    notIn: ['DELIVERED', 'RETURNED', 'CANCELLED', 'RETURN_TO_SENDER']
+                }
+            },
+            take: 200,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, trackingCode: true, logisticsStatus: true }
+        });
 
-    // PASO 2 — Consultar estado actual de todos los trackings
-    let updated = 0;
-    for (let i = 0; i < orders.length; i += BATCH_SIZE) {
-        const batch = orders.slice(i, i + BATCH_SIZE);
-        try {
+        if (!orders.length) {
+            results.push({ store: store.name, checked: 0, updated: 0 });
+            continue;
+        }
+
+        // Registrar
+        for (let i = 0; i < orders.length; i += BATCH_SIZE) {
+            const batch = orders.slice(i, i + BATCH_SIZE);
+            await client.register(batch.map(o => ({
+                number: o.trackingCode!,
+                tag: o.id,
+                lang: 'es',
+            }))).catch(() => {});
+            if (i + BATCH_SIZE < orders.length) await sleep(400);
+        }
+
+        // Consultar estados
+        let updated = 0;
+        for (let i = 0; i < orders.length; i += BATCH_SIZE) {
+            const batch = orders.slice(i, i + BATCH_SIZE);
             const statuses = await client.getTrackInfo(
                 batch.map(o => ({ number: o.trackingCode! }))
-            );
+            ).catch(() => []);
 
             for (const s of statuses) {
                 const order = batch.find(o => o.trackingCode === s.trackingNumber);
-                if (!order) continue;
-                if (s.status === order.logisticsStatus) continue; // sin cambio
+                if (!order || s.status === order.logisticsStatus) continue;
 
                 await prisma.order.update({
                     where: { id: order.id },
@@ -82,7 +68,6 @@ export async function POST(req: NextRequest) {
                         logisticsStatus: s.status,
                         ...(s.delivered ? { deliveredAt: new Date() } : {}),
                         ...(s.returning ? { returnedAt: new Date() } : {}),
-                        // Guardar último evento para mostrar en UI
                         trackingLastEvent: s.lastDescription || undefined,
                         trackingLastLocation: s.lastLocation || undefined,
                         trackingLastUpdate: s.lastUpdate ? new Date(s.lastUpdate) : undefined,
@@ -90,19 +75,14 @@ export async function POST(req: NextRequest) {
                 });
                 updated++;
             }
-        } catch (e: any) {
-            console.error(`[17track] GetTrackInfo batch ${i} error:`, e.message);
+
+            if (i + BATCH_SIZE < orders.length) await sleep(400);
         }
 
-        if (i + BATCH_SIZE < orders.length) await sleep(400);
+        results.push({ store: store.name, checked: orders.length, updated });
     }
 
-    return NextResponse.json({
-        success: true,
-        checked: orders.length,
-        registered,
-        updated,
-    });
+    return NextResponse.json({ success: true, results });
 }
 
 function sleep(ms: number) {

@@ -34,12 +34,11 @@ export async function POST(req: NextRequest) {
     });
 
     // Registrar en 17track (idempotente)
-    await get17trackClient(store)!
-        .registerTracking(orders.map(o => ({ number: o.trackingCode! })))
+    await client.register(orders.map(o => ({ number: o.trackingCode! })))
         .catch(() => {});
 
     // Obtener estados
-    const statuses = await client.getTrackingStatus(orders.map(o => o.trackingCode!));
+    const statuses = await client.getTrackInfo(orders.map(o => ({ number: o.trackingCode! })));
 
     let updated = 0;
     for (const s of statuses) {

@@ -1,13 +1,17 @@
+// src/lib/17track.ts
+// API v2.4 — https://api.17track.net/track/v2.4
+
+const BASE_URL = 'https://api.17track.net/track/v2.4';
+
 export class TrackSeventeenClient {
     private apiKey: string;
-    private baseUrl = 'https://api.17track.net/track/v2.2';
 
     constructor(apiKey: string) {
         this.apiKey = apiKey;
     }
 
-    private async fetch17(endpoint: string, body: any) {
-        const res = await fetch(`${this.baseUrl}${endpoint}`, {
+    private async post(endpoint: string, body: any) {
+        const res = await fetch(`${BASE_URL}${endpoint}`, {
             method: 'POST',
             headers: {
                 '17token': this.apiKey,
@@ -15,56 +19,101 @@ export class TrackSeventeenClient {
             },
             body: JSON.stringify(body),
         });
-        if (!res.ok) throw new Error(`17track API Error: ${res.status}`);
+
+        if (res.status === 429) throw new Error('17track: rate limit (3 req/s)');
+        if (res.status === 401) throw new Error('17track: clave inválida o IP no en whitelist');
+        if (!res.ok) throw new Error(`17track API error: ${res.status}`);
+
         return res.json();
     }
 
-    async registerTracking(trackings: { number: string; carrier?: string }[]) {
-        return this.fetch17('/register', trackings.map(t => ({
-            number: t.number,
-            ...(t.carrier ? { carrier: t.carrier } : {})
-        })));
+    // Registrar trackings (máx 40 por llamada)
+    async register(trackings: Array<{
+        number: string;
+        tag?: string;           // útil para guardar el orderId de EcomBoom
+        origin_country?: string;
+        destination_country?: string;
+        lang?: string;
+    }>) {
+        const data = await this.post('/register', trackings);
+        return {
+            accepted: data.data?.accepted || [],
+            rejected: data.data?.rejected || [],
+        };
     }
 
-    async getTrackingStatus(trackingNumbers: string[]) {
-        const data = await this.fetch17('/gettrackinfo',
-            trackingNumbers.map(n => ({ number: n }))
-        );
-        return (data.data?.accepted || []).map((t: any) => ({
+    // Obtener info de tracking (máx 40 por llamada)
+    async getTrackInfo(trackings: Array<{ number: string; carrier?: number }>) {
+        const data = await this.post('/gettrackinfo', trackings);
+        return (data.data?.accepted || []).map((t: any) => this.parseTrackInfo(t));
+    }
+
+    // Forzar push manual (útil para depurar)
+    async pushManual(trackings: Array<{ number: string; carrier?: number }>) {
+        return this.post('/push', trackings);
+    }
+
+    // Parar tracking (pedidos entregados/cancelados)
+    async stopTracking(trackings: Array<{ number: string; carrier?: number }>) {
+        return this.post('/stoptrack', trackings);
+    }
+
+    // Verificar cuota disponible
+    async getQuota() {
+        const data = await this.post('/getquota', {});
+        return data.data;
+    }
+
+    // Parsear respuesta de gettrackinfo al formato interno de EcomBoom
+    parseTrackInfo(t: any) {
+        const latestStatus = t.track_info?.latest_status;
+        const latestEvent = t.track_info?.latest_event;
+        const timeMetrics = t.track_info?.time_metrics;
+
+        return {
             trackingNumber: t.number,
             carrier: t.carrier,
-            status: this.normalizeStatus(t.track?.z0?.z),
-            lastEvent: t.track?.z0?.a,
-            lastLocation: t.track?.z0?.c,
-            lastUpdate: t.track?.z0?.d,
-            delivered: t.track?.z0?.z === 40,
-            events: (t.track?.z || []).map((e: any) => ({
-                status: e.z,
-                description: e.a,
-                location: e.c,
-                date: e.d,
-            }))
-        }));
+            status: this.normalizeStatus(latestStatus?.status),
+            subStatus: latestStatus?.sub_status || null,
+            lastDescription: latestEvent?.description || null,
+            lastLocation: latestEvent?.location || null,
+            lastUpdate: latestEvent?.time_utc || null,
+            estimatedDelivery: timeMetrics?.estimated_delivery_date?.from || null,
+            daysInTransit: timeMetrics?.days_of_transit || 0,
+            daysWithoutUpdate: timeMetrics?.days_after_last_update || 0,
+            delivered: latestStatus?.status === 'Delivered',
+            returning: latestStatus?.status === 'Exception' &&
+                       latestStatus?.sub_status?.includes('Return'),
+        };
     }
 
-    private normalizeStatus(code: number): string {
-        const map: Record<number, string> = {
-            0:  'REGISTERED',
-            10: 'IN_TRANSIT',
-            20: 'CUSTOMS',
-            25: 'UNDELIVERABLE',
-            30: 'DELIVERY_FAILED',
-            35: 'PICKUP_POINT',
-            40: 'DELIVERED',
-            50: 'RETURNED',
-            60: 'CANCELLED',
+    // Mapear status 17track → status interno EcomBoom
+    normalizeStatus(status17: string): string {
+        const map: Record<string, string> = {
+            'NotFound':             'REGISTERED',
+            'InfoReceived':         'REGISTERED',
+            'InTransit':            'IN_TRANSIT',
+            'Expired':              'INCIDENCE',
+            'AvailableForPickup':   'PICKUP_POINT',
+            'OutForDelivery':       'OUT_FOR_DELIVERY',
+            'DeliveryFailure':      'DELIVERY_FAILED',
+            'Delivered':            'DELIVERED',
+            'Exception':            'INCIDENCE',
         };
-        return map[code] || 'IN_TRANSIT';
+        return map[status17] || 'IN_TRANSIT';
+    }
+
+    // Verificar firma del webhook (seguridad)
+    static verifyWebhookSignature(body: string, signatureHeader: string, apiKey: string): boolean {
+        const crypto = require('crypto');
+        const content = `${body}/${apiKey}`;
+        const calculated = crypto.createHash('sha256').update(content, 'utf8').digest('hex');
+        return calculated === signatureHeader;
     }
 }
 
-export function get17trackClient(store: any): TrackSeventeenClient | null {
-    const cfg = store.extraConfig ? JSON.parse(store.extraConfig) : {};
+export function get17trackClient(store?: any): TrackSeventeenClient | null {
+    const cfg = store?.extraConfig ? JSON.parse(store.extraConfig) : {};
     const apiKey = cfg.TRACK17_API_KEY || process.env.TRACK17_API_KEY;
     if (!apiKey) return null;
     return new TrackSeventeenClient(apiKey);

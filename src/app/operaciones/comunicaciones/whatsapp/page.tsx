@@ -29,7 +29,7 @@ export default function WhatsAppPage() {
             await fetch('/api/communications/whatsapp/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ storeId, ...config })
+                body: JSON.stringify({ storeId: 'store-main', ...config }) // global — misma cuenta para todas las tiendas
             });
             toast.success('Configuración guardada');
         } catch {
@@ -102,6 +102,14 @@ export default function WhatsAppPage() {
 
             {subTab === 'config' && (
                 <div style={{ maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Aviso cuenta global */}
+                    <div style={{
+                        padding: '8px 12px', borderRadius: '8px',
+                        background: 'var(--mkt-bg)', border: '1px solid var(--mkt)',
+                        fontSize: '11px', color: 'var(--mkt)', fontWeight: 600
+                    }}>
+                        ⚠️ Esta configuración aplica a todas las tiendas — WhatsApp usa una sola cuenta Business
+                    </div>
                     <div className="ds-card" style={{ padding: '16px', borderLeft: '3px solid var(--mkt)' }}>
                         <div style={{
                             fontSize: '10px', fontWeight: 800, color: 'var(--mkt)',

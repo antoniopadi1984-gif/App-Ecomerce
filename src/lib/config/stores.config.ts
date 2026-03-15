@@ -41,3 +41,14 @@ export function getStoreName(storeId: string): string | null {
 export function getStoreCurrency(storeId: string): string | null {
     return STORES_CONFIG[storeId]?.currency ?? null;
 }
+
+/**
+ * WhatsApp Business API — UNA sola cuenta para todas las tiendas
+ * El número de teléfono identifica la cuenta, no la tienda
+ */
+export const WHATSAPP_CONFIG = {
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
+    accessToken:   process.env.WHATSAPP_ACCESS_TOKEN    || '',
+    businessId:    process.env.WHATSAPP_BUSINESS_ID     || '',
+    phoneNumber:   process.env.WHATSAPP_PHONE_NUMBER    || '',
+} as const;

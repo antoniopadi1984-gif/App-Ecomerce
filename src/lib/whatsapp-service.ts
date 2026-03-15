@@ -42,11 +42,13 @@ export async function sendOfficialWhatsApp(data: {
         const cost = PRICING[data.category];
 
         // 1. OFFICIAL META API CALL
-        const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-        const accessToken = account.accessToken || process.env.WHATSAPP_ACCESS_TOKEN;
-        
+        // Leer credenciales desde la fuente de verdad global (stores.config) con fallback a .env
+        const { WHATSAPP_CONFIG } = await import('./config/stores.config');
+        const phoneNumberId = WHATSAPP_CONFIG.phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
+        const accessToken   = account?.accessToken || WHATSAPP_CONFIG.accessToken || process.env.WHATSAPP_ACCESS_TOKEN;
+
         if (!phoneNumberId || !accessToken) {
-          return { success: false, error: 'WHATSAPP_PHONE_NUMBER_ID o WHATSAPP_ACCESS_TOKEN no configurados en .env' };
+            return { success: false, error: 'WHATSAPP_PHONE_NUMBER_ID o WHATSAPP_ACCESS_TOKEN no configurados' };
         }
         
         let requestBody: any;

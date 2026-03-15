@@ -115,9 +115,15 @@ export async function syncProductsToDb(storeId: string, products: any[]) {
             const variantNodes = prod.variants?.nodes || (Array.isArray(prod.variants) ? prod.variants : []);
             const mainVariant = variantNodes[0];
 
+            // Normalizar shopifyId — quitar prefijo GID si existe
+            const rawId = prod.id || '';
+            const normalizedShopifyId = rawId.includes('gid://') 
+                ? rawId.split('/').pop() 
+                : rawId;
+
             const productData: any = {
                 storeId,
-                shopifyId: prod.id,
+                shopifyId: normalizedShopifyId,
                 title: prod.title,
                 handle: prod.handle,
                 status: prod.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
@@ -130,11 +136,19 @@ export async function syncProductsToDb(storeId: string, products: any[]) {
                 updatedAt: new Date()
             };
 
-            await (prisma as any).product.upsert({
-                where: { shopifyId: prod.id },
-                update: productData,
-                create: productData
+            // Buscar por shopifyId + storeId para evitar duplicados entre tiendas
+            const existing = await (prisma as any).product.findFirst({
+                where: { shopifyId: normalizedShopifyId, storeId }
             });
+
+            if (existing) {
+                await (prisma as any).product.update({
+                    where: { id: existing.id },
+                    data: productData
+                });
+            } else {
+                await (prisma as any).product.create({ data: productData });
+            }
 
             console.log(`[Shopify Sync] ✅ Product synced: ${prod.title}`);
             syncedCount++;

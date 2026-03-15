@@ -853,7 +853,7 @@ export async function uploadTextToDrive(
     storeId: string,
     fileName: string,
     content: string,
-    opts: { subfolderName?: string } = {}
+    opts: { subfolderName?: string; fileType?: string } = {}
 ): Promise<{ driveFileId: string; driveUrl: string }> {
     const buffer = Buffer.from(content, 'utf-8');
     const result = await uploadToProduct(
@@ -862,7 +862,7 @@ export async function uploadTextToDrive(
         'text/plain',
         productId,
         storeId,
-        { fileType: 'DOCUMENT', subfolderName: opts.subfolderName }
+        { ...opts, fileType: opts.fileType || 'TEXT' }
     );
     return { driveFileId: result.driveFileId, driveUrl: result.driveUrl };
 }

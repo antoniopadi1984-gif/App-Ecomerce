@@ -36,13 +36,17 @@ export async function GET(request: Request) {
         'https://www.googleapis.com/auth/gmail.modify',
     ].join(' ');
 
+    // Leer storeId del query param — permite iniciar el OAuth para una tienda específica
+    const storeId = new URL(request.url).searchParams.get('storeId') || 'store-main';
+
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${clientId}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&response_type=code` +
         `&scope=${encodeURIComponent(scopes)}` +
         `&access_type=offline` +
-        `&prompt=consent`;
+        `&prompt=consent` +
+        `&state=${encodeURIComponent(storeId)}`; // ← storeId para el callback
 
     return NextResponse.redirect(googleAuthUrl);
 }

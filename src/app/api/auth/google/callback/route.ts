@@ -42,60 +42,74 @@ export async function GET(request: Request) {
             return NextResponse.redirect(`${origin}/connections?error=token_exchange`);
         }
 
-        // Save connection in DB
-        // Determine storeId (default for now)
-        let store = await prisma.store.findFirst();
-        if (!store) {
-            store = await prisma.store.create({ data: { name: "Nano Banana Store", currency: "EUR" } });
-        }
+        // Save connection in DB — leer storeId del parámetro state del OAuth
+        const storeId = searchParams.get('state') || 'store-main';
+        const store = await prisma.store.findUnique({ where: { id: storeId } })
+            || await prisma.store.findFirst();
+        if (!store) throw new Error('No store found — asegúrate de que hay al menos una tienda en BD');
 
-        // Upsert GOOGLE_OAUTH connection
+        // Upsert conexión principal GOOGLE_OAUTH
         await prisma.connection.upsert({
-            where: {
-                storeId_provider: {
-                    storeId: store.id,
-                    provider: "GOOGLE_SHEETS" // Using Google Sheets as the primary label for the Google identity
-                }
-            },
+            where: { storeId_provider: { storeId: store.id, provider: 'GOOGLE_OAUTH' } },
             update: {
-                apiKey: tokens.access_token,
-                apiSecret: tokens.refresh_token, // Store refresh token in apiSecret for persistent access
+                secretEnc: tokens.refresh_token || tokens.access_token,
+                accessToken: tokens.access_token,
                 extraConfig: JSON.stringify({
-                    expires_at: Date.now() + (tokens.expires_in * 1000),
+                    refresh_token: tokens.refresh_token,
+                    access_token: tokens.access_token,
+                    token_type: tokens.token_type,
+                    expires_in: tokens.expires_in,
                     scope: tokens.scope,
-                    token_type: tokens.token_type
+                    granted_at: new Date().toISOString()
                 }),
                 isActive: true
             },
             create: {
                 storeId: store.id,
-                provider: "GOOGLE_SHEETS",
-                apiKey: tokens.access_token,
-                apiSecret: tokens.refresh_token,
+                provider: 'GOOGLE_OAUTH',
+                secretEnc: tokens.refresh_token || tokens.access_token,
+                accessToken: tokens.access_token,
                 extraConfig: JSON.stringify({
-                    expires_at: Date.now() + (tokens.expires_in * 1000),
+                    refresh_token: tokens.refresh_token,
+                    access_token: tokens.access_token,
                     scope: tokens.scope,
-                    token_type: tokens.token_type
+                    granted_at: new Date().toISOString()
                 }),
                 isActive: true
             }
         });
 
-        // Also update Google Analytics connection if scope matches
-        if (tokens.scope?.includes("analytics")) {
+        // También: GOOGLE_SHEETS (retrocompatibilidad)
+        await prisma.connection.upsert({
+            where: { storeId_provider: { storeId: store.id, provider: 'GOOGLE_SHEETS' } },
+            update:  { apiKey: tokens.access_token, apiSecret: tokens.refresh_token, secretEnc: tokens.refresh_token, accessToken: tokens.access_token, isActive: true },
+            create:  { storeId: store.id, provider: 'GOOGLE_SHEETS', apiKey: tokens.access_token, apiSecret: tokens.refresh_token, secretEnc: tokens.refresh_token, accessToken: tokens.access_token, isActive: true }
+        });
+
+        // También: GOOGLE_ANALYTICS si el scope lo incluye
+        if (tokens.scope?.includes('analytics')) {
             await prisma.connection.upsert({
-                where: { storeId_provider: { storeId: store.id, provider: "GOOGLE_ANALYTICS" } },
-                update: { apiKey: tokens.access_token, apiSecret: tokens.refresh_token, isActive: true },
-                create: { storeId: store.id, provider: "GOOGLE_ANALYTICS", apiKey: tokens.access_token, apiSecret: tokens.refresh_token, isActive: true }
+                where: { storeId_provider: { storeId: store.id, provider: 'GOOGLE_ANALYTICS' } },
+                update:  { apiKey: tokens.access_token, apiSecret: tokens.refresh_token, secretEnc: tokens.refresh_token, accessToken: tokens.access_token, isActive: true },
+                create:  { storeId: store.id, provider: 'GOOGLE_ANALYTICS', apiKey: tokens.access_token, apiSecret: tokens.refresh_token, secretEnc: tokens.refresh_token, accessToken: tokens.access_token, isActive: true }
             });
         }
 
-        // Upsert GOOGLE_DRIVE connection (Critical for Deep Research)
-        if (tokens.scope?.includes("drive")) {
+        // También: GOOGLE_DRIVE
+        if (tokens.scope?.includes('drive')) {
             await prisma.connection.upsert({
-                where: { storeId_provider: { storeId: store.id, provider: "GOOGLE_DRIVE" } },
-                update: { apiKey: tokens.access_token, apiSecret: tokens.refresh_token, isActive: true },
-                create: { storeId: store.id, provider: "GOOGLE_DRIVE", apiKey: tokens.access_token, apiSecret: tokens.refresh_token, isActive: true }
+                where: { storeId_provider: { storeId: store.id, provider: 'GOOGLE_DRIVE' } },
+                update:  { apiKey: tokens.access_token, apiSecret: tokens.refresh_token, secretEnc: tokens.refresh_token, accessToken: tokens.access_token, isActive: true },
+                create:  { storeId: store.id, provider: 'GOOGLE_DRIVE', apiKey: tokens.access_token, apiSecret: tokens.refresh_token, secretEnc: tokens.refresh_token, accessToken: tokens.access_token, isActive: true }
+            });
+        }
+
+        // NUEVO: GOOGLE_GMAIL si se concedió el scope
+        if (tokens.scope?.includes('gmail')) {
+            await prisma.connection.upsert({
+                where: { storeId_provider: { storeId: store.id, provider: 'GOOGLE_GMAIL' } },
+                update:  { apiKey: tokens.access_token, apiSecret: tokens.refresh_token, secretEnc: tokens.refresh_token, accessToken: tokens.access_token, isActive: true },
+                create:  { storeId: store.id, provider: 'GOOGLE_GMAIL', apiKey: tokens.access_token, apiSecret: tokens.refresh_token, secretEnc: tokens.refresh_token, accessToken: tokens.access_token, isActive: true }
             });
         }
 

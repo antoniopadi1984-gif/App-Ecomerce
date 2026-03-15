@@ -27,9 +27,6 @@ export class GeminiProvider implements AIProvider {
 
     async getModels(): Promise<string[]> {
         return [
-            "gemini-1.5-pro-002",
-            "gemini-1.5-flash-002",
-            "gemini-3-flash-preview",
             "gemini-3.1-pro-preview",
             "gemini-3.1-flash-lite-preview",
             "gemini-3.1-flash-image",

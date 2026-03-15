@@ -56,7 +56,7 @@ MHO: No incluyas explicaciones ni formato markdown fuera del JSON.
                 },
                 required: ["hooks"]
             },
-            model: "gemini-1.5-pro-002" // Usamos el mejor disponible mientras el "3.1" no sea real o lo mapeamos
+            model: "gemini-3.1-pro-preview" // Modelo actualizado
         });
 
         // Intentar parsear el JSON si viene como texto

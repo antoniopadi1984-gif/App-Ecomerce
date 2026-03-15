@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
             TaskType.VIDEO_DISSECTION,
             prompt,
             {
-                model: 'gemini-1.5-flash-002',
+                model: 'gemini-3.1-flash-lite-preview',
                 video: videoBase64,
                 videoMimeType: 'video/mp4',
                 jsonSchema: true

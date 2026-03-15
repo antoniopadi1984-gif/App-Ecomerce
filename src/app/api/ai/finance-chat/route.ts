@@ -55,7 +55,7 @@ DATOS DEL MES ACTUAL:
 `;
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
 
         const result = await model.generateContent({
             contents: [

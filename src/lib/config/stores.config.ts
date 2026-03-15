@@ -7,21 +7,24 @@
  *   alecare-mx              → AleCare MX (México)
  *   cmlxrad5405b826d99j9kpgyy → AleCare UK (Reino Unido)
  */
-export const STORES_CONFIG: Record<string, { name: string; domain: string; currency: string }> = {
+export const STORES_CONFIG: Record<string, { name: string; domain: string; currency: string; supportEmail?: string }> = {
     'store-main': {
         name: 'AleEssence',
         domain: 'f7z7nn-ei.myshopify.com',
-        currency: 'EUR'
+        currency: 'EUR',
+        supportEmail: 'soporte@aleessence.com'
     },
     'alecare-mx': {
         name: 'AleCare MX',
         domain: 'im8zf5-6c.myshopify.com',
-        currency: 'MXN'
+        currency: 'MXN',
+        supportEmail: 'soporte@alecare.mx'
     },
     'cmlxrad5405b826d99j9kpgyy': {
         name: 'AleCare UK',
         domain: 'v1etfu-he.myshopify.com',  // ← v1etfu (verificado y funcional)
-        currency: 'GBP'
+        currency: 'GBP',
+        supportEmail: 'support@alecare.co.uk'
     }
 } as const;
 

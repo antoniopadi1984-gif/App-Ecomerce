@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store/store-context';
-import ComunicacionesLayout from '../ComunicacionesLayout';
+import { ComunicacionesTabs } from '@/components/operaciones/ComunicacionesTabs';
 
 interface GmailMessage {
     id: string;
@@ -88,7 +88,7 @@ export default function GmailPage() {
     };
 
     return (
-        <ComunicacionesLayout activeTab="gmail">
+        <ComunicacionesTabs>
             {/* Search bar */}
             <div className="flex gap-3 mb-5">
                 <input
@@ -187,6 +187,6 @@ export default function GmailPage() {
                     </div>
                 )}
             </div>
-        </ComunicacionesLayout>
+        </ComunicacionesTabs>
     );
 }

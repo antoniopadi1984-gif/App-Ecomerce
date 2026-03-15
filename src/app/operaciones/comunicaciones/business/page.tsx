@@ -1,9 +1,9 @@
 'use client';
-import ComunicacionesLayout from '../ComunicacionesLayout';
+import { ComunicacionesTabs } from '@/components/operaciones/ComunicacionesTabs';
 
 export default function BusinessPage() {
     return (
-        <ComunicacionesLayout activeTab="business">
+        <ComunicacionesTabs>
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-blue-900/30 border border-blue-500/20 flex items-center justify-center mb-4">
                     <span className="text-3xl">💼</span>
@@ -18,6 +18,6 @@ export default function BusinessPage() {
                     <span className="px-3 py-1.5 bg-[#1a1f2e] border border-white/5 rounded-lg text-xs text-gray-500">WhatsApp Business API</span>
                 </div>
             </div>
-        </ComunicacionesLayout>
+        </ComunicacionesTabs>
     );
 }

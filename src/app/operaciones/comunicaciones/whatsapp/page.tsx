@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store/store-context';
-import ComunicacionesLayout from '../ComunicacionesLayout';
+import { ComunicacionesTabs } from '@/components/operaciones/ComunicacionesTabs';
 
 const TRIGGERS = ['CONFIRMATION', 'PREPARATION', 'TRACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'INCIDENCE'];
 
@@ -32,7 +32,7 @@ export default function WhatsAppPage() {
     };
 
     return (
-        <ComunicacionesLayout activeTab="whatsapp">
+        <ComunicacionesTabs>
             <div className="flex gap-3 mb-6">
                 {(['templates', 'historial'] as const).map(t => (
                     <button key={t} onClick={() => setTab(t)}
@@ -102,6 +102,6 @@ export default function WhatsAppPage() {
                     ))}
                 </div>
             )}
-        </ComunicacionesLayout>
+        </ComunicacionesTabs>
     );
 }

@@ -1857,24 +1857,41 @@ model EvidenceChunk {
 }
 
 model DriveAsset {
-  id          String   @id @default(cuid())
-  productId   String
-  driveFileId String   @unique
-  drivePath   String
-  assetType   String
-  sourceUrl   String?
-  category    String?
-  subcategory String?
-  concept     Int?
-  organized   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  createdBy   String?
-  metadata    Json?
-  product     Product  @relation(fields: [productId], references: [id])
+  id             String    @id @default(cuid())
+  productId      String
+  storeId        String?
+  driveFileId    String    @unique
+  driveUrl       String?
+  drivePath      String
+  fileName       String?
+  mimeType       String?
+  assetType      String
+  fileType       String?
+  conceptCode    String?
+  funnelStage    String?
+  awarenessLevel Int?
+  traffic        String?
+  angle          String?
+  hookScore      Float?
+  transcription  String?
+  nomenclature   String?
+  sourceUrl      String?
+  category       String?
+  subcategory    String?
+  concept        Int?
+  organized      Boolean   @default(false)
+  syncedAt       DateTime?
+  agentReadable  Boolean   @default(true)
+  analysisJson   String?
+  createdAt      DateTime  @default(now())
+  createdBy      String?
+  metadata       Json?
+  product        Product   @relation(fields: [productId], references: [id])
 
   @@index([productId, assetType])
+  @@index([productId, conceptCode])
+  @@index([storeId, conceptCode])
   @@index([productId, organized])
-  @@index([productId, concept])
 }
 
 model ResearchProject {

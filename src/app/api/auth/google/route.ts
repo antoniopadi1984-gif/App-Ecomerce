@@ -18,14 +18,23 @@ export async function GET(request: Request) {
 
     // We request offline access to get a refresh_token
     const scopes = [
-        "https://www.googleapis.com/auth/spreadsheets", // Full Sheets Access
-        "https://www.googleapis.com/auth/drive",        // Full Drive Access
-        "https://www.googleapis.com/auth/analytics.readonly", // GA4 Data
-        "https://www.googleapis.com/auth/analytics",    // GA4 Management
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/userinfo.profile",
-        "https://www.googleapis.com/auth/cloud-platform" // Access to Vertex AI (Veo, Gemini, etc.)
-    ].join(" ");
+        // Workspace
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive',
+        // Analytics
+        'https://www.googleapis.com/auth/analytics.readonly',
+        'https://www.googleapis.com/auth/analytics',
+        // User identity
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile',
+        // Cloud Platform (Vertex AI, Veo, Gemini, etc.)
+        'https://www.googleapis.com/auth/cloud-platform',
+        // Gmail — agente que responde clientes
+        'https://www.googleapis.com/auth/gmail.send',
+        'https://www.googleapis.com/auth/gmail.compose',
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/gmail.modify',
+    ].join(' ');
 
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${clientId}` +

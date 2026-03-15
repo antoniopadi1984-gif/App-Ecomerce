@@ -3,7 +3,12 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log("🌱 Seed base desactivado para evitar creación de tiendas temporales. Usa scripts específicos para cada tienda.\n");
+    // ── BLINDAJE: verificar tiendas válidas antes de cualquier operación ──
+    // Las únicas tiendas de producción son las definidas en STORES_CONFIG
+    // NO crear tiendas nuevas desde este seed — usar scripts específicos
+    const VALID_STORE_IDS = ['store-main', 'alecare-mx', 'cmlxrad5405b826d99j9kpgyy'];
+    console.log('[Seed] Tiendas de producción válidas:', VALID_STORE_IDS);
+    console.log('🌱 Seed base desactivado para evitar creación de tiendas temporales. Usa scripts específicos para cada tienda.\n');
     /*
     // 1. Store
     const store = await prisma.store.upsert({

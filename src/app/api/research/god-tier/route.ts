@@ -3,8 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { AiRouter } from '@/lib/ai/router';
 import { TaskType } from '@/lib/ai/providers/interfaces';
 import { GEMINI_PROMPTS_V3 } from '@/lib/research/research-v3-prompts';
+import { ReviewScraper } from '@/lib/research/review-scraper';
 
-export const maxDuration = 120; // 2 mins per step ideally
+export const maxDuration = 300; // 5 mins per step — gemini-2.5-pro necesita más tiempo
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
@@ -33,8 +34,24 @@ export async function POST(req: NextRequest) {
 
         // Ejecución lógica según la Fase
         switch (stepKey) {
-            case 'P1': { // Product Core Forensic
-                const promptTemplate = GEMINI_PROMPTS_V3.PRODUCT_CORE_FORENSIC;
+            case 'P1': { // Product Core Forensic — con reseñas reales
+                // Recopilar reseñas reales de foros, Reddit y Amazon
+                let realReviewsContext = '';
+                try {
+                    const amazonLinks = product.amazonLinks ? JSON.parse(product.amazonLinks) : [];
+                    const amazonUrls = Array.isArray(amazonLinks) ? amazonLinks : [amazonLinks].filter(Boolean);
+                    const reviews = await ReviewScraper.gatherAllReviews(
+                        product.title,
+                        amazonUrls,
+                        product.country === 'MX' ? 'es-MX' : 'es'
+                    );
+                    if (reviews.totalReviews > 0) {
+                        realReviewsContext = `\n\nREVIEWS REALES ENCONTRADAS (${reviews.totalReviews} de ${reviews.sources.join(', ')}):\n${reviews.combinedText}`;
+                    }
+                } catch (e) {
+                    console.warn('[P1] Review scraping failed (non-critical):', e);
+                }
+                const promptTemplate = GEMINI_PROMPTS_V3.PRODUCT_CORE_FORENSIC + realReviewsContext;
                 const prompt = promptTemplate
                     .replace('{{productTitle}}', product.title)
                     .replace('{{niche}}', (product as any).niche || product.title)

@@ -101,9 +101,9 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
     'research-core': {
         role: 'research-core',
         provider: 'gemini-pro',
-        model: API_CONFIG.vertexAI.models.gemini.production,
+        model: 'gemini-2.5-pro',
         temperature: 0.3,
-        maxTokens: 8192,
+        maxTokens: 65536,
         systemPrompt: `Eres el RESEARCH CORE. Ejecutas la investigación P1 a P7 secuencialmente.
 Tu trabajo es extraer la verdad del mercado: Mass Desires, Pain Points, VOC (Voice of Customer), Competencia y Psicografía.
 Sin tu investigación, el resto de agentes están ciegos. Proporcionas la base de datos de insights.`,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ResearchOrchestrator } from '@/lib/research/research-orchestrator';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300;
+export const maxDuration = 600;
 
 export async function POST(req: NextRequest) {
     const { productId, storeId } = await req.json();

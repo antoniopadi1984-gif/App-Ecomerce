@@ -140,12 +140,10 @@ export class VideoAdOrchestrator {
                 }))
             );
 
-            const audioUrls = await Promise.all(
-                audioBuffers.map((buffer, i) => uploadBufferToGCS(
-                    buffer,
-                    `audio/batch_${Date.now()}_${i}.mp3`
-                ))
-            );
+            const audioUrls = audioBuffers.map((buffer: Buffer) => {
+                const b64 = buffer.toString('base64');
+                return `data:audio/mpeg;base64,${b64}`;
+            });
 
             // FASE 3: Animar TODOS los videos en paralelo
             console.log('[VideoAdOrchestrator] 🎬 FASE 3/3: Animando videos en paralelo...');

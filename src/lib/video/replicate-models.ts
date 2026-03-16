@@ -45,6 +45,60 @@ export const REPLICATE_MODELS = {
   MUSIC_MINIMAX:       { id: "minimax/music-2.5", use: "music_gen" },
   SUBTITLES_AUTO:      { id: "fictions-ai/autocaption", use: "subtitles" },
   VIDEO_UPSCALE:       { id: "topazlabs/video-upscale", use: "upscale_video" },
+
+  // ── NUEVOS MODELOS VERIFICADOS MARZO 2026 ─────────────────────
+  
+  // Traducción de vídeo completa (HeyGen)
+  VIDEO_TRANSLATE:     { id: "heygen/video-translation", use: "video_translate", quality: "production" },
+  
+  // Avatar full-body con audio (mejor que sadtalker)
+  OMNI_HUMAN:          { id: "bytedance/omni-human-1.5", use: "avatar_fullbody", quality: "production" },
+  DREAMACTOR:          { id: "bytedance/dreamactor-m2.0", use: "animate_character", quality: "production" },
+  
+  // Kling Avatar
+  KLING_AVATAR:        { id: "kwaivgi/kling-v2-avatar", use: "avatar_premium", quality: "production" },
+  
+  // Vídeo con audio sincronizado (los mejores)
+  VIDEO_VEO3:          { id: "google/veo-3", use: "t2v", quality: "ultra" },
+  VIDEO_VEO3_FAST:     { id: "google/veo-3-fast", use: "t2v", quality: "production" },
+  VIDEO_SEEDANCE_PRO:  { id: "bytedance/seedance-1-pro", use: "t2v|i2v", quality: "production" },
+  VIDEO_SORA2:         { id: "openai/sora-2", use: "t2v|i2v", quality: "ultra" },
+  VIDEO_PIXVERSE_V5:   { id: "pixverse/pixverse-v5", use: "t2v|i2v", quality: "fast" },
+  
+  // Imágenes de producto (especializado)
+  IMAGE_BRIA_PRODUCT:  { id: "bria/product-image", use: "product_image", quality: "production" },
+  IMAGE_BRIA_BG_GEN:   { id: "bria/background-generation", use: "background_gen", quality: "production" },
+  IMAGE_BRIA_REMOVE_BG: { id: "bria/remove-background", use: "remove_bg", quality: "production" },
+  IMAGE_BRIA_GENFILL:  { id: "bria/genfill", use: "image_fill", quality: "production" },
+  IMAGE_BRIA_ERASE:    { id: "bria/eraser", use: "image_erase", quality: "production" },
+  
+  // Upscale imágenes (Recraft y Topaz)
+  IMAGE_UPSCALE_CRISP: { id: "recraft-ai/recraft-crisp-upscale", use: "upscale_image", quality: "production" },
+  IMAGE_UPSCALE_CREATIVE: { id: "recraft-ai/recraft-creative-upscale", use: "upscale_image_creative", quality: "premium" },
+  IMAGE_VECTORIZE:     { id: "recraft-ai/recraft-vectorize", use: "vectorize", quality: "production" },
+  
+  // Flux 2 Flex (hasta 10 imágenes de referencia — ideal para consistencia de personaje)
+  IMAGE_FLUX_2_FLEX:   { id: "black-forest-labs/flux-2-flex", use: "image_gen|consistent_character", quality: "premium" },
+  
+  // Ideogram v3 (mejor texto en imágenes)
+  IMAGE_IDEOGRAM_V3:   { id: "ideogram-ai/ideogram-v3-quality", use: "image_gen|text_in_image", quality: "premium" },
+  
+  // Vídeo sincronizado (Pixverse lipsync)
+  LIPSYNC_PIXVERSE:    { id: "pixverse/lipsync", use: "lipsync", quality: "fast" },
+  LIPSYNC_KLING:       { id: "kwaivgi/kling-lip-sync", use: "lipsync", quality: "production" },
+  
+  // Audio a vídeo (LTX)
+  VIDEO_AUDIO_TO_VIDEO: { id: "lightricks/audio-to-video", use: "audio_to_video", quality: "production" },
+  
+  // Transcripción GPT-4o (mejor que Whisper para español)
+  TRANSCRIBE_GPT4O:    { id: "openai/gpt-4o-transcribe", use: "transcription", quality: "premium" },
+  
+  // Efectos de sonido para vídeo
+  VIDEO_SFX:           { id: "mirelo/video-to-sfx-v1.5", use: "add_sfx_auto", quality: "production" },
+  
+  // 3D desde imagen
+  MODEL_3D:            { id: "hyper3d/rodin", use: "3d_from_image", quality: "production" },
+
 } as const;
 
 export type ReplicateModelKey = keyof typeof REPLICATE_MODELS;

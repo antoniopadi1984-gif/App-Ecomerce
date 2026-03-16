@@ -7,8 +7,15 @@ export interface VideoAdConfig {
     avatarPrompt: string;
     script: string;
     voiceId?: string;
-    concept: string; // Para tracking
+    concept: string;
     cropFactor?: number;
+    format?: '9:16' | '16:9' | '1:1';
+    mode?: 'auto' | 'ugc' | 'vsl' | 'broll' | 'lipsync';
+}
+
+export interface BatchOptions {
+    quality?: 'fast' | 'standard' | 'premium';
+    format?: string;
 }
 
 export interface VideoAdResult {
@@ -68,7 +75,8 @@ export class VideoAdOrchestrator {
             const videoUrl = await this.animator.animate({
                 imageUrl: avatarUrl,
                 audioUrl: audioUrl,
-                cropFactor: config.cropFactor
+                cropFactor: config.cropFactor,
+                quality: opts.quality === 'premium' ? 'premium' : 'standard'
             });
 
             const duration = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -102,7 +110,7 @@ export class VideoAdOrchestrator {
     /**
      * Generar múltiples videos en BATCH (10-15 variaciones en paralelo)
      */
-    async generateBatch(configs: VideoAdConfig[]): Promise<VideoAdResult[]> {
+    async generateBatch(configs: VideoAdConfig[], opts: BatchOptions = {}): Promise<VideoAdResult[]> {
         console.log(`[VideoAdOrchestrator] 🚀 Generando ${configs.length} videos en BATCH...`);
 
         const startTime = Date.now();

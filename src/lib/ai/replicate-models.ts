@@ -13,6 +13,7 @@ export const REPLICATE_MODELS = {
         FLUX_DEV:           "black-forest-labs/flux-dev",                        // calidad/control
         FLUX_PRO:           "black-forest-labs/flux-1.1-pro",                   // máxima calidad
         FLUX_KONTEXT:       "black-forest-labs/flux-kontext-pro",               // image-to-image
+        FLUX_KONTEXT_PRO:  "black-forest-labs/flux-kontext-pro",               // alias legacy
         FLUX_FILL:          "black-forest-labs/flux-fill-pro",                  // inpainting
 
         // Ideogram — texto en imagen
@@ -98,6 +99,7 @@ export const REPLICATE_MODELS = {
         AUDIO_SEPARATION:   "lucataco/demucs:b76be2735c6c36e33e291b12fd6ee2ae71b0e28e5e7e36702c97e7c5b32e2c61",
         VIDEO_INPAINT:      "lucataco/propainter:5300f80bc41d222272e5111ba0b30ee80287413a216856525166299d63f03a61",
         IMAGE_UPSCALE:      "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee2d0e4b67e1fb967b9b3",
+        IMAGE_INPAINT:     "lucataco/propainter:5300f80bc41d222272e5111ba0b30ee80287413a216856525166299d63f03a61",
     },
 };
 

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
                 console.log('[Batch] Generating packaging...');
                 const url = await generateImage({
                     prompt: packagingPrompt,
-                    mode: 'imagen3',
+                    mode: 'nano-banana-pro',
                     aspectRatio: '1:1'
                 });
                 
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
                         image_request: {
                             prompt: adPrompt,
                             aspect_ratio: format === '1:1' ? 'ASPECT_1_1' : format === '9:16' ? 'ASPECT_9_16' : 'ASPECT_4_5',
-                            model: 'V_3',
+                            model: 'V_3_QUALITY',
                             rendering_speed: 'BALANCED',
                             style_type: 'REALISTIC',
                         }
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
                 try {
                     const videoUrl = await generateVideo({
                         prompt: vp.script || vp.prompt || adPrompt, // fallback chain
-                        mode: isVeo ? 'veo3' : 'standard',
+                        mode: isVeo ? 'veo3-fast' : 'standard',
                         quality: isVeo ? 'premium' : 'balanced',
                         aspectRatio: '9:16',
                         duration: 8,
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
                 const quickUrl = await generateImage({
                     prompt: adPrompt,
                     mode: 'generate',
-                    model: 'black-forest-labs/flux-schnell',
+                    model: 'black-forest-labs/flux-2-pro',
                     aspectRatio: format as any
                 });
 

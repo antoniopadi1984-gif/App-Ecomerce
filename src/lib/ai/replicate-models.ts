@@ -1,73 +1,81 @@
 /**
  * REPLICATE MODELS REGISTRY — EcomBoom
- * Hashes verificados desde replicate.com
- * Última actualización: Marzo 2026
+ * Modelos oficiales (always on, sin hash requerido)
+ * + Modelos con hash verificado
+ * Marzo 2026
  */
 
 export const REPLICATE_MODELS = {
 
     // ── IMAGEN ──────────────────────────────────────────────────────────────
     IMAGE: {
-        // Flux — generación de imágenes
-        FLUX_SCHNELL:       "black-forest-labs/flux-schnell",                    // rápido, económico ✅ VERIFICADO
-        FLUX_DEV:           "black-forest-labs/flux-dev",                        // calidad/control
-        FLUX_PRO:           "black-forest-labs/flux-1.1-pro",                   // máxima calidad
-        FLUX_KONTEXT:       "black-forest-labs/flux-kontext-pro",               // image-to-image
-        FLUX_KONTEXT_PRO:  "black-forest-labs/flux-kontext-pro",               // alias legacy
-        FLUX_FILL:          "black-forest-labs/flux-fill-pro",                  // inpainting
+        // Flux — generación oficial
+        FLUX_SCHNELL:       "black-forest-labs/flux-schnell",           // ✅ oficial, rápido
+        FLUX_DEV:           "black-forest-labs/flux-dev",               // ✅ oficial
+        FLUX_PRO:           "black-forest-labs/flux-1.1-pro",          // ✅ oficial
+        FLUX_KONTEXT:       "black-forest-labs/flux-kontext-pro",      // ✅ oficial, i2i
+        FLUX_KONTEXT_PRO:   "black-forest-labs/flux-kontext-pro",      // alias legacy
+        FLUX_FILL:          "black-forest-labs/flux-fill-pro",         // ✅ oficial, inpaint
 
         // Ideogram — texto en imagen
-        IDEOGRAM_V3:        "ideogram-ai/ideogram-v3",
-        IDEOGRAM_V3_TURBO:  "ideogram-ai/ideogram-v3-turbo",
+        IDEOGRAM_V3:        "ideogram-ai/ideogram-v3",                 // ✅ oficial
+        IDEOGRAM_V3_TURBO:  "ideogram-ai/ideogram-v3-turbo",          // ✅ oficial
 
-        // Recraft — estilo/vectorial
-        RECRAFT_V3:         "recraft-ai/recraft-v3",
-        RECRAFT_SVG:        "recraft-ai/recraft-v3-svg",
+        // Recraft
+        RECRAFT_V3:         "recraft-ai/recraft-v3",                   // ✅ oficial
+        RECRAFT_SVG:        "recraft-ai/recraft-v3-svg",              // ✅ oficial
 
-        // Upscale imagen
+        // Google
+        IMAGEN_3:           "google/imagen-3",                         // ✅ oficial
+
+        // Upscale / restauración
         REAL_ESRGAN:        "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee2d0e4b67e1fb967b9b3",
-        CLARITY_UPSCALE:    "philz1337x/clarity-upscaler:dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         CODEFORMER:         "sczhou/codeformer:7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
+        IMAGE_INPAINT:      "black-forest-labs/flux-fill-pro",        // alias legacy
     },
 
     // ── VIDEO GENERATIVO ────────────────────────────────────────────────────
     VIDEO: {
-        // Kling — text/image to video
-        KLING_V2:           "kwaivgi/kling-v2-6",
-        KLING_V3:           "kwaivgi/kling-v3-video",
-        KLING_V3_OMNI:      "kwaivgi/kling-v3-omni-video",
-        KLING_O1:           "kwaivgi/kling-o1",
+        // Kling — oficial
+        KLING_V2:           "kwaivgi/kling-v2-6",                     // ✅ oficial i2v
+        KLING_V3:           "kwaivgi/kling-v3-video",                 // ✅ oficial
+        KLING_V3_OMNI:      "kwaivgi/kling-v3-omni-video",           // ✅ oficial
+        KLING_O1:           "kwaivgi/kling-o1",                       // ✅ oficial
+        KLING_LIPSYNC:      "kwaivgi/kling-lip-sync",                 // ✅ oficial lipsync
 
-        // Alternativas video
-        MINIMAX:            "minimax/video-01",
-        LTX_VIDEO:          "lightricks/ltx-video-0-9-7",
-        WAN_I2V:            "wavespeedai/wan-2-1-i2v",
+        // Minimax / Hailuo — oficial
+        MINIMAX:            "minimax/video-01",                        // ✅ oficial
+        MINIMAX_LIVE:       "minimax/video-01-live",                  // ✅ oficial
 
-        // Veo 3 — via Vertex AI (no Replicate)
+        // Wan — oficial
+        WAN_I2V:            "wan-ai/wan-2.2-s2v",                    // ✅ oficial i2v+audio
+
+        // Veo — via Vertex AI
         VEO_3:              "vertex:veo-3.0-generate-preview",
         VEO_3_FAST:         "vertex:veo-3.0-fast-generate-preview",
 
-        // Post-producción video
-        VIDEO_UPSCALE:      "topazlabs/video-upscale",
+        // Post-producción
+        VIDEO_UPSCALE:      "topazlabs/video-upscale",                // ✅ oficial
         VIDEO_INPAINT:      "lucataco/propainter:5300f80bc41d222272e5111ba0b30ee80287413a216856525166299d63f03a61",
     },
 
     // ── AVATAR / LIPSYNC ────────────────────────────────────────────────────
     AVATAR: {
-        // Lipsync — sincronización labios con audio
-        LIPSYNC_2_PRO:      "sync/lipsync-2-pro",                               // ✅ VERIFICADO
+        // Lipsync oficial
+        LIPSYNC_2_PRO:      "sync/lipsync-2-pro",                    // ✅ VERIFICADO
+        LIPSYNC_2:          "sync/lipsync-2",                        // ✅ oficial, más rápido
+        KLING_LIPSYNC:      "kwaivgi/kling-lip-sync",               // ✅ oficial
+        LATENTSYNC:         "latentlabs/latentsync",                 // ✅ oficial
 
-        // OmniHuman — avatar hablante con audio
-        OMNI_HUMAN:         "bytedance/omni-human-1-5",
+        // Avatar hablante
+        OMNI_HUMAN:         "bytedance/omni-human-1-5",             // ✅ oficial
+        PIXVERSE_LIPSYNC:   "pixverse-ai/lipsync",                  // ✅ oficial
 
-        // Live Portrait — animar foto fija
-        LIVE_PORTRAIT:      "fofr/live-portrait:067dd98cc"  ,
+        // Animación portrait
+        LIVE_PORTRAIT:      "fofr/live-portrait:067dd98cc416e14c34b01f47aa2ab1a8ffe7d4d0f7ebc4e884d3e80a30c3e843",
 
-        // Hedra — avatar hablante premium
-        HEDRA:              "hedra-ai/character-2",
-
-        // LatentSync — lipsync alternativo
-        LATENTSYNC:         "tmappdev/latentsync",
+        // Multi-persona
+        MULTITALK:          "zsxkib/multitalk",                      // conversational lipsync
     },
 
     // ── AUDIO ───────────────────────────────────────────────────────────────
@@ -76,22 +84,22 @@ export const REPLICATE_MODELS = {
         WHISPER:            "openai/whisper:4d50797290df275329f202e48c76360b3f22b08d28c196cbc54600319435f8d2",
         WHISPER_FAST:       "vaibhavs10/incredibly-fast-whisper:3ab86df6c8f54c11309d4d1f930ac292bad43ace52d10c80d87eb258b3c9f79c",
 
-        // Música generativa
+        // Música
         MUSICGEN:           "meta/musicgen:671ac645ce5e552cc63a54a2bbff63fcbe5d87a576cb6833da7789fb0ad7bc3",
-        MUSICGEN_LARGE:     "meta/musicgen:b05b1dff1d8c6dc63d14b0cdb42135378dcb87f6373b0d3d341ede46e59e2b38",
 
-        // Separación de audio
+        // TTS alternativo
+        MINIMAX_TTS:        "minimax/speech-02-turbo",               // ✅ oficial multilingual
+        INWORLD_TTS:        "inworld/tts-1.5-mini",                 // ✅ oficial
+
+        // Separación audio
         DEMUCS:             "lucataco/demucs:b76be2735c6c36e33e291b12fd6ee2ae71b0e28e5e7e36702c97e7c5b32e2c61",
-
-        // Voz alternativa (TTS)
-        XTTS_V2:            "lucataco/xtts-v2:daff3f45af9fd58cff7ffd38a68831d2d45c5ec2e73c76cfed1af3f8bb3a8b83",
     },
 
-    // ── TEXTO / LLM ─────────────────────────────────────────────────────────
+    // ── TEXTO ────────────────────────────────────────────────────────────────
     TEXT: {
-        CLAUDE_DEFAULT:     "anthropic/claude-sonnet-4-6",
-        CLAUDE_OPUS:        "anthropic/claude-opus-4-6",
-        CLAUDE_SONNET:      "anthropic/claude-sonnet-4-6",
+        CLAUDE_DEFAULT:     "anthropic/claude-sonnet-4-6",           // ✅ oficial
+        CLAUDE_OPUS:        "anthropic/claude-opus-4-6",             // ✅ oficial
+        CLAUDE_SONNET:      "anthropic/claude-sonnet-4-6",           // ✅ oficial
     },
 
     // ── CLEANING ─────────────────────────────────────────────────────────────
@@ -99,7 +107,7 @@ export const REPLICATE_MODELS = {
         AUDIO_SEPARATION:   "lucataco/demucs:b76be2735c6c36e33e291b12fd6ee2ae71b0e28e5e7e36702c97e7c5b32e2c61",
         VIDEO_INPAINT:      "lucataco/propainter:5300f80bc41d222272e5111ba0b30ee80287413a216856525166299d63f03a61",
         IMAGE_UPSCALE:      "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee2d0e4b67e1fb967b9b3",
-        IMAGE_INPAINT:     "lucataco/propainter:5300f80bc41d222272e5111ba0b30ee80287413a216856525166299d63f03a61",
+        IMAGE_INPAINT:      "black-forest-labs/flux-fill-pro",
     },
 };
 
@@ -116,22 +124,23 @@ export const MODEL_TIERS = {
         balanced: REPLICATE_MODELS.VIDEO.KLING_V3,
         premium:  REPLICATE_MODELS.VIDEO.VEO_3,
         omni:     REPLICATE_MODELS.VIDEO.KLING_V3_OMNI,
-        minimax:  REPLICATE_MODELS.VIDEO.MINIMAX,
+        lipsync:  REPLICATE_MODELS.VIDEO.KLING_LIPSYNC,
     },
     AVATAR: {
-        fast:     REPLICATE_MODELS.AVATAR.LIPSYNC_2_PRO,
-        balanced: REPLICATE_MODELS.AVATAR.OMNI_HUMAN,
-        premium:  REPLICATE_MODELS.AVATAR.HEDRA,
+        fast:     REPLICATE_MODELS.AVATAR.LIPSYNC_2,
+        balanced: REPLICATE_MODELS.AVATAR.LIPSYNC_2_PRO,
+        premium:  REPLICATE_MODELS.AVATAR.OMNI_HUMAN,
         portrait: REPLICATE_MODELS.AVATAR.LIVE_PORTRAIT,
+        kling:    REPLICATE_MODELS.AVATAR.KLING_LIPSYNC,
     },
     AUDIO: {
         transcribe: REPLICATE_MODELS.AUDIO.WHISPER_FAST,
         music:      REPLICATE_MODELS.AUDIO.MUSICGEN,
+        tts:        REPLICATE_MODELS.AUDIO.MINIMAX_TTS,
         separate:   REPLICATE_MODELS.AUDIO.DEMUCS,
     },
 };
 
-// ── DEFAULTS POR MÓDULO ────────────────────────────────────────────────────
 export const DEFAULT_MODELS = {
     IMAGE:  MODEL_TIERS.IMAGE.balanced,
     VIDEO:  MODEL_TIERS.VIDEO.balanced,
@@ -139,22 +148,3 @@ export const DEFAULT_MODELS = {
 };
 
 export type Modality = "TEXT" | "IMAGE" | "VIDEO" | "AVATAR" | "AUDIO";
-
-// ── ALIASES DE COMPATIBILIDAD (no eliminar) ───────────────────────────────
-// Mantener referencias legacy que usa el código existente
-export const REPLICATE_MODELS_COMPAT = {
-    IMAGE: {
-        ...REPLICATE_MODELS.IMAGE,
-        FLUX_KONTEXT_PRO: REPLICATE_MODELS.IMAGE.FLUX_KONTEXT,  // alias
-        IMAGE_INPAINT:    REPLICATE_MODELS.IMAGE.FLUX_FILL,     // alias
-    },
-    CLEANING: {
-        ...REPLICATE_MODELS.CLEANING,
-        IMAGE_INPAINT: REPLICATE_MODELS.CLEANING.VIDEO_INPAINT, // alias
-    }
-};
-
-// Patch REPLICATE_MODELS para compatibilidad total
-(REPLICATE_MODELS.IMAGE as any).FLUX_KONTEXT_PRO = REPLICATE_MODELS.IMAGE.FLUX_KONTEXT;
-(REPLICATE_MODELS.CLEANING as any).IMAGE_INPAINT = REPLICATE_MODELS.CLEANING.VIDEO_INPAINT;
-(REPLICATE_MODELS as any).DEFAULT_MODELS = DEFAULT_MODELS;

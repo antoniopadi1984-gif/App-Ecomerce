@@ -658,7 +658,6 @@ export default function ScorecardPage() {
                     </div>
                 </>
             )}
-        </div>
         <AgentPanel
         specialistRole="neural-mother"
         specialistLabel="Neural Mother"
@@ -668,5 +667,6 @@ export default function ScorecardPage() {
         moduleContext={{}}
         specialistActions={[{"label": "Analizar semana", "prompt": "Analiza las métricas de esta semana y detecta el mayor problema"}, {"label": "¿Qué escalar?", "prompt": "¿Qué métricas están en verde y merece escalar presupuesto?"}, {"label": "Forecast mes", "prompt": "Proyecta el cierre de mes con los datos actuales"}]}
     />
+        </div>
     );
 }

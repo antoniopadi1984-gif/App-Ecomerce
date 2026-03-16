@@ -1175,7 +1175,6 @@ export default function CrmForensePage() {
 
                 </div>
             )}
-        </div>
         <AgentPanel
         specialistRole="research-core"
         specialistLabel="CRM Forensic"
@@ -1185,5 +1184,6 @@ export default function CrmForensePage() {
         moduleContext={{}}
         specialistActions={[{"label": "Analizar incidencias", "prompt": "¿Cuáles son las principales causas de devoluciones este mes?"}, {"label": "Transportista peor", "prompt": "¿Qué transportista tiene peor tasa de entrega y por qué?"}, {"label": "Cohorte análisis", "prompt": "Analiza el LTV por cohorte y recomienda estrategia de retención"}]}
     />
+        </div>
     );
 }

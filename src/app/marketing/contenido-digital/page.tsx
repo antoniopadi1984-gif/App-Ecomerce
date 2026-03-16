@@ -203,7 +203,6 @@ export default function ContenidoDigitalPage() {
                     )}
                 </div>
             )}
-        </div>
         <AgentPanel
         specialistRole="script-writer"
         specialistLabel="Script Writer"
@@ -213,5 +212,6 @@ export default function ContenidoDigitalPage() {
         moduleContext={{}}
         specialistActions={[{"label": "Audiolibro rápido", "prompt": "Genera el índice de un audiolibro sobre el beneficio principal del producto"}, {"label": "Email secuencia", "prompt": "Crea una secuencia de 5 emails post-compra para fidelizar"}, {"label": "Curso audio", "prompt": "Diseña un mini curso en audio de 5 lecciones"}]}
     />
+        </div>
     );
 }

@@ -2301,7 +2301,6 @@ export default function PedidosPage() {
                 </div>
             </div>
             {selectedOrder && <OrderDrawer pedido={selectedOrder} onClose={() => setSelectedOrder(null)} onSelectOrder={setSelectedOrder} />}
-        </div>
         <AgentPanel
         specialistRole="ops-commander"
         specialistLabel="Ops Commander"
@@ -2311,5 +2310,6 @@ export default function PedidosPage() {
         moduleContext={{}}
         specialistActions={[{"label": "Pedidos críticos", "prompt": "¿Cuáles son los pedidos más urgentes de confirmar hoy?"}, {"label": "Riesgo fraude", "prompt": "¿Qué pedidos tienen señales de posible fraude?"}, {"label": "Priorizar equipo", "prompt": "¿Cómo debo distribuir la carga entre los agentes hoy?"}]}
     />
+        </div>
     );
 }

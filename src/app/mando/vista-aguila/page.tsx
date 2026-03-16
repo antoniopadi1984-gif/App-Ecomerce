@@ -435,7 +435,6 @@ export default function VistaAguila() {
                 onSelect={addCard}
                 alreadySelected={layoutIds.map(id => cardConfig[id]?.metricId).filter(Boolean)}
             />
-        </div>
         <AgentPanel
         specialistRole="neural-mother"
         specialistLabel="Neural Mother"
@@ -445,5 +444,6 @@ export default function VistaAguila() {
         moduleContext={{}}
         specialistActions={[{"label": "Estado hoy", "prompt": "Dame el diagnóstico del día en 3 puntos"}, {"label": "Alertas críticas", "prompt": "¿Hay alguna métrica en rojo que requiera acción inmediata?"}]}
     />
+        </div>
     );
 }

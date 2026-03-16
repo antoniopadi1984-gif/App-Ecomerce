@@ -144,6 +144,9 @@ model Store {
   extensionCaptures    ExtensionCapture[]
   landingClones        LandingClone[]
   metaInsights         MetaInsightsCache[]
+  employees            Employee[]
+  scheduledAutos       ScheduledAutomation[]
+  whatsappRules        WhatsAppRule[]
 }
 
 model AutomationRule {
@@ -321,7 +324,7 @@ model Connection {
 }
 
 model Customer {
-  id           String    @id @default(cuid())
+  id           String       @id @default(cuid())
   storeId      String
   name         String
   email        String?
@@ -332,15 +335,15 @@ model Customer {
   province     String?
   zip          String?
   country      String?
-  totalOrders  Int       @default(0)
-  totalSpent   Float     @default(0)
-  avgTicket    Float     @default(0)
+  totalOrders  Int          @default(0)
+  totalSpent   Float        @default(0)
+  avgTicket    Float        @default(0)
   tags         String?
   notes        String?
   lastOrderAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  store        Store     @relation(fields: [storeId], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  store        Store        @relation(fields: [storeId], references: [id])
   orders       Order[]
   ltv          CustomerLTV?
 
@@ -2857,7 +2860,7 @@ model MediaJob {
 model AgentConfig {
   id           String   @id @default(cuid())
   storeId      String   @map("store_id")
-  agentId      String   @map("agent_id")   // ← String libre, no enum
+  agentId      String   @map("agent_id") // ← String libre, no enum
   systemPrompt String   @map("system_prompt")
   label        String?
   description  String?
@@ -2989,7 +2992,6 @@ model CopyVariant {
   @@index([storeId])
 }
 
-
 // ══════════════════════════════════════════════
 // INTELLIGENCE MODELS
 // ══════════════════════════════════════════════
@@ -3059,6 +3061,7 @@ model Employee {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   store     Store    @relation(fields: [storeId], references: [id])
+
   @@index([storeId])
 }
 
@@ -3073,6 +3076,7 @@ model ScheduledAutomation {
   status      String    @default("PENDING")
   createdAt   DateTime  @default(now())
   store       Store     @relation(fields: [storeId], references: [id])
+
   @@unique([storeId, orderId, ruleId])
   @@index([status, scheduledAt])
 }
@@ -3094,5 +3098,6 @@ model WhatsAppRule {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   store        Store    @relation(fields: [storeId], references: [id])
+
   @@index([storeId, trigger])
 }

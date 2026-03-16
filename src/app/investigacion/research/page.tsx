@@ -320,8 +320,8 @@ export default function ResearchLabPage() {
         specialistRole="research-core"
         specialistLabel="Research Core"
         accentColor="#10B981"
-        storeId={storeId || activeStoreId || "store-main"}
-        productId={productId}
+        storeId={activeStoreId || "store-main"}
+        productId={productId || undefined}
         moduleContext={{}}
         specialistActions={[{"label": "Lanzar P1", "prompt": "Inicia la investigación P1 del producto activo"}, {"label": "Resumir VOC", "prompt": "Resume las principales voces del cliente encontradas"}, {"label": "Ángulos fuertes", "prompt": "¿Cuáles son los 3 ángulos creativos más prometedores?"}]}
     />

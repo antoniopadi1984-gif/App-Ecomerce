@@ -2305,8 +2305,8 @@ export default function PedidosPage() {
         specialistRole="ops-commander"
         specialistLabel="Ops Commander"
         accentColor="#64748B"
-        storeId={storeId || activeStoreId || "store-main"}
-        productId={productId}
+        storeId={activeStoreId || "store-main"}
+        productId={undefined}
         moduleContext={{}}
         specialistActions={[{"label": "Pedidos críticos", "prompt": "¿Cuáles son los pedidos más urgentes de confirmar hoy?"}, {"label": "Riesgo fraude", "prompt": "¿Qué pedidos tienen señales de posible fraude?"}, {"label": "Priorizar equipo", "prompt": "¿Cómo debo distribuir la carga entre los agentes hoy?"}]}
     />

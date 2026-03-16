@@ -439,8 +439,8 @@ export default function VistaAguila() {
         specialistRole="neural-mother"
         specialistLabel="Neural Mother"
         accentColor="#6366F1"
-        storeId={storeId || activeStoreId || "store-main"}
-        productId={productId}
+        storeId={storeId || "store-main"}
+        productId={undefined}
         moduleContext={{}}
         specialistActions={[{"label": "Estado hoy", "prompt": "Dame el diagnóstico del día en 3 puntos"}, {"label": "Alertas críticas", "prompt": "¿Hay alguna métrica en rojo que requiera acción inmediata?"}]}
     />

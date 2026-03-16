@@ -207,8 +207,8 @@ export default function ContenidoDigitalPage() {
         specialistRole="script-writer"
         specialistLabel="Script Writer"
         accentColor="#EC4899"
-        storeId={storeId || activeStoreId || "store-main"}
-        productId={productId}
+        storeId={activeStoreId || "store-main"}
+        productId={productId || undefined}
         moduleContext={{}}
         specialistActions={[{"label": "Audiolibro rápido", "prompt": "Genera el índice de un audiolibro sobre el beneficio principal del producto"}, {"label": "Email secuencia", "prompt": "Crea una secuencia de 5 emails post-compra para fidelizar"}, {"label": "Curso audio", "prompt": "Diseña un mini curso en audio de 5 lecciones"}]}
     />

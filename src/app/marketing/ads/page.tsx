@@ -608,8 +608,8 @@ export default function MarketingAdsPage() {
         specialistRole="media-buyer"
         specialistLabel="Media Buyer"
         accentColor="#F59E0B"
-        storeId={storeId || activeStoreId || "store-main"}
-        productId={productId}
+        storeId={activeStoreId || "store-main"}
+        productId={undefined}
         moduleContext={{}}
         specialistActions={[{"label": "Diagnosticar ROAS", "prompt": "¿Por qué puede estar bajando el ROAS esta semana?"}, {"label": "Escalar campaña", "prompt": "¿Cómo debería escalar el presupuesto de la campaña activa?"}, {"label": "Fatiga creativos", "prompt": "¿Qué creativos están en fatiga y debo pausar?"}]}
     />

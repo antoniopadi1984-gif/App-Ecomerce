@@ -662,8 +662,8 @@ export default function ScorecardPage() {
         specialistRole="neural-mother"
         specialistLabel="Neural Mother"
         accentColor="#6366F1"
-        storeId={storeId || activeStoreId || "store-main"}
-        productId={productId}
+        storeId={storeId || "store-main"}
+        productId={undefined}
         moduleContext={{}}
         specialistActions={[{"label": "Analizar semana", "prompt": "Analiza las métricas de esta semana y detecta el mayor problema"}, {"label": "¿Qué escalar?", "prompt": "¿Qué métricas están en verde y merece escalar presupuesto?"}, {"label": "Forecast mes", "prompt": "Proyecta el cierre de mes con los datos actuales"}]}
     />

@@ -25,7 +25,7 @@ Responde en español de forma concisa y accionable.`;
         return NextResponse.json({ 
             success: true, 
             response: result.text,
-            tokensUsed: result.tokensUsed 
+            tokensUsed: result.totalTokens 
         });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });

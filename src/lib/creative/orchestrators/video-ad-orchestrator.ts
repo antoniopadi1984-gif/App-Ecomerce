@@ -1,7 +1,9 @@
 import { ImageGenerator } from '../generators/image-generator';
 import { VoiceGenerator } from '../generators/voice-generator';
 import { VideoAnimator } from '../generators/video-animator';
-import { uploadBufferToGCS } from '../../services/gcs-upload-service';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 export interface VideoAdConfig {
     avatarPrompt: string;
@@ -65,10 +67,13 @@ export class VideoAdOrchestrator {
                 text: config.script,
                 voiceId: config.voiceId
             });
-            const audioUrl = await uploadBufferToGCS(
-                audioBuffer,
-                `audio/v_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`
-            );
+            // Guardar audio en /tmp para pasarlo al VideoAnimator
+            const audioFileName = `audio_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`;
+            const audioTmpPath = path.join(os.tmpdir(), audioFileName);
+            fs.writeFileSync(audioTmpPath, audioBuffer);
+            // Convertir a data URI para modelos que aceptan base64
+            const audioBase64 = audioBuffer.toString('base64');
+            const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
 
             // PASO 3: Animar video
             console.log('[VideoAdOrchestrator] 🎬 Paso 3/3: Animando video...');

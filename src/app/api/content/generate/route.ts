@@ -41,16 +41,12 @@ export async function POST(req: NextRequest) {
         });
         if (!product) return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
 
-        const router = new AiRouter();
-
-        // ── PASO 1: Generar estructura y contenido con Gemini 2.5 Pro ──────
+        // ── PASO 1: Generar estructura con Gemini 2.5 Pro ──────────────
         const structurePrompt = buildStructurePrompt(type, topic, product.title, targetAudience, tone, language, chapters);
-
-        const structureResult = await router.route({
-            taskType: TaskType.COPY_LONGFORM,
-            prompt: structurePrompt,
-            model: process.env.GEMINI_MODEL_PRODUCTION || "gemini-2.5-pro",
-        });
+        const structureResult = await AiRouter.dispatch(
+            storeId, TaskType.COPY_LONGFORM, structurePrompt,
+            { jsonSchema: true }
+        );
 
         let structure: any;
         try {
@@ -78,7 +74,7 @@ ${item.content}`;
                     const audioBuffer = await ElevenLabsService.textToSpeech(
                         textToSpeak.slice(0, 5000), // max 5000 chars por chunk
                         voice,
-                        { stability: 0.5, similarity_boost: 0.75, model_id: "eleven_v3" }
+                        { stability: 0.5, similarity_boost: 0.75 }
                     );
 
                     // Subir a Drive

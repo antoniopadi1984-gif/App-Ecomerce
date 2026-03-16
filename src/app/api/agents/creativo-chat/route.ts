@@ -17,7 +17,6 @@ Responde en español de forma concisa y accionable.`;
             `${h.role === 'user' ? 'Usuario' : 'Asistente'}: ${h.content}`
         ).join('\n');
 
-        const router = new AiRouter();
         const result = await router.route({
             taskType: TaskType.COPY_SHORT,
             prompt: conversationHistory ? 

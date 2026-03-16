@@ -1,3 +1,4 @@
+import React from "react";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google"; // Switch to Outfit for a more modern, premium feel
 import "./globals.css";

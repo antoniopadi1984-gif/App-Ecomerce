@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { getWeeksInMonth, getWeekRanges } from '@/lib/weekUtils';
 import { getStatus, getObjPct, getProjection, getNeededPerWeek, isOnTrack, getVariation, formatValue, METRICS_WITH_TARGET, TARGET_FIELD_MAP } from '@/lib/scorecardUtils';
 
-interface DataCellProps { value: number; unit: string; status: "green" | "yellow" | "red" | "neutral"; variation: number | null; isBest: boolean; }
+interface DataCellProps { value: number; unit: string; status: "green" | "yellow" | "red" | "neutral"; variation: number | null; isBest: boolean; key?: string | number; }
 interface AccumCellProps { value: number; unit: string; status: "green" | "yellow" | "red" | "neutral"; }
 interface ProyCellProps { projection: number; target: number | null; unit: string; }
 interface NeededCellProps { needed: number | null; onTrack: boolean; achieved: boolean; unit: string; }
@@ -381,7 +381,7 @@ export default function ScorecardPage() {
             });
     };
 
-    const RowInfo = ({ label, propId, unit }: { label: string; propId: string; unit: string }) => {
+    const RowInfo = ({ label, propId, unit }: { key?: string; label: string; propId: string; unit: string }) => {
         const hasTarget = SCORECARD_METRICS.find(m => m.id === propId)?.hasTarget || false;
 
         // Setup data arrays

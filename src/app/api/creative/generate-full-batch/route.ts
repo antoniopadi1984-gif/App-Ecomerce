@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
                 console.log('[Batch] Generating packaging...');
                 const url = await generateImage({
                     prompt: packagingPrompt,
-                    mode: 'nano-banana-pro',
+                    mode: 'imagen3',
                     aspectRatio: '1:1'
                 });
                 

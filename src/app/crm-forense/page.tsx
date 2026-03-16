@@ -72,7 +72,7 @@ const TABS = [
     { id: 'INCIDENCIAS', label: 'Incidencias' },
 ];
 
-function PillTab({ active, label, set }: { active: boolean; label: string; set: () => void }) {
+function PillTab({ active, label, set }: { active: boolean; label: string; set: () => any }) {
     return (
         <button
             onClick={set}

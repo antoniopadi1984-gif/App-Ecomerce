@@ -2302,9 +2302,7 @@ export default function PedidosPage() {
             </div>
             {selectedOrder && <OrderDrawer pedido={selectedOrder} onClose={() => setSelectedOrder(null)} onSelectOrder={setSelectedOrder} />}
         </div>
-
-
-    <AgentPanel
+        <AgentPanel
         specialistRole="ops-commander"
         specialistLabel="Ops Commander"
         accentColor="#64748B"

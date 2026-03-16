@@ -204,9 +204,7 @@ export default function ContenidoDigitalPage() {
                 </div>
             )}
         </div>
-
-
-    <AgentPanel
+        <AgentPanel
         specialistRole="script-writer"
         specialistLabel="Script Writer"
         accentColor="#EC4899"

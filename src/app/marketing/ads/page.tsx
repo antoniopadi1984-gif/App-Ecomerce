@@ -605,9 +605,7 @@ export default function MarketingAdsPage() {
                 </div>
             </footer>
         </div>
-
-
-    <AgentPanel
+        <AgentPanel
         specialistRole="media-buyer"
         specialistLabel="Media Buyer"
         accentColor="#F59E0B"

@@ -20,5 +20,10 @@ export default function VideoLabPage() {
             .catch(() => { });
     }, [productId]);
 
-    return <VideoLabTab storeId={storeId || ''} productId={productId || ''} marketLang={marketLang} />;
+    return (
+        <>
+            <VideoLabTab storeId={storeId || ''} productId={productId || ''} marketLang={marketLang} />
+            <AgentPanel specialistRole="video-intelligence" specialistLabel="Video Intelligence" accentColor="#FF6B2B" storeId={storeId || ''} productId={productId} moduleContext={{}} specialistActions={[{label:"Analizar hook",prompt:"Analiza el hook del último vídeo subido"},{label:"5 variantes",prompt:"Genera 5 variantes de ángulos para el producto activo"},{label:"Qué concepto usar",prompt:"¿Qué concepto C1-C9 debería usar para fase fría?"}]} />
+        </>
+    );
 }

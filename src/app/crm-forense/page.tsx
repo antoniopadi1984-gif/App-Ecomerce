@@ -1176,9 +1176,7 @@ export default function CrmForensePage() {
                 </div>
             )}
         </div>
-
-
-    <AgentPanel
+        <AgentPanel
         specialistRole="research-core"
         specialistLabel="CRM Forensic"
         accentColor="#0EA5E9"

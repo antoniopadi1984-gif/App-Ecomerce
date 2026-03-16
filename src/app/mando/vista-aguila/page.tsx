@@ -436,9 +436,7 @@ export default function VistaAguila() {
                 alreadySelected={layoutIds.map(id => cardConfig[id]?.metricId).filter(Boolean)}
             />
         </div>
-
-
-    <AgentPanel
+        <AgentPanel
         specialistRole="neural-mother"
         specialistLabel="Neural Mother"
         accentColor="#6366F1"

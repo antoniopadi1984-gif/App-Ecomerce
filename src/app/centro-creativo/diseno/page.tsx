@@ -14,5 +14,10 @@ export default function DisenoPage() {
 
     if (!storeId || !productId || productId === 'GLOBAL') return null;
 
-    return <DisenoTab storeId={storeId} productId={productId} />;
+    return (
+        <>
+            <DisenoTab storeId={storeId} productId={productId} />
+            <AgentPanel specialistRole="image-director" specialistLabel="Image Director" accentColor="#8B5CF6" storeId={storeId} productId={productId} moduleContext={{}} specialistActions={[{label:"Prompt packaging",prompt:"Genera un prompt para crear el packaging del producto"},{label:"Static ad C1",prompt:"Crea un static ad para concepto C1 en formato 4:5"},{label:"Carrusel ventas",prompt:"Diseña la estructura de un carrusel de ventas para Meta"}]} />
+        </>
+    );
 }

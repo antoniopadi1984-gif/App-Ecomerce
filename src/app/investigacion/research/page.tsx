@@ -103,7 +103,7 @@ export default function ResearchLabPage() {
         });
         const d = await res.json();
         toast.dismiss(`step-${s}`);
-        if (!d.ok) {
+        if (!d.success) {
           toast.error(`Error en ${s}: ${d.error || 'desconocido'}`);
           break;
         }

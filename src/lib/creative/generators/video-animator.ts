@@ -38,7 +38,8 @@ export class VideoAnimator {
         if (quality === 'premium') {
             // PIPELINE PREMIUM: Imagen → Kling v3 video → Kling LipSync
             console.log('[VideoAnimator] 🎬 PREMIUM: Kling v3 → LipSync');
-            const videoOutput = await withRetry(() => replicate.run(REPLICATE_MODELS.VIDEO.KLING_V3 as any, {
+            const videoPred = await withRetry(() => replicate.predictions.create({
+                model: REPLICATE_MODELS.VIDEO.KLING_V3,
                 input: {
                     start_image: opts.imageUrl,
                     prompt: 'person talking naturally to camera, realistic head movement, UGC advertisement style',
@@ -46,34 +47,39 @@ export class VideoAnimator {
                     aspect_ratio: '9:16',
                 }
             }));
-            const videoUrl = extractUrl(videoOutput);
+            const videoResult = await replicate.wait(videoPred);
+            const videoUrl = extractUrl(videoResult.output);
 
-            // Lipsync sobre el video generado
-            const lipsyncOutput = await withRetry(() => replicate.run(REPLICATE_MODELS.AVATAR.KLING_LIPSYNC as any, {
+            const lipsyncPred = await withRetry(() => replicate.predictions.create({
+                model: REPLICATE_MODELS.AVATAR.KLING_LIPSYNC,
                 input: {
                     video_url: videoUrl,
                     audio_file: opts.audioUrl,
                 }
             }));
-            return extractUrl(lipsyncOutput);
+            const lipsyncResult = await replicate.wait(lipsyncPred);
+            return extractUrl(lipsyncResult.output);
 
         } else if (quality === 'fast') {
             // PIPELINE FAST: LipSync-2 directo (más rápido)
             console.log('[VideoAnimator] 🎬 FAST: LipSync-2 directo');
-            const output = await withRetry(() => replicate.run(REPLICATE_MODELS.AVATAR.LIPSYNC_2 as any, {
+            const pred = await withRetry(() => replicate.predictions.create({
+                model: REPLICATE_MODELS.AVATAR.LIPSYNC_2,
                 input: {
                     video: opts.imageUrl,
                     audio: opts.audioUrl,
                 }
             }));
-            return extractUrl(output);
+            const result = await replicate.wait(pred);
+            return extractUrl(result.output);
 
         } else {
             // PIPELINE STANDARD: Imagen → Kling v2 → Kling LipSync
             console.log('[VideoAnimator] 🎬 STANDARD: Kling v2 → LipSync');
 
-            // Paso 1: Generar video base desde imagen
-            const videoOutput = await withRetry(() => replicate.run(REPLICATE_MODELS.VIDEO.KLING_V2 as any, {
+            // Paso 1: Generar video base desde imagen (usando predictions.create para modelos oficiales)
+            const videoPred = await withRetry(() => replicate.predictions.create({
+                model: REPLICATE_MODELS.VIDEO.KLING_V2,
                 input: {
                     start_image: opts.imageUrl,
                     prompt: 'person talking naturally to camera, realistic natural movement, UGC style',
@@ -81,17 +87,20 @@ export class VideoAnimator {
                     aspect_ratio: '9:16',
                 }
             }));
-            const videoUrl = extractUrl(videoOutput);
+            const videoResult = await replicate.wait(videoPred);
+            const videoUrl = extractUrl(videoResult.output);
             console.log('[VideoAnimator] ✅ Video base generado:', videoUrl?.slice(0, 60));
 
             // Paso 2: Sincronizar labios con audio
-            const lipsyncOutput = await withRetry(() => replicate.run(REPLICATE_MODELS.AVATAR.KLING_LIPSYNC as any, {
+            const lipsyncPred = await withRetry(() => replicate.predictions.create({
+                model: REPLICATE_MODELS.AVATAR.KLING_LIPSYNC,
                 input: {
                     video_url: videoUrl,
                     audio_file: opts.audioUrl,
                 }
             }));
-            return extractUrl(lipsyncOutput);
+            const lipsyncResult = await replicate.wait(lipsyncPred);
+            return extractUrl(lipsyncResult.output);
         }
     }
 

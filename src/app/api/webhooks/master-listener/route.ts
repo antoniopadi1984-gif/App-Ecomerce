@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { executeAutomations, schedulePostDeliveryAutomations } from "@/lib/automation/executor";
 
 export async function POST(req: NextRequest) {
     try {
@@ -47,6 +48,15 @@ async function handleShopifyWebhook(topic: string, data: any) {
     console.log(`[Shopify Webhook] Processing topic: ${topic}`);
 
     if (topic === "orders/create" || topic === "orders/updated") {
+        // Disparar automatizaciones
+        if (topic === "orders/create") {
+            setTimeout(async () => {
+                try {
+                    const order = await prisma.order.findFirst({ where: { shopifyOrderId: data.id?.toString() } });
+                    if (order) await executeAutomations(order.storeId, "ORDER_CREATED", order.id);
+                } catch {}
+            }, 2000);
+        }
         const shopifyId = data.id.toString();
 
         const connection = await prisma.connection.findFirst({ where: { provider: "SHOPIFY" } });

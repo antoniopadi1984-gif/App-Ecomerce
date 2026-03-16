@@ -17,14 +17,10 @@ Responde en español de forma concisa y accionable.`;
             `${h.role === 'user' ? 'Usuario' : 'Asistente'}: ${h.content}`
         ).join('\n');
 
-        const result = await router.route({
-            taskType: TaskType.COPY_SHORT,
-            prompt: conversationHistory ? 
-                `Historial:\n${conversationHistory}\n\nNueva pregunta: ${message}` : 
-                message,
-            systemPrompt,
-            model: process.env.GEMINI_MODEL_FAST || 'gemini-2.5-flash-lite',
-        });
+        const _prompt = conversationHistory
+            ? `Historial:\n${conversationHistory}\n\nNueva pregunta: ${message}`
+            : message;
+        const result = await AiRouter.dispatch(storeId, TaskType.COPY_SHORT, _prompt, { systemPrompt });
 
         return NextResponse.json({ 
             success: true, 

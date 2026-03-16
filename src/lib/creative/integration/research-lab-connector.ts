@@ -36,8 +36,14 @@ export class ResearchLabConnector {
                 auto: 'Script de 30-45 segundos (~75-100 palabras). Hook en las primeras 3 palabras. Termina con CTA claro.',
             };
 
-            const systemPrompt = `Eres un experto en copywriting de respuesta directa para ecommerce. Escribe SOLO el script, sin títulos ni explicaciones. Sin asteriscos. Solo el texto que diría el avatar.`;
-            const userPrompt = `Producto: ${productTitle}\nAvatar objetivo: ${avatarDesc}\nÁngulo de marketing: ${angleText}\nHook principal: ${hook}\nPain point: ${pain}\nBeneficio clave: ${benefit}\nIdioma: Español mexicano\nFormato: ${modeInstructions[mode] || modeInstructions['auto']}`;
+            // Language bank del avatar (frases reales que usa)
+            const painPhrases = (avatar.language?.pain_phrases || []).slice(0, 4).join(' / ');
+            const hopePhrases = (avatar.language?.hope_phrases || []).slice(0, 3).join(' / ');
+            const objections = (avatar.language?.objections || avatar.language?.blocking_beliefs || []).slice(0, 2).join(' / ');
+            const langContext = painPhrases ? `\nFrases reales que usa este avatar (úsalas textualmente en el script):\n- Pain: ${painPhrases}\n- Hope: ${hopePhrases}${objections ? '\n- Objeciones: ' + objections : ''}` : '';
+
+            const systemPrompt = `Eres un experto en copywriting de respuesta directa para ecommerce. Escribe SOLO el script, sin títulos ni explicaciones. Sin asteriscos. Solo el texto que diría el avatar. Usa el lenguaje EXACTO del avatar — sus frases reales, su vocabulario, su tono.`;
+            const userPrompt = `Producto: ${productTitle}\nAvatar objetivo: ${avatarDesc}\nÁngulo de marketing: ${angleText}\nHook principal: ${hook}\nPain point: ${pain}\nBeneficio clave: ${benefit}\nIdioma: Español mexicano${langContext}\nFormato: ${modeInstructions[mode] || modeInstructions['auto']}`;
 
             const res = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
@@ -168,7 +174,8 @@ export class ResearchLabConnector {
         const occupation = avatar.occupation || avatar.name || 'professional';
         const ethnicity = avatar.ethnicity || 'Latin American';
         const skin = avatar.skin || '';
-        return `${ethnicity} ${gender}, ${age} years old, ${occupation}${skin ? ', ' + skin : ''}, candid authentic expression, looking directly at camera, soft natural lighting, iPhone portrait quality, UGC style, real person not a model`;
+        const location = avatar.location ? `, based in ${avatar.location}` : '';
+        return `${ethnicity} ${gender}, ${age} years old, ${occupation}${location}${skin ? ', ' + skin : ''}, candid authentic expression, looking directly at camera, soft natural lighting, iPhone portrait quality, UGC style, real person not a model, natural imperfections`;
     }
 
     static selectVoice(avatar: any): string | undefined {

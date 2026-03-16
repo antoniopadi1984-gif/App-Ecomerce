@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import Anthropic from '@anthropic-ai/sdk';
+
 import type { VideoAdConfig } from '../orchestrators/video-ad-orchestrator';
 
 type GenerateOptions = {
@@ -19,8 +19,6 @@ export class ResearchLabConnector {
         productTitle: string
     ): Promise<string> {
         try {
-            const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
             const avatarDesc = `${avatar.gender || 'persona'}, ${avatar.age || '35'} años, ${avatar.occupation || 'profesional'}`;
             const angleText = angle.angle || angle.concept || '';
             const hook = angle.hooks?.[0]?.text || angle.hooks?.[0] || angle.lead_lines || '';
@@ -35,27 +33,27 @@ export class ResearchLabConnector {
                 auto: 'Script de 30-45 segundos (~75-100 palabras). Hook en las primeras 3 palabras. Termina con CTA claro.',
             };
 
-            const prompt = `Eres un experto en copywriting de respuesta directa para ecommerce. 
+            const systemPrompt = `Eres un experto en copywriting de respuesta directa para ecommerce. Escribe SOLO el script, sin títulos ni explicaciones. Sin asteriscos. Solo el texto que diría el avatar.`;
+            const userPrompt = `Producto: ${productTitle}\nAvatar objetivo: ${avatarDesc}\nÁngulo de marketing: ${angleText}\nHook principal: ${hook}\nPain point: ${pain}\nBeneficio clave: ${benefit}\nIdioma: Español mexicano\nFormato: ${modeInstructions[mode] || modeInstructions['auto']}`;
 
-Producto: ${productTitle}
-Avatar objetivo: ${avatarDesc}
-Ángulo de marketing: ${angleText}
-Hook principal: ${hook}
-Pain point: ${pain}
-Beneficio clave: ${benefit}
-Idioma: Español mexicano
-Formato: ${modeInstructions[mode] || modeInstructions.auto}
-
-Escribe SOLO el script, sin títulos ni explicaciones. Sin asteriscos. Solo el texto que diría el avatar.`;
-
-            const response = await client.messages.create({
-                model: 'claude-opus-4-6',
-                max_tokens: 400,
-                messages: [{ role: 'user', content: prompt }]
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+                    'anthropic-version': '2023-06-01',
+                },
+                body: JSON.stringify({
+                    model: 'claude-opus-4-6',
+                    max_tokens: 400,
+                    system: systemPrompt,
+                    messages: [{ role: 'user', content: userPrompt }]
+                })
             });
 
-            const text = response.content[0];
-            return text.type === 'text' ? text.text.trim() : ResearchLabConnector.buildScriptFallback(angle);
+            const data = await res.json();
+            const text = data.content?.[0]?.text;
+            return text ? text.trim() : ResearchLabConnector.buildScriptFallback(angle);
 
         } catch (err) {
             console.warn('[ResearchLabConnector] Claude script failed, using fallback:', err);
@@ -134,12 +132,12 @@ Escribe SOLO el script, sin títulos ni explicaciones. Sin asteriscos. Solo el t
         }));
 
         const scripts = await Promise.all(
-            combos.map(({ angle, avatar }) =>
+            combos.map(({ angle, avatar }: { angle: any; avatar: any }) =>
                 ResearchLabConnector.buildScriptWithClaude(angle, avatar, mode, productTitle)
             )
         );
 
-        return combos.map(({ angle, avatar }, i) => ({
+        return combos.map(({ angle, avatar }: { angle: any; avatar: any }, i: number) => ({
             avatarPrompt: ResearchLabConnector.buildAvatarPrompt(avatar),
             script: scripts[i],
             concept: `${avatar.name || 'Avatar ' + (i + 1)} × ${angle.concept || angle.angle || 'Ángulo ' + (i + 1)}`,

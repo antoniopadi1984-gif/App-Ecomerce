@@ -45,7 +45,7 @@ export class VideoAdOrchestrator {
     /**
      * Generar UN video completo (avatar + voz + animación)
      */
-    async generateSingle(config: VideoAdConfig): Promise<VideoAdResult> {
+    async generateSingle(config: VideoAdConfig, opts: BatchOptions = {}): Promise<VideoAdResult> {
         console.log(`[VideoAdOrchestrator] 🚀 Generando video: ${config.concept}`);
 
         const startTime = Date.now();

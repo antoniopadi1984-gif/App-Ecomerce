@@ -59,13 +59,12 @@ export class VideoAnimator {
                 }
             }));
         } else {
-            // OmniHuman — lipsync con audio real (standard)
-            console.log('[VideoAnimator] 🎬 Usando OmniHuman (standard lipsync)');
-            output = await withRetry(() => replicate.run(REPLICATE_MODELS.AVATAR.OMNI_HUMAN as any, {
+            // LipSync-2-Pro — verificado ✅
+            console.log('[VideoAnimator] 🎬 Usando LipSync-2-Pro (standard)');
+            output = await withRetry(() => replicate.run(REPLICATE_MODELS.AVATAR.LIPSYNC_2_PRO as any, {
                 input: {
-                    image: opts.imageUrl,
+                    video: opts.imageUrl,
                     audio: opts.audioUrl,
-                    crop_factor: opts.cropFactor || 0.9
                 }
             }));
         }

@@ -137,3 +137,22 @@ export const DEFAULT_MODELS = {
 };
 
 export type Modality = "TEXT" | "IMAGE" | "VIDEO" | "AVATAR" | "AUDIO";
+
+// ── ALIASES DE COMPATIBILIDAD (no eliminar) ───────────────────────────────
+// Mantener referencias legacy que usa el código existente
+export const REPLICATE_MODELS_COMPAT = {
+    IMAGE: {
+        ...REPLICATE_MODELS.IMAGE,
+        FLUX_KONTEXT_PRO: REPLICATE_MODELS.IMAGE.FLUX_KONTEXT,  // alias
+        IMAGE_INPAINT:    REPLICATE_MODELS.IMAGE.FLUX_FILL,     // alias
+    },
+    CLEANING: {
+        ...REPLICATE_MODELS.CLEANING,
+        IMAGE_INPAINT: REPLICATE_MODELS.CLEANING.VIDEO_INPAINT, // alias
+    }
+};
+
+// Patch REPLICATE_MODELS para compatibilidad total
+(REPLICATE_MODELS.IMAGE as any).FLUX_KONTEXT_PRO = REPLICATE_MODELS.IMAGE.FLUX_KONTEXT;
+(REPLICATE_MODELS.CLEANING as any).IMAGE_INPAINT = REPLICATE_MODELS.CLEANING.VIDEO_INPAINT;
+(REPLICATE_MODELS as any).DEFAULT_MODELS = DEFAULT_MODELS;

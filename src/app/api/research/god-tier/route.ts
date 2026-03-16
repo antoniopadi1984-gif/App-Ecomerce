@@ -5,270 +5,239 @@ import { TaskType } from '@/lib/ai/providers/interfaces';
 import { GEMINI_PROMPTS_V3 } from '@/lib/research/research-v3-prompts';
 import { ReviewScraper } from '@/lib/research/review-scraper';
 
-export const maxDuration = 300; // 5 mins per step — gemini-2.5-pro necesita más tiempo
+export const maxDuration = 300;
 export const runtime = 'nodejs';
+
+function countryContext(store: any): string {
+    const currency = store?.currency || 'EUR';
+    if (currency === 'MXN') return 'México (español mexicano, busca en Google.com.mx, Amazon.com.mx, foros mexicanos, precios en MXN)';
+    if (currency === 'GBP') return 'Reino Unido (inglés británico, Amazon.co.uk)';
+    return 'España (español de España, Google.es, Amazon.es, foros españoles)';
+}
+
+async function getStepOutput(productId: string, runId: string, key: string) {
+    const step = await (prisma as any).researchStep.findFirst({
+        where: { productId, runId, stepKey: key },
+        orderBy: { createdAt: 'desc' },
+    });
+    if (!step) return null;
+    if (step.outputJson) { try { return JSON.parse(step.outputJson); } catch {} }
+    return step.outputText || null;
+}
+
+function parseAiResult(text: string): { resultText: string; resultJson: Record<string, unknown> | null } {
+    try {
+        const clean = text.replace(/\`\`\`json\s*/g, '').replace(/\`\`\`/g, '').trim();
+        const resultJson = JSON.parse(clean);
+        return { resultText: JSON.stringify(resultJson), resultJson };
+    } catch {
+        return { resultText: text, resultJson: { raw: text } };
+    }
+}
 
 export async function POST(req: NextRequest) {
     try {
         const { storeId, productId, runId: inputRunId, stepKey } = await req.json();
+        if (!storeId || !productId || !stepKey)
+            return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
 
-        if (!storeId || !productId || !stepKey) {
-            return NextResponse.json({ error: 'Faltan parámetros (storeId, productId, stepKey)' }, { status: 400 });
-        }
-
-        const runId = inputRunId || `run_${Date.now()}`;
-        const product = await prisma.product.findUnique({ where: { id: productId } });
+        const runId = inputRunId || \`run_${Date.now()}\`;
+        const product = await (prisma as any).product.findUnique({
+            where: { id: productId }, include: { store: true },
+        });
         if (!product) return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
 
-        // Helper para leer pasos anteriores
-        const getStepOutput = async (key: string) => {
-            const step = await prisma.researchStep.findFirst({
-                where: { productId, runId, stepKey: key },
-                orderBy: { createdAt: 'desc' },
-            });
-            return step?.outputJson ? JSON.parse(step.outputJson) : (step?.outputText || '');
-        };
-
+        const country = countryContext(product.store);
         let resultText = '';
         let resultJson: Record<string, unknown> | null = null;
 
-        // Ejecución lógica según la Fase
         switch (stepKey) {
-            case 'P1': { // Product Core Forensic — con reseñas reales
-                // Recopilar reseñas reales de foros, Reddit y Amazon
+
+            case 'P1': {
                 let realReviewsContext = '';
                 try {
                     const amazonLinks = product.amazonLinks ? JSON.parse(product.amazonLinks) : [];
                     const amazonUrls = Array.isArray(amazonLinks) ? amazonLinks : [amazonLinks].filter(Boolean);
-                    const reviews = await ReviewScraper.gatherAllReviews(
-                        product.title,
-                        amazonUrls,
-                        product.country === 'MX' ? 'es-MX' : 'es'
-                    );
-                    if (reviews.totalReviews > 0) {
-                        realReviewsContext = `\n\nREVIEWS REALES ENCONTRADAS (${reviews.totalReviews} de ${reviews.sources.join(', ')}):\n${reviews.combinedText}`;
-                    }
-                } catch (e) {
-                    console.warn('[P1] Review scraping failed (non-critical):', e);
-                }
-                const promptTemplate = GEMINI_PROMPTS_V3.PRODUCT_CORE_FORENSIC + realReviewsContext;
-                const prompt = promptTemplate
+                    const reviews = await ReviewScraper.gatherAllReviews(product.title, amazonUrls,
+                        product.store?.currency === 'MXN' ? 'es-MX' : 'es');
+                    if (reviews.totalReviews > 0)
+                        realReviewsContext = \`\n\nREVIEWS REALES (${reviews.totalReviews} fuentes):\n${reviews.combinedText.slice(0, 4000)}\`;
+                } catch {}
+
+                const prompt = GEMINI_PROMPTS_V3.MASS_DESIRE_DISCOVERY
                     .replace('{{productTitle}}', product.title)
                     .replace('{{niche}}', (product as any).niche || product.title)
                     .replace('{{productFamily}}', (product as any).category || 'General')
-                    .replace('{{country}}', 'España')
-                    .replace('{{competitorsJson}}', '[]');
+                    .replace('{{country}}', country)
+                    .replace('{{amazonUrls}}', JSON.stringify(product.amazonLinks ? JSON.parse(product.amazonLinks) : []))
+                    + \`\n\nPAÍS/MERCADO: ${country}. Avatares, citas y análisis DEBEN ser de este mercado.\`
+                    + realReviewsContext;
 
-                const p1Result = await AiRouter.dispatch(storeId, TaskType.RESEARCH_DEEP, prompt, { jsonSchema: true });
-                try {
-                    const clean = p1Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                    resultJson = JSON.parse(clean);
-                    resultText = JSON.stringify(resultJson);
-                } catch {
-                    resultText = p1Result.text;
-                    resultJson = { raw: p1Result.text };
-                }
+                const result = await AiRouter.dispatch(storeId, TaskType.RESEARCH_DEEP, prompt, { jsonSchema: true });
+                ({ resultText, resultJson } = parseAiResult(result.text));
                 break;
             }
 
-            case 'P2': // Macro Avatar Engine
-                const p1Data = await getStepOutput('P1');
-                const p2Result = await AiRouter.dispatch(
-                    storeId,
-                    TaskType.RESEARCH_DEEP,
-                    `${GEMINI_PROMPTS_V3.MACRO_AVATAR_CREATION}
-                    \n\nCONTEXTO REAL:
-                    Producto: ${product.title}
-                    Descripción: ${product.description || 'No disponible'}
-                    Esencia del Producto (P1): ${JSON.stringify(p1Data)}`,
-                    { jsonSchema: true }
-                );
-                try {
-                    const clean = p2Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                    resultJson = JSON.parse(clean);
-                    resultText = JSON.stringify(resultJson);
-                } catch {
-                    resultText = p2Result.text;
-                    resultJson = { raw: p2Result.text };
-                }
-                break;
+            case 'P2': {
+                const p1Data = await getStepOutput(productId, runId, 'P1');
+                if (!p1Data) return NextResponse.json({ error: 'Ejecuta P1 primero' }, { status: 400 });
 
-            case 'P3': // Language Bank
-                const p2Data = await getStepOutput('P2');
-                const p3Result = await AiRouter.dispatch(
-                    storeId,
-                    TaskType.COPYWRITING_DEEP,
-                    `${GEMINI_PROMPTS_V3.LANGUAGE_EXTRACTION}
-                    \n\nCONTEXTO REAL:
-                    Avatares Generados: ${JSON.stringify(p2Data)}`,
-                    { jsonSchema: true }
-                );
-                try {
-                    const clean = p3Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                    resultJson = JSON.parse(clean);
-                    resultText = JSON.stringify(resultJson);
-                } catch {
-                    resultText = p3Result.text;
-                    resultJson = { raw: p3Result.text };
-                }
-                break;
+                const prompt = GEMINI_PROMPTS_V3.MACRO_AVATAR_CREATION
+                    .replace('{{productTitle}}', product.title)
+                    .replace('{{productDescription}}', product.description || '')
+                    .replace('{{niche}}', (product as any).niche || product.title)
+                    .replace('{{country}}', country)
+                    .replace('{{desiresJson}}', JSON.stringify(p1Data).slice(0, 8000))
+                    + \`\n\nPAÍS: ${country}. Los avatares DEBEN ser personas reales de este mercado, con nombres y lenguaje local.\`;
 
-            case 'P4': // Angle Engine
-                const _p1Data = await getStepOutput('P1');
-                const _p2Data = await getStepOutput('P2');
-                const _p3Data = await getStepOutput('P3');
-                const p4Result = await AiRouter.dispatch(
-                    storeId,
-                    TaskType.COPYWRITING_DEEP,
-                    `${GEMINI_PROMPTS_V3.ANGLE_ENGINEERING_V3}
-                    \n\nCONTEXTO REAL:
-                    Producto: ${product.title}
-                    Evidencia (P1): ${JSON.stringify(_p1Data)}
-                    Avatar y Contexto (P2): ${JSON.stringify(_p2Data)}
-                    Banco de Lenguaje (P3): ${JSON.stringify(_p3Data)}
-                    Nivel Consciencia: Problem Aware
-                    Sofisticación: 3`,
-                    { jsonSchema: true }
-                );
-                try {
-                    const clean = p4Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                    resultJson = JSON.parse(clean);
-                    resultText = JSON.stringify(resultJson);
-                } catch {
-                    resultText = p4Result.text;
-                    resultJson = { raw: p4Result.text };
-                }
-                break;
-
-            case 'P5': { // Combo Matrix — Avatar x Ángulo con datos reales
-                const _p2DataForP5 = await getStepOutput('P2');
-                const _p4DataForP5 = await getStepOutput('P4');
-                const p5Result = await AiRouter.dispatch(
-                    storeId,
-                    TaskType.COPYWRITING_DEEP,
-                    `Eres un experto en media buying y copywriting de respuesta directa.
-                    Genera 50 combinaciones Avatar x Ángulo con hooks específicos basados EN LOS DATOS REALES proporcionados.
-                    
-                    Producto: ${product.title}
-                    Avatares (P2): ${JSON.stringify(_p2DataForP5).slice(0, 3000)}
-                    Ángulos de Ataque (P4): ${JSON.stringify(_p4DataForP5).slice(0, 3000)}
-                    
-                    Responde EXACTAMENTE en JSON:
-                    { "combos": [{ "avatar": "nombre del avatar", "angle": "nombre del ángulo", "hook": "hook específico de 8-12 palabras", "painStatement": "frase de dolor visceral de 10-15 palabras", "funnelStage": "TOF|MOF|BOF" }] }`,
-                    { jsonSchema: true }
-                );
-                try {
-                    const clean = p5Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                    resultJson = JSON.parse(clean);
-                    resultText = JSON.stringify(resultJson);
-                } catch {
-                    resultText = p5Result.text;
-                    resultJson = { raw: p5Result.text };
-                }
-
-                // Guardado real en DB (ComboMatrix)
-                await prisma.comboMatrix.create({
-                    data: {
-                        productId,
-                        avatarId: 'AV_ALL',
-                        angleId: 'ANG_ALL',
-                        hookBank: JSON.stringify((resultJson as any)?.combos || []),
-                        painStatements: JSON.stringify((resultJson as any)?.combos || []),
-                    }
-                });
+                const result = await AiRouter.dispatch(storeId, TaskType.RESEARCH_DEEP, prompt, { jsonSchema: true });
+                ({ resultText, resultJson } = parseAiResult(result.text));
                 break;
             }
 
-            case 'P6': // Vector Mapping
-                const p6Result = await AiRouter.dispatch(
-                    storeId,
-                    TaskType.COPYWRITING_DEEP,
-                    `Vector Mapping: Dolor -> Mecanismo -> Prueba -> Resultado -> CTA.
-                    Responde EXACTAMENTE en JSON con la estructura { "vectors": [{"dolor": "...", "mecanismo": "...", "prueba": "...", "resultado": "...", "cta": "..."}] }`,
-                    { jsonSchema: true }
-                );
-                try {
-                    const clean = p6Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                    resultJson = JSON.parse(clean);
-                    resultText = JSON.stringify(resultJson);
-                } catch {
-                    resultText = p6Result.text;
-                    resultJson = { raw: p6Result.text };
-                }
-                break;
+            case 'P21': {
+                const p2Data = await getStepOutput(productId, runId, 'P2');
+                if (!p2Data) return NextResponse.json({ error: 'Ejecuta P2 primero' }, { status: 400 });
 
-            case 'P7': // Landing Analyzer (Competidores)
-                const p7Prompt = GEMINI_PROMPTS_V3.COMPETITOR_ANALYSIS_V3
-                    .replace('{{competitorsJson}}', 'Usa tu conocimiento del mercado para este producto: ' + product.title + ' en el nicho: ' + ((product as any).niche || 'General'));
-                
-                const p7Result = await AiRouter.dispatch(
-                    storeId,
-                    TaskType.RESEARCH_FORENSIC, // Usar Gemini Pro para análisis de competencia
-                    p7Prompt,
-                    { jsonSchema: true }
-                );
-                try {
-                    const clean = p7Result.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                    resultJson = JSON.parse(clean);
-                    resultText = JSON.stringify(resultJson);
-                } catch {
-                    resultText = p7Result.text;
-                    resultJson = { raw: p7Result.text };
-                }
+                const prompt = GEMINI_PROMPTS_V3.LANGUAGE_EXTRACTION
+                    .replace('{{productTitle}}', product.title)
+                    .replace('{{country}}', country)
+                    + \`\n\nAVATARES (P2):\n${JSON.stringify(p2Data).slice(0, 8000)}\`
+                    + \`\n\nExtrae 13 secciones de lenguaje literal por avatar. Frases EXACTAS, sin parafrasear.\`;
+
+                const result = await AiRouter.dispatch(storeId, TaskType.RESEARCH_DEEP, prompt, { jsonSchema: true });
+                ({ resultText, resultJson } = parseAiResult(result.text));
                 break;
+            }
+
+            case 'P3': {
+                const p1Data = await getStepOutput(productId, runId, 'P1');
+                const p2Data = await getStepOutput(productId, runId, 'P2');
+                const p21Data = await getStepOutput(productId, runId, 'P21');
+                if (!p1Data || !p2Data) return NextResponse.json({ error: 'Ejecuta P1 y P2 primero' }, { status: 400 });
+
+                const anglePrompt = \`Eres un experto en copywriting de respuesta directa para el mercado de ${country}.
+
+PRODUCTO: ${product.title}
+DESCRIPCIÓN: ${product.description || ''}
+MERCADO: ${country}
+
+INVESTIGACIÓN DE MERCADO (P1):
+${JSON.stringify(p1Data).slice(0, 3500)}
+
+AVATARES MACRO (P2):
+${JSON.stringify(p2Data).slice(0, 3500)}
+
+${p21Data ? \`LANGUAGE BANK (P2.1):\n${JSON.stringify(p21Data).slice(0, 2500)}\` : ''}
+
+MISIÓN: Genera ángulos de marketing y ad copy siguiendo el God Tier Framework.
+
+PASO 1 — BLOCKING BELIEFS (3-5): Creencias que bloquean la compra del avatar principal.
+
+PASO 2 — 5-7 ÁNGULOS: Cada ángulo destruye una blocking belief. Plain English. IQ 90.
+
+PASO 3 — AD COPY completo (Story Lead, 800-1200 palabras) para el ángulo más fuerte:
+- Hook (patrón fear/loss)
+- Identificación inmediata (75-150 palabras, 1ª persona)
+- Amplificación (150-250 palabras, soluciones fallidas)
+- Descubrimiento del producto (150-250 palabras, vida real)
+- UMP Introducción (100-150 palabras, mecanismo del problema)
+- UMS Introducción (100-150 palabras, mecanismo de la solución)
+- Transformación (125-200 palabras, frases cortas, emocional)
+- CTA (150-200 palabras, 2ª persona)
+
+RESPONDE EXACTAMENTE en JSON válido:
+{
+  "blockingBeliefs": [{"belief": "", "evidence": "", "whyItBlocks": ""}],
+  "angles": [{"id": "", "plainEnglish": "", "currentBelief": "", "newInfo": "", "whyTheyBuy": "", "proof": ""}],
+  "adCopy": {
+    "targetAvatar": "",
+    "selectedAngle": "",
+    "hook": "",
+    "immediateIdentification": "",
+    "amplification": "",
+    "productDiscovery": "",
+    "umpIntroduction": "",
+    "umsIntroduction": "",
+    "transformation": "",
+    "cta": "",
+    "fullCopy": ""
+  }
+}\`;
+
+                const result = await AiRouter.dispatch(storeId, TaskType.COPYWRITING_DEEP, anglePrompt, { jsonSchema: true });
+                ({ resultText, resultJson } = parseAiResult(result.text));
+                break;
+            }
+
+            case 'P4': {
+                const p2Data = await getStepOutput(productId, runId, 'P2');
+                const p3Data = await getStepOutput(productId, runId, 'P3');
+                if (!p2Data) return NextResponse.json({ error: 'Ejecuta P2 primero' }, { status: 400 });
+
+                const prompt = \`Combo Matrix para ${product.title} | ${country}.
+Avatares: ${JSON.stringify(p2Data).slice(0, 3000)}
+Ángulos: ${JSON.stringify(p3Data || {}).slice(0, 2000)}
+Genera 30+ combos. JSON: { "combos": [{ "comboId": "COMBO_AV01_ANG01", "avatar": "", "angle": "", "hook": "", "painStatement": "", "funnelStage": "TOF|MOF|BOF", "creativeType": "video|image|carousel" }] }\`;
+
+                const result = await AiRouter.dispatch(storeId, TaskType.COPYWRITING_DEEP, prompt, { jsonSchema: true });
+                ({ resultText, resultJson } = parseAiResult(result.text));
+                try {
+                    await (prisma as any).comboMatrix.create({ data: { productId, avatarId: 'ALL', angleId: 'ALL', hookBank: JSON.stringify((resultJson as any)?.combos || []), painStatements: JSON.stringify((resultJson as any)?.combos || []) } });
+                } catch {}
+                break;
+            }
+
+            case 'P5': {
+                const p1Data = await getStepOutput(productId, runId, 'P1');
+                const p3Data = await getStepOutput(productId, runId, 'P3');
+                const prompt = \`Vector Mapping para ${product.title} en ${country}.
+Mercado (P1): ${JSON.stringify(p1Data || {}).slice(0, 2000)}
+Ángulos (P3): ${JSON.stringify(p3Data || {}).slice(0, 2000)}
+JSON: { "vectors": [{ "dolor": "", "mecanismo": "", "prueba": "", "resultado": "", "cta": "", "competidorDebilidad": "", "nuestraVentaja": "" }], "posicionamiento": { "categoriaCreada": "", "enemigoPrincipal": "", "claimUnico": "" } }\`;
+                const result = await AiRouter.dispatch(storeId, TaskType.RESEARCH_DEEP, prompt, { jsonSchema: true });
+                ({ resultText, resultJson } = parseAiResult(result.text));
+                break;
+            }
+
+            case 'P6': {
+                const p3Data = await getStepOutput(productId, runId, 'P3');
+                const p4Data = await getStepOutput(productId, runId, 'P4');
+                const prompt = \`Creative Briefs para ${product.title} en ${country}.
+Copy (P3): ${JSON.stringify(p3Data || {}).slice(0, 2000)}
+Combos (P4): ${JSON.stringify(p4Data || {}).slice(0, 2000)}
+JSON: { "creativeBriefs": [{ "format": "UGC|STATIC|CAROUSEL", "hook": "", "estructura": "", "duracion": "", "avatarTarget": "", "angleUsed": "", "scriptOutline": "" }] }\`;
+                const result = await AiRouter.dispatch(storeId, TaskType.COPYWRITING_DEEP, prompt, { jsonSchema: true });
+                ({ resultText, resultJson } = parseAiResult(result.text));
+                break;
+            }
+
+            case 'P7': {
+                const p3Data = await getStepOutput(productId, runId, 'P3');
+                const p5Data = await getStepOutput(productId, runId, 'P5');
+                const prompt = (GEMINI_PROMPTS_V3.COMPETITOR_ANALYSIS_V3 || \`Landing page óptima para ${product.title} en ${country}.\`)
+                    .replace('{{competitorsJson}}', \`Producto: ${product.title} | ${country}\`)
+                    + \`\nCopy (P3): ${JSON.stringify(p3Data || {}).slice(0, 1500)}\`
+                    + \`\nVectores (P5): ${JSON.stringify(p5Data || {}).slice(0, 1500)}\`;
+                const result = await AiRouter.dispatch(storeId, TaskType.RESEARCH_FORENSIC, prompt, { jsonSchema: true });
+                ({ resultText, resultJson } = parseAiResult(result.text));
+                break;
+            }
 
             default:
-                return NextResponse.json({ error: 'StepKey inválido' }, { status: 400 });
+                return NextResponse.json({ error: \`StepKey inválido: ${stepKey}\` }, { status: 400 });
         }
 
-        // Save ResearchStep
-        const stepRecord = await prisma.researchStep.upsert({
-            where: {
-                productId_runId_stepKey_version: {
-                    productId, runId, stepKey, version: 1
-                }
-            },
-            create: {
-                productId, runId, stepKey, version: 1,
-                outputText: resultText,
-                outputJson: JSON.stringify(resultJson),
-            },
-            update: {
-                outputText: resultText,
-                outputJson: JSON.stringify(resultJson),
-            }
+        const stepRecord = await (prisma as any).researchStep.upsert({
+            where: { productId_runId_stepKey_version: { productId, runId, stepKey, version: 1 } },
+            create: { productId, runId, stepKey, version: 1, inputText: '', outputText: resultText, outputJson: resultJson ? JSON.stringify(resultJson) : null },
+            update: { outputText: resultText, outputJson: resultJson ? JSON.stringify(resultJson) : null, updatedAt: new Date() },
         });
 
-        return NextResponse.json({ ok: true, runId, stepRecord });
+        return NextResponse.json({ success: true, stepKey, runId, stepId: stepRecord.id, result: resultJson || resultText });
 
-    } catch (err: unknown) {
-        console.error('[API /research/god-tier]', err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
+    } catch (e: any) {
+        console.error('[God-Tier Error]', e);
+        return NextResponse.json({ error: e.message || 'Error interno' }, { status: 500 });
     }
 }
-
-export async function GET(req: NextRequest) {
-    // List runs for a product
-    const { searchParams } = new URL(req.url);
-    const productId = searchParams.get('productId');
-    if (!productId) return NextResponse.json({ error: 'productId requerido' }, { status: 400 });
-
-    try {
-        const steps = await prisma.researchStep.findMany({
-            where: { productId },
-            orderBy: { createdAt: 'asc' }
-        });
-
-        // Group by runId
-        const runs = steps.reduce((acc: Record<string, unknown[]>, step: { runId: string }) => {
-            if (!acc[step.runId]) acc[step.runId] = [];
-            acc[step.runId].push(step);
-            return acc;
-        }, {});
-
-        return NextResponse.json({ ok: true, runs });
-    } catch (err: unknown) {
-        return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
-    }
-}
-

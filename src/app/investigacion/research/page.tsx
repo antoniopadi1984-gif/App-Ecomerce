@@ -187,6 +187,7 @@ export default function ResearchLabPage() {
 
   // ── MAIN ──────────────────────────────────────────────────────────
   return (
+    <>
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '20px 24px' }}>
 
       {/* HEADER */}
@@ -315,8 +316,6 @@ export default function ResearchLabPage() {
         </div>
       )}
     </div>
-
-
     <AgentPanel
         specialistRole="research-core"
         specialistLabel="Research Core"
@@ -326,6 +325,7 @@ export default function ResearchLabPage() {
         moduleContext={{}}
         specialistActions={[{"label": "Lanzar P1", "prompt": "Inicia la investigación P1 del producto activo"}, {"label": "Resumir VOC", "prompt": "Resume las principales voces del cliente encontradas"}, {"label": "Ángulos fuertes", "prompt": "¿Cuáles son los 3 ángulos creativos más prometedores?"}]}
     />
+    </>
   );
 }
 

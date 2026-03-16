@@ -38,7 +38,7 @@ function parseAiResult(text: string): { resultText: string; resultJson: Record<s
 async function saveStep(productId: string, runId: string, stepKey: string, resultText: string, resultJson: any) {
     return (prisma as any).researchStep.upsert({
         where: { productId_runId_stepKey_version: { productId, runId, stepKey, version: 1 } },
-        create: { productId, runId, stepKey, version: 1, inputText: '', outputText: resultText, outputJson: resultJson ? JSON.stringify(resultJson) : null },
+        create: { productId, runId, stepKey, version: 1, inputRefs: null, outputText: resultText, outputJson: resultJson ? JSON.stringify(resultJson) : null },
         update: { outputText: resultText, outputJson: resultJson ? JSON.stringify(resultJson) : null, updatedAt: new Date() },
     });
 }

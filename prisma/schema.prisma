@@ -3047,3 +3047,52 @@ model BudgetAllocation {
 
   @@index([storeId])
 }
+
+model Employee {
+  id        String   @id @default(cuid())
+  storeId   String
+  name      String
+  role      String   @default("AGENT")
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store    @relation(fields: [storeId], references: [id])
+  @@index([storeId])
+}
+
+model ScheduledAutomation {
+  id          String    @id @default(cuid())
+  storeId     String
+  orderId     String
+  ruleId      String
+  trigger     String
+  scheduledAt DateTime
+  processedAt DateTime?
+  status      String    @default("PENDING")
+  createdAt   DateTime  @default(now())
+  store       Store     @relation(fields: [storeId], references: [id])
+  @@unique([storeId, orderId, ruleId])
+  @@index([status, scheduledAt])
+}
+
+model WhatsAppRule {
+  id           String   @id @default(cuid())
+  storeId      String
+  accountId    String?
+  name         String
+  trigger      String
+  delayHours   Int      @default(0)
+  messageBody  String
+  imageUrl     String?
+  imageMode    String   @default("none")
+  isActive     Boolean  @default(true)
+  channel      String   @default("WHATSAPP")
+  includeLink  String?
+  discountCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  store        Store    @relation(fields: [storeId], references: [id])
+  @@index([storeId, trigger])
+}

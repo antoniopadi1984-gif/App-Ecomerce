@@ -222,6 +222,141 @@ export async function GET(req: NextRequest) {
                 break;
             }
 
+            case 'FULFILLMENT': {
+                const fulfillOrders = await (prisma as any).order.findMany({
+                    where: { storeId, createdAt: { gte: start, lt: end } },
+                    select: { createdAt: true, status: true, fulfillmentProvider: true, fulfillmentStatus: true, shippingCost: true, totalPrice: true },
+                });
+                const slots = buildSlotsArray();
+                const delivered = slots.map((_: any, i: number) =>
+                    fulfillOrders.filter((o: any) => {
+                        const d = new Date(o.createdAt);
+                        const idx = isAnnual ? d.getMonth() : d.getDate() - 1;
+                        return idx === i && ['DELIVERED','ENTREGADO'].includes(o.status||'');
+                    }).length
+                );
+                const total = slots.map((_: any, i: number) =>
+                    fulfillOrders.filter((o: any) => {
+                        const d = new Date(o.createdAt);
+                        return (isAnnual ? d.getMonth() : d.getDate()-1) === i;
+                    }).length
+                );
+                const rate = slots.map((_: any, i: number) =>
+                    total[i] > 0 ? Math.round((delivered[i]/total[i])*100) : 0
+                );
+                // Por proveedor
+                const providers: Record<string,{total:number,delivered:number,cost:number}> = {};
+                for (const o of fulfillOrders) {
+                    const p = o.fulfillmentProvider || 'Sin asignar';
+                    if (!providers[p]) providers[p] = {total:0,delivered:0,cost:0};
+                    providers[p].total++;
+                    providers[p].cost += o.shippingCost||0;
+                    if (['DELIVERED','ENTREGADO'].includes(o.status||'')) providers[p].delivered++;
+                }
+                data = {
+                    metrics: [
+                        { label: 'Pedidos enviados', values: total },
+                        { label: 'Entregados', values: delivered },
+                        { label: 'Tasa entrega %', values: rate },
+                    ],
+                    providers: Object.entries(providers).map(([name, m]) => ({
+                        name, total: m.total,
+                        deliveryRate: m.total>0 ? Math.round((m.delivered/m.total)*100) : 0,
+                        avgCost: m.total>0 ? Math.round(m.cost/m.total*100)/100 : 0,
+                    }))
+                };
+                break;
+            }
+
+            case 'LANDING_PAGES': {
+                const clones = await (prisma as any).landingClone.findMany({
+                    where: { storeId, createdAt: { gte: start, lt: end } },
+                    select: { createdAt: true, originalUrl: true, status: true, clonedUrl: true },
+                }).catch(() => []);
+                const assets = await (prisma as any).driveAsset.findMany({
+                    where: { storeId, assetType: 'LANDING_CLONE', createdAt: { gte: start, lt: end } },
+                    select: { createdAt: true, sourceUrl: true, drivePath: true },
+                }).catch(() => []);
+                data = {
+                    type: 'table',
+                    columns: ['Landing', 'Estado', 'Clonada', 'Fecha'],
+                    rows: clones.map((c: any) => ({
+                        name: c.originalUrl?.replace('https://','').slice(0,40) || 'Sin URL',
+                        status: c.status,
+                        clonedUrl: c.clonedUrl ? '✅' : '❌',
+                        date: new Date(c.createdAt).toLocaleDateString('es-ES'),
+                    })),
+                    total: clones.length,
+                };
+                break;
+            }
+
+            case 'COHORTES': {
+                const cohOrders = await (prisma as any).order.findMany({
+                    where: { storeId, createdAt: { gte: start, lt: end } },
+                    select: { createdAt: true, customerId: true, totalPrice: true, status: true },
+                });
+                // Agrupar por semana de adquisición
+                const cohortMap: Record<string, { newCustomers: number; repeatOrders: number; revenue: number }> = {};
+                const customerFirst: Record<string, Date> = {};
+                for (const o of cohOrders) {
+                    if (!o.customerId) continue;
+                    const d = new Date(o.createdAt);
+                    const weekKey = `S${Math.floor(d.getDate()/7)+1}`;
+                    if (!cohortMap[weekKey]) cohortMap[weekKey] = { newCustomers: 0, repeatOrders: 0, revenue: 0 };
+                    if (!customerFirst[o.customerId]) {
+                        customerFirst[o.customerId] = d;
+                        cohortMap[weekKey].newCustomers++;
+                    } else {
+                        cohortMap[weekKey].repeatOrders++;
+                    }
+                    cohortMap[weekKey].revenue += o.totalPrice || 0;
+                }
+                data = {
+                    type: 'table',
+                    columns: ['Cohorte', 'Nuevos clientes', 'Pedidos repetición', 'LTV estimado'],
+                    rows: Object.entries(cohortMap).map(([week, m]) => ({
+                        name: week,
+                        newCustomers: m.newCustomers,
+                        repeatOrders: m.repeatOrders,
+                        ltv: m.newCustomers > 0 ? Math.round(m.revenue / m.newCustomers * 100)/100 : 0,
+                    })),
+                };
+                break;
+            }
+
+            case 'INCIDENCIAS': {
+                const incOrders = await (prisma as any).order.findMany({
+                    where: {
+                        storeId,
+                        createdAt: { gte: start, lt: end },
+                        status: { in: ['RETURNED','DEVUELTO','FAILED','LOST','CANCELLED','INCIDENCIA'] }
+                    },
+                    select: { createdAt: true, status: true, totalPrice: true, fulfillmentProvider: true, notes: true },
+                });
+                const slots = buildSlotsArray();
+                const incBySlot = slots.map((_: any, i: number) =>
+                    incOrders.filter((o: any) => {
+                        const d = new Date(o.createdAt);
+                        return (isAnnual ? d.getMonth() : d.getDate()-1) === i;
+                    }).length
+                );
+                const byType: Record<string,number> = {};
+                for (const o of incOrders) {
+                    byType[o.status||'UNKNOWN'] = (byType[o.status||'UNKNOWN']||0) + 1;
+                }
+                data = {
+                    metrics: [{ label: 'Incidencias', values: incBySlot }],
+                    summary: Object.entries(byType).map(([type, count]) => ({
+                        type, count,
+                        percentage: incOrders.length > 0 ? Math.round((count/incOrders.length)*100) : 0
+                    })),
+                    totalLost: incOrders.reduce((s: number, o: any) => s + (o.totalPrice||0), 0),
+                };
+                break;
+            }
+
+
             default: {
                 data = { metrics: [{ label: 'Sin datos', values: buildSlotsArray() }] };
                 break;

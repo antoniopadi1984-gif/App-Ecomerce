@@ -185,6 +185,20 @@ export default function VistaAguila() {
         if (!storeId) return;
         fetchPulse();
         const interval = setInterval(fetchPulse, 5 * 60 * 1000);
+        // Neural Mother analiza métricas cada hora en background
+        const analyzeInterval = setInterval(() => {
+            if (!storeId) return;
+            fetch('/api/agents/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    role: 'neural-mother',
+                    prompt: 'Analiza las métricas del día y detecta anomalías o oportunidades críticas.',
+                    storeId,
+                })
+            }).catch(() => {});
+        }, 60 * 60 * 1000); // cada hora
+        return () => { clearInterval(interval); clearInterval(analyzeInterval); };
         return () => clearInterval(interval);
     }, [storeId, fetchPulse]);
 

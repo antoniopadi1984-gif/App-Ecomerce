@@ -109,6 +109,15 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const [hookAnalysis, setHookAnalysis] = useState<string | null>(null);
     const [generatedVariants, setGeneratedVariants] = useState<any[]>([]);
 
+    // VIDEO STUDIO
+    const [studioFormat, setStudioFormat] = useState<'9:16' | '16:9' | '1:1'>('9:16');
+    const [studioModel, setStudioModel] = useState<'fast' | 'balanced' | 'premium'>('balanced');
+    const [studioMode, setStudioMode] = useState<'ugc' | 'vsl' | 'broll' | 'lipsync' | 'auto'>('auto');
+    const [studioAvatar, setStudioAvatar] = useState<'woman_40s' | 'woman_55s' | 'man_35s' | 'woman_25s' | 'auto'>('auto');
+    const [studioCount, setStudioCount] = useState(3);
+    const [generationQueue, setGenerationQueue] = useState<Array<{id:string;concept:string;status:'pending'|'generating'|'done'|'error';videoUrl?:string}>>([]);
+    const [generatingStudio, setGeneratingStudio] = useState(false);
+
     // WORKSPACE load (my own videos from library)
     const [ownCreatives, setOwnCreatives] = useState<any[]>([]);
     const [loadingWorkspace, setLoadingWorkspace] = useState(false);
@@ -492,6 +501,27 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
         }
     };
 
+    const handleStudioGenerate = async () => {
+        if (productId === 'GLOBAL') { toast.error('Selecciona un producto específico'); return; }
+        setGeneratingStudio(true);
+        setGenerationQueue([]);
+        try {
+            const res = await fetch('/api/creative/generate-videos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, maxVideos: studioCount, format: studioFormat, model: studioModel, mode: studioMode, avatarStyle: studioAvatar })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setGeneratedVariants(data.videos || []);
+                setGenerationQueue((data.videos || []).map((v: any, i: number) => ({ id: v.id || String(i), concept: v.concept || `Variante ${i + 1}`, status: v.videoUrl ? 'done' : 'generating', videoUrl: v.videoUrl })));
+                toast.success(`${data.videos?.length || 0} videos generados`);
+                fetchOwnCreatives();
+            } else { throw new Error(data.error || 'Error'); }
+        } catch (e: any) { toast.error(e.message || 'Error al generar'); }
+        finally { setGeneratingStudio(false); }
+    };
+
     const STANDARD_FOLDERS = ['01_HOOKS', '02_CRUDE_CONTENT', '03_EDITS', '04_RESOURCES'];
 
     if (!storeId || !productId || productId === 'GLOBAL') {
@@ -578,50 +608,123 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                         </div>
                     </div>
 
-                    <div className="mt-auto p-4 rounded-xl bg-[var(--cre-bg)]/20 border border-[var(--cre)]/10">
-                        <div className="flex items-center gap-2 text-[var(--cre)] mb-2">
-                            <Mic size={14} />
-                            <span className="text-[9px] font-bold uppercase tracking-wider">Agente IA</span>
+                    {/* ── VIDEO STUDIO PANEL ─────────────────────── */}
+                    <div className="mt-auto flex flex-col gap-2">
+
+                        {/* MODO */}
+                        <div className="p-3 rounded-xl bg-[var(--cre-bg)]/20 border border-[var(--cre)]/10 space-y-2">
+                            <div className="flex items-center gap-1.5 text-[var(--cre)] mb-1">
+                                <Wand2 size={12} />
+                                <span className="text-[9px] font-black uppercase tracking-widest">Modo</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                                {([['auto','Auto IA'],['ugc','UGC'],['vsl','VSL'],['broll','B-Roll'],['lipsync','Lipsync']] as const).map(([val, label]) => (
+                                    <button key={val} onClick={() => setStudioMode(val as any)}
+                                        className={`py-1 px-1.5 rounded-md text-[8px] font-black uppercase tracking-tight transition-all ${studioMode === val ? 'bg-[var(--cre)] text-white shadow-sm' : 'bg-white border border-[var(--border)] text-[var(--text-tertiary)] hover:border-[var(--cre)]/40'}`}>
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        {hookAnalysis ? (
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[8px] font-bold text-emerald-600 uppercase">Análisis completado</span>
+                        {/* FORMATO + MODELO */}
+                        <div className="p-3 rounded-xl bg-white border border-[var(--border)] space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)] mb-1">Formato</div>
+                                    <div className="flex gap-1">
+                                        {(['9:16','16:9','1:1'] as const).map(f => (
+                                            <button key={f} onClick={() => setStudioFormat(f)}
+                                                className={`flex-1 py-1 rounded-md text-[8px] font-bold transition-all ${studioFormat === f ? 'bg-[var(--cre)] text-white' : 'bg-slate-50 border border-[var(--border)] text-slate-500 hover:border-[var(--cre)]/30'}`}>
+                                                {f}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)] mb-1">Cantidad</div>
+                                    <div className="flex gap-1">
+                                        {[1,3,5].map(n => (
+                                            <button key={n} onClick={() => setStudioCount(n)}
+                                                className={`flex-1 py-1 rounded-md text-[8px] font-bold transition-all ${studioCount === n ? 'bg-[var(--cre)] text-white' : 'bg-slate-50 border border-[var(--border)] text-slate-500 hover:border-[var(--cre)]/30'}`}>
+                                                {n}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* MODELO */}
+                            <div>
+                                <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)] mb-1">Modelo IA</div>
+                                <div className="grid grid-cols-3 gap-1">
+                                    {([['fast','Rápido','Kling v2'],['balanced','Estándar','Kling v3'],['premium','Premium','Veo 3']] as const).map(([val, label, sub]) => (
+                                        <button key={val} onClick={() => setStudioModel(val as any)}
+                                            className={`py-1.5 px-1 rounded-md text-center transition-all border ${studioModel === val ? 'bg-[var(--cre)] text-white border-[var(--cre)]' : 'bg-white border-[var(--border)] hover:border-[var(--cre)]/40'}`}>
+                                            <div className={`text-[8px] font-black uppercase ${studioModel === val ? 'text-white' : 'text-slate-700'}`}>{label}</div>
+                                            <div className={`text-[7px] ${studioModel === val ? 'text-white/70' : 'text-slate-400'}`}>{sub}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* AVATAR */}
+                            <div>
+                                <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)] mb-1">Avatar</div>
+                                <div className="grid grid-cols-3 gap-1">
+                                    {([['auto','Auto'],['woman_40s','Mujer 40'],['woman_55s','Mujer 55'],['man_35s','Hombre 35'],['woman_25s','Mujer 25']] as const).map(([val, label]) => (
+                                        <button key={val} onClick={() => setStudioAvatar(val as any)}
+                                            className={`py-1 rounded-md text-[7px] font-bold uppercase transition-all ${studioAvatar === val ? 'bg-[var(--cre)] text-white' : 'bg-slate-50 border border-[var(--border)] text-slate-500 hover:border-[var(--cre)]/30'}`}>
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* QUEUE STATUS */}
+                        {generationQueue.length > 0 && (
+                            <div className="p-2 rounded-xl bg-slate-50 border border-[var(--border)] space-y-1 max-h-28 overflow-y-auto">
+                                {generationQueue.map(job => (
+                                    <div key={job.id} className="flex items-center gap-2">
+                                        <div className="flex-shrink-0">
+                                            {job.status === 'done' && <CheckCircle2 size={10} className="text-emerald-500" />}
+                                            {job.status === 'generating' && <Loader2 size={10} className="text-[var(--cre)] animate-spin" />}
+                                            {job.status === 'pending' && <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />}
+                                            {job.status === 'error' && <AlertCircle size={10} className="text-red-400" />}
+                                        </div>
+                                        <span className="text-[8px] text-slate-600 truncate flex-1">{job.concept}</span>
+                                        {job.videoUrl && (
+                                            <a href={job.videoUrl} target="_blank" rel="noopener noreferrer"
+                                                className="text-[7px] font-bold text-[var(--cre)] hover:underline flex-shrink-0">Ver</a>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* HOOK ANALYSIS */}
+                        {hookAnalysis && (
+                            <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-[8px] font-bold text-emerald-600 uppercase">Análisis de Gancho</span>
                                     <button onClick={() => setHookAnalysis(null)} className="text-slate-400 hover:text-slate-700">
                                         <X size={10} />
                                     </button>
                                 </div>
-                                <p className="text-[10px] text-[var(--text-primary)] leading-relaxed max-h-32 overflow-y-auto">{hookAnalysis}</p>
+                                <p className="text-[10px] text-slate-700 leading-relaxed max-h-24 overflow-y-auto">{hookAnalysis}</p>
                             </div>
-                        ) : (
-                            <p className="text-[11px] text-[var(--text-primary)] font-medium leading-relaxed opacity-70 italic mb-4">
-                                "¿Quieres que analice el gancho de tu último video o prefieres que genere 5 variantes optimizadas?"
-                            </p>
                         )}
 
-                        <div className="flex flex-col gap-2 mt-3">
-                            <button
-                                onClick={handleGenerateVariants}
-                                disabled={generatingVariants}
-                                className="w-full py-2 px-3 rounded-lg bg-[var(--cre)] text-white text-[9px] font-black uppercase tracking-widest hover:bg-[var(--cre)]/90 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
-                            >
-                                {generatingVariants ? (
-                                    <><Loader2 size={12} className="animate-spin" /> Generando...</>
-                                ) : (
-                                    <><Zap size={12} /> Generar 5 Variantes</>
-                                )}
+                        {/* BOTONES ACCIÓN */}
+                        <div className="flex flex-col gap-1.5">
+                            <button onClick={handleStudioGenerate} disabled={generatingStudio || generatingVariants}
+                                className="w-full py-2.5 px-3 rounded-xl bg-[var(--cre)] text-white text-[9px] font-black uppercase tracking-widest hover:bg-[var(--cre)]/90 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60">
+                                {generatingStudio ? <><Loader2 size={12} className="animate-spin" /> Generando {studioCount} video{studioCount > 1 ? 's' : ''}...</> : <><Zap size={12} /> Generar {studioCount} {studioMode === 'auto' ? 'Video' : studioMode.toUpperCase()}{studioCount > 1 ? 's' : ''}</>}
                             </button>
-                            <button
-                                onClick={handleAnalyzeHook}
-                                disabled={analyzingHook}
-                                className="w-full py-2 px-3 rounded-lg bg-white border border-[var(--cre)]/30 text-[var(--cre)] text-[9px] font-black uppercase tracking-widest hover:bg-[var(--cre-bg)]/10 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                            >
-                                {analyzingHook ? (
-                                    <><Loader2 size={12} className="animate-spin" /> Analizando...</>
-                                ) : (
-                                    'Analizar Gancho'
-                                )}
+                            <button onClick={handleAnalyzeHook} disabled={analyzingHook}
+                                className="w-full py-2 px-3 rounded-xl bg-white border border-[var(--cre)]/30 text-[var(--cre)] text-[9px] font-black uppercase tracking-widest hover:bg-[var(--cre-bg)]/10 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+                                {analyzingHook ? <><Loader2 size={12} className="animate-spin" /> Analizando...</> : 'Analizar Gancho'}
                             </button>
                         </div>
                     </div>

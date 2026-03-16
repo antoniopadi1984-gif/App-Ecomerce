@@ -1,8 +1,8 @@
 export const REPLICATE_MODELS = {
     TEXT: {
-        CLAUDE_SONNET: "anthropic/claude-sonnet-4-6",
+        CLAUDE_SONNET: "anthropic/claude-4.5-sonnet",
         CLAUDE_OPUS: "anthropic/claude-opus-4-6",
-        CLAUDE_DEFAULT: "anthropic/claude-sonnet-4-6",
+        CLAUDE_DEFAULT: "anthropic/claude-4.5-sonnet",
     },
     IMAGE: {
         // Flux — Replicate

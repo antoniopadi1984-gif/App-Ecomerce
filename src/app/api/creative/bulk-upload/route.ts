@@ -32,7 +32,6 @@ export async function POST(req: NextRequest) {
                 storeId,
                 type: isVideo ? 'VIDEO' : 'IMAGE',
                 name: file.name,
-                processingStatus: 'PENDING',
                 metadata: JSON.stringify({
                     originalName: file.name,
                     fileSize: file.size,
@@ -51,7 +50,7 @@ export async function POST(req: NextRequest) {
             try {
                 await (prisma as any).creativeAsset.update({
                     where: { id: assetId },
-                    data: { processingStatus: 'PROCESSING' }
+                    data: { verdict: 'PENDING' }
                 });
 
                 if (isVideo) {
@@ -79,14 +78,14 @@ export async function POST(req: NextRequest) {
 
                     await (prisma as any).creativeAsset.update({
                         where: { id: assetId },
-                        data: { processingStatus: 'DONE' }
+                        data: { verdict: 'PENDING' }
                     });
                 }
             } catch (err: any) {
                 console.error(`[BulkUpload] Error procesando ${fileName}:`, err.message);
                 await (prisma as any).creativeAsset.update({
                     where: { id: assetId },
-                    data: { processingStatus: 'ERROR', metadata: JSON.stringify({ error: err.message }) }
+                    data: { verdict: 'ERROR' }
                 }).catch(() => {});
             }
         })();

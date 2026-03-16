@@ -78,6 +78,7 @@ export const navigation = [
         href: '/marketing/ads',
         children: [
             { label: 'Ads & Rendimiento', emoji: '📊', href: '/marketing/ads' },
+            { label: 'Contenido Digital', emoji: '📚', href: '/marketing/contenido-digital' },
             { label: 'Moderación', emoji: '🛡️', href: '/marketing/moderacion' },
             { label: 'Ad Spy (Extensión)', emoji: '👁️', href: '/marketing/ad-spy' },
             { label: 'MVP Wizard', emoji: '🚀', href: '/marketing/mvp-wizard' },

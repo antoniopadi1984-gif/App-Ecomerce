@@ -1,5 +1,6 @@
 'use client';
 
+import { AgentPanel } from "@/components/AgentPanel";
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Search, Filter, MapPin, User, AlertTriangle, RefreshCcw } from 'lucide-react';
 import { ORDER_STATES } from '@/lib/orderStates';
@@ -2301,5 +2302,16 @@ export default function PedidosPage() {
             </div>
             {selectedOrder && <OrderDrawer pedido={selectedOrder} onClose={() => setSelectedOrder(null)} onSelectOrder={setSelectedOrder} />}
         </div>
+
+
+    <AgentPanel
+        specialistRole="ops-commander"
+        specialistLabel="Ops Commander"
+        accentColor="#64748B"
+        storeId={storeId || activeStoreId || "store-main"}
+        productId={productId}
+        moduleContext={{}}
+        specialistActions={[{"label": "Pedidos críticos", "prompt": "¿Cuáles son los pedidos más urgentes de confirmar hoy?"}, {"label": "Riesgo fraude", "prompt": "¿Qué pedidos tienen señales de posible fraude?"}, {"label": "Priorizar equipo", "prompt": "¿Cómo debo distribuir la carga entre los agentes hoy?"}]}
+    />
     );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { AgentPanel } from "@/components/AgentPanel";
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Layout, BarChart3, Target, Zap,
@@ -604,5 +605,16 @@ export default function MarketingAdsPage() {
                 </div>
             </footer>
         </div>
+
+
+    <AgentPanel
+        specialistRole="media-buyer"
+        specialistLabel="Media Buyer"
+        accentColor="#F59E0B"
+        storeId={storeId || activeStoreId || "store-main"}
+        productId={productId}
+        moduleContext={{}}
+        specialistActions={[{"label": "Diagnosticar ROAS", "prompt": "¿Por qué puede estar bajando el ROAS esta semana?"}, {"label": "Escalar campaña", "prompt": "¿Cómo debería escalar el presupuesto de la campaña activa?"}, {"label": "Fatiga creativos", "prompt": "¿Qué creativos están en fatiga y debo pausar?"}]}
+    />
     );
 }

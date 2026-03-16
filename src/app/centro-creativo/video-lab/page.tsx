@@ -1,5 +1,6 @@
 'use client';
 
+import { AgentPanel } from "@/components/AgentPanel";
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';

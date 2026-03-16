@@ -1,5 +1,6 @@
 'use client';
 
+import { AgentPanel } from "@/components/AgentPanel";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import {
@@ -435,5 +436,16 @@ export default function VistaAguila() {
                 alreadySelected={layoutIds.map(id => cardConfig[id]?.metricId).filter(Boolean)}
             />
         </div>
+
+
+    <AgentPanel
+        specialistRole="neural-mother"
+        specialistLabel="Neural Mother"
+        accentColor="#6366F1"
+        storeId={storeId || activeStoreId || "store-main"}
+        productId={productId}
+        moduleContext={{}}
+        specialistActions={[{"label": "Estado hoy", "prompt": "Dame el diagnóstico del día en 3 puntos"}, {"label": "Alertas críticas", "prompt": "¿Hay alguna métrica en rojo que requiera acción inmediata?"}]}
+    />
     );
 }

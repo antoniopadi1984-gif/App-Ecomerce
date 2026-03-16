@@ -1,8 +1,24 @@
 {
   "crons": [
-    { "path": "/api/system/full-sync", "schedule": "0 6 * * *" },
-    { "path": "/api/finances/sync-today", "schedule": "0 23 * * *" },
-    { "path": "/api/system/health", "schedule": "*/15 * * * *" },
-    { "path": "/api/tracking/sync", "schedule": "0 */4 * * *" }
+    {
+      "path": "/api/system/full-sync",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/finances/sync-today",
+      "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/system/health",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/tracking/sync",
+      "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/marketing/insights/sync",
+      "schedule": "0 */6 * * *"
+    }
   ]
 }

@@ -116,6 +116,11 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const [studioCount, setStudioCount] = useState(3);
     const [generationQueue, setGenerationQueue] = useState<Array<{id:string;concept:string;status:'pending'|'generating'|'done'|'error';videoUrl?:string}>>([]);
     const [generatingStudio, setGeneratingStudio] = useState(false);
+    const [researchAvatars, setResearchAvatars] = useState<any[]>([]);
+    const [researchAngles, setResearchAngles] = useState<any[]>([]);
+    const [selectedAvatarIds, setSelectedAvatarIds] = useState<Set<string>>(new Set());
+    const [selectedAngleIds, setSelectedAngleIds] = useState<Set<string>>(new Set());
+    const [loadingResearchData, setLoadingResearchData] = useState(false);
     const [customScript, setCustomScript] = useState('');
     const [showScriptEditor, setShowScriptEditor] = useState(false);
 
@@ -265,6 +270,17 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
         if (view === 'META') fetchMetaLibrary();
         if (view === 'DRIVE') fetchDriveFolders();
     }, [view, productId]);
+
+    // Cargar avatares y ángulos del research cuando hay productId
+    useEffect(() => {
+        if (!productId || productId === 'GLOBAL') { setResearchAvatars([]); setResearchAngles([]); return; }
+        setLoadingResearchData(true);
+        fetch(`/api/research/creative-data?productId=${productId}`)
+            .then(r => r.json())
+            .then(d => { setResearchAvatars(d.avatars || []); setResearchAngles(d.angles || []); })
+            .catch(() => {})
+            .finally(() => setLoadingResearchData(false));
+    }, [productId]);
 
     // ── IMPORT META ADS LIBRARY URL ────────────────────────────────────────
     const handleImportUrl = async () => {
@@ -510,7 +526,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
             const res = await fetch('/api/creative/generate-videos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId, maxVideos: studioCount, format: studioFormat, model: studioModel, mode: studioMode, avatarStyle: studioAvatar, customScript: customScript.trim() || undefined })
+                body: JSON.stringify({ productId, maxVideos: studioCount, format: studioFormat, model: studioModel, mode: studioMode, avatarStyle: studioAvatar, customScript: customScript.trim() || undefined, selectedAvatarIds: selectedAvatarIds.size > 0 ? [...selectedAvatarIds] : undefined, selectedAngleIds: selectedAngleIds.size > 0 ? [...selectedAngleIds] : undefined })
             });
             const data = await res.json();
             if (data.success) {
@@ -669,7 +685,53 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                 </div>
                             </div>
 
-                            {/* AVATAR */}
+                            {/* AVATARES DEL RESEARCH */}
+                            {researchAvatars.length > 0 && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)]">Avatares del Research</div>
+                                        <button onClick={() => setSelectedAvatarIds(new Set())} className="text-[7px] text-slate-400 hover:text-slate-600">Reset</button>
+                                    </div>
+                                    <div className="flex flex-col gap-1 max-h-28 overflow-y-auto">
+                                        {researchAvatars.map(av => (
+                                            <button key={av.id} onClick={() => setSelectedAvatarIds(prev => { const next = new Set(prev); next.has(av.id) ? next.delete(av.id) : next.add(av.id); return next; })}
+                                                className={`w-full text-left px-2 py-1.5 rounded-lg border transition-all ${selectedAvatarIds.has(av.id) ? 'bg-[var(--cre)] border-[var(--cre)] text-white' : 'bg-white border-[var(--border)] hover:border-[var(--cre)]/40'}`}>
+                                                <div className={`text-[8px] font-black uppercase ${selectedAvatarIds.has(av.id) ? 'text-white' : 'text-slate-700'}`}>{av.name}</div>
+                                                <div className={`text-[7px] ${selectedAvatarIds.has(av.id) ? 'text-white/70' : 'text-slate-400'}`}>{av.gender} · {av.age} años · {av.occupation}</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ÁNGULOS DEL RESEARCH */}
+                            {researchAngles.length > 0 && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)]">Ángulos del Research</div>
+                                        <button onClick={() => setSelectedAngleIds(new Set())} className="text-[7px] text-slate-400 hover:text-slate-600">Reset</button>
+                                    </div>
+                                    <div className="flex flex-col gap-1 max-h-28 overflow-y-auto">
+                                        {researchAngles.map(ang => (
+                                            <button key={ang.id} onClick={() => setSelectedAngleIds(prev => { const next = new Set(prev); next.has(ang.id) ? next.delete(ang.id) : next.add(ang.id); return next; })}
+                                                className={`w-full text-left px-2 py-1.5 rounded-lg border transition-all ${selectedAngleIds.has(ang.id) ? 'bg-[var(--cre)] border-[var(--cre)] text-white' : 'bg-white border-[var(--border)] hover:border-[var(--cre)]/40'}`}>
+                                                <div className={`text-[8px] font-black uppercase truncate ${selectedAngleIds.has(ang.id) ? 'text-white' : 'text-slate-700'}`}>{ang.concept}</div>
+                                                <div className={`text-[7px] truncate ${selectedAngleIds.has(ang.id) ? 'text-white/70' : 'text-slate-400'}`}>{ang.hook || ang.angle}</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {loadingResearchData && (
+                                <div className="flex items-center gap-2 py-1">
+                                    <Loader2 size={10} className="animate-spin text-[var(--cre)]" />
+                                    <span className="text-[8px] text-slate-400">Cargando research...</span>
+                                </div>
+                            )}
+
+                            {/* AVATAR GENÉRICO (fallback) */}
+                            {researchAvatars.length === 0 && !loadingResearchData && (
                             <div>
                                 <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)] mb-1">Avatar</div>
                                 <div className="grid grid-cols-3 gap-1">
@@ -681,6 +743,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                     ))}
                                 </div>
                             </div>
+                            )}
                         </div>
 
                         {/* QUEUE STATUS */}

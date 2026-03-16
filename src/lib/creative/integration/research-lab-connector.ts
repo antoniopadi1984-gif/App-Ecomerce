@@ -8,6 +8,8 @@ type GenerateOptions = {
     format?: string;
     storeId?: string;
     customScript?: string;
+    selectedAvatarIds?: string[];
+    selectedAngleIds?: string[];
 };
 
 export class ResearchLabConnector {
@@ -114,7 +116,12 @@ export class ResearchLabConnector {
                 return true;
             });
 
-        const finalAvatars = avatars.length > 0 ? avatars : allAvatars;
+        // Filtrar por selección explícita si viene del UI
+        const selectedAvIds = opts.selectedAvatarIds;
+        const filteredAvatars = selectedAvIds && selectedAvIds.length > 0
+            ? allAvatars.filter((_: any, i: number) => selectedAvIds.includes(String(i)))
+            : avatars.length > 0 ? avatars : allAvatars;
+        const finalAvatars = filteredAvatars.length > 0 ? filteredAvatars : allAvatars;
 
         // Ángulos del research
         const angles = (
@@ -124,10 +131,14 @@ export class ResearchLabConnector {
             []
         ).slice(0, maxVideos);
 
-        if (angles.length === 0) throw new Error('No angles found in research');
+        const selectedAngIds = opts.selectedAngleIds;
+        const finalAngles = selectedAngIds && selectedAngIds.length > 0
+            ? angles.filter((_: any, i: number) => selectedAngIds.includes(String(i)))
+            : angles;
+        if (finalAngles.length === 0) throw new Error('No angles found in research');
 
         // Generar scripts con Claude en paralelo (máximo maxVideos combinaciones)
-        const combos = angles.slice(0, maxVideos).map((angle: any, i: number) => ({
+        const combos = finalAngles.slice(0, maxVideos).map((angle: any, i: number) => ({
             angle,
             avatar: finalAvatars[i % Math.max(finalAvatars.length, 1)] || {}
         }));

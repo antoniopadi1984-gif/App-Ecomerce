@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
             mode = 'auto',
             avatarStyle = 'auto',
             storeId,
+            customScript,
         } = body;
 
         const quality = model === 'premium' ? 'premium' : model === 'fast' ? 'fast' : 'standard';
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
         } else if (productId) {
             try {
                 configs = await ResearchLabConnector.getVideoConfigsFromResearch(
-                    productId, maxVideos, { mode, avatarStyle, format, storeId }
+                    productId, maxVideos, { mode, avatarStyle, format, storeId, customScript }
                 );
             } catch {
                 configs = ResearchLabConnector.getTestConfigs();

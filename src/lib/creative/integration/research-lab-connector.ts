@@ -7,6 +7,7 @@ type GenerateOptions = {
     avatarStyle?: string;
     format?: string;
     storeId?: string;
+    customScript?: string;
 };
 
 export class ResearchLabConnector {
@@ -133,7 +134,9 @@ export class ResearchLabConnector {
 
         const scripts = await Promise.all(
             combos.map(({ angle, avatar }: { angle: any; avatar: any }) =>
-                ResearchLabConnector.buildScriptWithClaude(angle, avatar, mode, productTitle)
+                opts.customScript
+                    ? Promise.resolve(opts.customScript!)
+                    : ResearchLabConnector.buildScriptWithClaude(angle, avatar, mode, productTitle)
             )
         );
 

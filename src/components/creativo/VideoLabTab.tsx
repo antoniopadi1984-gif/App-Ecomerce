@@ -116,6 +116,8 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const [studioCount, setStudioCount] = useState(3);
     const [generationQueue, setGenerationQueue] = useState<Array<{id:string;concept:string;status:'pending'|'generating'|'done'|'error';videoUrl?:string}>>([]);
     const [generatingStudio, setGeneratingStudio] = useState(false);
+    const [customScript, setCustomScript] = useState('');
+    const [showScriptEditor, setShowScriptEditor] = useState(false);
 
     // WORKSPACE load (my own videos from library)
     const [ownCreatives, setOwnCreatives] = useState<any[]>([]);
@@ -508,7 +510,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
             const res = await fetch('/api/creative/generate-videos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId, maxVideos: studioCount, format: studioFormat, model: studioModel, mode: studioMode, avatarStyle: studioAvatar })
+                body: JSON.stringify({ productId, maxVideos: studioCount, format: studioFormat, model: studioModel, mode: studioMode, avatarStyle: studioAvatar, customScript: customScript.trim() || undefined })
             });
             const data = await res.json();
             if (data.success) {
@@ -714,6 +716,34 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                 <p className="text-[10px] text-slate-700 leading-relaxed max-h-24 overflow-y-auto">{hookAnalysis}</p>
                             </div>
                         )}
+
+                        {/* EDITOR SCRIPT CUSTOM */}
+                        <div className="rounded-xl border border-[var(--border)] overflow-hidden">
+                            <button
+                                onClick={() => setShowScriptEditor(s => !s)}
+                                className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-slate-100 transition-all"
+                            >
+                                <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Script personalizado</span>
+                                <span className="text-[8px] text-slate-400">{showScriptEditor ? '▲' : '▼'}</span>
+                            </button>
+                            {showScriptEditor && (
+                                <div className="p-2 bg-white">
+                                    <textarea
+                                        value={customScript}
+                                        onChange={e => setCustomScript(e.target.value)}
+                                        placeholder="Escribe el script aquí para sobrescribir el generado por IA. Deja vacío para usar Claude automáticamente."
+                                        className="w-full text-[9px] text-slate-700 bg-slate-50 border border-[var(--border)] rounded-lg p-2 resize-none outline-none focus:border-[var(--cre)]/50 leading-relaxed"
+                                        rows={5}
+                                    />
+                                    <div className="flex items-center justify-between mt-1">
+                                        <span className="text-[7px] text-slate-400">{customScript.length} chars</span>
+                                        {customScript && (
+                                            <button onClick={() => setCustomScript('')} className="text-[7px] text-red-400 hover:text-red-600 font-bold">Limpiar</button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {/* BOTONES ACCIÓN */}
                         <div className="flex flex-col gap-1.5">

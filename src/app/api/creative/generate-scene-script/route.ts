@@ -56,20 +56,18 @@ export async function POST(req: NextRequest) {
             problem_solution: 'Formato Problema/Solución: primera mitad muestra el problema vívidamente, segunda mitad la solución.',
         };
 
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const replicateToken = process.env.REPLICATE_API_TOKEN;
+        // Crear predicción en Replicate con Claude
+        const createRes = await fetch('https://api.replicate.com/v1/models/anthropic/claude-opus-4-6/predictions', {
             method: 'POST',
             headers: {
+                'Authorization': `Bearer ${replicateToken}`,
                 'Content-Type': 'application/json',
-                'x-api-key': process.env.ANTHROPIC_API_KEY || '',
-                'anthropic-version': '2023-06-01',
             },
             body: JSON.stringify({
-                model: 'claude-opus-4-6',
-                max_tokens: 3000,
-                system: `Eres el mejor director creativo y copywriter de Meta Ads. Creas guiones de video divididos en escenas de 5 segundos. RESPONDE SOLO JSON VÁLIDO, sin markdown, sin explicaciones.`,
-                messages: [{
-                    role: 'user',
-                    content: `PRODUCTO: ${productTitle}
+                input: {
+                    system: 'Eres el mejor director creativo y copywriter de Meta Ads. Creas guiones de video divididos en escenas de 5 segundos. RESPONDE SOLO JSON VÁLIDO, sin markdown, sin explicaciones.',
+                    prompt: `PRODUCTO: ${productTitle}
 IMAGEN: ${productImg}
 AVATAR: ${avatar?.name || 'persona'}, ${avatar?.age || ''}años, ${avatar?.occupation || ''}, ${avatar?.location || ''}
 BIO: ${(avatar?.biography || '').slice(0, 250)}
@@ -112,12 +110,30 @@ Genera exactamente ${numScenes} escenas. JSON:
     }
   ]
 }`
-                }]
+                }
             })
         });
 
-        const data = await response.json();
-        const rawText = data.content?.[0]?.text || '';
+        const predData = await createRes.json();
+        if (!createRes.ok) throw new Error(`Replicate ${createRes.status}: ${JSON.stringify(predData)}`);
+        
+        // Polling hasta completar
+        const predId = predData.id;
+        let rawText = '';
+        const start = Date.now();
+        while (Date.now() - start < 55000) {
+            await new Promise(r => setTimeout(r, 3000));
+            const poll = await fetch(`https://api.replicate.com/v1/predictions/${predId}`, {
+                headers: { 'Authorization': `Bearer ${replicateToken}` }
+            });
+            const pollData = await poll.json();
+            if (pollData.status === 'succeeded') {
+                const out = pollData.output;
+                rawText = Array.isArray(out) ? out.join('') : (out || '');
+                break;
+            }
+            if (pollData.status === 'failed') throw new Error(`Claude falló: ${pollData.error}`);
+        }
 
         let sceneScript: any;
         try {

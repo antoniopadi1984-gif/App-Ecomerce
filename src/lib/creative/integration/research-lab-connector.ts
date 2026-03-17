@@ -42,8 +42,36 @@ export class ResearchLabConnector {
             const objections = (avatar.language?.objections || avatar.language?.blocking_beliefs || []).slice(0, 2).join(' / ');
             const langContext = painPhrases ? `\nFrases reales que usa este avatar (úsalas textualmente en el script):\n- Pain: ${painPhrases}\n- Hope: ${hopePhrases}${objections ? '\n- Objeciones: ' + objections : ''}` : '';
 
-            const systemPrompt = `Eres un experto en copywriting de respuesta directa para ecommerce. Escribe SOLO el script, sin títulos ni explicaciones. Sin asteriscos. Solo el texto que diría el avatar. Usa el lenguaje EXACTO del avatar — sus frases reales, su vocabulario, su tono.`;
-            const userPrompt = `Producto: ${productTitle}\nAvatar objetivo: ${avatarDesc}\nÁngulo de marketing: ${angleText}\nHook principal: ${hook}\nPain point: ${pain}\nBeneficio clave: ${benefit}\nIdioma: Español mexicano${langContext}\nFormato: ${modeInstructions[mode] || modeInstructions['auto']}`;
+            // Datos adicionales del avatar
+            const triggerExp = avatar.trigger_experience || '';
+            const coreDesire = avatar.core_desire || '';
+            const internalDialogue = avatar.internal_dialogue || '';
+            const awarenessLevel = avatar.awareness_level || 'problem_aware';
+
+            const systemPrompt = `Eres el mejor copywriter de respuesta directa para Meta Ads de ecommerce. 
+Especialista en Eugene Schwartz, Hormozi y Cashvertising.
+REGLAS ABSOLUTAS:
+- Escribe SOLO el script hablado, sin títulos, sin asteriscos, sin explicaciones
+- Usa el lenguaje EXACTO del avatar — sus frases reales, su jerga, su tono emocional
+- Estructura OBLIGATORIA: HOOK (3-5 seg, patrón interrupt) → PROBLEMA/AGITACIÓN (8-10 seg) → SOLUCIÓN/MECANISMO (8-10 seg) → PRUEBA SOCIAL (5 seg) → CTA (5 seg)
+- Total: 30-45 segundos de locución (~75-110 palabras)
+- El hook debe ser conversacional, dramático, con pausa natural (...)
+- Terminar con CTA claro y urgente`;
+
+            const userPrompt = `PRODUCTO: ${productTitle}
+AVATAR: ${avatarDesc}
+EXPERIENCIA TRIGGER: ${triggerExp}
+DESEO CENTRAL: ${coreDesire}
+DIÁLOGO INTERNO: ${internalDialogue}
+ÁNGULO: ${angleText}
+HOOK: ${hook}
+PAIN POINT: ${pain}
+BENEFICIO: ${benefit}
+NIVEL DE CONSCIENCIA: ${awarenessLevel}
+IDIOMA: Español mexicano (CDMX)${langContext}
+FORMATO: ${modeInstructions[mode] || modeInstructions['auto']}
+
+Escribe el script completo con la estructura Hook→Problema→Solución→Prueba Social→CTA:`;
 
             const res = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
@@ -169,13 +197,30 @@ export class ResearchLabConnector {
 
     // ── HELPERS ───────────────────────────────────────────────────────────
     static buildAvatarPrompt(avatar: any): string {
-        const age = avatar.age || avatar.demographics?.age || '38';
-        const gender = avatar.gender || 'person';
-        const occupation = avatar.occupation || avatar.name || 'professional';
-        const ethnicity = avatar.ethnicity || 'Latin American';
-        const skin = avatar.skin || '';
-        const location = avatar.location ? `, based in ${avatar.location}` : '';
-        return `${ethnicity} ${gender}, ${age} years old, ${occupation}${location}${skin ? ', ' + skin : ''}, candid authentic expression, looking directly at camera, soft natural lighting, iPhone portrait quality, UGC style, real person not a model, natural imperfections`;
+        const age = avatar.age || '35';
+        const occupation = avatar.occupation || 'professional';
+        const location = avatar.location || 'Latin America';
+        const name = avatar.name || '';
+        
+        // Inferir género desde el nombre y ocupación
+        const femaleIndicators = ['sofía','sofia','maría','maria','marcela','daniela','mujer','woman','female','coordinadora','mamá','mama','divorciada'];
+        const isFemale = femaleIndicators.some(w => name.toLowerCase().includes(w) || occupation.toLowerCase().includes(w));
+        const gender = isFemale ? 'woman' : 'man';
+        
+        // Extraer rasgos de la biografía
+        const bio = avatar.biography || '';
+        const isTired = bio.toLowerCase().includes('cansad') || bio.toLowerCase().includes('agotad') || bio.toLowerCase().includes('ojeras');
+        const isProf = bio.toLowerCase().includes('corporativ') || bio.toLowerCase().includes('oficin') || occupation.toLowerCase().includes('coordinador') || occupation.toLowerCase().includes('gerente');
+        
+        const appearance = isTired 
+            ? 'slightly tired but determined expression, natural skin with slight dark circles, no heavy makeup'
+            : 'natural authentic expression, minimal makeup';
+        
+        const style = isProf 
+            ? 'smart casual office attire, modern apartment or home office background'
+            : 'casual everyday outfit, home setting';
+        
+        return `candid authentic UGC photo, real ${gender} ${age} years old, ${occupation}, ${location}, ${appearance}, ${style}, looking directly at camera, soft natural window lighting, iPhone portrait quality, real person not a model, natural imperfections, genuine spontaneous expression, 9:16 vertical portrait`;
     }
 
     static selectVoice(avatar: any): string | undefined {

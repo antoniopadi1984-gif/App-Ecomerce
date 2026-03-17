@@ -57,16 +57,16 @@ export async function POST(req: NextRequest) {
         };
 
         const replicateToken = process.env.REPLICATE_API_TOKEN;
-        // Crear predicción en Replicate con Claude
-        const createRes = await fetch('https://api.replicate.com/v1/models/anthropic/claude-opus-4-6/predictions', {
+        const createRes = await fetch('https://api.replicate.com/v1/predictions', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${replicateToken}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                model: 'anthropic/claude-sonnet-4-6',
                 input: {
-                    system: 'Eres el mejor director creativo y copywriter de Meta Ads. Creas guiones de video divididos en escenas de 5 segundos. RESPONDE SOLO JSON VÁLIDO, sin markdown, sin explicaciones.',
+                    system_prompt: 'Eres el mejor director creativo y copywriter de Meta Ads. Creas guiones de video divididos en escenas de 5 segundos. RESPONDE SOLO JSON VÁLIDO, sin markdown, sin explicaciones.',
                     prompt: `PRODUCTO: ${productTitle}
 IMAGEN: ${productImg}
 AVATAR: ${avatar?.name || 'persona'}, ${avatar?.age || ''}años, ${avatar?.occupation || ''}, ${avatar?.location || ''}

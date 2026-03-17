@@ -10,43 +10,24 @@ const DIM: Record<string, { w: number; h: number }> = {
     '1:1':  { w: 1080, h: 1080 },
 };
 
-// Voz española por defecto en HeyGen
 const HEYGEN_ES_VOICE = '689f48196a9a43c4bbbb67c14fdbb4c6';
 
 async function replicateRun(model: string, input: Record<string, any>, maxWait = 180000): Promise<string> {
     const token = process.env.REPLICATE_API_TOKEN;
-    let createRes: Response = new Response('{}', { status: 500 });
-    let pred: any = {};
-
-    for (let attempt = 1; attempt <= 3; attempt++) {
-        createRes = await fetch(
-            `https://api.replicate.com/v1/models/${model}/predictions`,
-            {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ input }),
-            }
-        );
-        pred = await createRes.json();
-        if (createRes.status === 429) { await new Promise(r => setTimeout(r, attempt * 10000)); continue; }
-        break;
-    }
-    if (!createRes.ok) throw new Error(`${model} ${createRes.status}: ${pred.detail || pred.title}`);
-
+    const createRes = await fetch(
+        `https://api.replicate.com/v1/models/${model}/predictions`,
+        { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ input }) }
+    );
+    const pred = await createRes.json();
+    if (!createRes.ok) throw new Error(`${model} ${createRes.status}: ${pred.detail}`);
     const predId = pred.id;
     const start = Date.now();
     while (Date.now() - start < maxWait) {
         await new Promise(r => setTimeout(r, 4000));
-        const poll = await fetch(`https://api.replicate.com/v1/predictions/${predId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const poll = await fetch(`https://api.replicate.com/v1/predictions/${predId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         const pd = await poll.json();
-        console.log(`[${model}] ${predId} → ${pd.status}`);
-        if (pd.status === 'succeeded') {
-            const out = pd.output;
-            return Array.isArray(out) ? out[0] : (typeof out === 'string' ? out : String(out));
-        }
-        if (pd.status === 'failed') throw new Error(`${model} failed: ${pd.error}`);
+        if (pd.status === 'succeeded') { const o = pd.output; return Array.isArray(o) ? o[0] : String(o); }
+        if (pd.status === 'failed') throw new Error(`${model}: ${pd.error}`);
     }
     throw new Error(`Timeout ${model}`);
 }
@@ -62,29 +43,69 @@ export async function POST(req: NextRequest) {
 
         if (!avatarId || !script) return NextResponse.json({ error: 'avatarId y script requeridos' }, { status: 400 });
 
-        const token = process.env.REPLICATE_API_TOKEN;
+        const apiKey = process.env.HEYGEN_API_KEY!;
         const dim = DIM[videoFormat] || DIM['9:16'];
 
-        // PASO 1: HeyGen genera video con voz española
-        console.log(`[HeyGen] Generando video con avatar ${avatarId}`);
-        const heygenInput = {
-            avatar_id: avatarId,
-            input_text: script,
-            avatar_style: 'normal',
-            voice_id: HEYGEN_ES_VOICE,
-            voice_speed: speed,
-            voice_emotion: emotion,
-            caption: false, // subtítulos los añadimos nosotros
-            width: dim.w,
-            height: dim.h,
-        };
+        // PASO 1: HeyGen API directa — crear video
+        console.log(`[HeyGen] Creando video con ${avatarId}`);
+        const createRes = await fetch('https://api.heygen.com/v2/video/generate', {
+            method: 'POST',
+            headers: { 'X-Api-Key': apiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                video_inputs: [{
+                    character: {
+                        type: 'avatar',
+                        avatar_id: avatarId,
+                        avatar_style: 'normal',
+                    },
+                    voice: {
+                        type: 'text',
+                        input_text: script,
+                        voice_id: HEYGEN_ES_VOICE,
+                        speed: speed,
+                        emotion: emotion,
+                    },
+                    background: { type: 'color', value: '#FAFAFA' },
+                }],
+                caption: addCaptions,
+                dimension: { width: dim.w, height: dim.h },
+            }),
+        });
 
-        const heygenVideoUrl = await replicateRun('heygen/avatar-iv', heygenInput, 280000);
-        console.log(`[HeyGen] ✅ Video: ${heygenVideoUrl.slice(0, 80)}`);
+        const createData = await createRes.json();
+        if (!createRes.ok || createData.error) {
+            throw new Error(`HeyGen create: ${JSON.stringify(createData.error || createData)}`);
+        }
+
+        const videoId = createData.data?.video_id;
+        if (!videoId) throw new Error('No se obtuvo video_id de HeyGen');
+        console.log(`[HeyGen] Video ID: ${videoId}`);
+
+        // PASO 2: Polling hasta completar
+        let heygenVideoUrl = '';
+        const start = Date.now();
+        while (Date.now() - start < 240000) {
+            await new Promise(r => setTimeout(r, 5000));
+            const statusRes = await fetch(`https://api.heygen.com/v1/video_status.get?video_id=${videoId}`, {
+                headers: { 'X-Api-Key': apiKey }
+            });
+            const statusData = await statusRes.json();
+            const status = statusData.data?.status;
+            console.log(`[HeyGen] ${videoId} → ${status}`);
+
+            if (status === 'completed') {
+                heygenVideoUrl = statusData.data?.video_url || statusData.data?.video_url_caption || '';
+                break;
+            }
+            if (status === 'failed') throw new Error(`HeyGen falló: ${statusData.data?.error}`);
+        }
+
+        if (!heygenVideoUrl) throw new Error('HeyGen timeout — no completó en 4 minutos');
+        console.log(`[HeyGen] ✅ ${heygenVideoUrl.slice(0, 80)}`);
 
         let finalVideoUrl = heygenVideoUrl;
 
-        // PASO 2: Si hay voz ElevenLabs — generar audio y hacer lipsync
+        // PASO 3: Si hay voz ElevenLabs — reemplazar audio con LipSync
         if (elevenLabsVoiceId) {
             console.log(`[ElevenLabs] Generando audio con voz ${elevenLabsVoiceId}`);
             const elRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${elevenLabsVoiceId}`, {
@@ -101,14 +122,12 @@ export async function POST(req: NextRequest) {
                     },
                 }),
             });
-
-            if (!elRes.ok) throw new Error(`ElevenLabs ${elRes.status}`);
+            if (!elRes.ok) throw new Error(`ElevenLabs ${elRes.status}: ${await elRes.text()}`);
             const audioBuffer = Buffer.from(await elRes.arrayBuffer());
             const audioBase64 = `data:audio/mpeg;base64,${audioBuffer.toString('base64')}`;
             console.log(`[ElevenLabs] ✅ Audio generado`);
 
-            // PASO 3: LipSync — sincronizar labios con nuevo audio
-            console.log(`[LipSync] Sincronizando labios...`);
+            // LipSync cascade
             const lipsyncModels = [
                 { model: 'sync/lipsync-2-pro', input: { video: heygenVideoUrl, audio: audioBase64 } },
                 { model: 'sync/lipsync-2',     input: { video: heygenVideoUrl, audio: audioBase64 } },
@@ -136,12 +155,7 @@ export async function POST(req: NextRequest) {
             } catch {}
         }
 
-        return NextResponse.json({
-            success: true,
-            videoUrl: finalVideoUrl,
-            heygenVideoUrl,
-            usedLipsync: elevenLabsVoiceId ? true : false,
-        });
+        return NextResponse.json({ success: true, videoUrl: finalVideoUrl, heygenVideoUrl, usedLipsync: !!elevenLabsVoiceId });
 
     } catch (e: any) {
         console.error('[HeyGen generate]', e.message);

@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(req: NextRequest, { params }: { params: { avatarId: string } }) {
+export async function POST(
+    req: NextRequest,
+    context: { params: Promise<{ avatarId: string }> }
+) {
     try {
-        const current = await (prisma as any).heygenAvatar.findUnique({ where: { avatarId: params.avatarId } });
+        const { avatarId } = await context.params;
+        const current = await (prisma as any).heygenAvatar.findUnique({ 
+            where: { avatarId } 
+        });
         if (!current) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
         const updated = await (prisma as any).heygenAvatar.update({
-            where: { avatarId: params.avatarId },
+            where: { avatarId },
             data: { isFavorite: !current.isFavorite }
         });
         return NextResponse.json({ isFavorite: updated.isFavorite });

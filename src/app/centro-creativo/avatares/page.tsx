@@ -121,7 +121,7 @@ export default function AvataresPage() {
                 body: JSON.stringify({
                     avatarId: selectedAvatar.avatarId,
                     script,
-                    voiceId: selectedVoice,
+                    elevenLabsVoiceId: selectedVoice,
                     emotion,
                     speed,
                     addCaptions,

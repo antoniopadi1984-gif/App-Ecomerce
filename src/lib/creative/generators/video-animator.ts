@@ -1,19 +1,15 @@
 import { REPLICATE_MODELS } from '@/lib/ai/replicate-models';
 
 // Cadenas de fallback por calidad
+import { VIDEO_CASCADE, LIPSYNC_CASCADE } from '@/lib/ai/replicate-models';
+
 const VIDEO_MODELS_CASCADE = {
-    premium:  ['kwaivgi/kling-v3', 'kwaivgi/kling-v2.6', 'minimax/video-01', 'wan-ai/wan-2.2-s2v', 'lightricks/ltx-video'],
-    standard: ['kwaivgi/kling-v2.6', 'minimax/video-01', 'wan-ai/wan-2.2-s2v', 'lightricks/ltx-video'],
-    fast:     ['lightricks/ltx-video', 'wan-ai/wan-2.1', 'kwaivgi/kling-v2.6'],
+    premium:  VIDEO_CASCADE.premium,
+    standard: VIDEO_CASCADE.talking_head,
+    fast:     VIDEO_CASCADE.broll,
 };
 
-const LIPSYNC_MODELS_CASCADE = [
-    'kwaivgi/kling-lip-sync',
-    'sync/lipsync-2-pro',
-    'sync/lipsync-2',
-    'latentlabs/latentsync',
-    'pixverse-ai/lipsync',
-];
+const LIPSYNC_MODELS_CASCADE = LIPSYNC_CASCADE;
 
 // Inputs por modelo de video
 function buildVideoInput(model: string, imageUrl: string, quality: string) {

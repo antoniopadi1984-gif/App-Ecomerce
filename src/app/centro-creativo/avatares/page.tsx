@@ -52,6 +52,8 @@ export default function AvataresPage() {
     const [showGenerator, setShowGenerator] = useState(false);
 
     const videoRefs = useRef<Record<string, HTMLVideoElement>>({});
+    const [researchData, setResearchData] = useState<any>(null);
+    const [loadingResearch, setLoadingResearch] = useState(false);
 
     useEffect(() => {
         Promise.all([
@@ -62,6 +64,34 @@ export default function AvataresPage() {
             setVoices((voData.voices || []).filter((v: Voice) => v.language === 'es'));
         }).finally(() => setLoading(false));
     }, []);
+
+    useEffect(() => {
+        if (!productId || productId === 'GLOBAL') return;
+        setLoadingResearch(true);
+        fetch(`/api/research/creative-data?productId=${productId}`)
+            .then(r => r.json())
+            .then(d => {
+                setResearchData(d);
+                // Auto-rellenar script con hook del research
+                const avatar = d.avatars?.[0];
+                const langBank = d.languageBank?.[0];
+                const angle = d.angles?.[0];
+                if (avatar || langBank) {
+                    const painPhrase = langBank?.vocabulary_clusters?.pain_phrases?.[0] || '';
+                    const hopePhrase = langBank?.vocabulary_clusters?.hope_phrases?.[0] || '';
+                    const hook = angle?.lead_lines || angle?.hook || '';
+                    if (hook || painPhrase) {
+                        setScript(
+                            [hook, painPhrase, hopePhrase]
+                            .filter(Boolean).join(' ').slice(0, 300) ||
+                            script
+                        );
+                    }
+                }
+            })
+            .catch(() => {})
+            .finally(() => setLoadingResearch(false));
+    }, [productId]);
 
     const filtered = avatars.filter(a => {
         if (filterGender !== 'all' && a.gender !== filterGender) return false;
@@ -264,7 +294,28 @@ export default function AvataresPage() {
 
                 {/* Script */}
                 <div className="p-3 rounded-xl bg-white border border-[var(--border)]">
-                    <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)] mb-2">Script</div>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)]">Script</div>
+                        {researchData && (
+                            <div className="flex gap-1">
+                                {researchData.avatars?.slice(0,3).map((av: any, i: number) => (
+                                    <button key={i} onClick={() => {
+                                        const lb = researchData.languageBank?.find((l: any) => l.avatar_id === av.id) || researchData.languageBank?.[0];
+                                        const angle = researchData.angles?.[i] || researchData.angles?.[0];
+                                        const pain = lb?.vocabulary_clusters?.pain_phrases?.slice(0,2).join('. ') || '';
+                                        const hope = lb?.vocabulary_clusters?.hope_phrases?.[0] || '';
+                                        const hook = angle?.lead_lines || angle?.hook || '';
+                                        setScript([hook, pain, hope].filter(Boolean).join(' ').slice(0, 800));
+                                    }}
+                                    className="px-1.5 py-0.5 rounded text-[6px] font-black bg-[var(--cre)]/10 text-[var(--cre)] hover:bg-[var(--cre)]/20 truncate max-w-[60px]"
+                                    title={av.name}>
+                                        {av.name?.split(' ')[0]}
+                                    </button>
+                                ))}
+                                {loadingResearch && <span className="text-[7px] text-slate-400">...</span>}
+                            </div>
+                        )}
+                    </div>
                     <textarea value={script} onChange={e => setScript(e.target.value)}
                         className="w-full text-[9px] text-slate-700 bg-slate-50 border border-[var(--border)] rounded-lg p-2 resize-none outline-none focus:border-[var(--cre)]/50 leading-relaxed"
                         rows={6} placeholder="Escribe el script del avatar..." />

@@ -342,12 +342,12 @@ export function VideoStudioTab({ storeId, productId, voiceId, voiceSettings, onN
                 )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
                 {sceneResults.map((result, i) => {
                     const scene = editedScenes.find(s => s.id === result.sceneId);
                     return (
                         <div key={result.sceneId} className="bg-white border border-[var(--border)] rounded-xl overflow-hidden">
-                            <div className="aspect-[9/16] bg-slate-900 relative flex items-center justify-center">
+                            <div className="aspect-[9/16] bg-slate-900 relative flex items-center justify-center max-h-40">
                                 {result.status === 'done' && result.clipUrl ? (
                                     <video src={result.clipUrl} className="w-full h-full object-cover" controls muted />
                                 ) : result.status === 'generating' ? (

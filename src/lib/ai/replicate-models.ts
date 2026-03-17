@@ -86,9 +86,9 @@ export const REPLICATE_MODELS = {
         LTX_VIDEO:          "lightricks/ltx-video",                 // ✅ verificado
 
         // Veo — via Vertex AI (no Replicate)
-        VEO_3:              "vertex:veo-3.0-generate-preview",
-        VEO_3_FAST:         "vertex:veo-3.0-fast-generate-preview",
-        VEO_2:              "google/veo-2",
+        VEO_3:              "google/veo-3",                          // ✅ verificado Replicate
+        VEO_3_FAST:         "google/veo-3-fast",                     // ✅ verificado Replicate
+        VEO_2:              "google/veo-2",                          // ✅ verificado Replicate
 
         // Post-producción
         VIDEO_UPSCALE:      "topazlabs/video-upscale",              // ✅ verificado

@@ -7,10 +7,12 @@ async function replicateRun(model: string, input: Record<string, any>, maxWaitMs
     let createRes: Response = new Response('{}', { status: 500 });
     let pred: any = {};
     for (let attempt = 1; attempt <= 5; attempt++) {
-        createRes = await fetch('https://api.replicate.com/v1/predictions', {
+        // Endpoint correcto para modelos oficiales
+        const modelEndpoint = `https://api.replicate.com/v1/models/${model}/predictions`;
+        createRes = await fetch(modelEndpoint, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model, input }),
+            body: JSON.stringify({ input }),
         });
         pred = await createRes.json();
         if (createRes.status === 429) {

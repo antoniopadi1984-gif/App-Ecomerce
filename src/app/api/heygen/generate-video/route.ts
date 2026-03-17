@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
             height: dim.h,
         };
 
-        // Si hay voiceId de ElevenLabs lo añadimos
-        if (voiceId) input.voice_id = voiceId;
+        // HeyGen usa sus propias voces — ElevenLabs se aplica en post-producción
+        // if (voiceId) input.voice_id = voiceId; // No compatible
 
         // Lanzar predicción en Replicate
         const createRes = await fetch('https://api.replicate.com/v1/models/heygen/avatar-iv/predictions', {

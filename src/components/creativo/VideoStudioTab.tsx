@@ -331,69 +331,126 @@ export function VideoStudioTab({ storeId, productId, voiceId, voiceSettings, onN
 
     // FASE CLIPS — ver y aprobar
     if (phase === 'clips') return (
-        <div className="h-full overflow-y-auto p-4 space-y-3">
-            <div className="flex items-center justify-between mb-2">
-                <h2 className="text-[11px] font-black uppercase text-[var(--text)]">Clips por Escena</h2>
-                {!loading && sceneResults.every(s => s.status !== 'generating') && (
-                    <button onClick={assembleVideo}
-                        className="px-4 py-2 rounded-xl bg-[var(--cre)] text-white text-[9px] font-black uppercase tracking-widest">
-                        Montar Video Final →
-                    </button>
-                )}
+        <div className="h-full flex gap-3 p-4 overflow-hidden">
+            {/* IZQUIERDA: clips en grid compacto */}
+            <div className="flex-1 overflow-y-auto">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-[10px] font-black uppercase text-[var(--text)]">
+                        Clips por Escena
+                        <span className="ml-2 text-emerald-500">{sceneResults.filter(s=>s.status==='done').length}/{sceneResults.length} ✓</span>
+                    </h2>
+                    {!loading && sceneResults.every(s => s.status !== 'generating') && (
+                        <button onClick={assembleVideo}
+                            className="px-3 py-1.5 rounded-xl bg-[var(--cre)] text-white text-[8px] font-black uppercase tracking-widest">
+                            Montar →
+                        </button>
+                    )}
+                </div>
+                <div className="grid grid-cols-4 xl:grid-cols-6 gap-1.5">
+                    {sceneResults.map((result, i) => {
+                        const scene = editedScenes.find(s => s.id === result.sceneId);
+                        return (
+                            <div key={result.sceneId} className="bg-white border border-[var(--border)] rounded-lg overflow-hidden">
+                                <div className="aspect-[9/16] bg-slate-900 relative flex items-center justify-center">
+                                    {result.status === 'done' && result.clipUrl ? (
+                                        <video src={result.clipUrl} className="w-full h-full object-cover" controls muted />
+                                    ) : result.status === 'generating' ? (
+                                        <Loader2 size={14} className="animate-spin text-[var(--cre)]" />
+                                    ) : result.status === 'error' ? (
+                                        <AlertCircle size={12} className="text-red-400" />
+                                    ) : (
+                                        <Play size={10} className="text-white/20" />
+                                    )}
+                                    <div className="absolute top-1 left-1 w-4 h-4 rounded bg-[var(--cre)] text-white text-[7px] font-black flex items-center justify-center">
+                                        {result.sceneId}
+                                    </div>
+                                    {result.status === 'done' && (
+                                        <div className="absolute top-1 right-1">
+                                            <CheckCircle2 size={10} className="text-emerald-400" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="p-1">
+                                    <p className="text-[6px] text-slate-500 line-clamp-1 mb-1">{scene?.spokenText?.slice(0,40)}</p>
+                                    <div className="flex gap-0.5">
+                                        {(result.status === 'done' || result.status === 'error') && (
+                                            <button onClick={() => regenerateClip(result.sceneId)}
+                                                className="flex-1 py-0.5 rounded bg-slate-100 text-slate-500 text-[6px] font-black uppercase flex items-center justify-center gap-0.5">
+                                                <RefreshCw size={6} /> Re
+                                            </button>
+                                        )}
+                                        {result.status === 'done' && result.clipUrl && (
+                                            <a href={result.clipUrl} target="_blank" rel="noopener noreferrer"
+                                                className="flex-1 py-0.5 rounded bg-[var(--cre)]/10 text-[var(--cre)] text-[6px] font-black uppercase flex items-center justify-center">
+                                                Ver
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                {sceneResults.map((result, i) => {
-                    const scene = editedScenes.find(s => s.id === result.sceneId);
-                    return (
-                        <div key={result.sceneId} className="bg-white border border-[var(--border)] rounded-xl overflow-hidden">
-                            <div className="aspect-[9/16] bg-slate-900 relative flex items-center justify-center max-h-40">
-                                {result.status === 'done' && result.clipUrl ? (
-                                    <video src={result.clipUrl} className="w-full h-full object-cover" controls muted />
-                                ) : result.status === 'generating' ? (
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Loader2 size={20} className="animate-spin text-[var(--cre)]" />
-                                        <span className="text-[8px] text-white/60 uppercase">Generando...</span>
-                                    </div>
-                                ) : result.status === 'error' ? (
-                                    <div className="flex flex-col items-center gap-2 p-2 text-center">
-                                        <AlertCircle size={16} className="text-red-400" />
-                                        <span className="text-[7px] text-red-300">{result.error?.slice(0, 50)}</span>
-                                    </div>
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                                        <Play size={12} className="text-white/30" />
-                                    </div>
-                                )}
-                                <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded-md bg-[var(--cre)] text-white text-[8px] font-black flex items-center justify-center">
-                                    {result.sceneId}
+            {/* DERECHA: guion completo editable */}
+            <div className="w-80 flex-shrink-0 flex flex-col gap-2 overflow-y-auto">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-[10px] font-black uppercase text-[var(--text)]">Guion Completo</h3>
+                    <span className="text-[8px] text-slate-400">{editedScenes.reduce((acc, s) => acc + s.duration, 0)}s total</span>
+                </div>
+
+                {/* Guion unificado editable */}
+                <div className="p-3 rounded-xl bg-white border border-[var(--border)]">
+                    <div className="text-[8px] font-black uppercase text-[var(--text-tertiary)] mb-2">Script completo</div>
+                    <textarea
+                        value={editedScenes.map(s => s.spokenText).join(' ')}
+                        onChange={e => {
+                            // Redistribuir el texto editado entre escenas
+                            const fullText = e.target.value;
+                            const words = fullText.split(' ');
+                            const wordsPerScene = Math.ceil(words.length / editedScenes.length);
+                            setEditedScenes(prev => prev.map((scene, i) => ({
+                                ...scene,
+                                spokenText: words.slice(i * wordsPerScene, (i + 1) * wordsPerScene).join(' ')
+                            })));
+                        }}
+                        className="w-full text-[9px] text-slate-700 bg-slate-50 border border-[var(--border)] rounded-lg p-2 resize-none outline-none focus:border-[var(--cre)]/50 leading-relaxed"
+                        rows={8}
+                    />
+                </div>
+
+                {/* Escenas individuales */}
+                <div className="space-y-1.5">
+                    {editedScenes.map((scene, i) => {
+                        const result = sceneResults.find(r => r.sceneId === scene.id);
+                        return (
+                            <div key={scene.id} className={`p-2 rounded-lg border text-[8px] ${result?.status === 'done' ? 'border-emerald-200 bg-emerald-50' : result?.status === 'error' ? 'border-red-200 bg-red-50' : 'border-[var(--border)] bg-white'}`}>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <span className="w-4 h-4 rounded bg-[var(--cre)] text-white text-[7px] font-black flex items-center justify-center flex-shrink-0">{scene.id}</span>
+                                    <span className="font-black uppercase text-[7px] text-slate-500">{scene.sceneType} · {scene.duration}s</span>
+                                    {result?.status === 'done' && <CheckCircle2 size={8} className="text-emerald-500 ml-auto" />}
+                                    {result?.status === 'error' && <AlertCircle size={8} className="text-red-400 ml-auto" />}
                                 </div>
-                                {result.status === 'done' && (
-                                    <div className="absolute top-1.5 right-1.5">
-                                        <CheckCircle2 size={14} className="text-emerald-400" />
-                                    </div>
-                                )}
+                                <textarea
+                                    value={scene.spokenText}
+                                    onChange={e => setEditedScenes(prev => prev.map(s => s.id === scene.id ? {...s, spokenText: e.target.value} : s))}
+                                    className="w-full text-[8px] bg-transparent outline-none resize-none text-slate-700 leading-relaxed"
+                                    rows={2}
+                                />
+                                <div className="text-[6px] text-slate-400 mt-1 truncate">{scene.visualPrompt.slice(0, 80)}</div>
                             </div>
-                            <div className="p-2">
-                                <p className="text-[8px] text-slate-600 line-clamp-2">{scene?.spokenText}</p>
-                                <div className="flex gap-1 mt-1.5">
-                                    {(result.status === 'done' || result.status === 'error') && (
-                                        <button onClick={() => regenerateClip(result.sceneId)}
-                                            className="flex-1 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 text-[7px] font-black uppercase flex items-center justify-center gap-1">
-                                            <RefreshCw size={8} /> Regenerar
-                                        </button>
-                                    )}
-                                    {result.status === 'done' && result.clipUrl && (
-                                        <a href={result.clipUrl} target="_blank" rel="noopener noreferrer"
-                                            className="flex-1 py-1 rounded-md bg-[var(--cre)]/10 text-[var(--cre)] text-[7px] font-black uppercase flex items-center justify-center gap-1">
-                                            <Download size={8} /> Ver
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
+
+                {/* Botón montar */}
+                {!loading && sceneResults.every(s => s.status !== 'generating') && (
+                    <button onClick={assembleVideo}
+                        className="w-full py-2.5 rounded-xl bg-[var(--cre)] text-white text-[9px] font-black uppercase tracking-widest hover:bg-[var(--cre)]/90 mt-2">
+                        🎬 Montar Video Final
+                    </button>
+                )}
             </div>
         </div>
     );

@@ -1,26 +1,49 @@
-import { getConnectionSecret } from '@/lib/server/connections';
-import Replicate from 'replicate';
 import { REPLICATE_MODELS } from '@/lib/ai/replicate-models';
 
-async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, baseDelayMs = 12000): Promise<T> {
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-            return await fn();
-        } catch (err: any) {
-            const is429 = err?.message?.includes('429') || err?.status === 429;
-            if (is429 && attempt < maxAttempts) {
-                const delay = baseDelayMs * attempt;
-                console.warn(`[VideoAnimator] 429 — retry ${attempt}/${maxAttempts} en ${delay}ms`);
-                await new Promise(r => setTimeout(r, delay));
-            } else { throw err; }
+async function replicateRun(model: string, input: Record<string, any>, maxWaitMs = 180000): Promise<any> {
+    const token = process.env.REPLICATE_API_TOKEN;
+
+    // Crear predicción
+    const createRes = await fetch('https://api.replicate.com/v1/predictions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ model, input }),
+    });
+
+    const pred = await createRes.json();
+    if (!createRes.ok) {
+        throw new Error(`Replicate ${createRes.status}: ${pred.detail || pred.title || JSON.stringify(pred)}`);
+    }
+
+    const predId = pred.id;
+    console.log(`[Replicate] Predicción creada: ${predId} | modelo: ${model}`);
+
+    // Polling hasta completar
+    const start = Date.now();
+    while (Date.now() - start < maxWaitMs) {
+        await new Promise(r => setTimeout(r, 3000));
+
+        const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${predId}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const pollData = await pollRes.json();
+        const status = pollData.status;
+
+        console.log(`[Replicate] ${predId} status: ${status}`);
+
+        if (status === 'succeeded') {
+            const output = pollData.output;
+            const url = Array.isArray(output) ? output[0] : output;
+            return typeof url === 'string' ? url : url?.url?.() || String(url);
+        }
+        if (status === 'failed' || status === 'canceled') {
+            throw new Error(`Predicción ${status}: ${pollData.error || 'sin detalle'}`);
         }
     }
-    throw new Error('Max retries exceeded');
-}
-
-function extractUrl(output: any): string {
-    const url = Array.isArray(output) ? output[0] : output;
-    return typeof url === 'string' ? url : url?.url?.() || String(url);
+    throw new Error(`Timeout esperando predicción ${predId}`);
 }
 
 export class VideoAnimator {
@@ -31,76 +54,44 @@ export class VideoAnimator {
         cropFactor?: number;
         quality?: 'standard' | 'premium' | 'fast';
     }): Promise<string> {
-        const token = await getConnectionSecret('store-main', 'REPLICATE') || process.env.REPLICATE_API_TOKEN;
-        const replicate = new Replicate({ auth: token! });
         const quality = opts.quality || 'standard';
 
         if (quality === 'premium') {
-            // PIPELINE PREMIUM: Imagen → Kling v3 video → Kling LipSync
-            console.log('[VideoAnimator] 🎬 PREMIUM: Kling v3 → LipSync');
-            const videoPred = await withRetry(() => replicate.predictions.create({
-                model: REPLICATE_MODELS.VIDEO.KLING_V3,
-                input: {
-                    start_image: opts.imageUrl,
-                    prompt: 'person talking naturally to camera, realistic head movement, UGC advertisement style',
-                    duration: 5,
-                    aspect_ratio: '9:16',
-                }
-            }));
-            const videoResult = await replicate.wait(videoPred);
-            const videoUrl = extractUrl(videoResult.output);
-
-            const lipsyncPred = await withRetry(() => replicate.predictions.create({
-                model: REPLICATE_MODELS.AVATAR.KLING_LIPSYNC,
-                input: {
-                    video_url: videoUrl,
-                    audio_file: opts.audioUrl,
-                }
-            }));
-            const lipsyncResult = await replicate.wait(lipsyncPred);
-            return extractUrl(lipsyncResult.output);
+            console.log('[VideoAnimator] 🎬 PREMIUM: Kling v3 → Kling LipSync');
+            const videoUrl = await replicateRun(REPLICATE_MODELS.VIDEO.KLING_V3, {
+                start_image: opts.imageUrl,
+                prompt: 'person talking naturally to camera, realistic head movement, UGC advertisement style',
+                duration: 5,
+                aspect_ratio: '9:16',
+            });
+            return await replicateRun(REPLICATE_MODELS.AVATAR.KLING_LIPSYNC, {
+                video_url: videoUrl,
+                audio_file: opts.audioUrl,
+            });
 
         } else if (quality === 'fast') {
-            // PIPELINE FAST: LipSync-2 directo (más rápido)
             console.log('[VideoAnimator] 🎬 FAST: LipSync-2 directo');
-            const pred = await withRetry(() => replicate.predictions.create({
-                model: REPLICATE_MODELS.AVATAR.LIPSYNC_2,
-                input: {
-                    video: opts.imageUrl,
-                    audio: opts.audioUrl,
-                }
-            }));
-            const result = await replicate.wait(pred);
-            return extractUrl(result.output);
+            return await replicateRun(REPLICATE_MODELS.AVATAR.LIPSYNC_2, {
+                video: opts.imageUrl,
+                audio: opts.audioUrl,
+            });
 
         } else {
-            // PIPELINE STANDARD: Imagen → Kling v2 → Kling LipSync
-            console.log('[VideoAnimator] 🎬 STANDARD: Kling v2 → LipSync');
+            console.log('[VideoAnimator] 🎬 STANDARD: Kling v2.6 → Kling LipSync');
+            // Paso 1: imagen → video base
+            const videoUrl = await replicateRun(REPLICATE_MODELS.VIDEO.KLING_V2, {
+                start_image: opts.imageUrl,
+                prompt: 'person talking naturally to camera, realistic natural movement, UGC style',
+                duration: 5,
+                aspect_ratio: '9:16',
+            });
+            console.log('[VideoAnimator] ✅ Video base:', videoUrl?.slice(0, 80));
 
-            // Paso 1: Generar video base desde imagen (usando predictions.create para modelos oficiales)
-            const videoPred = await withRetry(() => replicate.predictions.create({
-                model: REPLICATE_MODELS.VIDEO.KLING_V2,
-                input: {
-                    start_image: opts.imageUrl,
-                    prompt: 'person talking naturally to camera, realistic natural movement, UGC style',
-                    duration: 5,
-                    aspect_ratio: '9:16',
-                }
-            }));
-            const videoResult = await replicate.wait(videoPred);
-            const videoUrl = extractUrl(videoResult.output);
-            console.log('[VideoAnimator] ✅ Video base generado:', videoUrl?.slice(0, 60));
-
-            // Paso 2: Sincronizar labios con audio
-            const lipsyncPred = await withRetry(() => replicate.predictions.create({
-                model: REPLICATE_MODELS.AVATAR.KLING_LIPSYNC,
-                input: {
-                    video_url: videoUrl,
-                    audio_file: opts.audioUrl,
-                }
-            }));
-            const lipsyncResult = await replicate.wait(lipsyncPred);
-            return extractUrl(lipsyncResult.output);
+            // Paso 2: video + audio → lipsync
+            return await replicateRun(REPLICATE_MODELS.AVATAR.KLING_LIPSYNC, {
+                video_url: videoUrl,
+                audio_file: opts.audioUrl,
+            });
         }
     }
 
@@ -110,20 +101,14 @@ export class VideoAnimator {
         cropFactor?: number;
         quality?: 'standard' | 'premium' | 'fast';
     }[]): Promise<string[]> {
-        // Secuencial para evitar rate limits
         const results: string[] = [];
         for (const c of configs) {
             results.push(await this.animate(c));
-            await new Promise(r => setTimeout(r, 3000));
+            await new Promise(r => setTimeout(r, 2000));
         }
         return results;
     }
 
-    calculateCost(durationSeconds: number): number {
-        return durationSeconds * 0.04;
-    }
-
-    estimateDuration(charCount: number): number {
-        return Math.ceil(charCount / 15);
-    }
+    calculateCost(durationSeconds: number): number { return durationSeconds * 0.04; }
+    estimateDuration(charCount: number): number { return Math.ceil(charCount / 15); }
 }

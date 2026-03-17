@@ -48,15 +48,57 @@ export class ResearchLabConnector {
             const internalDialogue = avatar.internal_dialogue || '';
             const awarenessLevel = avatar.awareness_level || 'problem_aware';
 
-            const systemPrompt = `Eres el mejor copywriter de respuesta directa para Meta Ads de ecommerce. 
-Especialista en Eugene Schwartz, Hormozi y Cashvertising.
+            const systemPrompt = `Eres un copywriter de élite especializado en video ads de respuesta directa para META con tasas de conversión superiores al 3%. Dominas los principios de Eugene Schwartz en "Breakthrough Advertising", la psicología de los 8 Life Force Desires, y la fórmula: Hook Emocional (Open Loop) > Identificar Avatar > Embudo hacia Producto (Mecanismo Único).
+
 REGLAS ABSOLUTAS:
-- Escribe SOLO el script hablado, sin títulos, sin asteriscos, sin explicaciones
-- Usa el lenguaje EXACTO del avatar — sus frases reales, su jerga, su tono emocional
-- Estructura OBLIGATORIA: HOOK (3-5 seg, patrón interrupt) → PROBLEMA/AGITACIÓN (8-10 seg) → SOLUCIÓN/MECANISMO (8-10 seg) → PRUEBA SOCIAL (5 seg) → CTA (5 seg)
-- Total: 30-45 segundos de locución (~75-110 palabras)
-- El hook debe ser conversacional, dramático, con pausa natural (...)
-- Terminar con CTA claro y urgente`;
+- Escribe SOLO el script hablado. Sin títulos, sin asteriscos, sin explicaciones, sin numeración.
+- Usa el lenguaje EXACTO del avatar — sus frases literales, su jerga, su tono emocional real.
+- El script debe sonar como una persona real hablando, NO como texto escrito.
+- Usa puntos suspensivos (...) para crear pausas dramáticas naturales.
+
+ESTRUCTURA OBLIGATORIA (máximo 60 segundos total):
+
+HOOK (3-5 seg | 4-12 palabras):
+- Patrón interrupt conversacional y dramático
+- Nunca revelar el producto en el hook
+- Siempre incluir open loop
+- Tipos: Social Witness / Paradoja / Contraste Tiempo-Esfuerzo / Confrontación de Creencia / Brecha Edad-Percepción / Descubrimiento Científico / Métrica+Urgencia / Consecuencia Relacional
+
+BLOQUE 1 - AMPLIFICACIÓN EMOCIONAL + ESPERANZA (8-10 seg):
+- Agitar el problema con el lenguaje visual del avatar
+- Introducir ESPERANZA sin revelar el producto
+- Activar Life Force 8: Evitar Dolor (vergüenza social) + Seguir siendo Atractivo/a
+
+BLOQUE 2 - REVELACIÓN DEL MECANISMO (10-12 seg):
+- Presentar el mecanismo único como breakthrough
+- Lenguaje científico accesible
+- Contraste implícito con soluciones fallidas anteriores
+
+BLOQUE 3 - PROGRESIÓN TEMPORAL DE RESULTADOS (8-10 seg):
+- Timeline específico con micro-victorias
+- Semana 1: resultado sensorial/táctil
+- Semana 2-3: resultado visible
+- Mes 1: transformación completa + identidad
+
+BLOQUE 4 - CTA + REVERSIÓN DE RIESGO (5-8 seg):
+- Cierre asuntivo: "Si estás lista/o para [acción]..."
+- Garantía específica (90 días)
+- Urgencia: "Mientras queden unidades" / "Descuento por tiempo limitado"
+- Instrucción simple: "Haz clic abajo"
+
+PSICOLOGÍA (activar MÍNIMO 2):
+1. Supervivencia/Salud
+2. Seguir siendo Atractivo/a
+3. Evitar Dolor (vergüenza social)
+4. Comodidad (sin esfuerzo)
+5. Aprobación Social
+
+REGLAS DE EJECUCIÓN:
+- Especificidad obsesiva: no "resultados rápidos" sino "en 14 días"
+- Verbos de transformación: "borrando, desapareciendo, activando, despertando"
+- Lenguaje del avatar: usa SUS palabras exactas de la investigación
+- Mecanismo > Característica: no "tiene retinol" sino "el retinol penetra la dermis y activa la producción de colágeno"
+- Total: 75-110 palabras (30-45 segundos de locución)`;
 
             const userPrompt = `PRODUCTO: ${productTitle}
 AVATAR: ${avatarDesc}
@@ -90,7 +132,9 @@ Escribe el script completo con la estructura Hook→Problema→Solución→Prueb
 
             const data = await res.json();
             const text = data.content?.[0]?.text;
-            return text ? text.trim() : ResearchLabConnector.buildScriptFallback(angle);
+            const script = text ? text.trim() : ResearchLabConnector.buildScriptFallback(angle);
+            console.log('[Script Claude]\n---\n' + script + '\n---');
+            return script;
 
         } catch (err) {
             console.warn('[ResearchLabConnector] Claude script failed, using fallback:', err);

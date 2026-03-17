@@ -3101,3 +3101,19 @@ model WhatsAppRule {
 
   @@index([storeId, trigger])
 }
+
+model HeygenAvatar {
+  id              String   @id @default(cuid())
+  avatarId        String   @unique
+  name            String
+  gender          String   @default("unknown")
+  previewUrl      String   @default("")
+  previewVideoUrl String   @default("")
+  tags            String   @default("[]")
+  notes           String   @default("")
+  isActive        Boolean  @default(true)
+  isFavorite      Boolean  @default(false)
+  usedForProducts String   @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

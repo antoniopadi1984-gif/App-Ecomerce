@@ -350,23 +350,38 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
         const fileList = Array.from(files);
         setUploadProgress(fileList.map(f => ({ file: f.name, status: 'en cola' })));
         
+        // Subir de 1 en 1 como stream directo — sin límite de 10MB
+        let totalQueued = 0;
         for (const file of fileList) {
-            formData.append('videos', file);
-        }
+            try {
+                setUploadProgress(prev => prev.map(p => p.file === file.name ? { ...p, status: 'subiendo...' } : p));
 
-        try {
-            const res = await fetch('/api/upload/video', {
-                method: 'POST',
-                headers: { 'X-Store-Id': storeId },
-                body: formData
-            });
-            const data = await res.json();
-            if (data.ok) {
-                toast.success(`${data.totalQueued} vídeos en procesamiento — la IA está analizando`);
-                setUploadProgress(data.jobs.map((j: any) => ({ file: j.fileName, status: 'procesando...' })));
+                const params = new URLSearchParams({
+                    productId,
+                    storeId,
+                    competitorName: competitorName || 'COMPETIDOR',
+                    fileName: file.name,
+                    isOwn: 'false',
+                });
+
+                const res = await fetch(`/api/upload/video?${params}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/octet-stream' },
+                    body: file,
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    totalQueued++;
+                    setUploadProgress(prev => prev.map(p => p.file === file.name ? { ...p, status: 'analizando...' } : p));
+                } else {
+                    setUploadProgress(prev => prev.map(p => p.file === file.name ? { ...p, status: 'error' } : p));
+                }
+            } catch (e) {
+                setUploadProgress(prev => prev.map(p => p.file === file.name ? { ...p, status: 'error' } : p));
             }
-        } catch (e) {
-            toast.error('Error al subir vídeos');
+        }
+        if (totalQueued > 0) toast.success(`${totalQueued} vídeos en análisis — Whisper + Gemini procesando`);
+        else { toast.error('Error al subir vídeos');
         } finally {
             setUploading(false);
         }

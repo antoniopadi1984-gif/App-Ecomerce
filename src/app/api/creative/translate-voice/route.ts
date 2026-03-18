@@ -123,6 +123,7 @@ async function runPipeline(
                 'Traducción de script publicitario al español mexicano',
                 `Traduce al español mexicano este script publicitario de video. Devuelve SOLO la traducción, sin explicaciones:\n\n${transcription}`
             );
+            console.log("[Pipeline] AgentDispatcher result:", JSON.stringify(result).slice(0, 500));
             if (result.content) translation = result.content;
             console.log('[Pipeline] ✅ Traducción via AgentDispatcher');
         } catch (e: any) {

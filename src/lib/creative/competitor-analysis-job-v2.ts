@@ -9,6 +9,24 @@ import * as os from 'os';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+const CONCEPT_MAP: Record<string, string> = {
+    'PROBLEMA': 'C1', 'C1': 'C1',
+    'ANTES_DESPUES': 'C2', 'ANTES/DESPUES': 'C2', 'C2': 'C2',
+    'MECANISMO': 'C3', 'C3': 'C3',
+    'PRUEBA_SOCIAL': 'C4', 'PRUEBA SOCIAL': 'C4', 'C4': 'C4',
+    'OFERTA': 'C5', 'C5': 'C5',
+    'OBJECION': 'C6', 'OBJECIÓN': 'C6', 'C6': 'C6',
+    'RESULTADO': 'C7', 'C7': 'C7',
+    'EDUCACION': 'C8', 'EDUCACIÓN': 'C8', 'C8': 'C8',
+    'AUTORIDAD': 'C9', 'C9': 'C9',
+};
+
+function normalizeConceptCode(concept: string): ConceptKey {
+    const upper = concept.toUpperCase().trim();
+    return (CONCEPT_MAP[upper] || 'C1') as ConceptKey;
+}
+
+
 export interface AnalysisResult {
     concept: ConceptKey;
     phase: Phase;
@@ -56,7 +74,8 @@ export async function analyzeCompetitorVideo(params: {
     const version = await getNextVersion(productId, analysis.concept, isOwn);
 
     // 4. Nomenclatura
-    const nomenclature = `${sku}_${analysis.concept}_${version}`;
+    const conceptCode = normalizeConceptCode(analysis.concept);
+    const nomenclature = `${sku}_${conceptCode}_${version}`;
     const ext = path.extname(videoPath) || '.mp4';
 
     // 5. Limpiar metadata
@@ -67,10 +86,11 @@ export async function analyzeCompetitorVideo(params: {
     // 6. Subir a Drive
     const drive = await getDriveClient();
     const section = isOwn ? 'CREATIVOS' : 'COMPETENCIA';
+    const normalizedConcept = normalizeConceptCode(analysis.concept);
     const phaseFolderId = await getOrCreateConceptFolder(
         product.driveFolderId,
         section,
-        analysis.concept,
+        normalizedConcept,
         analysis.phase
     );
 
@@ -91,7 +111,7 @@ export async function analyzeCompetitorVideo(params: {
         await (prisma as any).competitorVideo.upsert({
             where: { nomenclature },
             create: {
-                productId, nomenclature, driveUrl,
+                productId, storeId, nomenclature, driveUrl,
                 filename: nomenclature,
                 concept: analysis.concept, phase: analysis.phase,
                 framework: analysis.framework, hookScore: analysis.hookScore,

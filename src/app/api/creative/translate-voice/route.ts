@@ -119,11 +119,10 @@ async function runPipeline(
         try {
             const { AgentDispatcher } = await import('@/lib/agents/agent-dispatcher');
             const dispatcher = new AgentDispatcher();
-            const result = await dispatcher.dispatch({
-                role: 'copywriter',
-                prompt: `Traduce al español mexicano este script publicitario de video. Devuelve SOLO la traducción, sin explicaciones:\n\n${transcription}`,
-                taskDescription: 'Traducción de script publicitario'
-            });
+            const result = await dispatcher.dispatchAuto(
+                'Traducción de script publicitario al español mexicano',
+                `Traduce al español mexicano este script publicitario de video. Devuelve SOLO la traducción, sin explicaciones:\n\n${transcription}`
+            );
             if (result.content) translation = result.content;
             console.log('[Pipeline] ✅ Traducción via AgentDispatcher');
         } catch (e: any) {

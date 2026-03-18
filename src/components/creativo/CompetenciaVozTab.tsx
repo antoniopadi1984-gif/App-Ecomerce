@@ -88,6 +88,7 @@ export function CompetenciaVozTab({ storeId, productId }: CompetenciaVozTabProps
             formData.append('addSubtitles', String(addSubtitles));
             formData.append('productId', productId);
             formData.append('storeId', storeId);
+            if (scriptEs.trim()) formData.append('scriptEs', scriptEs.trim());
 
             setStep('transcribing');
             const res = await fetch('/api/creative/translate-voice', {
@@ -213,7 +214,17 @@ export function CompetenciaVozTab({ storeId, productId }: CompetenciaVozTabProps
                 </div>
 
                 <div className="p-3 rounded-xl bg-white border border-[var(--border)]">
-                    <div className="text-[9px] font-black uppercase text-[var(--text-tertiary)] mb-2">4. Opciones</div>
+                    <div className="text-[9px] font-black uppercase text-[var(--text-tertiary)] mb-2">4. Script en español (opcional)</div>
+                    <textarea
+                        value={scriptEs}
+                        onChange={e => setScriptEs(e.target.value)}
+                        placeholder="Pega aquí el script en español del DOC de análisis para saltar la transcripción automática..."
+                        className="w-full text-[9px] bg-slate-50 border border-[var(--border)] rounded-lg px-2 py-1.5 outline-none focus:border-[var(--cre)]/50 resize-none h-24"
+                    />
+                </div>
+
+                <div className="p-3 rounded-xl bg-white border border-[var(--border)]">
+                    <div className="text-[9px] font-black uppercase text-[var(--text-tertiary)] mb-2">5. Opciones</div>
                     <div className="space-y-2">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" checked={addLipsync} onChange={e => setAddLipsync(e.target.checked)} className="accent-[var(--cre)]" />

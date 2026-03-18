@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
     const addSubtitles = formData.get('addSubtitles') === 'true';
     const productId = formData.get('productId') as string;
     const storeId = formData.get('storeId') as string;
+    const preloadedScript = formData.get('scriptEs') as string || ''; // Script ya traducido
 
     if (!videoFile || !voiceId) return NextResponse.json({ error: 'video y voiceId requeridos' }, { status: 400 });
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
     jobs[jobId] = { status: 'processing', step: 'transcribing', jobId };
 
     // Ejecutar pipeline async
-    runPipeline(jobId, videoFile, voiceId, voiceSettings, targetLang, addLipsync, addSubtitles, productId, storeId).catch(e => {
+    runPipeline(jobId, videoFile, voiceId, voiceSettings, targetLang, addLipsync, addSubtitles, productId, storeId, preloadedScript).catch(e => {
         jobs[jobId] = { status: 'error', error: e.message, jobId };
     });
 
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
 async function runPipeline(
     jobId: string, videoFile: File, voiceId: string, voiceSettings: any,
     targetLang: string, addLipsync: boolean, addSubtitles: boolean,
-    productId: string, storeId: string
+    productId: string, storeId: string, preloadedScript: string = ''
 ) {
     const tmpDir = join(tmpdir(), `translate-${jobId}`);
     await mkdir(tmpDir, { recursive: true });
@@ -63,6 +64,41 @@ async function runPipeline(
         // PASO 2: Extraer audio
         jobs[jobId].step = 'transcribing';
         await execAsync(`ffmpeg -y -i "${videoPath}" -vn -acodec mp3 "${audioPath}"`);
+
+        // PASO 3: Transcribir + traducir (o usar script precargado)
+        if (preloadedScript) {
+            console.log('[Pipeline] ✅ Usando script precargado en español');
+            jobs[jobId].step = 'generating_audio';
+            // Saltar directamente al TTS con el script en español
+            const ttsRes2 = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+                method: 'POST',
+                headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY!, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: preloadedScript,
+                    model_id: 'eleven_multilingual_v2',
+                    voice_settings: {
+                        stability: voiceSettings.stability ?? 0.5,
+                        similarity_boost: voiceSettings.similarity_boost ?? 0.8,
+                        style: voiceSettings.style ?? 0.3,
+                        use_speaker_boost: true,
+                    },
+                }),
+            });
+            if (!ttsRes2.ok) throw new Error(`ElevenLabs TTS: ${ttsRes2.status}`);
+            const newAudioBuffer2 = Buffer.from(await ttsRes2.arrayBuffer());
+            const newAudioPath2 = join(tmpDir, 'new_audio.mp3');
+            await writeFile(newAudioPath2, newAudioBuffer2);
+            // Montar video + audio y continuar
+            const silentVideoPath2 = join(tmpDir, 'silent.mp4');
+            const mergedVideoPath2 = join(tmpDir, 'merged.mp4');
+            await execAsync(`ffmpeg -y -i "${videoPath}" -an -c:v copy "${silentVideoPath2}"`);
+            await execAsync(`ffmpeg -y -i "${silentVideoPath2}" -i "${newAudioPath2}" -c:v copy -c:a aac -shortest "${mergedVideoPath2}"`);
+            const finalBuffer2 = await readFile(mergedVideoPath2);
+            const finalVideoUrl2 = `data:video/mp4;base64,${finalBuffer2.toString('base64')}`;
+            jobs[jobId] = { status: 'done', jobId, videoUrl: finalVideoUrl2, translation: preloadedScript };
+            console.log('[Pipeline] ✅ Pipeline con script precargado completado');
+            return;
+        }
 
         // PASO 3: Transcribir con Whisper local
         const whisperBin = process.env.WHISPER_BIN || '/Users/padi/whisper.cpp/build/bin/whisper-cli';
@@ -146,6 +182,7 @@ FORMATO DE RESPUESTA:
             try { analysis = JSON.parse(analysisMatch[1].trim()); } catch {}
         }
         if (translationMatch) translation = translationMatch[1].trim();
+        console.log(`[Pipeline] 📝 Traducción: ${translation.slice(0, 100)}`);
 
         console.log(`[Pipeline] ✅ Análisis + Traducción completados`);
 

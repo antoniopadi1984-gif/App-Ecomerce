@@ -2766,6 +2766,16 @@ model CompetitorVideo {
   googleDriveTomasId String?
   voiceoverRemoved   Boolean            @default(false)
   libraryId          String?
+  // Nuevos campos v2
+  nomenclature       String?            @unique
+  driveUrl           String?
+  concept            String?
+  phase              String?
+  hookScore          Int?
+  consciousnessLevel Int?
+  scriptEs           String?
+  primaryAngle       String?
+  isOwn              Boolean            @default(false)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   library            CompetitorLibrary? @relation(fields: [libraryId], references: [id])

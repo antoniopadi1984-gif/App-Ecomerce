@@ -64,21 +64,16 @@ async function runPipeline(
         jobs[jobId].step = 'transcribing';
         await execAsync(`ffmpeg -y -i "${videoPath}" -vn -acodec mp3 "${audioPath}"`);
 
-        // PASO 3: Transcribir con ElevenLabs Scribe
-        const audioBuffer = await readFile(audioPath);
-        const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'audio.mp3');
-        formData.append('model_id', 'scribe_v1');
-        formData.append('language_code', 'en');
-
-        const scribeRes = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
-            method: 'POST',
-            headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY! },
-            body: formData,
-        });
-        const scribeData = await scribeRes.json();
-        const transcription = scribeData.text || '';
+        // PASO 3: Transcribir con Whisper local
+        const whisperBin = process.env.WHISPER_BIN || '/Users/padi/whisper.cpp/build/bin/whisper-cli';
+        const whisperModel = process.env.WHISPER_MODEL || '/Users/padi/whisper.cpp/models/ggml-large-v3.bin';
+        const whisperOut = join(tmpDir, 'whisper_out');
+        await execAsync(`"${whisperBin}" -m "${whisperModel}" -f "${audioPath}" --output-txt -of "${whisperOut}" --language auto 2>/dev/null`);
+        let transcription = '';
+        try {
+            const { readFile: rf } = await import('fs/promises');
+            transcription = (await rf(`${whisperOut}.txt`, 'utf-8')).trim();
+        } catch { transcription = ''; }
         console.log(`[Pipeline] ✅ Transcripción: ${transcription.slice(0, 80)}`);
 
         // PASO 4: Análisis Gemini + Traducción

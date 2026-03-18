@@ -56,8 +56,7 @@ export async function analyzeCompetitorVideo(params: {
     const version = await getNextVersion(productId, analysis.concept, isOwn);
 
     // 4. Nomenclatura
-    const prefix = isOwn ? '' : 'COMP_';
-    const nomenclature = `${prefix}${sku}_${analysis.concept}_${version}`;
+    const nomenclature = `${sku}_${analysis.concept}_${version}`;
     const ext = path.extname(videoPath) || '.mp4';
 
     // 5. Limpiar metadata

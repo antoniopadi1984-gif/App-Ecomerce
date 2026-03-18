@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const EXTENSION_ID = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; // ID de producción
+const EXTENSION_ID = ''; // ID de extensión — configurar en producción
 
 interface Scene {
     thumbnail: string;
@@ -129,6 +129,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
         const checkExtension = () => {
             const chrome = (window as any).chrome;
             if (chrome?.runtime?.sendMessage) {
+                if (!EXTENSION_ID || EXTENSION_ID.length !== 32) { setExtensionInstalled(false); return; }
                 chrome.runtime.sendMessage(EXTENSION_ID, { type: 'PING' }, (response: any) => {
                     if (chrome.runtime.lastError || !response) {
                         setExtensionInstalled(false);
@@ -166,6 +167,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
             // 2. Notificar a la extensión si está instalada
             const chrome = (window as any).chrome;
             if (extensionInstalled && chrome?.runtime?.sendMessage) {
+                if (!EXTENSION_ID || EXTENSION_ID.length !== 32) { setExtensionInstalled(false); return; }
                 chrome.runtime.sendMessage(EXTENSION_ID, {
                     type: 'SET_ACTIVE_PRODUCT',
                     productId,

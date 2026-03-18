@@ -113,40 +113,12 @@ async function runPipeline(
         } catch { transcription = ''; }
         console.log(`[Pipeline] ✅ Transcripción: ${transcription.slice(0, 80)}`);
 
-        // PASO 4: Análisis Gemini + Traducción
-        jobs[jobId].step = 'analyzing';
-        const langMap: Record<string, string> = {
-            'es-mx': 'español mexicano coloquial y natural',
-            'es-es': 'español de España',
-            'es-neutral': 'español neutro latinoamericano',
-        };
-
-        const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-preview-03-25:generateContent?key=${process.env.GEMINI_API_KEY}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `Traduce el siguiente texto al ${langMap[targetLang] || 'español neutro'}. Devuelve ÚNICAMENTE la traducción, sin explicaciones, sin notas, sin nada más.
-
-${transcription}`
-                        }]
-                    }],
-                    generationConfig: { temperature: 0.1, maxOutputTokens: 3000 }
-                })
-            }
-        );
-
+        // PASO 4: Traducción con translateToEs
         jobs[jobId].step = 'translating';
-        const geminiData = await geminiRes.json();
-        const geminiText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-        const translation = geminiText.trim() || transcription;
+        const { translateToEs } = await import('@/lib/translation');
+        const translation = await translateToEs(transcription, 'EN', 'video script publicitario');
         console.log(`[Pipeline] 📝 Traducción: ${translation.slice(0, 100)}`);
-
-        console.log(`[Pipeline] ✅ Análisis + Traducción completados`);
+        console.log(`[Pipeline] ✅ Traducción completada`);
 
         // PASO 5: Generar audio con ElevenLabs
         jobs[jobId].step = 'generating_audio';

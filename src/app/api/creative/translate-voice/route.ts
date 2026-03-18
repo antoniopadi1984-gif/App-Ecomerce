@@ -169,7 +169,7 @@ async function runPipeline(
             const botY = Math.floor(vh * 0.78);
             const botH = vh - botY;
             await execAsync(
-                `ffmpeg -y -i "${videoPath}" -vf "delogo=x=0:y=0:w=${vw}:h=${topH}:show=0,delogo=x=0:y=${botY}:w=${vw}:h=${botH}:show=0" "${noTextPath}"`
+                `ffmpeg -y -i "${videoPath}" -vf "drawbox=x=0:y=0:w=${vw}:h=${topH}:color=black@0.7:t=fill,drawbox=x=0:y=${botY}:w=${vw}:h=${botH}:color=black@0.7:t=fill" "${noTextPath}"`
             );
         } catch {
             await execAsync(`cp "${videoPath}" "${noTextPath}"`);
@@ -223,14 +223,24 @@ async function runPipeline(
             const words2 = translation.split(' ');
             const chunkSize2 = 7;
             let drawtextFilters = [];
+            // Escribir subtítulos como ASS file (más compatible que drawtext)
+            let assContent = "[Script Info]\nScriptType: v4.00+\nPlayResX: 384\nPlayResY: 684\n\n[V4+ Styles]\nFormat: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding\nStyle: Default,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1\n\n[Events]\nFormat: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text\n";
+            const fmtAss = (s: number) => {
+                const h = Math.floor(s/3600);
+                const m = Math.floor((s%3600)/60);
+                const sec = Math.floor(s%60);
+                const cs = Math.floor((s*100)%100);
+                return \`\${h}:\${String(m).padStart(2,'0')}:\${String(sec).padStart(2,'0')}.\${String(cs).padStart(2,'0')}\`;
+            };
             for (let i = 0; i < words2.length; i += chunkSize2) {
-                const chunk = words2.slice(i, i + chunkSize2).join(' ').replace(/'/g, "\'").replace(/:/g, "\:");
-                const startT = (i / 2.5).toFixed(2);
-                const endT = Math.min(((i + chunkSize2) / 2.5), duration).toFixed(2);
-                drawtextFilters.push(`drawtext=text='${chunk}':fontsize=18:fontcolor=white:borderw=2:bordercolor=black:x=(w-text_w)/2:y=h-60:enable='between(t,${startT},${endT})'`);
+                const chunk = words2.slice(i, i + chunkSize2).join(' ').replace(/[{}\\]/g, '');
+                const startT2 = i / 2.5;
+                const endT2 = Math.min((i + chunkSize2) / 2.5, duration);
+                assContent += \`Dialogue: 0,\${fmtAss(startT2)},\${fmtAss(endT2)},Default,,0,0,0,,\${chunk}\n\`;
             }
-            const filterStr = drawtextFilters.join(',');
-            await execAsync(`ffmpeg -y -i "${mergedVideoPath}" -vf "${filterStr}" "${subtitledPath}"`);
+            const assPath = join(tmpDir, 'subs.ass');
+            await writeFile(assPath, assContent);
+            await execAsync(`ffmpeg -y -i "${mergedVideoPath}" -vf "ass=${assPath}" "${subtitledPath}"`);
             finalVideoPath = subtitledPath;
         } catch (e: any) {
             console.warn('[Pipeline] Subtítulos fallaron:', e.message);

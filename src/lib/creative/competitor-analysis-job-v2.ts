@@ -85,7 +85,7 @@ export async function analyzeCompetitorVideo(params: {
 
     // 6. Subir a Drive
     const drive = await getDriveClient();
-    const section = isOwn ? 'CREATIVOS' : 'COMPETENCIA';
+    const section = 'CREATIVOS'; // Videos siempre van a CREATIVOS tras análisis
     const normalizedConcept = normalizeConceptCode(analysis.concept);
     const phaseFolderId = await getOrCreateConceptFolder(
         product.driveFolderId,

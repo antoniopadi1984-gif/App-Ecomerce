@@ -4,10 +4,8 @@ import { uploadToInbox } from '@/lib/services/drive-service';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
-
-// Aumentar límite de body para subida de vídeos
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
+
 
 export async function POST(req: NextRequest) {
     const storeId = req.headers.get('X-Store-Id');

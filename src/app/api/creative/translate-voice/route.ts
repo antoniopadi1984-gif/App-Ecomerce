@@ -161,7 +161,7 @@ FORMATO DE RESPUESTA:
             headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY!, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 text: translation,
-                model_id: 'eleven_v3',
+                model_id: 'eleven_multilingual_v2',
                 voice_settings: {
                     stability: voiceSettings.stability ?? 0.5,
                     similarity_boost: voiceSettings.similarity_boost ?? 0.8,

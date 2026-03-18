@@ -83,7 +83,6 @@ async function runPipeline(
                         style: voiceSettings.style ?? 0.3,
                         use_speaker_boost: true,
                     },
-                    speed: voiceSettings.speed ?? 1.0,
                 }),
             });
             if (!ttsRes2.ok) throw new Error(`ElevenLabs TTS: ${ttsRes2.status}`);
@@ -124,9 +123,7 @@ async function runPipeline(
                 'Traducción de script publicitario al español mexicano',
                 `Traduce al español mexicano este script publicitario de video. Devuelve SOLO la traducción, sin explicaciones:\n\n${transcription}`
             );
-            console.log("[Pipeline] AgentDispatcher result:", JSON.stringify(result).slice(0, 500));
-            if (result.text) translation = result.text;
-            else if (result.content) translation = result.content;
+            if ((result as any).text) translation = (result as any).text;
             console.log('[Pipeline] ✅ Traducción via AgentDispatcher');
         } catch (e: any) {
             console.warn('[Pipeline] AgentDispatcher translation failed:', e.message);
@@ -156,95 +153,20 @@ async function runPipeline(
         const audioBase64 = `data:audio/mpeg;base64,${newAudioBuffer.toString('base64')}`;
         console.log(`[Pipeline] ✅ Audio ElevenLabs generado`);
 
-        // PASO 5.5: Blur en zonas de texto hardcoded (superior e inferior)
-        const noTextPath = join(tmpDir, 'no_text.mp4');
-        try {
-            // Detectar resolución
-            const { stdout: probeOut } = await execAsync(
-                `ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "${videoPath}"`
-            );
-            const [vw, vh] = probeOut.trim().split(',').map(Number);
-            // Blur zona superior (0-20%) y zona inferior (80-100%) donde están los textos
-            const topH = Math.floor(vh * 0.22);
-            const botY = Math.floor(vh * 0.78);
-            const botH = vh - botY;
-            await execAsync(
-                `ffmpeg -y -i "${videoPath}" -vf "drawbox=x=0:y=0:w=${vw}:h=${topH}:color=black@0.7:t=fill,drawbox=x=0:y=${botY}:w=${vw}:h=${botH}:color=black@0.7:t=fill" "${noTextPath}"`
-            );
-        } catch {
-            await execAsync(`cp "${videoPath}" "${noTextPath}"`);
-        }
-
         // PASO 6: Montar video con nuevo audio (sin voz original)
         jobs[jobId].step = 'lipsync';
         const silentVideoPath = join(tmpDir, 'silent.mp4');
         const mergedVideoPath = join(tmpDir, 'merged.mp4');
 
         // Eliminar audio original del video
-        await execAsync(`ffmpeg -y -i "${noTextPath}" -an -c:v copy "${silentVideoPath}"`);
+        await execAsync(`ffmpeg -y -i "${videoPath}" -an -c:v copy "${silentVideoPath}"`);
 
         // Mezclar video mudo + nuevo audio
         await execAsync(
-            `ffmpeg -y -i "${silentVideoPath}" -i "${newAudioPath}" -c:v copy -c:a aac -af "apad" -shortest "${mergedVideoPath}"`
+            `ffmpeg -y -i "${silentVideoPath}" -i "${newAudioPath}" -c:v copy -c:a aac -shortest "${mergedVideoPath}"`
         );
 
-        // Añadir subtítulos en español (SRT generado de la traducción)
-        const subtitledPath = join(tmpDir, 'subtitled.mp4');
         let finalVideoPath = mergedVideoPath;
-        try {
-            // Generar SRT simple de la traducción
-            const words = translation.split(' ');
-            const wordsPerSec = 2.5;
-            let srtContent = '';
-            let wordIdx = 0;
-            let subIdx = 1;
-            const chunkSize = 6;
-            while (wordIdx < words.length) {
-                const chunk = words.slice(wordIdx, wordIdx + chunkSize).join(' ');
-                const startSec = (wordIdx / wordsPerSec);
-                const endSec = ((wordIdx + chunkSize) / wordsPerSec);
-                const fmt = (s: number) => {
-                    const h = Math.floor(s/3600).toString().padStart(2,'0');
-                    const m = Math.floor((s%3600)/60).toString().padStart(2,'0');
-                    const sec = Math.floor(s%60).toString().padStart(2,'0');
-                    const ms = Math.floor((s*1000)%1000).toString().padStart(3,'0');
-                    return `${h}:${m}:${sec},${ms}`;
-                };
-                srtContent += `${subIdx}\n${fmt(startSec)} --> ${fmt(endSec)}\n${chunk}\n\n`;
-                wordIdx += chunkSize;
-                subIdx++;
-            }
-            const srtPath = join(tmpDir, 'subs.srt');
-            await writeFile(srtPath, srtContent);
-            // Usar drawtext en lugar de subtitles (no requiere libass)
-            // Calcular duración del video
-            const { stdout: durOut } = await execAsync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${mergedVideoPath}"`);
-            const duration = parseFloat(durOut.trim());
-            const words2 = translation.split(' ');
-            const chunkSize2 = 7;
-            let drawtextFilters = [];
-            // Escribir subtítulos como ASS file (más compatible que drawtext)
-            let assContent = "[Script Info]\nScriptType: v4.00+\nPlayResX: 384\nPlayResY: 684\n\n[V4+ Styles]\nFormat: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding\nStyle: Default,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1\n\n[Events]\nFormat: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text\n";
-            const fmtAss = (s: number) => {
-                const h = Math.floor(s/3600);
-                const m = Math.floor((s%3600)/60);
-                const sec = Math.floor(s%60);
-                const cs = Math.floor((s*100)%100);
-                return \`\${h}:\${String(m).padStart(2,'0')}:\${String(sec).padStart(2,'0')}.\${String(cs).padStart(2,'0')}\`;
-            };
-            for (let i = 0; i < words2.length; i += chunkSize2) {
-                const chunk = words2.slice(i, i + chunkSize2).join(' ').replace(/[{}\\]/g, '');
-                const startT2 = i / 2.5;
-                const endT2 = Math.min((i + chunkSize2) / 2.5, duration);
-                assContent += \`Dialogue: 0,\${fmtAss(startT2)},\${fmtAss(endT2)},Default,,0,0,0,,\${chunk}\n\`;
-            }
-            const assPath = join(tmpDir, 'subs.ass');
-            await writeFile(assPath, assContent);
-            await execAsync(`ffmpeg -y -i "${mergedVideoPath}" -vf "ass=${assPath}" "${subtitledPath}"`);
-            finalVideoPath = subtitledPath;
-        } catch (e: any) {
-            console.warn('[Pipeline] Subtítulos fallaron:', e.message);
-        }
 
         // LipSync si está activado
         if (addLipsync) {

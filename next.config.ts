@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
+      bodySizeLimit: '500mb',
+    },
+  },
+  experimental: {
+    serverActions: {
       bodySizeLimit: '50mb',
     },
     optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tooltip', 'framer-motion', 'recharts'],
@@ -58,3 +63,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+// Already configured above - just adding body size limit note

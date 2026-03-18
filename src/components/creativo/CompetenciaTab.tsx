@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const EXTENSION_ID = ''; // ID de extensión — configurar en producción
+const EXTENSION_ID = 'macdkmffemnkhgbejnjfmbpdmfboleoj';
 
 interface Scene {
     thumbnail: string;

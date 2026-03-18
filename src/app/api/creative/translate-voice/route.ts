@@ -122,51 +122,19 @@ async function runPipeline(
         };
 
         const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-preview-03-25:generateContent?key=${process.env.GEMINI_API_KEY}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{
                         parts: [{
-                            text: `Eres un experto en marketing directo y copywriting para Meta Ads.
-                            
-TRANSCRIPCIÓN del video de competencia:
-"${transcription}"
+                            text: `Traduce el siguiente texto al ${langMap[targetLang] || 'español neutro'}. Devuelve ÚNICAMENTE la traducción, sin explicaciones, sin notas, sin nada más.
 
-IMPORTANTE: Debes responder en el formato exacto indicado abajo.
-
-Haz DOS cosas:
-
-1. ANÁLISIS DE MARKETING (JSON):
-{
-  "hook": "el hook exacto que usa",
-  "framework": "AIDA/PAS/Hook-Body-CTA/etc",
-  "angle": "ángulo de ataque (dolor/beneficio/miedo/curiosidad/social proof)",
-  "funnel_stage": "frío/tibio/caliente",
-  "target_avatar": "descripción del avatar objetivo",
-  "why_it_works": "por qué este anuncio funciona o no (máx 2 frases)",
-  "creative_concept": "concepto creativo central",
-  "ctr_estimate": "estimación CTR (bajo/medio/alto) con justificación",
-  "mejoras_sugeridas": "3 mejoras concretas para adaptar a nuestro producto"
-}
-
-2. TRADUCCIÓN COMPLETA a ${langMap[targetLang] || 'español neutro'}:
-- Traduce TODO el texto al español, sin dejar nada en inglés
-- Mantén el tono, energía y ritmo del original
-- Adapta expresiones culturalmente
-- OBLIGATORIO: devuelve el texto completo traducido al español
-
-FORMATO DE RESPUESTA:
-<ANALISIS>
-{json aquí}
-</ANALISIS>
-<TRADUCCION>
-{traducción aquí}
-</TRADUCCION>`
+${transcription}`
                         }]
                     }],
-                    generationConfig: { temperature: 0.3, maxOutputTokens: 2000 }
+                    generationConfig: { temperature: 0.1, maxOutputTokens: 3000 }
                 })
             }
         );
@@ -175,16 +143,7 @@ FORMATO DE RESPUESTA:
         const geminiData = await geminiRes.json();
         const geminiText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-        let analysis: any = {};
-        let translation = transcription;
-
-        const analysisMatch = geminiText.match(/<ANALISIS>([\s\S]*?)<\/ANALISIS>/);
-        const translationMatch = geminiText.match(/<TRADUCCION>([\s\S]*?)<\/TRADUCCION>/);
-
-        if (analysisMatch) {
-            try { analysis = JSON.parse(analysisMatch[1].trim()); } catch {}
-        }
-        if (translationMatch) translation = translationMatch[1].trim();
+        const translation = geminiText.trim() || transcription;
         console.log(`[Pipeline] 📝 Traducción: ${translation.slice(0, 100)}`);
 
         console.log(`[Pipeline] ✅ Análisis + Traducción completados`);

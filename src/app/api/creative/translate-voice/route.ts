@@ -169,7 +169,7 @@ async function runPipeline(
             const botY = Math.floor(vh * 0.78);
             const botH = vh - botY;
             await execAsync(
-                `ffmpeg -y -i "${videoPath}" -vf "delogo=x=0:y=0:w=${vw}:h=${topH}:show=0,delogo=x=0:y=${botY}:w=${vw}:h=${botH}:show=0" "${noTextPath}" 2>/dev/null`
+                `ffmpeg -y -i "${videoPath}" -vf "delogo=x=0:y=0:w=${vw}:h=${topH}:show=0,delogo=x=0:y=${botY}:w=${vw}:h=${botH}:show=0" "${noTextPath}"`
             );
         } catch {
             await execAsync(`cp "${videoPath}" "${noTextPath}"`);
@@ -230,7 +230,7 @@ async function runPipeline(
                 drawtextFilters.push(`drawtext=text='${chunk}':fontsize=18:fontcolor=white:borderw=2:bordercolor=black:x=(w-text_w)/2:y=h-60:enable='between(t,${startT},${endT})'`);
             }
             const filterStr = drawtextFilters.join(',');
-            await execAsync(`ffmpeg -y -i "${mergedVideoPath}" -vf "${filterStr}" "${subtitledPath}" 2>/dev/null`);
+            await execAsync(`ffmpeg -y -i "${mergedVideoPath}" -vf "${filterStr}" "${subtitledPath}"`);
             finalVideoPath = subtitledPath;
         } catch (e: any) {
             console.warn('[Pipeline] Subtítulos fallaron:', e.message);

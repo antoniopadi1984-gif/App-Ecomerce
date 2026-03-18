@@ -66,6 +66,7 @@ export const navigation = [
             { label: 'Avatares y Voces', emoji: '🤖', href: '/centro-creativo/avatares' },
             { label: 'Biblioteca IA', emoji: '📚', href: '/centro-creativo/biblioteca' },
             { label: 'Rendimiento Creativo', emoji: '📈', href: '/centro-creativo/rendimiento' },
+            { label: 'Competencia', emoji: '🕵️', href: '/centro-creativo/competencia' },
         ]
     },
     {

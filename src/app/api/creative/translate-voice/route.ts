@@ -168,49 +168,47 @@ async function runPipeline(
 
         let finalVideoPath = mergedVideoPath;
 
-        // SUBTÍTULOS EN ESPAÑOL + BLUR TEXTO INGLÉS
-        const subtitledPath = join(tmpDir, 'subtitled.mp4');
+        // BLUR texto inglés + subtítulos español
+        const subtitledPath2 = join(tmpDir, 'subtitled.mp4');
         try {
-            // Detectar resolución
-            const { stdout: probeOut2 } = await execAsync(
-                `ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "${mergedVideoPath}"`
+            const { stdout: pOut } = await execAsync(
+                'ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "' + mergedVideoPath + '"'
             );
-            const [vw2, vh2] = probeOut2.trim().split(',').map(Number);
+            const dims = pOut.trim().split(',');
+            const vw2 = parseInt(dims[0]);
+            const vh2 = parseInt(dims[1]);
             const topH2 = Math.floor(vh2 * 0.25);
             const botY2 = Math.floor(vh2 * 0.78);
             const botH2 = vh2 - botY2;
 
-            // Obtener duración
-            const { stdout: durOut2 } = await execAsync(
-                `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${mergedVideoPath}"`
+            const { stdout: dOut } = await execAsync(
+                'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "' + mergedVideoPath + '"'
             );
-            const dur2 = parseFloat(durOut2.trim());
+            const dur2 = parseFloat(dOut.trim());
 
-            // Generar filtros drawtext para subtítulos
-            const words3 = translation.split(' ');
+            const words3 = translation.replace(/['"\\]/g, ' ').split(' ').filter(Boolean);
             const chunk3 = 6;
-            const wps3 = 2.5;
-            const dtFilters: string[] = [];
+            const filters: string[] = [
+                'drawbox=x=0:y=0:w=' + vw2 + ':h=' + topH2 + ':color=black@0.85:t=fill',
+                'drawbox=x=0:y=' + botY2 + ':w=' + vw2 + ':h=' + botH2 + ':color=black@0.85:t=fill'
+            ];
+
             for (let ii = 0; ii < words3.length; ii += chunk3) {
-                const txt = words3.slice(ii, ii + chunk3).join(' ')
-                    .replace(/[\\':]/g, ' ').replace(/[^\x00-\x7Fá-üÁ-Ü ]/g, '');
-                const t1 = (ii / wps3).toFixed(2);
-                const t2 = Math.min((ii + chunk3) / wps3, dur2).toFixed(2);
-                dtFilters.push(
-                    "drawtext=text='" + txt + "':fontsize=18:fontcolor=white:borderw=2:bordercolor=black:x=(w-text_w)/2:y=h-50:enable='between(t\," + t1 + "\," + t2 + ")'"
+                const txt = words3.slice(ii, ii + chunk3).join(' ');
+                const t1 = (ii / 2.5).toFixed(2);
+                const t2 = Math.min((ii + chunk3) / 2.5, dur2).toFixed(2);
+                filters.push(
+                    'drawtext=text=' + JSON.stringify(txt) +
+                    ':fontsize=18:fontcolor=white:borderw=2:bordercolor=black' +
+                    ':x=(w-text_w)/2:y=h-50:enable=between(t\\,' + t1 + '\\,' + t2 + ')'
                 );
             }
 
-            // Filtro completo: blur zonas + subtítulos
-            const blurTop = "drawbox=x=0:y=0:w=" + vw2 + ":h=" + topH2 + ":color=black@0.8:t=fill";
-            const blurBot = "drawbox=x=0:y=" + botY2 + ":w=" + vw2 + ":h=" + botH2 + ":color=black@0.8:t=fill";
-            const fullFilter = [blurTop, blurBot, ...dtFilters].join(',');
-
-            await execAsync(`ffmpeg -y -i "${mergedVideoPath}" -vf "${fullFilter}" "${subtitledPath}"`);
-            finalVideoPath = subtitledPath;
-            console.log('[Pipeline] ✅ Subtítulos + blur aplicados');
-        } catch (e: any) {
-            console.warn('[Pipeline] Subtítulos fallaron:', e.message);
+            await execAsync('ffmpeg -y -i "' + mergedVideoPath + '" -vf "' + filters.join(',') + '" "' + subtitledPath2 + '"');
+            finalVideoPath = subtitledPath2;
+            console.log('[Pipeline] ✅ Blur + subtítulos aplicados');
+        } catch (e2: any) {
+            console.warn('[Pipeline] Blur/subs fallaron:', e2.message);
         }
 
         // LipSync si está activado

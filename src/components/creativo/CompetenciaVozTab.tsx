@@ -50,6 +50,7 @@ export function CompetenciaVozTab({ storeId, productId }: CompetenciaVozTabProps
     const [targetLang, setTargetLang] = useState<'es-mx' | 'es-es' | 'es-neutral'>('es-mx');
     const [addLipsync, setAddLipsync] = useState(true);
     const [addSubtitles, setAddSubtitles] = useState(true);
+    const [scriptEs, setScriptEs] = useState('');
     const [jobId, setJobId] = useState('');
 
     useEffect(() => {

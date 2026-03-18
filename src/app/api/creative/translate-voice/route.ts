@@ -190,7 +190,7 @@ async function runPipeline(
             // PASO 1: Solo blur (sin texto — es lo más seguro)
             const blurFilter = 'drawbox=x=0:y=0:w=' + vw2 + ':h=' + topH2 + ':color=black@0.85:t=fill,drawbox=x=0:y=' + botY2 + ':w=' + vw2 + ':h=' + botH2 + ':color=black@0.85:t=fill';
             const blurOnlyPath = join(tmpDir, 'blur_only.mp4');
-            await execAsync('ffmpeg -y -i "' + mergedVideoPath + '" -vf "' + blurFilter + '" -c:a copy "' + blurOnlyPath + '"');
+            await execAsync('/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -i "' + mergedVideoPath + '" -vf "' + blurFilter + '" -c:a copy "' + blurOnlyPath + '"');
 
             // PASO 2: Generar SRT
             const words3 = translation.split(/\s+/).filter(Boolean);
@@ -215,7 +215,7 @@ async function runPipeline(
             await writeFile(srtPath3, srtOut, 'utf8');
 
             // PASO 3: Quemar SRT en video con subtitles filter
-            await execAsync('ffmpeg -y -i "' + blurOnlyPath + '" -vf "subtitles=' + srtPath3 + ':force_style=FontSize=16,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Outline=2,Bold=1,Alignment=2" "' + subtitledPath2 + '"');
+            await execAsync('/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -i "' + blurOnlyPath + '" -vf "subtitles=' + srtPath3 + ':force_style=FontSize=16,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Outline=2,Bold=1,Alignment=2" "' + subtitledPath2 + '"');
             finalVideoPath = subtitledPath2;
             console.log('[Pipeline] ✅ Blur + subtítulos aplicados');
         } catch (e2: any) {

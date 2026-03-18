@@ -232,7 +232,6 @@ async function runPipeline(
             result: {
                 transcription,
                 translation,
-                analysis,
                 audioUrl: audioBase64,
                 finalVideoUrl,
             }

@@ -140,6 +140,7 @@ ${transcription}` }] }],
                 }
             );
             const vd = await vertexRes.json();
+            console.log('[Pipeline] Vertex response:', JSON.stringify(vd).slice(0, 300));
             const vText = vd.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
             if (vText) translation = vText;
         } catch (e: any) {

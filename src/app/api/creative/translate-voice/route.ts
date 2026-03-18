@@ -82,6 +82,7 @@ async function runPipeline(
                         similarity_boost: voiceSettings.similarity_boost ?? 0.8,
                         style: voiceSettings.style ?? 0.3,
                         use_speaker_boost: true,
+                        speed: voiceSettings.speed ?? 1.0,
                     },
                 }),
             });
@@ -165,7 +166,7 @@ async function runPipeline(
 
         // Mezclar video mudo + nuevo audio
         await execAsync(
-            `ffmpeg -y -i "${silentVideoPath}" -i "${newAudioPath}" -c:v copy -c:a aac -shortest "${mergedVideoPath}"`
+            `ffmpeg -y -i "${silentVideoPath}" -i "${newAudioPath}" -c:v copy -c:a aac -af "apad" -shortest "${mergedVideoPath}"`
         );
 
         let finalVideoPath = mergedVideoPath;

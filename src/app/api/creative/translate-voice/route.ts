@@ -82,8 +82,8 @@ async function runPipeline(
                         similarity_boost: voiceSettings.similarity_boost ?? 0.8,
                         style: voiceSettings.style ?? 0.3,
                         use_speaker_boost: true,
-                        speed: voiceSettings.speed ?? 1.0,
                     },
+                    speed: voiceSettings.speed ?? 1.0,
                 }),
             });
             if (!ttsRes2.ok) throw new Error(`ElevenLabs TTS: ${ttsRes2.status}`);
@@ -169,7 +169,7 @@ async function runPipeline(
             const botY = Math.floor(vh * 0.78);
             const botH = vh - botY;
             await execAsync(
-                `ffmpeg -y -i "${videoPath}" -vf "boxblur=20:1:cr=0:cb=0:x=0:y=0:w=${vw}:h=${topH},boxblur=20:1:cr=0:cb=0:x=0:y=${botY}:w=${vw}:h=${botH}" "${noTextPath}" 2>/dev/null`
+                `ffmpeg -y -i "${videoPath}" -vf "delogo=x=0:y=0:w=${vw}:h=${topH}:show=0,delogo=x=0:y=${botY}:w=${vw}:h=${botH}:show=0" "${noTextPath}" 2>/dev/null`
             );
         } catch {
             await execAsync(`cp "${videoPath}" "${noTextPath}"`);
@@ -216,9 +216,21 @@ async function runPipeline(
             }
             const srtPath = join(tmpDir, 'subs.srt');
             await writeFile(srtPath, srtContent);
-            await execAsync(
-                `ffmpeg -y -i "${mergedVideoPath}" -vf "subtitles=${srtPath}:force_style='FontSize=14,PrimaryColour=&Hffffff,OutlineColour=&H000000,Outline=2,Bold=1,Alignment=2'" "${subtitledPath}" 2>/dev/null`
-            );
+            // Usar drawtext en lugar de subtitles (no requiere libass)
+            // Calcular duración del video
+            const { stdout: durOut } = await execAsync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${mergedVideoPath}"`);
+            const duration = parseFloat(durOut.trim());
+            const words2 = translation.split(' ');
+            const chunkSize2 = 7;
+            let drawtextFilters = [];
+            for (let i = 0; i < words2.length; i += chunkSize2) {
+                const chunk = words2.slice(i, i + chunkSize2).join(' ').replace(/'/g, "\'").replace(/:/g, "\:");
+                const startT = (i / 2.5).toFixed(2);
+                const endT = Math.min(((i + chunkSize2) / 2.5), duration).toFixed(2);
+                drawtextFilters.push(`drawtext=text='${chunk}':fontsize=18:fontcolor=white:borderw=2:bordercolor=black:x=(w-text_w)/2:y=h-60:enable='between(t,${startT},${endT})'`);
+            }
+            const filterStr = drawtextFilters.join(',');
+            await execAsync(`ffmpeg -y -i "${mergedVideoPath}" -vf "${filterStr}" "${subtitledPath}" 2>/dev/null`);
             finalVideoPath = subtitledPath;
         } catch (e: any) {
             console.warn('[Pipeline] Subtítulos fallaron:', e.message);

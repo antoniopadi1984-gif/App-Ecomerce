@@ -186,36 +186,36 @@ async function runPipeline(
             );
             const dur2 = parseFloat(dOut.trim());
 
-            const words3 = translation.replace(/['"\\]/g, ' ').split(' ').filter(Boolean);
+            // Generar SRT y usar filtro de video por pasos separados
+            // PASO 1: Solo blur (sin texto — es lo más seguro)
+            const blurFilter = 'drawbox=x=0:y=0:w=' + vw2 + ':h=' + topH2 + ':color=black@0.85:t=fill,drawbox=x=0:y=' + botY2 + ':w=' + vw2 + ':h=' + botH2 + ':color=black@0.85:t=fill';
+            const blurOnlyPath = join(tmpDir, 'blur_only.mp4');
+            await execAsync('ffmpeg -y -i "' + mergedVideoPath + '" -vf "' + blurFilter + '" -c:a copy "' + blurOnlyPath + '"');
+
+            // PASO 2: Generar SRT
+            const words3 = translation.split(/\s+/).filter(Boolean);
             const chunk3 = 6;
-            const filters: string[] = [
-                'drawbox=x=0:y=0:w=' + vw2 + ':h=' + topH2 + ':color=black@0.85:t=fill',
-                'drawbox=x=0:y=' + botY2 + ':w=' + vw2 + ':h=' + botH2 + ':color=black@0.85:t=fill'
-            ];
-
+            let srtOut = '';
+            let srtIdx = 1;
             for (let ii = 0; ii < words3.length; ii += chunk3) {
-                // Limpiar texto para FFmpeg: solo ASCII básico, sin comillas ni caracteres especiales
-                const rawTxt = words3.slice(ii, ii + chunk3).join(' ');
-                const txt = rawTxt
-                    .replace(/['"\\:]/g, ' ')
-                    .replace(/[áàäâ]/g, 'a').replace(/[éèëê]/g, 'e')
-                    .replace(/[íìïî]/g, 'i').replace(/[óòöô]/g, 'o')
-                    .replace(/[úùüû]/g, 'u').replace(/[ñ]/g, 'n')
-                    .replace(/[ÁÀÄÂ]/g, 'A').replace(/[ÉÈËÊ]/g, 'E')
-                    .replace(/[ÍÌÏÎ]/g, 'I').replace(/[ÓÒÖÔ]/g, 'O')
-                    .replace(/[ÚÙÜÛ]/g, 'U').replace(/[Ñ]/g, 'N')
-                    .replace(/[^a-zA-Z0-9 .,!?]/g, ' ')
-                    .trim();
-                const t1 = (ii / 2.5).toFixed(2);
-                const t2 = Math.min((ii + chunk3) / 2.5, dur2).toFixed(2);
-                filters.push(
-                    'drawtext=text=' + txt +
-                    ':fontsize=18:fontcolor=white:borderw=2:bordercolor=black' +
-                    ':x=(w-text_w)/2:y=h-50:enable=between(t\\,' + t1 + '\\,' + t2 + ')'
-                );
+                const chunk = words3.slice(ii, ii + chunk3).join(' ');
+                const s1 = ii / 2.5;
+                const s2 = Math.min((ii + chunk3) / 2.5, dur2);
+                const ts = (s: number) => {
+                    const h = String(Math.floor(s/3600)).padStart(2,'0');
+                    const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+                    const sc = String(Math.floor(s%60)).padStart(2,'0');
+                    const ms = String(Math.floor((s*1000)%1000)).padStart(3,'0');
+                    return h+':'+m+':'+sc+','+ms;
+                };
+                srtOut += srtIdx + '\n' + ts(s1) + ' --> ' + ts(s2) + '\n' + chunk + '\n\n';
+                srtIdx++;
             }
+            const srtPath3 = join(tmpDir, 'subs3.srt');
+            await writeFile(srtPath3, srtOut, 'utf8');
 
-            await execAsync('ffmpeg -y -i "' + mergedVideoPath + '" -vf "' + filters.join(',') + '" "' + subtitledPath2 + '"');
+            // PASO 3: Quemar SRT en video con subtitles filter
+            await execAsync('ffmpeg -y -i "' + blurOnlyPath + '" -vf "subtitles=' + srtPath3 + ':force_style=FontSize=16,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Outline=2,Bold=1,Alignment=2" "' + subtitledPath2 + '"');
             finalVideoPath = subtitledPath2;
             console.log('[Pipeline] ✅ Blur + subtítulos aplicados');
         } catch (e2: any) {

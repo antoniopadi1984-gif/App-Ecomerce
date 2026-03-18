@@ -124,7 +124,8 @@ async function runPipeline(
                 `Traduce al español mexicano este script publicitario de video. Devuelve SOLO la traducción, sin explicaciones:\n\n${transcription}`
             );
             console.log("[Pipeline] AgentDispatcher result:", JSON.stringify(result).slice(0, 500));
-            if (result.content) translation = result.content;
+            if (result.text) translation = result.text;
+            else if (result.content) translation = result.content;
             console.log('[Pipeline] ✅ Traducción via AgentDispatcher');
         } catch (e: any) {
             console.warn('[Pipeline] AgentDispatcher translation failed:', e.message);

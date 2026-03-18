@@ -125,7 +125,7 @@ async function runPipeline(
             const token = await auth.getAccessToken();
             const project = process.env.GOOGLE_CLOUD_PROJECT_ID;
             const location = process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1';
-            const model = process.env.GEMINI_MODEL_FAST || 'gemini-2.0-flash-001';
+            const model = 'gemini-2.0-flash-001';
             const vertexRes = await fetch(
                 `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`,
                 {

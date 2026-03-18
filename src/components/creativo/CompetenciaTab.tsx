@@ -115,7 +115,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
     const [advertiserUrl, setAdvertiserUrl] = useState('');
     const [isImporting, setIsImporting] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [extensionInstalled, setExtensionInstalled] = useState(true);
+    const [extensionInstalled, setExtensionInstalled] = useState(true); // Siempre true — banner innecesario
     const [showVOModal, setShowVOModal] = useState(false);
     const [isProcessingVO, setIsProcessingVO] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -516,7 +516,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
             {/* COLUMN RIGHT */}
             <main className="flex-1 overflow-hidden flex flex-col bg-white rounded-xl border border-[var(--border)] shadow-sm">
                 {/* Extension Banner */}
-                {!extensionInstalled && (
+                {false && (
                     <div className="bg-[var(--cre-bg)] border-b border-[var(--cre)]/20 px-6 py-2 flex items-center justify-between animate-in slide-in-from-top duration-300">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[var(--cre)] shadow-sm">

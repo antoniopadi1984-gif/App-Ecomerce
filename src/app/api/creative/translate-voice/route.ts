@@ -113,40 +113,22 @@ async function runPipeline(
         } catch { transcription = ''; }
         console.log(`[Pipeline] ✅ Transcripción: ${transcription.slice(0, 80)}`);
 
-        // PASO 4: Traducción con Vertex AI via Service Account
+        // PASO 4: Traducción via AgentDispatcher
         jobs[jobId].step = 'translating';
         let translation = transcription;
         try {
-            const { GoogleAuth } = await import('google-auth-library');
-            const credStr = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-            const auth = credStr
-                ? new GoogleAuth({ credentials: JSON.parse(credStr), scopes: ['https://www.googleapis.com/auth/cloud-platform'] })
-                : new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
-            const token = await auth.getAccessToken();
-            const project = process.env.GOOGLE_CLOUD_PROJECT_ID;
-            const location = process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1';
-            const model = 'gemini-2.0-flash-001';
-            const vertexRes = await fetch(
-                `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({
-                        contents: [{ role: 'user', parts: [{ text: `Traduce al español este script publicitario. Devuelve SOLO la traducción:
-
-${transcription}` }] }],
-                        generationConfig: { temperature: 0.1, maxOutputTokens: 3000 }
-                    })
-                }
-            );
-            const vd = await vertexRes.json();
-            console.log('[Pipeline] Vertex response:', JSON.stringify(vd).slice(0, 300));
-            const vText = vd.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-            if (vText) translation = vText;
+            const { AgentDispatcher } = await import('@/lib/agents/agent-dispatcher');
+            const dispatcher = new AgentDispatcher();
+            const result = await dispatcher.dispatch({
+                role: 'copywriter',
+                prompt: `Traduce al español mexicano este script publicitario de video. Devuelve SOLO la traducción, sin explicaciones:\n\n${transcription}`,
+                taskDescription: 'Traducción de script publicitario'
+            });
+            if (result.content) translation = result.content;
+            console.log('[Pipeline] ✅ Traducción via AgentDispatcher');
         } catch (e: any) {
-            console.warn('[Pipeline] Vertex translation failed:', e.message);
+            console.warn('[Pipeline] AgentDispatcher translation failed:', e.message);
         }
-        console.log(`[Pipeline] 📝 Traducción: ${translation.slice(0, 100)}`);
         console.log(`[Pipeline] ✅ Traducción completada`);
 
         // PASO 5: Generar audio con ElevenLabs

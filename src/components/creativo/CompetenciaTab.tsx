@@ -244,9 +244,11 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
             const data = await res.json();
             if (data.success) {
                 // Sanitizar referencias a Spencer
-                const dataStr = JSON.stringify(data.data);
-                const cleanStr = dataStr.replace(/Spencer Pawlin/g, 'Ecomboom Agent').replace(/Spencer/g, 'IA');
-                setBatchData(JSON.parse(cleanStr));
+                if (data.data) {
+                    const dataStr = JSON.stringify(data.data);
+                    const cleanStr = dataStr.replace(/Spencer Pawlin/g, 'Ecomboom Agent').replace(/Spencer/g, 'IA');
+                    setBatchData(JSON.parse(cleanStr));
+                }
             }
             else setBatchData(null);
         } catch (e) {

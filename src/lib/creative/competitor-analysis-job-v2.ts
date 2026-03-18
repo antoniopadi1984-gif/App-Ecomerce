@@ -92,6 +92,7 @@ export async function analyzeCompetitorVideo(params: {
             where: { nomenclature },
             create: {
                 productId, nomenclature, driveUrl,
+                filename: nomenclature,
                 concept: analysis.concept, phase: analysis.phase,
                 framework: analysis.framework, hookScore: analysis.hookScore,
                 consciousnessLevel: analysis.consciousnessLevel,
@@ -118,7 +119,7 @@ ${adCopy ? `COPY META: ${adCopy}` : ''}
 
 JSON:
 {
-  "concept": "C1|C2|C3|C4|C5|C6|C7|C8|C9",
+  "concept": "C1", (SOLO el concepto MÁS predominante, un único valor)
   "phase": "FRIO|TEMPLADO|CALIENTE|RETARGETING",
   "framework": "UGC|VSL|BROLL|TESTIMONIAL|EDUCATIVO|DEMOSTRACION",
   "hookScore": 0-100,

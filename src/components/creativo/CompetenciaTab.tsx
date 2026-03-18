@@ -381,7 +381,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
             }
         }
         if (totalQueued > 0) toast.success(`${totalQueued} vídeos en análisis — Whisper + Gemini procesando`);
-        else { toast.error('Error al subir vídeos');
+        else { toast.error('Error al subir vídeos'); }
         } finally {
             setUploading(false);
         }

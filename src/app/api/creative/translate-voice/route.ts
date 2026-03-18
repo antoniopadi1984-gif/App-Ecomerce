@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const voiceId = formData.get('voiceId') as string;
     const voiceSettings = JSON.parse(formData.get('voiceSettings') as string || '{}');
     const targetLang = formData.get('targetLang') as string || 'es-mx';
-    const addLipsync = formData.get('addLipsync') === 'true';
+    const addLipsync = false; // Desactivado por defecto — muy lento
     const addSubtitles = formData.get('addSubtitles') === 'true';
     const productId = formData.get('productId') as string;
     const storeId = formData.get('storeId') as string;
@@ -194,7 +194,7 @@ async function runPipeline(
 
                         const predId = pred.id;
                         const start = Date.now();
-                        while (Date.now() - start < 120000) {
+                        while (Date.now() - start < 60000) {
                             await new Promise(r => setTimeout(r, 4000));
                             const poll = await fetch(`https://api.replicate.com/v1/predictions/${predId}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }

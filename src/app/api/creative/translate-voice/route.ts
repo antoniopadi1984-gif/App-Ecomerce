@@ -194,11 +194,22 @@ async function runPipeline(
             ];
 
             for (let ii = 0; ii < words3.length; ii += chunk3) {
-                const txt = words3.slice(ii, ii + chunk3).join(' ');
+                // Limpiar texto para FFmpeg: solo ASCII básico, sin comillas ni caracteres especiales
+                const rawTxt = words3.slice(ii, ii + chunk3).join(' ');
+                const txt = rawTxt
+                    .replace(/['"\\:]/g, ' ')
+                    .replace(/[áàäâ]/g, 'a').replace(/[éèëê]/g, 'e')
+                    .replace(/[íìïî]/g, 'i').replace(/[óòöô]/g, 'o')
+                    .replace(/[úùüû]/g, 'u').replace(/[ñ]/g, 'n')
+                    .replace(/[ÁÀÄÂ]/g, 'A').replace(/[ÉÈËÊ]/g, 'E')
+                    .replace(/[ÍÌÏÎ]/g, 'I').replace(/[ÓÒÖÔ]/g, 'O')
+                    .replace(/[ÚÙÜÛ]/g, 'U').replace(/[Ñ]/g, 'N')
+                    .replace(/[^a-zA-Z0-9 .,!?]/g, ' ')
+                    .trim();
                 const t1 = (ii / 2.5).toFixed(2);
                 const t2 = Math.min((ii + chunk3) / 2.5, dur2).toFixed(2);
                 filters.push(
-                    'drawtext=text=' + JSON.stringify(txt) +
+                    'drawtext=text=' + txt +
                     ':fontsize=18:fontcolor=white:borderw=2:bordercolor=black' +
                     ':x=(w-text_w)/2:y=h-50:enable=between(t\\,' + t1 + '\\,' + t2 + ')'
                 );

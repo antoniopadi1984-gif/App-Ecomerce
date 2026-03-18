@@ -214,108 +214,48 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
         let storeFolderId = store?.driveRootFolderId;
         if (!storeFolderId) storeFolderId = await setupStoreDrive(storeId);
 
-        // Nomenclature build for SKU
-        const prodSku = product?.sku || product?.title?.toUpperCase().replace(/\s+/g, '_').slice(0, 10) || productId;
+        // SKU como nombre de carpeta raíz del producto
+        const prodSku = product?.sku || product?.title?.toUpperCase()
+            .replace(/[^A-Z0-9]/g, '_').replace(/_+/g, '_').slice(0, 15) || productId;
+
         const prodFolderId = await findOrCreateFolder(drive, prodSku, storeFolderId);
 
-        // ── ESTRUCTURA IA PRO — INMUTABLE ──────────────────────────────
-        const centroId = await findOrCreateFolder(drive, 'CENTRO_CREATIVO', prodFolderId);
+        // ── ESTRUCTURA DEFINITIVA ──────────────────────────────────────
 
-        // 00_INBOX
-        await findOrCreateFolder(drive, '00_INBOX_SIN_PROCESAR', centroId);
+        // INVESTIGACION
+        await findOrCreateFolder(drive, 'INVESTIGACION', prodFolderId);
 
-        // 01_ESTUDIO
-        const estudioId = await findOrCreateFolder(drive, '01_ESTUDIO_PRODUCCION', centroId);
-        await findOrCreateFolder(drive, '01_IA_VILLAGES', estudioId);
-        await findOrCreateFolder(drive, '02_AUDIO', estudioId);
-        await findOrCreateFolder(drive, '03_RAW', estudioId);
-        await findOrCreateFolder(drive, '04_PROYECTOS', estudioId);
+        // CREATIVOS — carpetas de concepto creadas dinámicamente por el agente
+        await findOrCreateFolder(drive, 'CREATIVOS', prodFolderId);
 
-        // 02_BIBLIOTECA
-        const biblioId = await findOrCreateFolder(drive, '02_BIBLIOTECA_LISTOS_PARA_ADS', centroId);
-        const retargetId = await findOrCreateFolder(drive, '01_RETARGETING', biblioId);
-        await findOrCreateFolder(drive, 'R10_COPY_DIRECTO', retargetId);
-        await findOrCreateFolder(drive, 'R20_COPY_PROBLEMA', retargetId);
-        await findOrCreateFolder(drive, 'R30_COPY_STORY', retargetId);
-        await findOrCreateFolder(drive, '02_CONCEPTOS', biblioId);
-        await findOrCreateFolder(drive, '03_ESTATICOS', biblioId);
+        // ESTATICOS — misma estructura que CREATIVOS
+        await findOrCreateFolder(drive, 'ESTATICOS', prodFolderId);
 
-        // 03_ESTATICOS (ads)
-        const staticId = await findOrCreateFolder(drive, '03_ESTATICOS', centroId);
-        for (let i = 1; i <= 6; i++) {
-            await findOrCreateFolder(drive, `ANGULO_${i}`, staticId);
-        }
+        // COMPETENCIA
+        const compId = await findOrCreateFolder(drive, 'COMPETENCIA', prodFolderId);
+        await findOrCreateFolder(drive, 'INBOX', compId);
 
-        // 04_CARROUSEL
-        const carrouselId = await findOrCreateFolder(drive, '04_CARROUSEL', centroId);
-        for (let s = 1; s <= 7; s++) {
-            await findOrCreateFolder(drive, `SLIDE_${s}`, carrouselId);
-        }
-
-        // ── ESTRUCTURA SPENCER C1-C9 ──────────────────────────────────
-
-        for (const concept of CREATIVE_CONCEPTS) {
-            const conceptFolderId = await findOrCreateFolder(drive, concept.driveFolder, centroId);
-            
-            for (const traffic of TRAFFIC_TEMPS) {
-                // Solo crear las combinaciones válidas para este concepto
-                if (!(concept.traffic as unknown as string[]).includes(traffic.id)) continue;
-                
-                const trafficFolderId = await findOrCreateFolder(drive, traffic.folder, conceptFolderId);
-                
-                for (const awareness of AWARENESS_LEVELS) {
-                    if (!(concept.awareness as unknown as number[]).includes(awareness.level)) continue;
-                    if (!(traffic.awareness as unknown as number[]).includes(awareness.level)) continue;
-                    await findOrCreateFolder(drive, awareness.folder, trafficFolderId);
-                }
-            }
-        }
-        // ── FIN ESTRUCTURA SPENCER ────────────────────────────────────
-
-        // 05_LANDINGS
-        const landingsId = await findOrCreateFolder(drive, '05_LANDINGS', centroId);
+        // LANDINGS
+        const landingsId = await findOrCreateFolder(drive, 'LANDINGS', prodFolderId);
         await findOrCreateFolder(drive, 'SPY', landingsId);
         await findOrCreateFolder(drive, 'CLONES', landingsId);
-        await findOrCreateFolder(drive, 'ADVERTORIAL', landingsId);
-        await findOrCreateFolder(drive, 'LISTICLE', landingsId);
+        await findOrCreateFolder(drive, 'ADAPTADAS', landingsId);
 
-        // 06_ASSETS
-        const assetsId = await findOrCreateFolder(drive, '06_ASSETS', centroId);
+        // ASSETS
+        const assetsId = await findOrCreateFolder(drive, 'ASSETS', prodFolderId);
+        await findOrCreateFolder(drive, 'PRODUCTO', assetsId);
         await findOrCreateFolder(drive, 'PACKAGING', assetsId);
-        await findOrCreateFolder(drive, 'TRUST_BADGES', assetsId);
-        await findOrCreateFolder(drive, 'IMAGENES_LANDING', assetsId);
-        // ── FIN ESTRUCTURA IA PRO ──────────────────────────────────────
+        await findOrCreateFolder(drive, 'AVATARES', assetsId);
 
-        // Create empty index.json
-        const emptyIndex: ProductIndex = {
-            productId, storeId,
-            updatedAt: new Date().toISOString(),
-            concepts: [],
-            research: { exists: false, files: [] },
-            landings: { exists: false, count: 0 },
-            assets: { images: 0, videos: 0 },
-        };
-        await drive.files.create({
-            requestBody: {
-                name: 'index.json',
-                mimeType: 'application/json',
-                parents: [prodFolderId],
-            },
-            media: {
-                mimeType: 'application/json',
-                body: JSON.stringify(emptyIndex, null, 2),
-            },
-            fields: 'id',
-            supportsAllDrives: true
-        });
+        // ── FIN ESTRUCTURA ─────────────────────────────────────────────
 
-        // Guardar centroId como driveFolderId del producto
+        // Guardar en BD
         await (prisma as any).product.update({
             where: { id: productId },
             data: {
-                driveFolderId: centroId,
+                driveFolderId: prodFolderId,
+                driveRootPath: JSON.stringify({ root: prodFolderId, sku: prodSku }),
                 driveSetupDone: true,
-                driveIndexPath: `${prodSku}/index.json`,
             }
         });
 
@@ -326,7 +266,7 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
     }
 }
 
-// ── Index management ──────────────────────────────────────────────────────────
+
 export async function syncProductIndex(productId: string, storeId: string) {
     try {
         const drive = await getDriveClient();
@@ -865,4 +805,45 @@ export async function uploadTextToDrive(
         { ...opts, fileType: opts.fileType || 'TEXT' }
     );
     return { driveFileId: result.driveFileId, driveUrl: result.driveUrl };
+}
+
+// ── CONCEPTOS CREATIVOS ────────────────────────────────────────────────────
+export const CONCEPTS = {
+    C1: 'PROBLEMA',
+    C2: 'ANTES_DESPUES',
+    C3: 'MECANISMO',
+    C4: 'PRUEBA_SOCIAL',
+    C5: 'OFERTA',
+    C6: 'OBJECION',
+    C7: 'RESULTADO',
+    C8: 'EDUCACION',
+    C9: 'AUTORIDAD',
+} as const;
+
+export type ConceptKey = keyof typeof CONCEPTS;
+export type Phase = 'FRIO' | 'TEMPLADO' | 'CALIENTE' | 'RETARGETING';
+
+/**
+ * Crea o encuentra la carpeta de un concepto + fase dentro de CREATIVOS o COMPETENCIA.
+ * Ejemplo: CREATIVOS/C2_ANTES_DESPUES/FRIO
+ */
+export async function getOrCreateConceptFolder(
+    productRootId: string,
+    section: 'CREATIVOS' | 'ESTATICOS' | 'COMPETENCIA',
+    concept: ConceptKey,
+    phase: Phase
+): Promise<string> {
+    const drive = await getDriveClient();
+
+    // Encontrar carpeta raíz de la sección
+    const sectionId = await findOrCreateFolder(drive, section, productRootId);
+
+    // Carpeta del concepto: C2_ANTES_DESPUES
+    const conceptFolder = `${concept}_${CONCEPTS[concept]}`;
+    const conceptId = await findOrCreateFolder(drive, conceptFolder, sectionId);
+
+    // Carpeta de la fase: FRIO
+    const phaseId = await findOrCreateFolder(drive, phase, conceptId);
+
+    return phaseId;
 }

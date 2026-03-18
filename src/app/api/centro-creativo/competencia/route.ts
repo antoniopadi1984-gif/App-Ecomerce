@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { processCompetitorVideo } from '@/lib/creative/competitor-analysis-job';
+import { analyzeCompetitorVideo } from '@/lib/creative/competitor-analysis-job-v2';
 
 /**
  * COMPETENCIA API
@@ -59,7 +59,12 @@ export async function POST(request: Request) {
 
         // 2. Trigger background analysis (Non-blocking)
         // Note: In Next.js App Router (Node.js runtime), this continues after response
-        processCompetitorVideo(videoRecord.id, url, productId, storeId).catch(err => {
+        analyzeCompetitorVideo({
+            videoPath: url,
+            productId,
+            storeId,
+            isOwn: false,
+        }).catch((err: any) => {
             console.error(`[API] Error starting background analysis for ${videoRecord.id}:`, err);
         });
 

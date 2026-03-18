@@ -355,7 +355,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
         }
 
         try {
-            const res = await fetch('/api/spy/bulk-ingest', {
+            const res = await fetch('/api/upload/video', {
                 method: 'POST',
                 headers: { 'X-Store-Id': storeId },
                 body: formData

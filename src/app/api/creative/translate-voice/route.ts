@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
     const storeId = formData.get('storeId') as string;
     const preloadedScript = formData.get('scriptEs') as string || ''; // Script ya traducido
 
+    console.log('[API] preloadedScript length:', preloadedScript?.length || 0);
     if (!videoFile || !voiceId) return NextResponse.json({ error: 'video y voiceId requeridos' }, { status: 400 });
 
     const jobId = randomBytes(8).toString('hex');
@@ -133,6 +134,8 @@ async function runPipeline(
 TRANSCRIPCIÓN del video de competencia:
 "${transcription}"
 
+IMPORTANTE: Debes responder en el formato exacto indicado abajo.
+
 Haz DOS cosas:
 
 1. ANÁLISIS DE MARKETING (JSON):
@@ -148,11 +151,11 @@ Haz DOS cosas:
   "mejoras_sugeridas": "3 mejoras concretas para adaptar a nuestro producto"
 }
 
-2. TRADUCCIÓN a ${langMap[targetLang] || 'español neutro'}:
-- Mantén el tono, la energía y el ritmo del original
-- Adapta expresiones culturalmente (no traducción literal)
-- Conserva el framework y estructura del anuncio original
-- Devuelve SOLO el texto traducido, sin explicaciones
+2. TRADUCCIÓN COMPLETA a ${langMap[targetLang] || 'español neutro'}:
+- Traduce TODO el texto al español, sin dejar nada en inglés
+- Mantén el tono, energía y ritmo del original
+- Adapta expresiones culturalmente
+- OBLIGATORIO: devuelve el texto completo traducido al español
 
 FORMATO DE RESPUESTA:
 <ANALISIS>

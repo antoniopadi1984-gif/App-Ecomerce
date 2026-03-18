@@ -280,19 +280,32 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
     const handleAdvertiserSpy = async () => {
         if (!advertiserUrl.trim()) return;
         setIsImporting(true);
-        const toastId = toast.loading("Registrando espiado de biblioteca...");
+        const toastId = toast.loading("Extrayendo anuncios de Meta...");
         try {
-            const res = await fetch('/api/extension/library-spy', {
+            // 1. Registrar en BD
+            await fetch('/api/extension/library-spy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ advertiserUrl, productId, storeId })
             });
-            if (!res.ok) throw new Error();
-            toast.success("Espiado solicitado. Ver progreso en pestaña Bibliotecas.", { id: toastId });
+
+            // 2. Extraer anuncios con scraper
+            const res = await fetch('/api/meta/library-scraper', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: advertiserUrl, productId, storeId })
+            });
+            const data = await res.json();
+
+            if (data.success && data.ads?.length > 0) {
+                toast.success(`✅ ${data.totalAds} anuncios encontrados para "${data.query}"`, { id: toastId });
+            } else {
+                toast.success("Biblioteca registrada — extracción en progreso", { id: toastId });
+            }
             setAdvertiserUrl('');
             fetchLibraries();
         } catch (e) {
-            toast.error("Error al registrar espiado. ¿Tienes la extensión?", { id: toastId });
+            toast.error("Error al espiar biblioteca", { id: toastId });
         } finally {
             setIsImporting(false);
         }

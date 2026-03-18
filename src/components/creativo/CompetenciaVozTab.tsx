@@ -121,7 +121,7 @@ export function CompetenciaVozTab({ storeId, productId }: CompetenciaVozTabProps
                 if (data.step) setStep(data.step as Step);
 
                 if (data.status === 'done') {
-                    setResult(data.result);
+                    setResult(data.videoUrl || data.result);
                     setStep('done');
                     toast.success('¡Video procesado con tu voz!');
                     return;

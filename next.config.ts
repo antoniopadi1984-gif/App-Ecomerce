@@ -52,4 +52,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Aumentar límite body para rutas API
+const nextConfigWithSize = {
+    ...nextConfig,
+};
+
+// @ts-ignore
+nextConfigWithSize.experimental = {
+    ...nextConfig.experimental,
+    serverActions: { bodySizeLimit: '500mb' },
+};
+
+export default nextConfigWithSize;

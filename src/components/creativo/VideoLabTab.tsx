@@ -142,7 +142,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const handleBulkSubtitles = async () => {
         if (selectedIds.size === 0) return;
         toast.promise(Promise.all(Array.from(selectedIds).map(id => 
-            fetch(`/api/video-lab/subtitles`, {
+            fetch(`/api/creative/add-captions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ assetId: id, storeId })
@@ -173,7 +173,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
 
     const handleSubtitles = async (assetId: string) => {
         toast.promise(
-            fetch(`/api/video-lab/subtitles`, {
+            fetch(`/api/creative/add-captions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ assetId, storeId })

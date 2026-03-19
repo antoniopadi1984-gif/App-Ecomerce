@@ -25,14 +25,14 @@ export async function POST(req: NextRequest) {
         const isImage = file.type.startsWith('image/');
         if (!isVideo && !isImage) continue;
 
+        // 1. Crear registro inmediato en BD
         const asset = await (prisma as any).creativeAsset.create({
             data: {
                 productId,
                 storeId,
                 type: isVideo ? 'VIDEO' : 'IMAGE',
                 name: file.name,
-                processingStatus: 'PENDING',
-                tagsJson: JSON.stringify({
+                metadata: JSON.stringify({
                     originalName: file.name,
                     fileSize: file.size,
                     isCompetitor
@@ -40,52 +40,65 @@ export async function POST(req: NextRequest) {
             }
         });
 
+        // 2. Lanzar pipeline en background — NO awaitar
         const buffer = Buffer.from(await file.arrayBuffer());
         const fileName = file.name;
         const assetId = asset.id;
 
+        // Fire and forget
         ;(async () => {
             try {
                 await (prisma as any).creativeAsset.update({
                     where: { id: assetId },
-                    data: { processingStatus: 'PROCESSING' }
+                    data: { verdict: 'PENDING' }
                 });
 
                 if (isVideo) {
+                    // Llamar al pipeline de vídeo existente
                     const fd = new FormData();
                     const blob = new Blob([buffer], { type: file.type });
-                    fd.append('video', blob, fileName);
+                    fd.append('file', blob, fileName);
                     fd.append('productId', productId);
                     fd.append('assetId', assetId);
 
-                    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-                    await fetch(`${appUrl}/api/video-lab/process`, {
-                        method: 'POST',
-                        headers: { 'X-Store-Id': storeId },
-                        body: fd
-                    });
+                    await fetch(
+                        `${process.env.NEXT_PUBLIC_APP_URL}/api/video-lab/process`,
+                        {
+                            method: 'POST',
+                            headers: { 'X-Store-Id': storeId },
+                            body: fd
+                        }
+                    );
                 } else {
+                    // Imagen — limpiar metadata y subir a Drive
                     const { BulkUploadPipeline } = await import('@/lib/creative/bulk-upload-pipeline');
                     await BulkUploadPipeline.processImage({
                         buffer, fileName, productId, storeId, isCompetitor
                     });
+
                     await (prisma as any).creativeAsset.update({
                         where: { id: assetId },
-                        data: { processingStatus: 'DONE' }
+                        data: { verdict: 'PENDING' }
                     });
                 }
             } catch (err: any) {
                 console.error(`[BulkUpload] Error procesando ${fileName}:`, err.message);
                 await (prisma as any).creativeAsset.update({
                     where: { id: assetId },
-                    data: { processingStatus: 'ERROR' }
+                    data: { verdict: 'ERROR' }
                 }).catch(() => {});
             }
         })();
 
-        queued.push({ assetId, fileName: file.name, type: isVideo ? 'VIDEO' : 'IMAGE', status: 'PENDING' });
+        queued.push({
+            assetId,
+            fileName: file.name,
+            type: isVideo ? 'VIDEO' : 'IMAGE',
+            status: 'PENDING'
+        });
     }
 
+    // Responder inmediatamente sin esperar el procesamiento
     return NextResponse.json({
         ok: true,
         queued: queued.length,

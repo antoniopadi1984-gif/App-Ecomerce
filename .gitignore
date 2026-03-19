@@ -64,9 +64,9 @@ render/
 exports/
 export/
 videos/
-video/
+# video/ — removed to allow src/lib/video/
 audios/
-audio/
+# audio/ — removed to allow src/lib/audio/
 images/
 image/
 *.mp4

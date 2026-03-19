@@ -36,6 +36,22 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        // Auto-trigger contenido digital si el agente es de creación de contenido
+        if (storeId && ['voice-director', 'script-writer', 'packaging-designer'].includes(role)) {
+            try {
+                await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/content/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Store-Id': storeId },
+                    body: JSON.stringify({
+                        productId: context?.productId,
+                        type: role === 'voice-director' ? 'audio_course' : 'ebook',
+                        topic: prompt.slice(0, 100),
+                        storeId,
+                    })
+                }).catch(() => {}); // fire and forget
+            } catch {}
+        }
+
         return NextResponse.json({ success: true, result });
     } catch (e: any) {
         console.error("🛑 [Agent API Error]", e);

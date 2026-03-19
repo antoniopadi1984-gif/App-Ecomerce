@@ -144,6 +144,9 @@ model Store {
   extensionCaptures    ExtensionCapture[]
   landingClones        LandingClone[]
   metaInsights         MetaInsightsCache[]
+  employees            Employee[]
+  scheduledAutos       ScheduledAutomation[]
+  whatsappRules        WhatsAppRule[]
 }
 
 model AutomationRule {
@@ -321,7 +324,7 @@ model Connection {
 }
 
 model Customer {
-  id           String    @id @default(cuid())
+  id           String       @id @default(cuid())
   storeId      String
   name         String
   email        String?
@@ -332,15 +335,15 @@ model Customer {
   province     String?
   zip          String?
   country      String?
-  totalOrders  Int       @default(0)
-  totalSpent   Float     @default(0)
-  avgTicket    Float     @default(0)
+  totalOrders  Int          @default(0)
+  totalSpent   Float        @default(0)
+  avgTicket    Float        @default(0)
   tags         String?
   notes        String?
   lastOrderAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  store        Store     @relation(fields: [storeId], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  store        Store        @relation(fields: [storeId], references: [id])
   orders       Order[]
   ltv          CustomerLTV?
 
@@ -2763,6 +2766,16 @@ model CompetitorVideo {
   googleDriveTomasId String?
   voiceoverRemoved   Boolean            @default(false)
   libraryId          String?
+  // Nuevos campos v2
+  nomenclature       String?            @unique
+  driveUrl           String?
+  concept            String?
+  phase              String?
+  hookScore          Int?
+  consciousnessLevel Int?
+  scriptEs           String?
+  primaryAngle       String?
+  isOwn              Boolean            @default(false)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   library            CompetitorLibrary? @relation(fields: [libraryId], references: [id])
@@ -2857,7 +2870,7 @@ model MediaJob {
 model AgentConfig {
   id           String   @id @default(cuid())
   storeId      String   @map("store_id")
-  agentId      String   @map("agent_id")   // ← String libre, no enum
+  agentId      String   @map("agent_id") // ← String libre, no enum
   systemPrompt String   @map("system_prompt")
   label        String?
   description  String?
@@ -2989,7 +3002,6 @@ model CopyVariant {
   @@index([storeId])
 }
 
-
 // ══════════════════════════════════════════════
 // INTELLIGENCE MODELS
 // ══════════════════════════════════════════════
@@ -3046,4 +3058,72 @@ model BudgetAllocation {
   createdAt       DateTime @default(now())
 
   @@index([storeId])
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  storeId   String
+  name      String
+  role      String   @default("AGENT")
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store    @relation(fields: [storeId], references: [id])
+
+  @@index([storeId])
+}
+
+model ScheduledAutomation {
+  id          String    @id @default(cuid())
+  storeId     String
+  orderId     String
+  ruleId      String
+  trigger     String
+  scheduledAt DateTime
+  processedAt DateTime?
+  status      String    @default("PENDING")
+  createdAt   DateTime  @default(now())
+  store       Store     @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, orderId, ruleId])
+  @@index([status, scheduledAt])
+}
+
+model WhatsAppRule {
+  id           String   @id @default(cuid())
+  storeId      String
+  accountId    String?
+  name         String
+  trigger      String
+  delayHours   Int      @default(0)
+  messageBody  String
+  imageUrl     String?
+  imageMode    String   @default("none")
+  isActive     Boolean  @default(true)
+  channel      String   @default("WHATSAPP")
+  includeLink  String?
+  discountCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  store        Store    @relation(fields: [storeId], references: [id])
+
+  @@index([storeId, trigger])
+}
+
+model HeygenAvatar {
+  id              String   @id @default(cuid())
+  avatarId        String   @unique
+  name            String
+  gender          String   @default("unknown")
+  previewUrl      String   @default("")
+  previewVideoUrl String   @default("")
+  tags            String   @default("[]")
+  notes           String   @default("")
+  isActive        Boolean  @default(true)
+  isFavorite      Boolean  @default(false)
+  usedForProducts String   @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

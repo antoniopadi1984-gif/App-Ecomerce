@@ -1,168 +1,242 @@
 /**
- * Advanced Meta Ad Library Scraper for EcomBoom
- * Specialized in deep extraction of ad cards, including multiple versions and full page scanning.
+ * EcomBoom Intelligence — Meta Ads Library Scraper v2
+ * Panel flotante premium con extracción completa de copy, métricas y assets
  */
 
-console.log("[EcomBoom] Advanced Meta Scraper Loaded");
+console.log("[EcomBoom] Intelligence v2 Loaded");
 
-// 1. Message listener
+const EB_COLOR = '#FF6B2B';
+const EB_DARK = '#1a1a2e';
+
+// ── PANEL FLOTANTE POR TARJETA ────────────────────────────────────────────
+function extractAdData(card) {
+    const video = card.querySelector('video');
+    const images = Array.from(card.querySelectorAll('img')).filter(i =>
+        i.src && !i.src.includes('profile') && !i.src.includes('avatar') && i.width > 100
+    );
+
+    // Copy del anuncio
+    const allText = card.innerText || '';
+    const lines = allText.split('\n').map(l => l.trim()).filter(l => l.length > 10);
+
+    // Métricas Meta
+    const impressionBadge = card.querySelector('[class*="impression"]') ||
+        Array.from(card.querySelectorAll('span')).find(s => s.textContent.includes('impresion') || s.textContent.includes('impression'));
+
+    const activeDate = Array.from(card.querySelectorAll('span,div')).find(el =>
+        el.textContent.match(/en circulaci[oó]n|running since|started|activo/i)
+    );
+
+    const adCount = Array.from(card.querySelectorAll('span,div')).find(el =>
+        el.textContent.match(/\d+\s*anuncios?|ads? use/i)
+    );
+
+    const platforms = Array.from(card.querySelectorAll('[aria-label*="Facebook"],[aria-label*="Instagram"],[aria-label*="Messenger"]'))
+        .map(el => el.getAttribute('aria-label')).filter(Boolean);
+
+    const advertiserEl = card.closest('[data-testid]')?.querySelector('a[href*="/ads"]') ||
+        card.querySelector('strong, h3, [class*="advertiser"]');
+
+    return {
+        type: video ? 'VIDEO' : 'IMAGE',
+        videoUrl: video?.src && !video.src.startsWith('blob') ? video.src : null,
+        imageUrls: images.map(i => i.src).slice(0, 5),
+        copy: lines.slice(0, 10).join('\n'),
+        headline: lines[0] || '',
+        adCopy: lines.slice(1, 4).join(' '),
+        cta: lines[lines.length - 1] || '',
+        impressionLevel: impressionBadge?.textContent?.trim() || '',
+        activeDate: activeDate?.textContent?.trim() || '',
+        adCount: adCount?.textContent?.trim() || '',
+        platforms: platforms.length ? platforms : ['Facebook', 'Instagram'],
+        advertiser: advertiserEl?.textContent?.trim() || document.title,
+        pageUrl: window.location.href,
+        timestamp: new Date().toISOString(),
+    };
+}
+
+function createPanel(card, adData) {
+    const existing = card.querySelector('.eb-panel');
+    if (existing) return;
+
+    const panel = document.createElement('div');
+    panel.className = 'eb-panel';
+    panel.style.cssText = `
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 3px solid ${EB_COLOR};
+        padding: 10px 12px;
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+        border-radius: 0 0 12px 12px;
+    `;
+
+    const mediaAsset = adData.videoUrl || adData.imageUrls[0] || '';
+    const hasMedia = !!mediaAsset;
+
+    panel.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div style="width:28px;height:28px;background:${EB_COLOR};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🚀</div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:10px;font-weight:900;color:${EB_DARK};text-transform:uppercase;letter-spacing:0.05em;">EcomBoom Intelligence</div>
+                <div style="font-size:9px;color:#888;truncate;">${adData.advertiser.slice(0,30)}</div>
+            </div>
+            ${adData.adCount ? `<div style="font-size:9px;font-weight:800;color:${EB_COLOR};background:#fff3ed;padding:2px 6px;border-radius:6px;">🔥 ${adData.adCount}</div>` : ''}
+        </div>
+        
+        ${adData.copy ? `
+        <div style="font-size:9px;color:#444;background:#f8f8f8;padding:6px 8px;border-radius:6px;margin-bottom:8px;max-height:40px;overflow:hidden;line-height:1.4;">
+            "${adData.copy.slice(0,120)}..."
+        </div>` : ''}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button class="eb-save-btn" style="
+                background:linear-gradient(135deg,${EB_COLOR},#ff8c42);
+                color:white;border:none;border-radius:8px;
+                padding:7px 10px;font-size:10px;font-weight:800;
+                cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;
+                box-shadow:0 2px 8px rgba(255,107,43,0.4);
+            ">
+                💾 Guardar en EcomBoom
+            </button>
+            <button class="eb-download-btn" style="
+                background:${EB_DARK};
+                color:white;border:none;border-radius:8px;
+                padding:7px 10px;font-size:10px;font-weight:800;
+                cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;
+                ${!hasMedia ? 'opacity:0.5;cursor:not-allowed;' : ''}
+            ">
+                ⬇ Descargar HD
+            </button>
+        </div>
+
+        ${adData.impressionLevel ? `
+        <div style="margin-top:6px;font-size:8px;color:#888;display:flex;align-items:center;gap:4px;">
+            <span style="width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block;"></span>
+            Activo · ${adData.impressionLevel}
+            ${adData.activeDate ? ` · ${adData.activeDate}` : ''}
+        </div>` : ''}
+    `;
+
+    // Botón guardar
+    panel.querySelector('.eb-save-btn').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        btn.innerHTML = '⏳ Enviando...';
+        btn.style.opacity = '0.8';
+
+        chrome.storage.local.get(['last_product_id', 'last_store_id'], (res) => {
+            if (!res.last_product_id) {
+                alert('⚠️ Abre EcomBoom y selecciona el producto primero');
+                btn.innerHTML = '💾 Guardar en EcomBoom';
+                btn.style.opacity = '1';
+                return;
+            }
+
+            chrome.runtime.sendMessage({
+                action: 'save_competitor_creative',
+                payload: {
+                    url: mediaAsset,
+                    type: adData.type,
+                    productId: res.last_product_id,
+                    storeId: res.last_store_id || 'store-main',
+                    meta: {
+                        platform: 'META',
+                        adCopy: adData.copy,
+                        headline: adData.headline,
+                        cta: adData.cta,
+                        advertiser: adData.advertiser,
+                        impressionLevel: adData.impressionLevel,
+                        activeDate: adData.activeDate,
+                        adCount: adData.adCount,
+                        platforms: adData.platforms,
+                        pageUrl: adData.pageUrl,
+                        timestamp: adData.timestamp,
+                    }
+                }
+            }, (response) => {
+                if (response?.success) {
+                    btn.innerHTML = '✅ ¡Guardado!';
+                    btn.style.background = '#16a34a';
+                } else {
+                    btn.innerHTML = '❌ Error';
+                    btn.style.background = '#dc2626';
+                    setTimeout(() => {
+                        btn.innerHTML = '💾 Guardar en EcomBoom';
+                        btn.style.background = `linear-gradient(135deg,${EB_COLOR},#ff8c42)`;
+                        btn.style.opacity = '1';
+                    }, 2000);
+                }
+            });
+        });
+    });
+
+    // Botón download
+    panel.querySelector('.eb-download-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!hasMedia) return;
+        chrome.runtime.sendMessage({
+            action: 'download_asset',
+            url: mediaAsset,
+            filename: `ecomboom_${Date.now()}.${adData.type === 'VIDEO' ? 'mp4' : 'jpg'}`
+        });
+    });
+
+    card.style.position = 'relative';
+    card.appendChild(panel);
+}
+
+// ── SCAN COMPLETO DE LA BIBLIOTECA ───────────────────────────────────────
+function scanFullLibrary(productId, sendResponse) {
+    const cards = document.querySelectorAll('div[role="region"]');
+    const results = [];
+
+    cards.forEach(card => {
+        const data = extractAdData(card);
+        if (data.videoUrl || data.imageUrls.length > 0) {
+            results.push(data);
+        }
+    });
+
+    chrome.runtime.sendMessage({
+        action: 'bulk_save_competitor',
+        payload: { ads: results, productId }
+    }, sendResponse);
+}
+
+// ── INYECCIÓN EN TARJETAS ────────────────────────────────────────────────
+function injectPanels() {
+    const cards = document.querySelectorAll('div[role="region"]');
+    cards.forEach(card => {
+        if (card.querySelector('.eb-panel')) return;
+        const data = extractAdData(card);
+        if (data.videoUrl || data.imageUrls.length > 0 || data.copy) {
+            createPanel(card, data);
+        }
+    });
+}
+
+// Observer para nuevas tarjetas al hacer scroll
+const observer = new MutationObserver(() => injectPanels());
+observer.observe(document.body, { childList: true, subtree: true });
+setTimeout(injectPanels, 2000);
+setInterval(injectPanels, 5000);
+
+// Message listener
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "extract_creative") {
-        captureActiveAd(request.productId, sendResponse);
+    if (request.action === 'extract_creative') {
+        const cards = document.querySelectorAll('div[role="region"]');
+        if (cards.length === 0) { sendResponse({ success: false, error: 'No cards found' }); return true; }
+        const data = extractAdData(cards[0]);
+        sendResponse({ success: true, data });
         return true;
     }
-
-    if (request.action === "scan_advertiser_library") {
+    if (request.action === 'scan_advertiser_library') {
         scanFullLibrary(request.productId, sendResponse);
         return true;
     }
 });
-
-// 2. Inject Buttons DIRECTLY onto the Ad Cards
-function injectButtonsOnCards() {
-    // Busca las tarjetas de anuncios
-    const adCards = document.querySelectorAll('div[role="region"]');
-    
-    adCards.forEach(card => {
-        // Verifica si ya inyectamos el botón para no duplicarlo
-        if (card.querySelector('.ecomboom-card-btn')) return;
-
-        // Buscaremos si hay video o imagen en la misma card
-        const video = card.querySelector('video');
-        const img = card.querySelector('img[src*="ad_creative"]');
-
-        if (!video && !img) return; // Si no hay media, no inyectamos aún
-
-        const type = video ? 'VIDEO' : 'IMAGE';
-        
-        // Creamos el botón
-        const btnContainer = document.createElement('div');
-        btnContainer.className = 'ecomboom-card-btn';
-        btnContainer.style.cssText = `
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 100;
-        `;
-
-        btnContainer.innerHTML = `
-            <button style="
-                background: linear-gradient(135deg, #10b981, #059669);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 6px 12px;
-                font-family: 'Inter', sans-serif;
-                font-size: 11px;
-                font-weight: 800;
-                cursor: pointer;
-                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-                display: flex;
-                align-items: center;
-                gap: 5px;
-            ">
-                🚀 Guardar en EcomBoom
-            </button>
-        `;
-
-        // Prevenimos que clicks en la tarjeta arruinen el botón
-        btnContainer.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            
-            // Obtenemos el product id por defecto
-            chrome.storage.local.get(['last_product_id'], (res) => {
-                const productId = res.last_product_id;
-                if (!productId) {
-                    alert("⚠️ ¡Atención! Abre la extensión de EcomBoom arriba a la derecha y selecciona el producto donde guardar esto.");
-                    return;
-                }
-
-                // URL base
-                let url = '';
-                if (video && video.src && !video.src.startsWith('blob')) {
-                    url = video.src;
-                } else if (img && img.src) {
-                    url = img.src;
-                } else {
-                    alert("Aún cargando video...");
-                    return;
-                }
-
-                btnContainer.querySelector('button').innerHTML = "⏳ Guardando...";
-                
-                // Enviar a Background script para descarga/guardado
-                chrome.runtime.sendMessage({
-                    action: "save_competitor_creative",
-                    payload: {
-                        url,
-                        type,
-                        productId,
-                        meta: {
-                            platform: "META",
-                            adCopy: card.innerText.slice(0, 500),
-                            timestamp: new Date().toISOString()
-                        }
-                    }
-                }, (response) => {
-                    setTimeout(() => {
-                        btnContainer.querySelector('button').innerHTML = "✅ ¡Enviado a Drive+IA!";
-                        btnContainer.querySelector('button').style.background = "#0f172a";
-                    }, 500);
-                });
-            });
-        });
-
-        // Buscamos el div contenedor del media para ponerlo arriba
-        const mediaContainer = video ? video.parentElement : img.parentElement;
-        if (mediaContainer) {
-            mediaContainer.style.position = 'relative';
-            mediaContainer.appendChild(btnContainer);
-        }
-    });
-}
-
-// Observador para cuando se hace scroll e inyectar en nuevas tarjetas
-const observer = new MutationObserver(() => {
-    injectButtonsOnCards();
-});
-
-observer.observe(document.body, { childList: true, subtree: true });
-
-// Llamada inicial
-setTimeout(injectButtonsOnCards, 2000);
-
-// --- Funciones antiguas para el Popup interactivo ---
-function captureActiveAd(productId, sendResponse) {
-    const cards = Array.from(document.querySelectorAll('div[role="region"]'));
-    if (cards.length === 0) {
-        sendResponse({ success: false, error: "No ad cards found" });
-        return;
-    }
-    for (const card of cards) {
-        const video = card.querySelector('video');
-        const img = card.querySelector('img[src*="ad_creative"]');
-        if (video && video.src && !video.src.startsWith('blob')) {
-            reportAsset(video.src, 'VIDEO', card, productId, sendResponse);
-            return;
-        } else if (img && img.src) {
-            reportAsset(img.src, 'IMAGE', card, productId, sendResponse);
-            return;
-        }
-    }
-    sendResponse({ success: false, error: "No clear creative source found in active cards" });
-}
-
-function reportAsset(url, type, card, productId, sendResponse) {
-    chrome.runtime.sendMessage({
-        action: "save_competitor_creative",
-        payload: {
-            url,
-            type,
-            productId,
-            meta: { platform: "META", adCopy: card.innerText.slice(0, 500) }
-        }
-    }, (response) => {
-        sendResponse(response);
-    });
-}

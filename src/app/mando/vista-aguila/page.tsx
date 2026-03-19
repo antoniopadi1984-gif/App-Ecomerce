@@ -1,5 +1,6 @@
 'use client';
 
+import { AgentPanel } from "@/components/AgentPanel";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import {
@@ -185,6 +186,20 @@ export default function VistaAguila() {
         if (!storeId) return;
         fetchPulse();
         const interval = setInterval(fetchPulse, 5 * 60 * 1000);
+        // Neural Mother analiza métricas cada hora en background
+        const analyzeInterval = setInterval(() => {
+            if (!storeId) return;
+            fetch('/api/agents/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    role: 'neural-mother',
+                    prompt: 'Analiza las métricas del día y detecta anomalías o oportunidades críticas.',
+                    storeId,
+                })
+            }).catch(() => {});
+        }, 60 * 60 * 1000); // cada hora
+        return () => { clearInterval(interval); clearInterval(analyzeInterval); };
         return () => clearInterval(interval);
     }, [storeId, fetchPulse]);
 
@@ -420,6 +435,15 @@ export default function VistaAguila() {
                 onSelect={addCard}
                 alreadySelected={layoutIds.map(id => cardConfig[id]?.metricId).filter(Boolean)}
             />
+        <AgentPanel
+        specialistRole="neural-mother"
+        specialistLabel="Neural Mother"
+        accentColor="#6366F1"
+        storeId={storeId || "store-main"}
+        productId={undefined}
+        moduleContext={{}}
+        specialistActions={[{"label": "Estado hoy", "prompt": "Dame el diagnóstico del día en 3 puntos"}, {"label": "Alertas críticas", "prompt": "¿Hay alguna métrica en rojo que requiera acción inmediata?"}]}
+    />
         </div>
     );
 }

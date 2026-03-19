@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { BeepingClient } from '@/lib/beeping';
+import { executeWhatsAppRule } from '@/lib/automation/whatsapp-rule-executor';
+import { schedulePostDeliveryAutomations } from '@/lib/automation/executor';
 
 export async function POST(req: NextRequest) {
     try {
@@ -66,6 +68,46 @@ export async function POST(req: NextRequest) {
                 updatedAt: new Date()
             }
         });
+
+        // ── Disparar automatizaciones WhatsApp según estado ──────────
+        const waCtx = {
+            storeId: order.storeId,
+            orderId: order.id,
+            customerPhone: (order as any).customerPhone || '',
+            customerName: (order as any).customerName || 'Cliente',
+            orderNumber: (order as any).orderNumber || '',
+            productTitle: (order as any).productTitle || '',
+            trackingCode: tracking || body.tracking_code || (order as any).trackingCode || '',
+        };
+
+        const triggerMap: Record<string, string> = {
+            'DELIVERED':   'DELIVERED',
+            'IN_TRANSIT':  'TRACKING_ADDED',
+            'RETURNED':    'RETURNED',
+        };
+        const waTrigger = triggerMap[internalStatus];
+
+        // Estado: En Reparto
+        if (logisticsStatus.includes('Reparto')) {
+            executeWhatsAppRule({ ...waCtx, trigger: 'OUT_FOR_DELIVERY' }).catch(() => {});
+        }
+        // Estado: Intento fallido (Punto de recogida sin recoger)
+        if (logisticsStatus.includes('recogida')) {
+            executeWhatsAppRule({ ...waCtx, trigger: 'DELIVERY_ATTEMPTED' }).catch(() => {});
+        }
+        // Estado: Entregado → programar D+3, D+7, D+14
+        if (internalStatus === 'DELIVERED') {
+            executeWhatsAppRule({ ...waCtx, trigger: 'DELIVERED' }).catch(() => {});
+            schedulePostDeliveryAutomations(order.storeId, order.id).catch(() => {});
+        }
+        // Estado: Devuelto
+        if (internalStatus === 'RETURNED') {
+            executeWhatsAppRule({ ...waCtx, trigger: 'RETURNED' }).catch(() => {});
+        }
+        // Tracking añadido
+        if (tracking && internalStatus === 'IN_TRANSIT') {
+            executeWhatsAppRule({ ...waCtx, trigger: 'TRACKING_ADDED' }).catch(() => {});
+        }
 
         // Evento
         await (prisma as any).orderEvent.create({

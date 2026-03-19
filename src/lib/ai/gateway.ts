@@ -106,7 +106,7 @@ class AIGateway {
         }
 
         // Default: text
-        return { modality: "TEXT", modelHint: DEFAULT_MODELS.TEXT, safety: "safe" };
+        return { modality: "TEXT", modelHint: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT, safety: "safe" };
     }
 
     /**
@@ -114,7 +114,7 @@ class AIGateway {
      * Usa Claude via Replicate por defecto.
      */
     async runText(options: RunTextOptions): Promise<GatewayResponse> {
-        const fullModelName = options.modelHint || DEFAULT_MODELS.TEXT;
+        const fullModelName = options.modelHint || REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT;
         const isVertexModel = 
             fullModelName.startsWith("vertex:") || 
             fullModelName.startsWith("google/") || 

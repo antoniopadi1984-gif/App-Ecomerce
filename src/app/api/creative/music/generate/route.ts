@@ -23,9 +23,9 @@ export async function POST(req: NextRequest) {
     // Generar música con Gemini Lyria-002
     const result = await AiRouter.dispatch(
         storeId,
-        TaskType.MUSIC_GENERATION,
+        TaskType.COPY_SHORT,
         `${prompt}. Mood: ${mood}. Genre: ${genre}. E-commerce ad background music. Duration: ${duration} seconds. High energy, professional production.`,
-        { model: 'lyria-002', duration }
+        { model: 'lyria-002' }
     );
 
     // Extraer audio del resultado

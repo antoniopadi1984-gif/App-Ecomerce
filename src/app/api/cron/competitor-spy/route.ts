@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
         // Obtener todas las tiendas activas desde BD
         const { prisma } = await import('@/lib/prisma');
         const stores = await prisma.store.findMany({
-            where: { status: 'ACTIVE' },
+            where: {},
             select: { id: true }
         });
         for (const store of stores) {

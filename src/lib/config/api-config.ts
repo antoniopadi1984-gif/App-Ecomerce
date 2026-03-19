@@ -15,14 +15,14 @@ export const API_CONFIG = {
         models: {
             // Gemini - Text Generation
             gemini: {
-                production: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-3.1-pro-preview',
-                fast: process.env.GEMINI_MODEL_FAST || 'gemini-3.1-flash-lite-preview',
+                production: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-2.5-pro',
+                fast: process.env.GEMINI_MODEL_FAST || 'gemini-2.5-flash',
                 endpoint: 'v1'
             },
 
             // Image Generation
             imagen: {
-                model: process.env.IMAGEN_MODEL || 'gemini-3.1-flash-image',
+                model: process.env.IMAGEN_MODEL || 'gemini-2.5-flash',
                 endpoint: 'v1'
             }
         },

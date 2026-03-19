@@ -1,4 +1,6 @@
 'use client';
+import { AgentPanel } from "@/components/AgentPanel";
+import React from "react";
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { useProduct } from '@/context/ProductContext';
@@ -13,14 +15,15 @@ interface ResearchResult {
 }
 
 // ── helpers ─────────────────────────────────────────────────────────
-const STEP_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  P1: { label: 'Problema & Avatar',   emoji: '🎯', color: '#6366f1' },
-  P2: { label: 'Ángulos de Mensaje',  emoji: '💡', color: '#f59e0b' },
-  P3: { label: 'Mecanismo Único',     emoji: '⚙️', color: '#10b981' },
-  P4: { label: 'Offer Stack',         emoji: '🎁', color: '#3b82f6' },
-  P5: { label: 'Combo Matrix',        emoji: '🧠', color: '#8b5cf6' },
-  P6: { label: 'Vector Mapping',      emoji: '🗺️', color: '#14b8a6' },
-  P7: { label: 'Landing Analyzer',    emoji: '💻', color: '#ec4899' },
+const STEP_LABELS: Record<string, { label: string; emoji: string; color: string; description: string }> = {
+  P1:  { label: 'Mass Desire Discovery', emoji: '🎯', color: '#6366f1', description: 'Deseos masivos + drivers emocionales + VOC — Gemini Deep Research' },
+  P2:  { label: 'Macro Avatares',        emoji: '💡', color: '#f59e0b', description: '8 avatares con profundidad forense — Gemini Deep Research' },
+  P21: { label: 'Language Bank',         emoji: '🗣️', color: '#10b981', description: 'Lenguaje literal de cada avatar (13 secciones) — Gemini Deep Research' },
+  P3:  { label: 'Ángulos + Ad Copy',     emoji: '✍️', color: '#ef4444', description: 'Blocking beliefs + ángulos + story lead (800-1200 palabras) — Claude' },
+  P4:  { label: 'Combo Matrix',          emoji: '🧠', color: '#8b5cf6', description: 'Avatar × Ángulo con hooks específicos' },
+  P5:  { label: 'Vector Mapping',        emoji: '🗺️', color: '#14b8a6', description: 'Dolor → Mecanismo → Prueba → Resultado → CTA' },
+  P6:  { label: 'Creative Briefs',       emoji: '🎬', color: '#f97316', description: 'Scripts y briefs para cada combo' },
+  P7:  { label: 'Landing Analyzer',      emoji: '💻', color: '#ec4899', description: 'Estructura óptima de landing page' },
 };
 
 const LS: React.CSSProperties = {
@@ -88,7 +91,7 @@ export default function ResearchLabPage() {
     }
     setRunning(true);
     const runId = `run_${Date.now()}`;
-    const stepsToRun = step ? [step] : ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7'];
+    const stepsToRun = step ? [step] : ['P1', 'P2', 'P21', 'P3', 'P4', 'P5', 'P6', 'P7'];
 
     try {
       for (const s of stepsToRun) {
@@ -100,7 +103,7 @@ export default function ResearchLabPage() {
         });
         const d = await res.json();
         toast.dismiss(`step-${s}`);
-        if (!d.ok) {
+        if (!d.success) {
           toast.error(`Error en ${s}: ${d.error || 'desconocido'}`);
           break;
         }
@@ -185,6 +188,7 @@ export default function ResearchLabPage() {
 
   // ── MAIN ──────────────────────────────────────────────────────────
   return (
+    <>
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '20px 24px' }}>
 
       {/* HEADER */}
@@ -313,6 +317,16 @@ export default function ResearchLabPage() {
         </div>
       )}
     </div>
+    <AgentPanel
+        specialistRole="research-core"
+        specialistLabel="Research Core"
+        accentColor="#10B981"
+        storeId={activeStoreId || "store-main"}
+        productId={productId || undefined}
+        moduleContext={{}}
+        specialistActions={[{"label": "Lanzar P1", "prompt": "Inicia la investigación P1 del producto activo"}, {"label": "Resumir VOC", "prompt": "Resume las principales voces del cliente encontradas"}, {"label": "Ángulos fuertes", "prompt": "¿Cuáles son los 3 ángulos creativos más prometedores?"}]}
+    />
+    </>
   );
 }
 

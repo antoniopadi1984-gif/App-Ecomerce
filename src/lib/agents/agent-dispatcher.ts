@@ -205,7 +205,7 @@ export class AgentDispatcher {
                 console.log(`[Gemini] Vertex AI (v1beta1) → ${modelName} @ ${location}`);
 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 60000); // 1 minuto timeout
+                const timeoutId = setTimeout(() => controller.abort(), 280000); // 4.5 mins — gemini-2.5-pro necesita tiempo
 
                 try {
                     const response = await fetch(endpoint, {
@@ -230,7 +230,7 @@ export class AgentDispatcher {
                     }
                 } catch (e: any) {
                     clearTimeout(timeoutId);
-                    if (e.name === 'AbortError') throw new Error("Gemini Vertex AI timeout (60s)");
+                    if (e.name === 'AbortError') throw new Error("Gemini Vertex AI timeout (280s) — respuesta demasiado larga");
                     throw e;
                 }
 
@@ -249,7 +249,7 @@ export class AgentDispatcher {
             console.log(`[Gemini] AI Studio (v1beta) → ${modelName}`);
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000); 
+            const timeoutId = setTimeout(() => controller.abort(), 280000); 
 
             try {
                 const response = await fetch(endpoint, {
@@ -263,7 +263,7 @@ export class AgentDispatcher {
                 return this.processGeminiResponse(response, role, config);
             } catch (e: any) {
                 clearTimeout(timeoutId);
-                if (e.name === 'AbortError') throw new Error("Gemini AI Studio timeout (60s)");
+                if (e.name === 'AbortError') throw new Error("Gemini AI Studio timeout (280s)");
                 throw e;
             }
         }

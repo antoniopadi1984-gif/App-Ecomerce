@@ -224,7 +224,7 @@ export async function generateVideo(params: {
 
 export async function generateImage(params: {
     prompt: string;
-    mode: 'generate' | 'edit' | 'svg' | 'ideogram' | 'imagen3' | 'gemini-image';
+    mode: 'generate' | 'edit' | 'svg' | 'ideogram' | 'imagen3' | 'gemini-image' | 'nano-banana-pro';
     model?: string;               // override manual del modelo
     referenceImageUrl?: string;   // para mode='edit' con flux-kontext
     aspectRatio?: '1:1' | '4:5' | '9:16' | '16:9';
@@ -246,8 +246,9 @@ export async function generateImage(params: {
         const gen = new ImageGenerator();
         return gen.generate({
             prompt: params.prompt,
+            style: (params as any).style || 'photo',
             aspectRatio: (params.aspectRatio as any),
-            negativePrompt: params.negativePrompt,
+            // negativePrompt: params.negativePrompt,
         });
     }
 

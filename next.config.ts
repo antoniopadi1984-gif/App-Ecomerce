@@ -3,17 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: '50mb',
+      bodySizeLimit: '500mb',
     },
     optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tooltip', 'framer-motion', 'recharts'],
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    remotePatterns: [{ protocol: 'https', hostname: '**' }],
   },
   serverExternalPackages: ['@prisma/client', 'prisma'],
   async redirects() {
@@ -41,7 +36,7 @@ const nextConfig: NextConfig = {
       { source: '/eagle-eye', destination: '/mando', permanent: true },
       { source: '/analytics/:path*', destination: '/crm-forense', permanent: true },
       { source: '/analiticas', destination: '/crm-forense', permanent: true },
-    ]
+    ];
   },
   async headers() {
     return [
@@ -57,4 +52,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Aumentar límite body para rutas API
+const nextConfigWithSize = {
+    ...nextConfig,
+};
+
+// @ts-ignore
+nextConfigWithSize.experimental = {
+    ...nextConfig.experimental,
+    serverActions: { bodySizeLimit: '500mb' },
+};
+
+export default nextConfigWithSize;

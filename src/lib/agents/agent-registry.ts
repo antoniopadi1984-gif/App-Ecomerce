@@ -101,9 +101,9 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
     'research-core': {
         role: 'research-core',
         provider: 'gemini-pro',
-        model: API_CONFIG.vertexAI.models.gemini.production,
+        model: 'gemini-2.5-pro',
         temperature: 0.3,
-        maxTokens: 8192,
+        maxTokens: 65536,
         systemPrompt: `Eres el RESEARCH CORE. Ejecutas la investigación P1 a P7 secuencialmente.
 Tu trabajo es extraer la verdad del mercado: Mass Desires, Pain Points, VOC (Voice of Customer), Competencia y Psicografía.
 Sin tu investigación, el resto de agentes están ciegos. Proporcionas la base de datos de insights.`,
@@ -336,10 +336,10 @@ Sin tu investigación, el resto de agentes están ciegos. Proporcionas la base d
         role: 'video-director',
         provider: 'replicate-claude',
         model: REPLICATE_MODELS.TEXT.CLAUDE_SONNET,
-        temperature: 0.4,
-        maxTokens: 4096,
-        systemPrompt: `Director de video (Redireccionado a VIDEO INTELLIGENCE).`,
-        description: 'Legacy - Ver Video Intelligence',
+        temperature: 0.7,
+        maxTokens: 8192,
+        systemPrompt: DEFAULT_AGENT_PROMPTS.VIDEO_DIRECTOR,
+        description: 'Director de Scripts de Video — Meta Ads respuesta directa, Eugene Schwartz framework',
         tier: 1,
         costTier: 'premium'
     },

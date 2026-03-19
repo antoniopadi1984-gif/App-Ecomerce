@@ -94,6 +94,10 @@ export async function GET(req: NextRequest) {
             const w = getWeekOfMonth(new Date(o.createdAt), monthStart);
             if (o.confirmationAttempts > 1) weeks[w].reintentos++;
             if (['CONFIRMED', 'confirmed'].includes(o.status || '')) weeks[w].confirmadas++;
+            // Entregados reales desde órdenes
+            if (['DELIVERED', 'ENTREGADO', 'delivered'].includes(o.status || '')) weeks[w].delivered++;
+            // Devueltos reales
+            if (['RETURNED', 'DEVUELTO', 'returned'].includes(o.status || '')) weeks[w].returned++;
         }
 
         // Nuevos clientes: primer pedido del mes
@@ -120,6 +124,24 @@ export async function GET(req: NextRequest) {
             weeks[w].creativesLaunched++;
             if ((c.revenue || 0) > 0 && (c.spend || 0) > 0 && (c.revenue / c.spend) >= 2) {
                 weeks[w].creativesWinner++;
+            }
+        }
+
+        // ── Sessions desde Meta si dailyFinance no las tiene ──────
+        for (let wi = 0; wi < 4; wi++) {
+            if (weeks[wi].sessions === 0 && adMetrics.length > 0) {
+                // Usar clicks de Meta como proxy de sessions cuando no hay GA
+                const weekStart = new Date(monthStart.getTime() + wi * 7 * 24 * 60 * 60 * 1000);
+                const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+                const weekAdMetrics = adMetrics.filter((m: any) => {
+                    const d = new Date(m.date);
+                    return d >= weekStart && d < weekEnd;
+                });
+                const clicks = weekAdMetrics.reduce((sum: number, m: any) => {
+                    const norm = JSON.parse(m.metricsNorm || '{}');
+                    return sum + (norm.clicks || norm.link_clicks || 0);
+                }, 0);
+                if (clicks > 0) weeks[wi].sessions = clicks;
             }
         }
 
@@ -159,7 +181,8 @@ export async function GET(req: NextRequest) {
             const sesiones = w.sessions || 0;
             const lanzados = w.creativesLaunched || 0;
             const ganadores = w.creativesWinner || 0;
-            const enviados = w.orders || 0;
+            // enviados = orders que tienen tracking o fueron confirmados (no cancelados/pendientes)
+            const enviados = w.confirmadas || w.orders || 0;
 
             const roas = inversion > 0 ? facturacion / inversion : 0;
             const cpa = pedidos > 0 ? inversion / pedidos : 0;
@@ -184,17 +207,18 @@ export async function GET(req: NextRequest) {
                 pedidos,
                 entregados,
                 enviados,
+                cogs: w.cogs || 0,
                 shipping_total: w.shippingCost || 0,
                 lanzados,
                 ganadores,
                 beneficio_neto: w.netProfit || 0,
                 margen: netMargin,
                 tasa_envio,
-                tasa_entrega: confirmRate,
+                tasa_entrega: deliveryRate,
                 tasa_rebote: returnRate,
                 devoluciones,
                 roas, cpa, deliveryRate, confirmRate, returnRate,
-                netMargin, costPerSession, ratio_acierto, coste_envio, recurrentes, roi, tasa_conversion, ticket_medio
+                netMargin, coste_visita: costPerSession, ratio_acierto, coste_envio, recurrentes, roi, tasa_conversion, ticket_medio
             };
         }
 

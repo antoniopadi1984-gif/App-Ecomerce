@@ -1,5 +1,6 @@
 'use client';
 
+import { AgentPanel } from "@/components/AgentPanel";
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/store-context';
 import { RefreshCw, Loader2, ChevronDown, ChevronRight, Zap, Pencil, X, TrendingUp, Check, AlertCircle } from 'lucide-react';
@@ -7,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { getWeeksInMonth, getWeekRanges } from '@/lib/weekUtils';
 import { getStatus, getObjPct, getProjection, getNeededPerWeek, isOnTrack, getVariation, formatValue, METRICS_WITH_TARGET, TARGET_FIELD_MAP } from '@/lib/scorecardUtils';
 
-interface DataCellProps { value: number; unit: string; status: "green" | "yellow" | "red" | "neutral"; variation: number | null; isBest: boolean; }
+interface DataCellProps { value: number; unit: string; status: "green" | "yellow" | "red" | "neutral"; variation: number | null; isBest: boolean; key?: string | number; }
 interface AccumCellProps { value: number; unit: string; status: "green" | "yellow" | "red" | "neutral"; }
 interface ProyCellProps { projection: number; target: number | null; unit: string; }
 interface NeededCellProps { needed: number | null; onTrack: boolean; achieved: boolean; unit: string; }
@@ -381,7 +382,7 @@ export default function ScorecardPage() {
             });
     };
 
-    const RowInfo = ({ label, propId, unit }: { label: string; propId: string; unit: string }) => {
+    const RowInfo = ({ label, propId, unit }: { key?: string; label: string; propId: string; unit: string }) => {
         const hasTarget = SCORECARD_METRICS.find(m => m.id === propId)?.hasTarget || false;
 
         // Setup data arrays
@@ -657,6 +658,15 @@ export default function ScorecardPage() {
                     </div>
                 </>
             )}
+        <AgentPanel
+        specialistRole="neural-mother"
+        specialistLabel="Neural Mother"
+        accentColor="#6366F1"
+        storeId={storeId || "store-main"}
+        productId={undefined}
+        moduleContext={{}}
+        specialistActions={[{"label": "Analizar semana", "prompt": "Analiza las métricas de esta semana y detecta el mayor problema"}, {"label": "¿Qué escalar?", "prompt": "¿Qué métricas están en verde y merece escalar presupuesto?"}, {"label": "Forecast mes", "prompt": "Proyecta el cierre de mes con los datos actuales"}]}
+    />
         </div>
     );
 }

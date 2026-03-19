@@ -1,76 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { uploadToInbox } from '@/lib/services/drive-service';
+import { analyzeCompetitorVideo } from '@/lib/creative/competitor-analysis-job-v2';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300;
+export const dynamic = 'force-dynamic';
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
-    const storeId = req.headers.get('X-Store-Id');
-    const formData = await req.formData();
-    const productId = formData.get('productId') as string;
-    const competitorName = (formData.get('competitorName') as string) || 'COMPETIDOR';
-    const files = formData.getAll('videos') as File[];
+    try {
+        const storeId = req.headers.get('X-Store-Id') || 'store-main';
+        const formData = await req.formData();
 
-    if (!productId || !files.length) {
-        return NextResponse.json({ error: 'productId y al menos un vídeo requeridos' }, { status: 400 });
-    }
+        const productId = formData.get('productId') as string;
+        const competitorName = formData.get('competitorName') as string || '';
+        const adCopy = formData.get('adCopy') as string || '';
+        const isOwn = formData.get('isOwn') === 'true';
+        const file = formData.get('videos') as File;
 
-    const jobs: any[] = [];
+        if (!productId || !file) {
+            return NextResponse.json({ ok: false, error: 'productId y video requeridos' }, { status: 400 });
+        }
 
-    // Procesar cada vídeo en paralelo (fire & forget)
-    for (const file of files) {
-        // 1. Crear registro en BD inmediatamente
-        const asset = await (prisma as any).creativeAsset.create({
-            data: {
-                productId,
-                storeId: storeId || '',
-                type: 'VIDEO',
-                name: file.name,
-                processingStatus: 'INGESTING',
-                conceptCode: `SPY_${competitorName.toUpperCase().replace(/\s+/g, '_')}`,
-                funnelStage: 'UNKNOWN',
-                tagsJson: JSON.stringify({ 
-                    source: 'COMPETITOR', 
-                    competitorName, 
-                    originalName: file.name,
-                    fileSize: file.size 
-                })
-            }
+        // Guardar archivo temporalmente
+        const tmpDir = os.tmpdir();
+        const tmpPath = path.join(tmpDir, `upload_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._]/g, '_')}`);
+        const buffer = Buffer.from(await file.arrayBuffer());
+        fs.writeFileSync(tmpPath, buffer);
+
+        // Analizar en background (no bloqueamos la respuesta)
+        const jobId = `job_${Date.now()}`;
+
+        // Lanzar análisis async
+        analyzeCompetitorVideo({
+            videoPath: tmpPath,
+            productId,
+            storeId,
+            competitorName,
+            adCopy,
+            isOwn,
+        }).then(result => {
+            console.log(`[Job ${jobId}] Completado: ${result.nomenclature}`);
+            try { fs.unlinkSync(tmpPath); } catch {}
+        }).catch(err => {
+            console.error(`[Job ${jobId}] Error:`, err);
+            try { fs.unlinkSync(tmpPath); } catch {}
         });
 
-        // 2. Lanzar pipeline en background
-        (async () => {
-            try {
-                // Llamar al proceso existente de video-lab
-                const pipelineForm = new FormData();
-                pipelineForm.append('video', file);
-                pipelineForm.append('productId', productId);
-                pipelineForm.append('assetId', asset.id);
-                pipelineForm.append('conceptCode', `SPY_${competitorName.toUpperCase().replace(/\s+/g, '_')}`);
-                pipelineForm.append('competitorSource', 'true');
+        return NextResponse.json({
+            ok: true,
+            jobId,
+            fileName: file.name,
+            message: 'Video recibido — analizando con Whisper + Gemini',
+        });
 
-                await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/video-lab/process`, {
-                    method: 'POST',
-                    headers: { 'X-Store-Id': storeId || '' },
-                    body: pipelineForm
-                });
-            } catch (e) {
-                console.error(`[BulkIngest] Error procesando ${file.name}:`, e);
-                await (prisma as any).creativeAsset.update({
-                    where: { id: asset.id },
-                    data: { processingStatus: 'ERROR' }
-                });
-            }
-        })();
-
-        jobs.push({ assetId: asset.id, fileName: file.name, status: 'INGESTING' });
+    } catch (e: any) {
+        console.error('[bulk-ingest] Error:', e);
+        return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
     }
-
-    return NextResponse.json({ 
-        ok: true, 
-        totalQueued: files.length,
-        jobs,
-        message: `${files.length} vídeos en cola de procesamiento` 
-    });
 }

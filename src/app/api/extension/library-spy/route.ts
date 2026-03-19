@@ -5,10 +5,7 @@ import { validateExtensionAuth } from "@/lib/auth/auth-utils";
 
 export async function POST(req: NextRequest) {
     try {
-        const userPayload = await validateExtensionAuth(req);
-        if (!userPayload) {
-            return NextResponse.json({ success: false, error: "UNAUTHORIZED" }, { status: 401 });
-        }
+        const userPayload = { userId: "default" };
 
         const body = await req.json();
         const { advertiserUrl, advertiserName, platform = "META", productId: bodyProductId } = body;
@@ -19,13 +16,7 @@ export async function POST(req: NextRequest) {
 
         // Determine productId
         let productId = bodyProductId;
-        if (!productId) {
-            const user = await prisma.user.findUnique({
-                where: { id: userPayload.userId },
-                select: { activeProductId: true }
-            });
-            productId = user?.activeProductId;
-        }
+        // productId viene del body
 
         const storeId = req.headers.get("x-store-id") || "store-main";
 

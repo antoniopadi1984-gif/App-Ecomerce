@@ -21,7 +21,7 @@ export async function runCompetitorSpy(storeId: string) {
                         headers: { 'Content-Type': 'application/json', 'X-Store-Id': storeId },
                         body: JSON.stringify({
                             targetUrl: link.url,
-                            competitorId: link.competitorName || link.id,
+                            competitorId: link.url || link.id,
                             productId: product.id
                         })
                     }

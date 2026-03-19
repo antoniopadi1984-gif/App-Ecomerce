@@ -77,6 +77,10 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 // ── 2. Message Orchestrator ──
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'PING') {
+        sendResponse({ status: 'ok', version: '2.0' });
+        return true;
+    }
     console.log("[ServiceWorker] Action:", message.action);
 
     switch (message.action) {

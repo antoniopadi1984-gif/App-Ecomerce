@@ -34,7 +34,6 @@ export const navigation = [
             { label: 'Comunicaciones',   emoji: '💬', href: '/operaciones/comunicaciones/whatsapp' },
             { label: 'Automatizaciones', emoji: '🤖', href: '/operaciones/automatizaciones/reglas' },
             { label: 'Agentes IA',       emoji: '🧠', href: '/operaciones/agentes' },
-            { label: 'Valor Percibido',  emoji: '👑', href: '/operaciones/valor-percibido' },
         ]
     },
     {
@@ -67,6 +66,7 @@ export const navigation = [
             { label: 'Avatares y Voces', emoji: '🤖', href: '/centro-creativo/avatares' },
             { label: 'Biblioteca IA', emoji: '📚', href: '/centro-creativo/biblioteca' },
             { label: 'Rendimiento Creativo', emoji: '📈', href: '/centro-creativo/rendimiento' },
+            { label: 'Competencia', emoji: '🕵️', href: '/centro-creativo/competencia' },
         ]
     },
     {
@@ -78,6 +78,8 @@ export const navigation = [
         href: '/marketing/ads',
         children: [
             { label: 'Ads & Rendimiento', emoji: '📊', href: '/marketing/ads' },
+            { label: 'Contenido Digital', emoji: '📚', href: '/marketing/contenido-digital' },
+            { label: 'Valor Percibido', emoji: '👑', href: '/operaciones/valor-percibido' },
             { label: 'Moderación', emoji: '🛡️', href: '/marketing/moderacion' },
             { label: 'Ad Spy (Extensión)', emoji: '👁️', href: '/marketing/ad-spy' },
             { label: 'MVP Wizard', emoji: '🚀', href: '/marketing/mvp-wizard' },

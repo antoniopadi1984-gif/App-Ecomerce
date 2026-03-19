@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const EXTENSION_ID = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; // ID de producción
+const EXTENSION_ID = 'macdkmffemnkhgbejnjfmbpdmfboleoj';
 
 interface Scene {
     thumbnail: string;
@@ -115,7 +115,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
     const [advertiserUrl, setAdvertiserUrl] = useState('');
     const [isImporting, setIsImporting] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [extensionInstalled, setExtensionInstalled] = useState(true);
+    const [extensionInstalled, setExtensionInstalled] = useState(true); // Siempre true — banner innecesario
     const [showVOModal, setShowVOModal] = useState(false);
     const [isProcessingVO, setIsProcessingVO] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -129,6 +129,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
         const checkExtension = () => {
             const chrome = (window as any).chrome;
             if (chrome?.runtime?.sendMessage) {
+                if (!EXTENSION_ID || EXTENSION_ID.length !== 32) { setExtensionInstalled(false); return; }
                 chrome.runtime.sendMessage(EXTENSION_ID, { type: 'PING' }, (response: any) => {
                     if (chrome.runtime.lastError || !response) {
                         setExtensionInstalled(false);
@@ -166,6 +167,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
             // 2. Notificar a la extensión si está instalada
             const chrome = (window as any).chrome;
             if (extensionInstalled && chrome?.runtime?.sendMessage) {
+                if (!EXTENSION_ID || EXTENSION_ID.length !== 32) { setExtensionInstalled(false); return; }
                 chrome.runtime.sendMessage(EXTENSION_ID, {
                     type: 'SET_ACTIVE_PRODUCT',
                     productId,
@@ -242,9 +244,11 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
             const data = await res.json();
             if (data.success) {
                 // Sanitizar referencias a Spencer
-                const dataStr = JSON.stringify(data.data);
-                const cleanStr = dataStr.replace(/Spencer Pawlin/g, 'Ecomboom Agent').replace(/Spencer/g, 'IA');
-                setBatchData(JSON.parse(cleanStr));
+                if (data.data) {
+                    const dataStr = JSON.stringify(data.data);
+                    const cleanStr = dataStr.replace(/Spencer Pawlin/g, 'Ecomboom Agent').replace(/Spencer/g, 'IA');
+                    setBatchData(JSON.parse(cleanStr));
+                }
             }
             else setBatchData(null);
         } catch (e) {
@@ -276,19 +280,32 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
     const handleAdvertiserSpy = async () => {
         if (!advertiserUrl.trim()) return;
         setIsImporting(true);
-        const toastId = toast.loading("Registrando espiado de biblioteca...");
+        const toastId = toast.loading("Extrayendo anuncios de Meta...");
         try {
-            const res = await fetch('/api/extension/library-spy', {
+            // 1. Registrar en BD
+            await fetch('/api/extension/library-spy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ advertiserUrl, productId, storeId })
             });
-            if (!res.ok) throw new Error();
-            toast.success("Espiado solicitado. Ver progreso en pestaña Bibliotecas.", { id: toastId });
+
+            // 2. Extraer anuncios con scraper
+            const res = await fetch('/api/meta/library-scraper', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: advertiserUrl, productId, storeId })
+            });
+            const data = await res.json();
+
+            if (data.success && data.ads?.length > 0) {
+                toast.success(`✅ ${data.totalAds} anuncios encontrados para "${data.query}"`, { id: toastId });
+            } else {
+                toast.success("Biblioteca registrada — extracción en progreso", { id: toastId });
+            }
             setAdvertiserUrl('');
             fetchLibraries();
         } catch (e) {
-            toast.error("Error al registrar espiado. ¿Tienes la extensión?", { id: toastId });
+            toast.error("Error al espiar biblioteca", { id: toastId });
         } finally {
             setIsImporting(false);
         }
@@ -346,26 +363,39 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
         const fileList = Array.from(files);
         setUploadProgress(fileList.map(f => ({ file: f.name, status: 'en cola' })));
         
+        // Subir de 1 en 1 como stream directo — sin límite de 10MB
+        let totalQueued = 0;
         for (const file of fileList) {
-            formData.append('videos', file);
-        }
+            try {
+                setUploadProgress(prev => prev.map(p => p.file === file.name ? { ...p, status: 'subiendo...' } : p));
 
-        try {
-            const res = await fetch('/api/spy/bulk-ingest', {
-                method: 'POST',
-                headers: { 'X-Store-Id': storeId },
-                body: formData
-            });
-            const data = await res.json();
-            if (data.ok) {
-                toast.success(`${data.totalQueued} vídeos en procesamiento — la IA está analizando`);
-                setUploadProgress(data.jobs.map((j: any) => ({ file: j.fileName, status: 'procesando...' })));
+                const params = new URLSearchParams({
+                    productId,
+                    storeId,
+                    competitorName: competitorName || 'COMPETIDOR',
+                    fileName: file.name,
+                    isOwn: 'false',
+                });
+
+                const res = await fetch(`/api/upload/video?${params}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/octet-stream' },
+                    body: file,
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    totalQueued++;
+                    setUploadProgress(prev => prev.map(p => p.file === file.name ? { ...p, status: 'analizando...' } : p));
+                } else {
+                    setUploadProgress(prev => prev.map(p => p.file === file.name ? { ...p, status: 'error' } : p));
+                }
+            } catch (e) {
+                setUploadProgress(prev => prev.map(p => p.file === file.name ? { ...p, status: 'error' } : p));
             }
-        } catch (e) {
-            toast.error('Error al subir vídeos');
-        } finally {
-            setUploading(false);
         }
+        if (totalQueued > 0) toast.success(`${totalQueued} vídeos en análisis — Whisper + Gemini procesando`);
+        else toast.error('Error al subir vídeos');
+        setUploading(false);
     };
 
     return (
@@ -512,7 +542,7 @@ export function CompetenciaTab({ storeId, productId, productSku }: {
             {/* COLUMN RIGHT */}
             <main className="flex-1 overflow-hidden flex flex-col bg-white rounded-xl border border-[var(--border)] shadow-sm">
                 {/* Extension Banner */}
-                {!extensionInstalled && (
+                {false && (
                     <div className="bg-[var(--cre-bg)] border-b border-[var(--cre)]/20 px-6 py-2 flex items-center justify-between animate-in slide-in-from-top duration-300">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[var(--cre)] shadow-sm">

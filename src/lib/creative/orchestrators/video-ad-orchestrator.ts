@@ -1,14 +1,23 @@
 import { ImageGenerator } from '../generators/image-generator';
 import { VoiceGenerator } from '../generators/voice-generator';
 import { VideoAnimator } from '../generators/video-animator';
-import { uploadBufferToGCS } from '../../services/gcs-upload-service';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 export interface VideoAdConfig {
     avatarPrompt: string;
     script: string;
     voiceId?: string;
-    concept: string; // Para tracking
+    concept: string;
     cropFactor?: number;
+    format?: '9:16' | '16:9' | '1:1';
+    mode?: 'auto' | 'ugc' | 'vsl' | 'broll' | 'lipsync';
+}
+
+export interface BatchOptions {
+    quality?: 'fast' | 'standard' | 'premium';
+    format?: string;
 }
 
 export interface VideoAdResult {
@@ -38,7 +47,7 @@ export class VideoAdOrchestrator {
     /**
      * Generar UN video completo (avatar + voz + animación)
      */
-    async generateSingle(config: VideoAdConfig): Promise<VideoAdResult> {
+    async generateSingle(config: VideoAdConfig, opts: BatchOptions = {}): Promise<VideoAdResult> {
         console.log(`[VideoAdOrchestrator] 🚀 Generando video: ${config.concept}`);
 
         const startTime = Date.now();
@@ -58,17 +67,21 @@ export class VideoAdOrchestrator {
                 text: config.script,
                 voiceId: config.voiceId
             });
-            const audioUrl = await uploadBufferToGCS(
-                audioBuffer,
-                `audio/v_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`
-            );
+            // Guardar audio en /tmp para pasarlo al VideoAnimator
+            const audioFileName = `audio_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`;
+            const audioTmpPath = path.join(os.tmpdir(), audioFileName);
+            fs.writeFileSync(audioTmpPath, audioBuffer);
+            // Convertir a data URI para modelos que aceptan base64
+            const audioBase64 = audioBuffer.toString('base64');
+            const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
 
             // PASO 3: Animar video
             console.log('[VideoAdOrchestrator] 🎬 Paso 3/3: Animando video...');
             const videoUrl = await this.animator.animate({
                 imageUrl: avatarUrl,
                 audioUrl: audioUrl,
-                cropFactor: config.cropFactor
+                cropFactor: config.cropFactor,
+                quality: opts.quality === 'premium' ? 'premium' : 'standard'
             });
 
             const duration = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -102,7 +115,7 @@ export class VideoAdOrchestrator {
     /**
      * Generar múltiples videos en BATCH (10-15 variaciones en paralelo)
      */
-    async generateBatch(configs: VideoAdConfig[]): Promise<VideoAdResult[]> {
+    async generateBatch(configs: VideoAdConfig[], opts: BatchOptions = {}): Promise<VideoAdResult[]> {
         console.log(`[VideoAdOrchestrator] 🚀 Generando ${configs.length} videos en BATCH...`);
 
         const startTime = Date.now();
@@ -127,12 +140,10 @@ export class VideoAdOrchestrator {
                 }))
             );
 
-            const audioUrls = await Promise.all(
-                audioBuffers.map((buffer, i) => uploadBufferToGCS(
-                    buffer,
-                    `audio/batch_${Date.now()}_${i}.mp3`
-                ))
-            );
+            const audioUrls = audioBuffers.map((buffer: Buffer) => {
+                const b64 = buffer.toString('base64');
+                return `data:audio/mpeg;base64,${b64}`;
+            });
 
             // FASE 3: Animar TODOS los videos en paralelo
             console.log('[VideoAdOrchestrator] 🎬 FASE 3/3: Animando videos en paralelo...');

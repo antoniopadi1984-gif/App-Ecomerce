@@ -54,7 +54,7 @@ export async function POST(
         }
     );
 
-    const videoUrl = Array.isArray(output) ? output[0] : output as string;
+    const videoUrl = Array.isArray(output) ? output[0] : (output as unknown) as string;
 
     // 4. Descargar y subir a Drive
     const videoBuffer = await fetch(videoUrl).then(r => r.arrayBuffer()).then(ab => Buffer.from(ab));

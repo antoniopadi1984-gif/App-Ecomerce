@@ -1,7 +1,3 @@
-/**
- * subtitle-utils.ts
- * Genera SRT desde word-level timestamps de ElevenLabs Scribe v2.
- */
 
 export interface WordTimestamp {
   text: string;
@@ -9,65 +5,43 @@ export interface WordTimestamp {
   end: number;
 }
 
-function toSRTTime(seconds: number): string {
-  const ms = Math.round((seconds % 1) * 1000);
-  const s = Math.floor(seconds) % 60;
-  const m = Math.floor(seconds / 60) % 60;
-  const h = Math.floor(seconds / 3600);
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
-}
+export function generateSRT(words: WordTimestamp[]): string {
+  let srt = '';
+  let counter = 1;
+  const charsPerLine = 35; // Maximum characters per line for readability
 
-export function generateSRT(
-  words: WordTimestamp[],
-  wordsPerLine = 5,
-  totalDuration = 30
-): string {
-  if (!words || words.length === 0) return '';
+  let currentLine: WordTimestamp[] = [];
+  let currentLength = 0;
 
-  const hasRealTimestamps = words.every(
-    w => typeof w.start === 'number' && typeof w.end === 'number' && !isNaN(w.start)
-  );
-
-  const lines: string[] = [];
-  let idx = 1;
-
-  for (let i = 0; i < words.length; i += wordsPerLine) {
-    const group = words.slice(i, i + wordsPerLine);
-    const text = group.map(w => w.text).join(' ').trim();
-    if (!text) continue;
-
-    let start: number;
-    let end: number;
-
-    if (hasRealTimestamps) {
-      start = group[0].start;
-      end = group[group.length - 1].end;
-    } else {
-      start = (i / words.length) * totalDuration;
-      end = Math.min(((i + wordsPerLine) / words.length) * totalDuration, totalDuration);
+  for (const word of words) {
+    if (currentLength + word.text.length > charsPerLine || (currentLine.length > 0 && word.start - currentLine[currentLine.length - 1].end > 0.5)) {
+      // Commit line
+      srt += formatSRTBlock(counter++, currentLine);
+      currentLine = [];
+      currentLength = 0;
     }
-
-    if (end <= start) end = start + 0.5;
-
-    lines.push(`${idx}`);
-    lines.push(`${toSRTTime(start)} --> ${toSRTTime(end)}`);
-    lines.push(text);
-    lines.push('');
-    idx++;
+    currentLine.push(word);
+    currentLength += word.text.length + 1;
   }
 
-  return lines.join('\n');
+  if (currentLine.length > 0) {
+    srt += formatSRTBlock(counter++, currentLine);
+  }
+
+  return srt;
 }
 
-export function generateSRTFromText(text: string, wordsPerLine = 5): string {
-  const words = text.split(/\s+/).filter(Boolean);
-  const secondsPerWord = 60 / 150;
+function formatSRTBlock(index: number, words: WordTimestamp[]): string {
+  const start = formatTimestamp(words[0].start);
+  const end = formatTimestamp(words[words.length - 1].end);
+  const text = words.map(w => w.text).join(' ').trim();
+  return `${index}\n${start} --> ${end}\n${text}\n\n`;
+}
 
-  const wordTimestamps: WordTimestamp[] = words.map((w, i) => ({
-    text: w,
-    start: i * secondsPerWord,
-    end: (i + 1) * secondsPerWord,
-  }));
-
-  return generateSRT(wordTimestamps, wordsPerLine);
+function formatTimestamp(seconds: number): string {
+  const date = new Date(0);
+  date.setSeconds(seconds);
+  const ms = Math.floor((seconds % 1) * 1000);
+  const time = date.toISOString().substr(11, 8);
+  return `${time},${ms.toString().padStart(3, '0')}`;
 }

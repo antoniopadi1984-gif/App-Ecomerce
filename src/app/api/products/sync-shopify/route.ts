@@ -39,7 +39,7 @@ export async function POST(request: Request) {
             try {
                 const variant = sp.variants?.[0];
                 await prisma.product.upsert({
-                    where: { shopifyId: String(sp.id) },
+                    where: { id: String(sp.id) },
                     update: {
                         title: sp.title,
                         description: sp.body_html || null,

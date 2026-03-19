@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { executeAutomations, schedulePostDeliveryAutomations } from "@/lib/automation/executor";
+import { executeWhatsAppRule } from "@/lib/automation/whatsapp-rule-executor";
 
 export async function POST(req: NextRequest) {
     try {
@@ -47,6 +49,26 @@ async function handleShopifyWebhook(topic: string, data: any) {
     console.log(`[Shopify Webhook] Processing topic: ${topic}`);
 
     if (topic === "orders/create" || topic === "orders/updated") {
+        // Disparar automatizaciones
+        if (topic === "orders/create") {
+            setTimeout(async () => {
+                try {
+                    const order = await prisma.order.findFirst({ where: { shopifyOrderId: data.id?.toString() } });
+                    if (order) {
+                        await executeAutomations(order.storeId, "ORDER_CREATED", order.id);
+                        await executeWhatsAppRule({
+                            storeId: order.storeId,
+                            orderId: order.id,
+                            customerPhone: (order as any).customerPhone || '',
+                            customerName: (order as any).customerName || 'Cliente',
+                            orderNumber: (order as any).orderNumber || '',
+                            productTitle: (order as any).productTitle || '',
+                            trigger: 'ORDER_CREATED',
+                        }).catch(() => {});
+                    }
+                } catch {}
+            }, 2000);
+        }
         const shopifyId = data.id.toString();
 
         const connection = await prisma.connection.findFirst({ where: { provider: "SHOPIFY" } });

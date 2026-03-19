@@ -180,7 +180,7 @@ function generatePeriodRows(mode: ViewMode, month: number, year: number) {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function PillTab({ active, label, set }: { active: boolean; label: string; set: () => void }) {
+function PillTab({ active, label, set }: { active: boolean; label: string; set: () => any }) {
     return (
         <button
             onClick={set}
@@ -1355,8 +1355,8 @@ export default function FinanzasPage() {
         const rawSums: any = {};
         allFields.forEach(f => {
             if (f === 'label' || f === 'key') return;
-            const valid = tableData.filter(r => typeof (r as any)[f] === 'number');
-            rawSums[f] = valid.reduce((acc, r) => acc + ((r as any)[f] || 0), 0);
+            const valid = tableData.filter(r => typeof (r as any)[f as string] === 'number');
+            rawSums[f] = valid.reduce((acc, r) => acc + ((r as any)[f as string] || 0), 0);
         });
 
         // 2. Build final totals for columns

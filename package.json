@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "prisma": {
     "engineType": "library",
-    "seed": "ts-node prisma/seed-connections.ts"
+    "seed": "ts-node --project tsconfig.seed.json prisma/seed-connections.ts"
   },
   "private": true,
   "scripts": {
@@ -15,7 +15,7 @@
     "worker": "npx tsx worker-sidecar.ts",
     "clean": "pkill -f 'next dev' || true; pkill -f 'python3 src/engine/server.py' || true; rm -rf .next/dev/lock",
     "db:reset": "npx prisma db push && npx ts-node prisma/seed-connections.ts",
-    "db:seed": "npx ts-node prisma/seed-connections.ts"
+    "db:seed": "npx ts-node --project tsconfig.seed.json prisma/seed-connections.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.22",

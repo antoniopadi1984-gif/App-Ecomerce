@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
                 storeId,
                 type: isVideo ? 'VIDEO' : 'IMAGE',
                 name: file.name,
-                metadata: JSON.stringify({
+                tagsJson: JSON.stringify({
                     originalName: file.name,
                     fileSize: file.size,
                     isCompetitor
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
                     // Llamar al pipeline de vídeo existente
                     const fd = new FormData();
                     const blob = new Blob([buffer], { type: file.type });
-                    fd.append('file', blob, fileName);
+                    fd.append('video', blob, fileName);
                     fd.append('productId', productId);
                     fd.append('assetId', assetId);
 

@@ -190,32 +190,7 @@ async function runPipeline(
             // PASO 1: Solo blur (sin texto — es lo más seguro)
             const blurFilter = 'drawbox=x=0:y=0:w=' + vw2 + ':h=' + topH2 + ':color=black@0.85:t=fill,drawbox=x=0:y=' + botY2 + ':w=' + vw2 + ':h=' + botH2 + ':color=black@0.85:t=fill';
             const blurOnlyPath = join(tmpDir, 'blur_only.mp4');
-            await execAsync('/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -i "' + mergedVideoPath + '" -vf "' + blurFilter + '" -c:a copy "' + blurOnlyPath + '"');
-
-            // PASO 2: Generar SRT
-            const words3 = translation.split(/\s+/).filter(Boolean);
-            const chunk3 = 6;
-            let srtOut = '';
-            let srtIdx = 1;
-            for (let ii = 0; ii < words3.length; ii += chunk3) {
-                const chunk = words3.slice(ii, ii + chunk3).join(' ');
-                const s1 = ii / 2.5;
-                const s2 = Math.min((ii + chunk3) / 2.5, dur2);
-                const ts = (s: number) => {
-                    const h = String(Math.floor(s/3600)).padStart(2,'0');
-                    const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
-                    const sc = String(Math.floor(s%60)).padStart(2,'0');
-                    const ms = String(Math.floor((s*1000)%1000)).padStart(3,'0');
-                    return h+':'+m+':'+sc+','+ms;
-                };
-                srtOut += srtIdx + '\n' + ts(s1) + ' --> ' + ts(s2) + '\n' + chunk + '\n\n';
-                srtIdx++;
-            }
-            const srtPath3 = join(tmpDir, 'subs3.srt');
-            await writeFile(srtPath3, srtOut, 'utf8');
-
-            // PASO 3: Quemar SRT en video con subtitles filter
-            await execAsync('/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -i "' + blurOnlyPath + '" -vf "subtitles=' + srtPath3 + '" "' + subtitledPath2 + '"');
+            await execAsync(`/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -i "${blurOnlyPath}" -vf "subtitles=${srtPath3}" "${subtitledPath2}"`);
             finalVideoPath = subtitledPath2;
             console.log('[Pipeline] ✅ Blur + subtítulos aplicados');
         } catch (e2: any) {

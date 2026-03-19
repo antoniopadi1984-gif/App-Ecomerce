@@ -72,3 +72,25 @@ async function main() {
 main()
   .catch(e => { console.error('❌ Seed error:', e); process.exit(1); })
   .finally(() => prisma.$disconnect());
+
+// ── Agent Profiles ─────────────────────────────────────────────────────────
+const agentRoles = [
+  'general','research-core','funnel-architect','video-intelligence',
+  'media-buyer','image-director','ops-commander','drive-intelligence'
+];
+
+async function seedAgentProfiles(prisma: PrismaClient) {
+  console.log('🌱 Seeding agent profiles...');
+  const storeIds = ['store-main','alecare-mx','cmlxrad5405b826d99j9kpgyy'];
+  for (const storeId of storeIds) {
+    const existing = await prisma.agentProfile.findMany({ where: { storeId } });
+    const existingRoles = existing.map((a: any) => a.role);
+    const missing = agentRoles.filter(r => !existingRoles.includes(r));
+    for (const role of missing) {
+      await prisma.agentProfile.create({
+        data: { storeId, role, name: role, isActive: true, model: 'gemini-3.1-flash-lite-preview' }
+      });
+      console.log(`  ✅ AgentProfile: ${storeId} / ${role}`);
+    }
+  }
+}

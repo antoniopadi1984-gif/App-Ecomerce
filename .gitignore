@@ -131,3 +131,5 @@ prisma/*.stale_root
 .DS_Store
 .venv_backup/
 src/engine/static/avatars/_generated/
+!src/lib/video/
+!src/lib/video/**

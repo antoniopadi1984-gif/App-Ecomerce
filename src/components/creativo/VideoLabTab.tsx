@@ -158,7 +158,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const handleBulkTranslate = async () => {
         if (selectedIds.size === 0) return;
         toast.promise(Promise.all(Array.from(selectedIds).map(id => 
-            fetch(`/api/video-lab/translate-audio`, {
+            fetch(`/api/video-lab/replace-audio`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ assetId: id, storeId, targetLang: marketLang || 'en' })
@@ -188,7 +188,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
 
     const handleTranslate = async (assetId: string) => {
         toast.promise(
-            fetch(`/api/video-lab/translate-audio`, {
+            fetch(`/api/video-lab/replace-audio`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ assetId, storeId, targetLang: marketLang || 'en' })

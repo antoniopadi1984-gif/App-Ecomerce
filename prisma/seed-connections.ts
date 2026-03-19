@@ -94,3 +94,30 @@ async function seedAgentProfiles(prisma: PrismaClient) {
     }
   }
 }
+
+// ── Agent Configs (para página de agentes) ─────────────────────────────────
+export async function seedAgentConfigs(prisma: any) {
+  console.log('🌱 Seeding agent configs...');
+  const AGENTS = [
+    { agentId: 'NEURAL_MOTHER',      label: 'Neural Mother',       description: 'Agente Jefe — diagnóstico ejecutivo y coordinación total',       module: 'mando',         emoji: '🧠' },
+    { agentId: 'FUNNEL_ARCHITECT',   label: 'Funnel Architect',    description: 'Landing + Advertorial + Listicle + Oferta + CRO',               module: 'creativo',      emoji: '🏗️' },
+    { agentId: 'VIDEO_INTELLIGENCE', label: 'Video Intelligence',  description: 'Análisis + guión + dirección + UGC — todo sobre vídeo',          module: 'creativo',      emoji: '🎬' },
+    { agentId: 'IMAGE_DIRECTOR',     label: 'Image Director',      description: 'Imágenes estáticas + carruseles + JSON para IA',                 module: 'creativo',      emoji: '🎨' },
+    { agentId: 'CREATIVE_FORENSIC',  label: 'Creative Forensic',   description: 'Disección forense de vídeos, landings y carruseles',             module: 'investigacion', emoji: '🔍' },
+    { agentId: 'RESEARCH_CORE',      label: 'Research Core',       description: 'Investigación P1-P7: producto, avatares, ángulos',              module: 'investigacion', emoji: '🔬' },
+    { agentId: 'MEDIA_BUYER',        label: 'Media Buyer',         description: 'Meta Ads: análisis, escalado, diagnóstico de creativos',        module: 'marketing',     emoji: '📡' },
+    { agentId: 'OPS_COMMANDER',      label: 'Ops Commander',       description: 'Pedidos, incidencias, equipo, postventa',                      module: 'operaciones',   emoji: '⚙️' },
+    { agentId: 'DRIVE_INTELLIGENCE', label: 'Drive Intelligence',  description: 'Organización automática, nomenclatura y clasificación',         module: 'drive',         emoji: '📁' },
+  ];
+  const stores = ['store-main','alecare-mx','cmlxrad5405b826d99j9kpgyy'];
+  for (const storeId of stores) {
+    for (const agent of AGENTS) {
+      await prisma.agentConfig.upsert({
+        where: { storeId_agentId: { storeId, agentId: agent.agentId } },
+        update: { label: agent.label, description: agent.description, module: agent.module, emoji: agent.emoji },
+        create: { storeId, ...agent, systemPrompt: '', isCustom: false, isActive: true }
+      });
+    }
+    console.log(`  ✅ AgentConfigs: ${storeId}`);
+  }
+}

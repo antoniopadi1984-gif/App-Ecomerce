@@ -30,7 +30,7 @@ export type AgentRole =
   | 'drive-organizer'
   | 'general';
 
-export type ModelProvider = 'replicate-claude' | 'gemini-pro' | 'gemini-flash';
+export type ModelProvider = 'replicate-claude' | 'gemini-pro' | 'gemini-flash' | 'anthropic';
 
 export interface AgentConfig {
     role: AgentRole;
@@ -52,8 +52,8 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
 
     'neural-mother': {
         role: 'neural-mother',
-        provider: 'replicate-claude',
-        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-5',
         temperature: 0.3,
         maxTokens: 8192,
         systemPrompt: DEFAULT_AGENT_PROMPTS.NEURAL_MOTHER,
@@ -64,8 +64,8 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
 
     'funnel-architect': {
         role: 'funnel-architect',
-        provider: 'replicate-claude',
-        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-5',
         temperature: 0.7,
         maxTokens: 16384,
         systemPrompt: DEFAULT_AGENT_PROMPTS.FUNNEL_ARCHITECT,
@@ -88,8 +88,8 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
 
     'image-director': {
         role: 'image-director',
-        provider: 'replicate-claude',
-        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-5',
         temperature: 0.6,
         maxTokens: 4096,
         systemPrompt: DEFAULT_AGENT_PROMPTS.IMAGE_DIRECTOR,
@@ -101,7 +101,7 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
     'research-core': {
         role: 'research-core',
         provider: 'gemini-pro',
-        model: 'gemini-2.5-pro',
+        model: 'gemini-3.1-pro-preview',
         temperature: 0.3,
         maxTokens: 65536,
         systemPrompt: `Eres el RESEARCH CORE. Ejecutas la investigación P1 a P7 secuencialmente.
@@ -114,8 +114,8 @@ Sin tu investigación, el resto de agentes están ciegos. Proporcionas la base d
 
     'media-buyer': {
         role: 'media-buyer',
-        provider: 'replicate-claude',
-        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
+        provider: 'gemini-pro',
+        model: API_CONFIG.vertexAI.models.gemini.production,
         temperature: 0.3,
         maxTokens: 4096,
         systemPrompt: DEFAULT_AGENT_PROMPTS.MEDIA_BUYER,
@@ -126,8 +126,8 @@ Sin tu investigación, el resto de agentes están ciegos. Proporcionas la base d
 
     'ops-commander': {
         role: 'ops-commander',
-        provider: 'replicate-claude',
-        model: REPLICATE_MODELS.TEXT.CLAUDE_DEFAULT,
+        provider: 'gemini-flash',
+        model: 'gemini-3.1-flash-lite-preview',
         temperature: 0.2,
         maxTokens: 4096,
         systemPrompt: DEFAULT_AGENT_PROMPTS.OPS_COMMANDER,

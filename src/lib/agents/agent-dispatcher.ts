@@ -101,6 +101,9 @@ export class AgentDispatcher {
             case 'gemini-flash':
                 return this.dispatchToGemini(role, finalConfig, request);
 
+            case 'anthropic':
+                return this.dispatchToAnthropic(role, finalConfig, request);
+
             default:
                 throw new Error(`Unknown provider: ${provider}`);
         }
@@ -148,6 +151,56 @@ export class AgentDispatcher {
      * Canal 1: Vertex AI via Service Account (v1beta1 — soporta todos los modelos 2026)
      * Canal 2: Gemini AI Studio via API Key (fallback automático)
      */
+
+    private async dispatchToAnthropic(
+        role: AgentRole,
+        config: any,
+        request: AgentRequest
+    ): Promise<AgentResponse> {
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
+
+        const culturalDirectives = this.getCulturalDirectives(request.locale);
+        const userPrompt = request.context
+            ? `LOCALIZACIÓN: ${culturalDirectives}\n\nCONTEXTO:\n${request.context}\n\nTAREA:\n${request.prompt}`
+            : `LOCALIZACIÓN: ${culturalDirectives}\n\nTAREA:\n${request.prompt}`;
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: config.model || 'claude-sonnet-4-5',
+                max_tokens: request.maxTokens || config.maxTokens || 4096,
+                system: config.systemPrompt || '',
+                messages: [{ role: 'user', content: userPrompt }],
+                temperature: request.temperature ?? config.temperature ?? 0.7,
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(`Anthropic API error ${response.status}: ${JSON.stringify(err)}`);
+        }
+
+        const data = await response.json();
+        const text = data.content?.[0]?.text || '';
+        const inputTokens = data.usage?.input_tokens || 0;
+        const outputTokens = data.usage?.output_tokens || 0;
+
+        return {
+            role,
+            provider: 'anthropic',
+            model: config.model,
+            text,
+            usage: { promptTokens: inputTokens, completionTokens: outputTokens, totalTokens: inputTokens + outputTokens },
+            cost: (inputTokens * 0.000003) + (outputTokens * 0.000015)
+        };
+    }
+
     private async dispatchToGemini(
         role: AgentRole,
         config: any,

@@ -215,7 +215,7 @@ async function runPipeline(
             await writeFile(srtPath3, srtOut, 'utf8');
 
             // PASO 3: Quemar SRT en video con subtitles filter
-            await execAsync(`/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -i "${blurOnlyPath}" -vf "subtitles=${srtPath3}" "${subtitledPath2}"`);
+            await execAsync('/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -i "' + blurOnlyPath + '" -vf "subtitles=' + srtPath3 + '" "' + subtitledPath2 + '"');
             finalVideoPath = subtitledPath2;
             console.log('[Pipeline] ✅ Blur + subtítulos aplicados');
         } catch (e2: any) {

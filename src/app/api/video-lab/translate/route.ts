@@ -54,7 +54,12 @@ async function runLatentSync(videoUrl: string, audioUrl: string, replicateToken:
 export async function POST(req: NextRequest) {
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vlab-translate-'));
     try {
-        const { assetId, targetLang, storeId, burnSubtitles = true, lipSync = true } = await req.json();
+        const { 
+            assetId, targetLang, storeId, 
+            burnSubtitles = true, lipSync = false,
+            voiceId, speed = 1.0, stability = 0.5, style = 0.3,
+            mode = 'dubbing' // 'dubbing' | 'tts'
+        } = await req.json();
 
         if (!assetId || !targetLang || !storeId) return NextResponse.json({ error: 'assetId, targetLang y storeId son requeridos' }, { status: 400 });
         if (!SUPPORTED_LANGUAGES[targetLang]) return NextResponse.json({ error: `Idioma no soportado: ${targetLang}`, supported: Object.keys(SUPPORTED_LANGUAGES) }, { status: 400 });
@@ -66,7 +71,7 @@ export async function POST(req: NextRequest) {
         if (!asset) return NextResponse.json({ error: 'Asset no encontrado' }, { status: 404 });
         if (!asset.driveFileId) return NextResponse.json({ error: 'Asset sin archivo en Drive' }, { status: 400 });
 
-        console.log(`[Translate] ${asset.nomenclatura} → ${targetLang} | lipSync: ${lipSync}`);
+        console.log(`[Translate] ${asset.nomenclatura} → ${targetLang} | mode: ${mode} | lipSync: ${lipSync}`);
 
         const { google } = await import('googleapis');
         const { getConnectionSecret } = await import('@/lib/server/connections');
@@ -86,6 +91,93 @@ export async function POST(req: NextRequest) {
         });
         console.log('[Translate] Vídeo descargado');
 
+        // ── MODO TTS: Transcribir → Traducir → TTS con voz elegida ──────────────
+        if (mode === 'tts' && voiceId) {
+            console.log(`[Translate] Modo TTS con voz: ${voiceId}`);
+            
+            // Extraer audio para transcripción
+            const audioPath = path.join(tmpDir, 'audio_orig.mp3');
+            await execAsync(`ffmpeg -i '${videoPath}' -vn -acodec mp3 '${audioPath}' -y`);
+            
+            // Transcribir con ElevenLabs Scribe
+            const transcriptionResult = await ElevenLabsService.speechToText(
+                new Blob([await fs.readFile(audioPath)], { type: 'audio/mp3' }), { storeId }
+            );
+            const originalText = transcriptionResult?.text || '';
+            if (!originalText) throw new Error('No se pudo transcribir el audio original');
+            
+            // Traducir con Gemini
+            const { AiRouter } = await import('@/lib/ai/router');
+            const { TaskType } = await import('@/lib/ai/providers/interfaces');
+            const translationResult = await AiRouter.dispatch(storeId, TaskType.COPYWRITING_DEEP,
+                \`Traduce al \${targetLang} este texto publicitario manteniendo exactamente el tono, urgencia y estructura. Devuelve SOLO el texto traducido:\n\n"\${originalText}"\`,
+                {}
+            );
+            const translatedText = translationResult.text.replace(/^"|"$/g, '').trim();
+            console.log(\`[Translate TTS] Texto traducido: \${translatedText.slice(0, 80)}...\`);
+            
+            // Generar audio con ElevenLabs TTS
+            const ttsBuffer = await ElevenLabsService.textToSpeech(translatedText, voiceId, {
+                stability,
+                similarity_boost: 0.8,
+                style,
+                speed
+            });
+            
+            // Reemplazar audio en el vídeo con FFmpeg
+            const ttsAudioPath = path.join(tmpDir, 'tts_audio.mp3');
+            await fs.writeFile(ttsAudioPath, ttsBuffer);
+            const ttsVideoPath = path.join(tmpDir, 'tts_video.mp4');
+            await execAsync(`ffmpeg -i '${videoPath}' -i '${ttsAudioPath}' -map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`);
+            
+            // Generar SRT del texto traducido con timestamps aproximados
+            const words = transcriptionResult?.words || [];
+            let srtContent = '';
+            if (words.length > 0) {
+                // Proporcionar timestamps del original al texto traducido
+                const wordsTranslated = translatedText.split(' ').map((word: string, i: number) => ({
+                    text: word,
+                    start: words[Math.min(i, words.length-1)]?.start || 0,
+                    end: words[Math.min(i, words.length-1)]?.end || 1
+                }));
+                srtContent = generateSRT(wordsTranslated);
+            }
+            
+            // Quemar subtítulos
+            let finalPath = ttsVideoPath;
+            if (burnSubtitles && srtContent) {
+                const srtPath = path.join(tmpDir, 'subs.srt');
+                const burnedPath = path.join(tmpDir, 'final_tts.mp4');
+                await fs.writeFile(srtPath, srtContent);
+                try {
+                    await execAsync(\`ffmpeg -i '\${ttsVideoPath}' -vf "subtitles='\${srtPath}':force_style='FontSize=18,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,Outline=2,Bold=1,Alignment=2'" -c:a copy '\${burnedPath}' -y\`);
+                    finalPath = burnedPath;
+                } catch {}
+            }
+            
+            // Subir a Drive
+            const langCode = targetLang.toUpperCase();
+            const baseNomen = (asset.nomenclatura || asset.name).replace(/\.mp4$/i, '');
+            const translatedNomen = \`\${baseNomen}_\${langCode}_TTS.mp4\`;
+            const driveSubfolder = \`\${asset.drivePath || '2_CREATIVOS'}/\${langCode}\`;
+            
+            const videoUpload = await uploadToProduct(await fs.readFile(finalPath), translatedNomen, 'video/mp4', asset.productId, storeId, { subfolderName: driveSubfolder, conceptCode: asset.conceptCode, fileType: 'VIDEO', version: asset.versionNumber });
+            
+            let srtDriveUrl = '';
+            if (srtContent) {
+                const srtUp = await uploadToProduct(Buffer.from(srtContent), \`\${baseNomen}_\${langCode}.srt\`, 'text/plain', asset.productId, storeId, { subfolderName: driveSubfolder, conceptCode: asset.conceptCode, fileType: 'DOCUMENT', version: asset.versionNumber });
+                srtDriveUrl = \`https://drive.google.com/file/d/\${srtUp.driveFileId}/view\`;
+            }
+            
+            const translatedAsset = await (prisma as any).creativeAsset.create({
+                data: { id: crypto.randomUUID(), storeId, productId: asset.productId, name: translatedNomen, nomenclatura: translatedNomen, type: 'VIDEO', language: targetLang, conceptCode: asset.conceptCode, funnelStage: asset.funnelStage, versionNumber: asset.versionNumber, driveFileId: videoUpload.driveFileId, driveUrl: \`https://drive.google.com/file/d/\${videoUpload.driveFileId}/view\`, drivePath: driveSubfolder, processingStatus: 'DONE', sourceAssetId: assetId, tagsJson: JSON.stringify({ mode: 'tts', voiceId, translatedFrom: asset.language || 'auto', translatedTo: targetLang, srtUrl: srtDriveUrl }) }
+            });
+            
+            console.log(\`[Translate TTS] ✅ \${translatedNomen}\`);
+            return NextResponse.json({ success: true, assetId: translatedAsset.id, nomenclatura: translatedNomen, driveUrl: \`https://drive.google.com/file/d/\${videoUpload.driveFileId}/view\`, srtUrl: srtDriveUrl, language: targetLang, mode: 'tts' });
+        }
+
+        // ── MODO DUBBING (ElevenLabs) ─────────────────────────────────────────
         // ElevenLabs Dubbing
         const driveViewUrl = `https://drive.google.com/uc?export=download&id=${asset.driveFileId}`;
         const dubbingJob = await ElevenLabsService.dubVideo(driveViewUrl, targetLang);

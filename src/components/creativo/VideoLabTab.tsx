@@ -121,6 +121,16 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const [selectedAvatarIds, setSelectedAvatarIds] = useState<Set<string>>(new Set());
     const [selectedAngleIds, setSelectedAngleIds] = useState<Set<string>>(new Set());
     const [loadingResearchData, setLoadingResearchData] = useState(false);
+    // Modal traducción
+    const [showTranslateModal, setShowTranslateModal] = useState(false);
+    const [translateTargetIds, setTranslateTargetIds] = useState<string[]>([]);
+    const [translateLang, setTranslateLang] = useState('es');
+    const [translateVoiceId, setTranslateVoiceId] = useState('EXAVITQu4vr4xnSDxMaL');
+    const [translateSpeed, setTranslateSpeed] = useState(1.0);
+    const [translateStability, setTranslateStability] = useState(0.5);
+    const [translateStyle, setTranslateStyle] = useState(0.3);
+    const [translating, setTranslating] = useState(false);
+    const [translateMode, setTranslateMode] = useState<'tts'|'dubbing'>('tts');
     const [customScript, setCustomScript] = useState('');
     const [showScriptEditor, setShowScriptEditor] = useState(false);
 
@@ -155,20 +165,35 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
         setSelectedIds(new Set());
     };
 
-    const handleBulkTranslate = async () => {
+    const handleBulkTranslate = () => {
         if (selectedIds.size === 0) return;
-        toast.promise(Promise.all(Array.from(selectedIds).map(id => 
-            fetch(`/api/video-lab/replace-audio`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ assetId: id, storeId, targetLang: marketLang || 'en' })
-            })
-        )), {
-            loading: `Traduciendo audio para ${selectedIds.size} videos...`,
-            success: 'Audios traducidos con éxito. Disponibles en Drive.',
-            error: 'Error al traducir algunos audios'
-        });
-        setSelectedIds(new Set());
+        setTranslateTargetIds(Array.from(selectedIds));
+        setShowTranslateModal(true);
+    };
+
+    const executeTranslation = async () => {
+        if (translateTargetIds.length === 0) return;
+        setTranslating(true);
+        setShowTranslateModal(false);
+        toast.loading(`Traduciendo ${translateTargetIds.length} vídeo(s) a ${translateLang}...`, { id: 'translate' });
+        try {
+            const results = await Promise.all(translateTargetIds.map(assetId =>
+                fetch('/api/video-lab/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ assetId, storeId, targetLang: translateLang, voiceId: translateVoiceId, speed: translateSpeed, stability: translateStability, style: translateStyle, burnSubtitles: true, lipSync: false, mode: translateMode })
+                }).then(r => r.json())
+            ));
+            const ok = results.filter(r => r.success).length;
+            const fail = results.length - ok;
+            toast.success(`✅ ${ok} traducido(s)${fail > 0 ? ` — ${fail} fallaron` : ''}`, { id: 'translate' });
+            fetchOwnCreatives();
+        } catch (e: any) {
+            toast.error(`Error: ${e.message}`, { id: 'translate' });
+        } finally {
+            setTranslating(false);
+            setSelectedIds(new Set());
+        }
     };
 
     const handleSubtitles = async (assetId: string) => {
@@ -186,19 +211,9 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
         );
     };
 
-    const handleTranslate = async (assetId: string) => {
-        toast.promise(
-            fetch(`/api/video-lab/replace-audio`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ assetId, storeId, targetLang: marketLang || 'en' })
-            }).then(r => r.json()),
-            {
-                loading: 'Traduciendo audio...',
-                success: 'Audio traducido con éxito. Revisa tu carpeta en Drive.',
-                error: 'Error al traducir el audio'
-            }
-        );
+    const handleTranslate = (assetId: string) => {
+        setTranslateTargetIds([assetId]);
+        setShowTranslateModal(true);
     };
 
     // Fetch own creatives (WORKSPACE view)
@@ -1491,5 +1506,136 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                 )}
             </div>
         </div>
+
+        {/* ── MODAL TRADUCCIÓN ─────────────────────────────────────── */}
+        {showTranslateModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-5">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">🌐 Traducir Vídeo</h3>
+                        <button onClick={() => setShowTranslateModal(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">✕</button>
+                    </div>
+
+                    {/* Idioma destino */}
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">Idioma destino</label>
+                        <select value={translateLang} onChange={e => setTranslateLang(e.target.value)}
+                            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]">
+                            {[['es','🇪🇸 Español'],['en','🇬🇧 English'],['fr','🇫🇷 Français'],['de','🇩🇪 Deutsch'],['it','🇮🇹 Italiano'],['pt','🇧🇷 Português'],['ar','🇸🇦 Árabe'],['zh','🇨🇳 Chino'],['ja','🇯🇵 Japonés'],['ko','🇰🇷 Coreano'],['ru','🇷🇺 Ruso'],['pl','🇵🇱 Polaco'],['hi','🇮🇳 Hindi'],['nl','🇳🇱 Neerlandés'],['sv','🇸🇪 Sueco'],['tr','🇹🇷 Turco']].map(([code, label]) => (
+                                <option key={code} value={code}>{label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Selector de voz */}
+                    <div className="space-y-1.5">
+                        {/* Modo */}
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">Modo de traducción</label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button onClick={() => setTranslateMode('tts')}
+                                className={`py-2 rounded-xl text-[9px] font-black uppercase transition-all ${translateMode==='tts' ? 'bg-[var(--cre)] text-white' : 'border border-[var(--border)] text-[var(--text-tertiary)]'}`}>
+                                🎙️ Voz elegida
+                            </button>
+                            <button onClick={() => setTranslateMode('dubbing')}
+                                className={`py-2 rounded-xl text-[9px] font-black uppercase transition-all ${translateMode==='dubbing' ? 'bg-[var(--cre)] text-white' : 'border border-[var(--border)] text-[var(--text-tertiary)]'}`}>
+                                🤖 Dubbing IA
+                            </button>
+                        </div>
+                        <p className="text-[8px] text-[var(--text-tertiary)]">
+                            {translateMode==='tts' ? 'Transcribe → Traduce → genera audio con la voz que elijas' : 'ElevenLabs clona la voz original y dobla el vídeo'}
+                        </p>
+                    </div>
+
+                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">Voz ElevenLabs</label>
+                        <select value={translateVoiceId} onChange={e => setTranslateVoiceId(e.target.value)}
+                            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]">
+                            <optgroup label="🇪🇸 Español Peninsular">
+                                <option value="ojUrU2nc4bppCZKFp9U8">Javier — Comercial y Dinámico</option>
+                                <option value="yiWEefwu5z3DQCM79clN">Laura López — Social Media</option>
+                                <option value="GwtqU7RCQKrjzJ0dGhqT">José Borda — Expresivo</option>
+                                <option value="PwxTzhTOyJ9IXBhXZdc8">Jose A. del Rio — Publicidad</option>
+                                <option value="h3l1RP4XfcWsPwoRp9G6">Sheila España — Social Media</option>
+                                <option value="D7dkYvH17OKLgp4SLulf">Martin Osborne — Publicidad</option>
+                                <option value="KHCvMklQZZo0O30ERnVn">Sara Martin 1 — Educativa</option>
+                                <option value="Ir1QNHvhaJXbAGhT50w3">Sara Martin 2 — Narrativa</option>
+                                <option value="gD1IexrzCvsXPHUuT0s3">Sara Martin 3 — Conversacional</option>
+                                <option value="XcWPJPVzbTFL09D9rQkl">Marco — Conversacional</option>
+                                <option value="NhUo7cJi70nyU8yfCimA">Theo — Social Media y Ads</option>
+                                <option value="75toWT7xwWkf5F7xSBgK">OMG Voice — Narrativa</option>
+                                <option value="bXNyE7Z9cvPDl9TXt4Wg">Toñi Moreno — Andaluza</option>
+                                <option value="C8Qbw8pAs2Q6xnmJACLv">Ani Egea</option>
+                            </optgroup>
+                            <optgroup label="🇦🇷 Español Argentino">
+                                <option value="gBTPbHzRd0ZmV75Z5Zk4">Carlos Pro — Narrativa</option>
+                            </optgroup>
+                            <optgroup label="🇬🇧 English">
+                                <option value="EXAVITQu4vr4xnSDxMaL">Sarah — Confident Female</option>
+                                <option value="CwhRBWXzGAHq8TQ4Fs17">Roger — Casual Male</option>
+                                <option value="JBFqnCBsd6RMkjVDRZzb">George — British Male</option>
+                                <option value="TX3LPaxmHKxFdv7VOQHJ">Liam — Social Media</option>
+                                <option value="pqHfZKP75CvOlQylNhV4">Bill — Advertisement</option>
+                                <option value="nPczCjzI2devNBz1zQrb">Brian — Deep Social Media</option>
+                                <option value="cgSgspJ2msm6clMCkdW9">Jessica — Playful Female</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    {/* Velocidad */}
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">
+                            Velocidad: <span className="text-[var(--cre)]">{translateSpeed.toFixed(1)}x</span>
+                        </label>
+                        <input type="range" min="0.7" max="1.3" step="0.05" value={translateSpeed}
+                            onChange={e => setTranslateSpeed(parseFloat(e.target.value))}
+                            className="w-full accent-[var(--cre)]" />
+                        <div className="flex justify-between text-[8px] text-[var(--text-tertiary)]">
+                            <span>Lento 0.7x</span><span>Normal 1.0x</span><span>Rápido 1.3x</span>
+                        </div>
+                    </div>
+
+                    {/* Estabilidad */}
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">
+                            Estabilidad: <span className="text-[var(--cre)]">{Math.round(translateStability * 100)}%</span>
+                        </label>
+                        <input type="range" min="0" max="1" step="0.05" value={translateStability}
+                            onChange={e => setTranslateStability(parseFloat(e.target.value))}
+                            className="w-full accent-[var(--cre)]" />
+                        <div className="flex justify-between text-[8px] text-[var(--text-tertiary)]">
+                            <span>Variable</span><span>Equilibrado</span><span>Estable</span>
+                        </div>
+                    </div>
+
+                    {/* Estilo */}
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">
+                            Expresividad: <span className="text-[var(--cre)]">{Math.round(translateStyle * 100)}%</span>
+                        </label>
+                        <input type="range" min="0" max="1" step="0.05" value={translateStyle}
+                            onChange={e => setTranslateStyle(parseFloat(e.target.value))}
+                            className="w-full accent-[var(--cre)]" />
+                        <div className="flex justify-between text-[8px] text-[var(--text-tertiary)]">
+                            <span>Neutro</span><span>Natural</span><span>Expresivo</span>
+                        </div>
+                    </div>
+
+                    <div className="text-[9px] text-[var(--text-tertiary)] bg-[var(--bg)] rounded-xl p-3">
+                        {translateTargetIds.length} vídeo(s) seleccionado(s) · Subtítulos quemados automáticamente
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button onClick={() => setShowTranslateModal(false)}
+                            className="flex-1 py-2.5 border border-[var(--border)] rounded-xl text-xs font-black uppercase text-[var(--text-tertiary)] hover:border-[var(--text-tertiary)] transition-all">
+                            Cancelar
+                        </button>
+                        <button onClick={executeTranslation} disabled={translating}
+                            className="flex-1 py-2.5 bg-[var(--cre)] text-white rounded-xl text-xs font-black uppercase hover:brightness-110 transition-all disabled:opacity-50">
+                            {translating ? 'Traduciendo...' : '🌐 Traducir'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     );
 }

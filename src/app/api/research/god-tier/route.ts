@@ -229,6 +229,36 @@ export async function POST(req: NextRequest) {
 
         const stepRecord = await saveStep(productId, runId, stepKey, resultText, resultJson);
 
+        // Subir automáticamente a Drive en la carpeta correcta de 1_INVESTIGACION
+        const STEP_DRIVE_MAP: Record<string, string> = {
+            'P1': 'P1_PRODUCTO',
+            'P2': 'P2_AVATARES',
+            'P21': 'P2_AVATARES',
+            'P3': 'P3_COMPETENCIA',
+            'P4': 'P4_ANGULOS',
+            'P5': 'P5_HOOKS',
+            'P6': 'P6_OBJECIONES',
+            'P7': 'P7_OFERTA',
+        };
+        const driveSubfolder = STEP_DRIVE_MAP[stepKey];
+        if (driveSubfolder && product.driveFolderId) {
+            try {
+                const { saveResearchDoc } = await import('@/lib/services/drive-service');
+                const sku = product.sku || product.title.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase();
+                const docName = `${sku}_${stepKey}_${driveSubfolder}`;
+                await saveResearchDoc(
+                    product.driveFolderId,
+                    `1_INVESTIGACION/${driveSubfolder}`,
+                    docName,
+                    resultText,
+                    { supportsAllDrives: true }
+                );
+                console.log(`[God-Tier] ✅ ${stepKey} subido a Drive: 1_INVESTIGACION/${driveSubfolder}/${docName}`);
+            } catch (driveErr: any) {
+                console.warn(`[God-Tier] ⚠️ Drive upload falló para ${stepKey} (no crítico):`, driveErr.message);
+            }
+        }
+
         return NextResponse.json({ success: true, stepKey, runId, stepId: stepRecord.id, result: resultJson || resultText });
 
     } catch (e: any) {

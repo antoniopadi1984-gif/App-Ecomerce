@@ -866,3 +866,40 @@ export async function getOrCreateConceptFolder(
 
     return phaseId;
 }
+
+/**
+ * Sube un documento de research a la carpeta correcta dentro de 1_INVESTIGACION
+ * path: ej "1_INVESTIGACION/P1_PRODUCTO"
+ */
+export async function saveResearchDoc(
+    productRootFolderId: string,
+    path: string,
+    fileName: string,
+    content: string,
+    opts?: { supportsAllDrives?: boolean }
+): Promise<{ driveFileId: string | null | undefined; driveUrl: string | null | undefined } | null> {
+    try {
+        const drive = await getDriveClient();
+        const targetFolderId = await findOrCreatePath(drive, path, productRootFolderId);
+        
+        const res = await drive.files.create({
+            requestBody: {
+                name: fileName,
+                parents: [targetFolderId],
+                mimeType: 'application/vnd.google-apps.document'
+            },
+            media: {
+                mimeType: 'text/plain',
+                body: content
+            },
+            fields: 'id,webViewLink',
+            supportsAllDrives: opts?.supportsAllDrives ?? true
+        });
+
+        console.log(`[DriveService] ✅ Research doc saved: ${fileName} -> ${path}`);
+        return { driveFileId: res.data.id, driveUrl: res.data.webViewLink };
+    } catch (e: any) {
+        console.error('[DriveService] saveResearchDoc failed:', e.message);
+        return null;
+    }
+}

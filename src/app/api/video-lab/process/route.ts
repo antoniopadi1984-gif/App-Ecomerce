@@ -599,10 +599,10 @@ EcomBoom — Creative Forensic Agent
             storeId,
             { 
               conceptCode, 
-              funnelStage, 
-              angle: psychologyAngle,
+              funnelStage,
               fileType: 'DOCUMENT', 
-              version 
+              version,
+              subfolderName: drivePath
             }
         );
         srtUrl = `https://drive.google.com/file/d/${srtUpload.driveFileId}/view`;

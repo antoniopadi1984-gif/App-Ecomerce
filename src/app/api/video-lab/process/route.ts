@@ -213,61 +213,65 @@ async function processVideoBackground(
         select: { sku: true, title: true }
     });
 
-    const analysisPrompt = `${DEFAULT_AGENT_PROMPTS.VIDEO_INTELLIGENCE}
+    // Research del producto para enriquecer el análisis
+    let researchContext = '';
+    try {
+        const researchSteps = await (prisma as any).researchStep.findMany({
+            where: { productId },
+            select: { stepKey: true, outputText: true },
+            orderBy: { stepKey: 'asc' }
+        });
+        const p1 = researchSteps.find((s: any) => s.stepKey === 'P1');
+        const p2 = researchSteps.find((s: any) => s.stepKey === 'P2');
+        const p4 = researchSteps.find((s: any) => s.stepKey === 'P4');
+        const p5 = researchSteps.find((s: any) => s.stepKey === 'P5');
+        if (p1) researchContext += `\n\nRESEARCH P1 — DESEOS DEL MERCADO:\n${p1.outputText?.slice(0, 2000)}`;
+        if (p2) researchContext += `\n\nRESEARCH P2 — AVATARES:\n${p2.outputText?.slice(0, 1500)}`;
+        if (p4) researchContext += `\n\nRESEARCH P4 — ÁNGULOS VALIDADOS:\n${p4.outputText?.slice(0, 1000)}`;
+        if (p5) researchContext += `\n\nRESEARCH P5 — HOOKS VALIDADOS:\n${p5.outputText?.slice(0, 800)}`;
+    } catch (e) {
+        console.warn('[VideoLab] Research no disponible:', e);
+    }
 
-DATOS DEL VÍDEO:
-Producto: "${product?.title}"
+    const analysisPrompt = `Ejecuta un análisis forense completo de este vídeo publicitario.
+
+PRODUCTO: "${product?.title}"
 SKU: "${product?.sku || 'PROD'}"
-Transcripción: "${transcription}"
 
-CONCEPTOS CREATIVOS DISPONIBLES (Spencer Pawling):
-C1 — Problema: identifica y agita el dolor del avatar
-C2 — Falsa Solución: por qué lo que probaron no funciona
-C3 — Mecanismo: por qué SÍ funciona, mecanismo único
-C4 — Prueba: testimonios, demos, resultados reales
-C5 — Autoridad: experto, estudio, comparativa
-C6 — Historia: narrativa personal de transformación
-C7 — Identidad: lifestyle, aspiracional, estatus
-C8 — Resultado: before/after, transformación visual
-C9 — Oferta: CTA directo, urgencia, escasez
+TRANSCRIPCIÓN COMPLETA:
+${transcription || 'Sin transcripción — analiza por el contexto del producto'}
+${researchContext}
 
-TRÁFICO (Spencer):
-COLD: audiencia fría, no conoce la marca
-WARM: ha interactuado, conoce el problema
-HOT_RETARGET: listo para comprar o retargeting
+INSTRUCCIONES:
+1. Identifica el concepto C1-C9 real del vídeo
+2. Detecta el framework real por la estructura narrativa
+3. Los clips DEBEN seguir la estructura exacta del framework detectado
+4. drivePath formato: C[N]_[CONCEPTO]/[TRAFICO]/[N]_[AWARENESS]
+5. Usa el research para identificar avatar y ángulo reales
+6. hookVariants: hooks alternativos listos para grabar, específicos para este producto
+7. metaCopy: copy real para este producto y ángulo específico
 
-CONSCIENCIA (Schwartz 1-5):
-1 — Unaware: no sabe que tiene el problema
-2 — Problem_Aware: sabe el problema, no la solución
-3 — Solution_Aware: sabe que hay soluciones, no conoce tu producto
-4 — Product_Aware: conoce tu producto, no está convencido
-5 — Most_Aware: listo para comprar
+DEVUELVE ÚNICAMENTE EL JSON COMPLETO SIN MARKDOWN.`;
 
-Devuelve SOLO este JSON:
-{
-  "concept": "C1",
-  "conceptName": "Problema",
-  "traffic": "COLD",
-  "awareness": 2,
-  "awarenessName": "Problem_Aware",
-  "drivePath": "C1_Problema/COLD/2_Problem_Aware",
-  "hookScore": 7,
-  "hookType": "Social Witness",
-  "framework": "PAS",
-  "angle": "mirada cansada",
-  "avatar": "mujer 45+",
-  "emotionPillar": "miedo",
-  "clips": [
-    {"name": "HOOK", "start": 0, "end": 3},
-    {"name": "PROBLEMA", "start": 3, "end": 15},
-    {"name": "MECANISMO", "start": 15, "end": 35},
-    {"name": "CTA", "start": 50, "end": 60}
-  ],
-  "improvements": "análisis de mejoras concretas",
-  "replicableTemplate": "estructura abstracta replicable"
-}`;
+    // Cargar system prompt del agente VIDEO_INTELLIGENCE desde BD
+    let videoIntelligencePrompt: string | undefined;
+    try {
+        const agentProfile = await (prisma as any).agentProfile.findFirst({
+            where: { role: 'video-intelligence', storeId },
+            select: { systemPrompt: true }
+        });
+        if (agentProfile?.systemPrompt) {
+            videoIntelligencePrompt = agentProfile.systemPrompt;
+            console.log('[VideoLab] ✅ System prompt cargado desde BD para video-intelligence');
+        }
+    } catch (e) {
+        console.warn('[VideoLab] No se pudo cargar system prompt desde BD, usando default');
+    }
 
-    const analysisResult = await AiRouter.dispatch(storeId, TaskType.CREATIVE_FORENSIC, analysisPrompt, { jsonSchema: true });
+    const analysisResult = await AiRouter.dispatch(storeId, TaskType.CREATIVE_FORENSIC, analysisPrompt, { 
+        jsonSchema: true,
+        systemPromptOverride: videoIntelligencePrompt
+    });
 
     let analysis: any = {
         concept: 'C3',

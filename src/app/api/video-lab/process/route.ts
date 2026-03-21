@@ -203,24 +203,6 @@ async function processVideoBackground(
             throw audioErr;
         }
     }
-    try {
-        if (audioErr.message?.includes('does not contain any stream') ||
-            audioErr.message?.includes('Invalid argument')) {
-            console.warn('[VideoLab] Vídeo sin audio — continuando sin transcripción');
-            hasAudio = false;
-        } else {
-            throw audioErr;
-        }
-    }
-    } catch (audioErr: any) {
-        if (audioErr.message?.includes('does not contain any stream') || 
-            audioErr.message?.includes('Invalid argument')) {
-            console.warn('[VideoLab] Vídeo sin audio — continuando sin transcripción');
-            hasAudio = false;
-        } else {
-            throw audioErr;
-        }
-    }
     const audioBuffer = await fs.readFile(audioPath);
     const audioBlob = new Blob([audioBuffer], { type: 'audio/mp3' });
     

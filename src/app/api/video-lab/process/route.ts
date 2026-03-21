@@ -413,7 +413,11 @@ Los clips DEBEN seguir la estructura del framework detectado.`;
     if (analysis.clips && analysis.clips.length > 0) {
         for (let i = 0; i < analysis.clips.length; i++) {
             const clip = analysis.clips[i];
-            const name = clip.name.toUpperCase().replace(/\s+/g, '_');
+            const rawName = (clip.name || 'CLIP').toUpperCase()
+                .replace(/[^A-Z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_|_$/g, '');
+            const name = rawName.slice(0, 20);
             const duration = clip.end - clip.start;
             if (duration > 0.5) {
                 await execAsync(

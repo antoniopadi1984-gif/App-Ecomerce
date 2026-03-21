@@ -267,25 +267,65 @@ async function processVideoBackground(
         console.warn('[VideoLab] Research no disponible:', e);
     }
 
-    const analysisPrompt = `Ejecuta un análisis forense completo de este vídeo publicitario.
+    const analysisPrompt = `Analiza el siguiente vídeo publicitario.
 
 PRODUCTO: "${product?.title}"
 SKU: "${product?.sku || 'PROD'}"
 
-TRANSCRIPCIÓN COMPLETA:
-${transcription || 'Sin transcripción — analiza por el contexto del producto'}
+TRANSCRIPCIÓN:
+${transcription || 'Sin transcripción disponible'}
 ${researchContext}
 
-INSTRUCCIONES:
-1. Identifica el concepto C1-C9 real del vídeo
-2. Detecta el framework real por la estructura narrativa
-3. Los clips DEBEN seguir la estructura exacta del framework detectado
-4. drivePath formato: C[N]_[CONCEPTO]/[TRAFICO]/[N]_[AWARENESS]
-5. Usa el research para identificar avatar y ángulo reales
-6. hookVariants: hooks alternativos listos para grabar, específicos para este producto
-7. metaCopy: copy real para este producto y ángulo específico
+RESPONDE ÚNICAMENTE CON EL SIGUIENTE JSON, SIN TEXTO ADICIONAL, SIN MARKDOWN, SIN EXPLICACIONES.
+EL JSON DEBE EMPEZAR CON { Y TERMINAR CON }.
+USA EXACTAMENTE ESTAS CLAVES EN EL NIVEL RAÍZ:
 
-DEVUELVE ÚNICAMENTE EL JSON COMPLETO SIN MARKDOWN.`;
+{
+  "concept": "C1",
+  "conceptName": "PROBLEMA",
+  "traffic": "FRIO",
+  "awareness": 2,
+  "awarenessName": "2_PROBLEM_AWARE",
+  "framework": "PAS",
+  "drivePath": "C1_PROBLEMA/FRIO/2_PROBLEM_AWARE",
+  "hookScore": 8,
+  "hookType": "PROBLEMA_DIRECTO",
+  "angle": "angulo de venta detectado",
+  "avatar": "descripcion del avatar",
+  "emotionPillar": "emocion dominante",
+  "primaryDesire": "deseo principal",
+  "lifeForce": "LF3",
+  "sophistication": 3,
+  "productionType": "UGC",
+  "clips": [
+    {"name": "HOOK", "start": 0, "end": 4, "effectiveness": 8, "notes": "evaluacion"},
+    {"name": "PROBLEMA", "start": 4, "end": 15, "effectiveness": 7, "notes": "evaluacion"},
+    {"name": "AGITACION", "start": 15, "end": 26, "effectiveness": 6, "notes": "evaluacion"},
+    {"name": "SOLUCION", "start": 26, "end": 43, "effectiveness": 7, "notes": "evaluacion"},
+    {"name": "CTA", "start": 43, "end": 58, "effectiveness": 8, "notes": "evaluacion"}
+  ],
+  "overallScore": 7,
+  "whyItWorks": "razones especificas",
+  "whyItFails": "puntos de mejora",
+  "improvements": [
+    {"priority": "ALTA", "change": "cambio", "impact": "impacto", "how": "como"}
+  ],
+  "hookVariants": [
+    {"type": "DATO_SHOCK", "text": "hook alternativo especifico para este producto"}
+  ],
+  "metaCopy": {
+    "headline": "headline maximo 40 caracteres",
+    "primaryText": "copy maximo 125 caracteres",
+    "cta": "Comprar ahora"
+  },
+  "extractedStructure": "guion resumido del video"
+}
+
+Sustituye los valores de ejemplo por el análisis real del vídeo.
+concept debe ser uno de: C1, C2, C3, C4, C5, C6, C7, C8, C9
+traffic debe ser uno de: FRIO, TEMPLADO, CALIENTE, RETARGETING
+framework debe ser uno de: PAS, AIDA, VSL, UGC, ANTES_DESPUES, TESTIMONIAL, EDUCATIVO, DEMOSTRACION, HOOK_PURO
+Los clips DEBEN seguir la estructura del framework detectado.`;
 
     // Cargar system prompt del agente VIDEO_INTELLIGENCE desde BD
     let videoIntelligencePrompt: string | undefined;
@@ -358,7 +398,15 @@ DEVUELVE ÚNICAMENTE EL JSON COMPLETO SIN MARKDOWN.`;
 
     updateJob(jobId, { status: 'ANALYZED', progress: 65, hook: analysis.hook, funnelStage });
  
-    // PASO 4: Disección de clips (Scenedetect impulsado por IA + FFmpeg)
+    // PASO 4: Nomenclatura y versión
+    const sku = product?.sku || productCode(product?.title ?? 'PRD');
+    const existingVersions = await (prisma as any).creativeAsset.count({
+        where: { productId, conceptCode }
+    });
+    const version = existingVersions + 1;
+    const generatedNomen = `${sku}_${conceptCode}_V${version}.mp4`;
+
+    // PASO 5: Corte de clips con FFmpeg usando timestamps del análisis
     const clipsDir = path.join(tmpDir, 'clips');
     await fs.mkdir(clipsDir, { recursive: true });
     
@@ -374,21 +422,11 @@ DEVUELVE ÚNICAMENTE EL JSON COMPLETO SIN MARKDOWN.`;
             }
         }
     } else {
-        // Fallback: Segmentos de 10s si la IA no dió timestamps
         await execAsync(
             `ffmpeg -i '${strippedPath}' -f segment -segment_time 10 -c copy '${clipsDir}/SCENE_%02d.mp4' -y`
         );
     }
     updateJob(jobId, { status: 'SPLIT', progress: 80 });
- 
-    // Nomenclatura Spencer: SKU-C1-V1.mp4
-    const sku = product?.sku || productCode(product?.title ?? 'PRD');
-    // conceptCode ya está definido arriba
-    const existingVersions = await (prisma as any).creativeAsset.count({
-        where: { productId, conceptCode }
-    });
-    const version = existingVersions + 1;
-    const generatedNomen = `${sku}_${conceptCode}_V${version}.mp4`;
 
     // Subir al path correcto en Drive
     // Normalizar drivePath: todo mayúsculas, formato C1_PROBLEMA/FRIO/2_PROBLEM_AWARE

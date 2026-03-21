@@ -210,7 +210,7 @@ ${script}
 
 Concepts:
 1. Problema - Identificar y agitar el dolor exacto del avatar
-2. Falsa_Solucion - Por qué lo que han probado no funciona
+2. ANTES_DESPUES - Por qué lo que han probado no funciona
 3. Mecanismo - Cómo funciona el producto técnicamente
 4. Prueba - Testimonios y resultados
 5. Autoridad - Expertos y comparativas

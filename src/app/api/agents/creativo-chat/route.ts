@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
 
         const systemPrompt = `Eres un experto en creatividad publicitaria y marketing de respuesta directa.
 Tu función es ayudar a crear, analizar y mejorar creativos publicitarios para ecommerce.
-Conoces los conceptos C1-C9 (Problema, Falsa Solución, Mecanismo, Prueba, Autoridad, Historia, Identidad, Resultado, Oferta).
+Conoces los conceptos C1-C9 (Problema, ANTES_DESPUES, Mecanismo, Prueba, Autoridad, Historia, Identidad, Resultado, Oferta).
 Contexto del producto: ${JSON.stringify(context || {})}.
 Responde en español de forma concisa y accionable.`;
 

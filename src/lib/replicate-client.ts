@@ -113,7 +113,7 @@ export async function generateCopy(params: {
 
     const systemPrompts: Record<string, string> = {
         landing: `Eres un experto en copywriting de respuesta directa para ecommerce. 
-Sigues los frameworks de Hormozi, Schwartz y Spencer Pawling. 
+Sigues los frameworks de Hormozi, Schwartz y respuesta directa. 
 Escribes copy que convierte. Cada sección tiene un trabajo específico: atraer, convencer, eliminar objeciones, cerrar.
 Devuelve el copy completo estructurado en secciones: HERO, PROBLEMA, MECANISMO, PRUEBA, OFERTA, GARANTIA, FAQ, CTA.`,
 

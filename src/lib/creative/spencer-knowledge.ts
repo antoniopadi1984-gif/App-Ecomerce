@@ -7,11 +7,11 @@ export const CREATIVE_CONCEPTS = [
         driveFolder: 'C1_Problema'
     },
     {
-        id: 2, code: 'C2', name: 'Falsa_Solucion',
+        id: 2, code: 'C2', name: 'ANTES_DESPUES',
         description: 'Por qué lo que han probado no funciona — errores, mitos, riesgos',
         traffic: ['COLD', 'WARM'],
         awareness: [2, 3],
-        driveFolder: 'C2_Falsa_Solucion'
+        driveFolder: 'C2_ANTES_DESPUES'
     },
     {
         id: 3, code: 'C3', name: 'Mecanismo',

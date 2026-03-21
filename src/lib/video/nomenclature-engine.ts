@@ -1,6 +1,6 @@
 export const CONCEPTS = {
   C1: { name: "Problema",       funnel: ["COLD"],         awareness: [1,2] },
-  C2: { name: "Falsa_Solucion", funnel: ["COLD","WARM"],  awareness: [2,3] },
+  C2: { name: "ANTES_DESPUES", funnel: ["COLD","WARM"],  awareness: [2,3] },
   C3: { name: "Mecanismo",      funnel: ["WARM"],          awareness: [3] },
   C4: { name: "Prueba",         funnel: ["WARM","HOT"],   awareness: [3,4] },
   C5: { name: "Autoridad",      funnel: ["WARM","HOT"],   awareness: [4] },

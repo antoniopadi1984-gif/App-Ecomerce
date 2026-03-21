@@ -329,12 +329,21 @@ DEVUELVE ÚNICAMENTE EL JSON COMPLETO SIN MARKDOWN.`;
     };
 
     try {
-        const raw = analysisResult.text.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+        let raw = analysisResult.text || '';
+        // Limpiar markdown
+        raw = raw.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+        // Extraer solo el JSON — buscar el primer { hasta el último }
+        const firstBrace = raw.indexOf('{');
+        const lastBrace = raw.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            raw = raw.slice(firstBrace, lastBrace + 1);
+        }
         const parsed = JSON.parse(raw);
-        // Merge con defaults para garantizar que ningún campo sea undefined
         analysis = { ...analysis, ...parsed };
+        console.log('[VideoLab] ✅ Análisis parseado — concept:', parsed.concept, '| framework:', parsed.framework, '| traffic:', parsed.traffic);
     } catch (e) {
         console.warn('[VideoLab] JSON parse failed, usando defaults:', e);
+        console.warn('[VideoLab] Raw response preview:', analysisResult.text?.slice(0, 300));
     }
     
     const conceptCode = hints.conceptCode || analysis.concept || file.name.split('.')[0].toUpperCase().replace(/[^A-Z0-9]/g, '_');

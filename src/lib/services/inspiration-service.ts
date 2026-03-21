@@ -62,7 +62,7 @@ export class InspirationService {
                 role: 'research-lab',
                 prompt,
                 jsonSchema: true,
-                model: 'gemini-3.1-pro-preview'
+                model: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-2.5-pro'
             });
 
             const analysis = JSON.parse(response.text.replace(/```json|```/g, '').trim());

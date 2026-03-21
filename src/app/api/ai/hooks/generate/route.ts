@@ -56,7 +56,7 @@ MHO: No incluyas explicaciones ni formato markdown fuera del JSON.
                 },
                 required: ["hooks"]
             },
-            model: "gemini-3.1-pro-preview" // Modelo actualizado
+            model: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-2.5-pro' // Modelo desde env
         });
 
         // Intentar parsear el JSON si viene como texto

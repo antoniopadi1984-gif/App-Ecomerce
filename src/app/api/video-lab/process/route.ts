@@ -267,7 +267,7 @@ Devuelve SOLO este JSON:
   "replicableTemplate": "estructura abstracta replicable"
 }`;
 
-    const analysisResult = await AiRouter.dispatch(storeId, TaskType.PERFORMANCE_ADS, analysisPrompt, { jsonSchema: true });
+    const analysisResult = await AiRouter.dispatch(storeId, TaskType.CREATIVE_FORENSIC, analysisPrompt, { jsonSchema: true });
 
     let analysis: any = {
         concept: 'C3',
@@ -332,7 +332,7 @@ Devuelve SOLO este JSON:
         where: { productId, conceptCode }
     });
     const version = existingVersions + 1;
-    const generatedNomen = `${sku}-${conceptCode}-V${version}.mp4`;
+    const generatedNomen = `${sku}_${conceptCode}_V${version}.mp4`;
 
     // Subir al path correcto en Drive
     const drivePath = analysis.drivePath || `${conceptCode}/COLD`;
@@ -444,7 +444,7 @@ EcomBoom — Creative Forensic Agent
         const clipFile = clipsFiles[i];
         const clipBuffer = await fs.readFile(path.join(clipsDir, clipFile));
         const clipNameTag = clipFile.replace('.mp4', '').split('_').slice(2).join('_');
-        const clipNomen = `${sku}-${conceptCode}-V${version}-${clipNameTag}.mp4`.toUpperCase();
+        const clipNomen = `${sku}_${conceptCode}_V${version}_${clipNameTag}.mp4`.toUpperCase();
         
         const clipUpload = await uploadToProduct(
             clipBuffer,

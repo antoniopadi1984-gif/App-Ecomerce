@@ -64,7 +64,7 @@ SKU Sugerido (si existe): ${product.sku || 'N/A'}
         // 3. Llamar a Gemini vía Vertex AI
         const gemini = new GeminiProvider();
         const response = await gemini.invokeText({
-            model: "gemini-3.1-pro-preview",
+            model: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-2.5-pro',
             prompt: userPrompt,
             systemPrompt: systemPrompt,
             jsonSchema: true // Forzado a JSON

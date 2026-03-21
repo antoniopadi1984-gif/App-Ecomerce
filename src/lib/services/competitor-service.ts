@@ -162,7 +162,7 @@ export class CompetitorService {
                 role: 'research-lab',
                 prompt,
                 jsonSchema: true,
-                model: 'gemini-3.1-pro-preview'
+                model: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-2.5-pro'
             });
 
             const analysis = JSON.parse(response.text.replace(/```json|```/g, '').trim());
@@ -210,7 +210,7 @@ export class CompetitorService {
             role: 'video-director',
             prompt,
             jsonSchema: true,
-            model: 'gemini-3.1-pro-preview'
+            model: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-2.5-pro'
         });
 
         const blueprint = JSON.parse(response.text.replace(/```json|```/g, '').trim());
@@ -257,7 +257,7 @@ export class CompetitorService {
             role: 'landing-creator',
             prompt,
             jsonSchema: true,
-            model: 'gemini-3.1-pro-preview'
+            model: process.env.GEMINI_MODEL_PRODUCTION || 'gemini-2.5-pro'
         });
 
         const analysis = JSON.parse(response.text.replace(/```json|```/g, '').trim());

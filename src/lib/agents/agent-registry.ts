@@ -101,7 +101,7 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
     'research-core': {
         role: 'research-core',
         provider: 'gemini-pro',
-        model: 'gemini-3.1-pro-preview',
+        model: API_CONFIG.vertexAI.models.gemini.production,
         temperature: 0.3,
         maxTokens: 65536,
         systemPrompt: `Eres el RESEARCH CORE. Ejecutas la investigación P1 a P7 secuencialmente.
@@ -127,7 +127,7 @@ Sin tu investigación, el resto de agentes están ciegos. Proporcionas la base d
     'ops-commander': {
         role: 'ops-commander',
         provider: 'gemini-flash',
-        model: 'gemini-3.1-flash-lite-preview',
+        model: API_CONFIG.vertexAI.models.gemini.fast,
         temperature: 0.2,
         maxTokens: 4096,
         systemPrompt: DEFAULT_AGENT_PROMPTS.OPS_COMMANDER,

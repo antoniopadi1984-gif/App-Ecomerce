@@ -27,11 +27,14 @@ export class GeminiProvider implements AIProvider {
 
     async getModels(): Promise<string[]> {
         return [
+            // ✅ GA en europe-west1
+            "gemini-2.5-pro",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash-001",
+            "gemini-2.0-flash-lite-001",
+            // 🌐 Solo endpoint global (fuera de EU)
             "gemini-3.1-pro-preview",
-            "gemini-3.1-flash-lite-preview",
-            "gemini-3.1-flash-image",
-            "veo-3.1",
-            "lyria-002"
+            "gemini-2.5-flash-preview-09-2025",
         ];
     }
 

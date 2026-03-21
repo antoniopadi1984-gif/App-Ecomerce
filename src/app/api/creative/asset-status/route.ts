@@ -10,13 +10,13 @@ export async function GET(req: NextRequest) {
         select: {
             id: true, name: true, nomenclatura: true,
             processingStatus: true, conceptCode: true,
-            funnelStage: true, driveUrl: true, metadata: true
+            funnelStage: true, driveUrl: true, tagsJson: true
         }
     });
 
     if (!asset) return NextResponse.json({ error: 'Asset no encontrado' }, { status: 404 });
 
-    const meta = asset.metadata ? JSON.parse(asset.metadata) : {};
+    const meta = asset.tagsJson ? JSON.parse(asset.tagsJson) : {};
 
     return NextResponse.json({
         assetId:       asset.id,

@@ -461,7 +461,7 @@ ANÁLISIS CREATIVO — ECOMMERCE FORENSIC FRAMEWORK
 Archivo: ${generatedNomen}
 Ruta Drive: ${drivePath}/
 
-CLASIFICACIÓN SPENCER
+CLASIFICACIÓN CREATIVA
 ─────────────────────
 Concepto: ${analysis.concept} — ${analysis.conceptName}
 Tráfico: ${analysis.traffic}
@@ -486,11 +486,11 @@ ${(analysis.clips || []).map((c: any) => `[${c.start}s → ${c.end}s] ${c.name}`
 
 MEJORAS CONCRETAS
 ─────────────────
-${analysis.improvements}
+${(analysis.improvements || []).map((i: any) => `• [${i.priority}] ${i.change} → ${i.impact}`).join("\n")}
 
 PLANTILLA REPLICABLE
 ────────────────────
-${analysis.replicableTemplate}
+${analysis.extractedStructure || ""}
 
 ────────────────────────────────────────
 EcomBoom — Creative Forensic Agent

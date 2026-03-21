@@ -129,7 +129,7 @@ export async function analyzeCompetitorVideo(params: {
 }
 
 async function analyzeWithGemini(script: string, language: string, adCopy?: string): Promise<AnalysisResult> {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite-preview-04-17' });
 
     const prompt = `Eres experto en publicidad de ecommerce y marketing de respuesta directa.
 Analiza este script publicitario. Devuelve SOLO JSON válido sin markdown.

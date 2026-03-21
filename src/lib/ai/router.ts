@@ -49,6 +49,7 @@ export class AiRouter {
             videoFileUri?: string,
             model?: string,
             systemPrompt?: string,
+            systemPromptOverride?: string,  // alias que toma prioridad sobre systemPrompt
             jsonSchema?: any,
             context?: string,
             locale?: string
@@ -87,7 +88,8 @@ export class AiRouter {
                 videoMimeType: options.videoMimeType,
                 videoFileUri: options.videoFileUri,
                 model: options.model,
-                context: options.context || options.systemPrompt, // Legacy bridge
+                context: options.context || options.systemPromptOverride || options.systemPrompt, // systemPromptOverride > systemPrompt
+                systemPromptOverride: options.systemPromptOverride || options.systemPrompt, // pasar al dispatcher
                 taskDescription: taskKey as string,
                 jsonSchema: !!options.jsonSchema,
                 locale: options.locale

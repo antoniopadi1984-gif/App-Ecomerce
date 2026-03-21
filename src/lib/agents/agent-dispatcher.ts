@@ -377,11 +377,45 @@ export class AgentDispatcher {
         
         const uploadData = await uploadRes.json() as any;
         const fileUri = uploadData.file?.uri;
+        const fileName = uploadData.file?.name; // ej: "files/vy8afxuksble"
         if (!fileUri) throw new Error('No se obtuvo fileUri de Gemini File API');
         
         console.log('[Gemini FileAPI] ✅ Vídeo subido:', fileUri);
+
+        // ── Esperar a que el archivo esté en estado ACTIVE ──────────────────
+        // Gemini necesita procesar el vídeo antes de permitir su uso.
+        // Hacemos polling cada 2s durante máx. 120s.
+        const MAX_WAIT_MS = 120_000;
+        const POLL_INTERVAL_MS = 2_000;
+        const pollStartTime = Date.now();
+
+        while (Date.now() - pollStartTime < MAX_WAIT_MS) {
+            const statusRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${apiKey}`
+            );
+            const statusData = await statusRes.json() as any;
+            const state = statusData.state as string | undefined;
+
+            if (state === 'ACTIVE') {
+                console.log(`[Gemini FileAPI] ✅ Archivo ACTIVE tras ${Math.round((Date.now() - pollStartTime) / 1000)}s`);
+                break;
+            }
+
+            if (state === 'FAILED') {
+                throw new Error(`Gemini File API: el archivo quedó en estado FAILED (${statusData.error?.message || 'sin detalle'})`);
+            }
+
+            console.log(`[Gemini FileAPI] ⏳ Estado: ${state || 'PROCESSING'} — esperando...`);
+            await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+        }
+
+        if (Date.now() - pollStartTime >= MAX_WAIT_MS) {
+            throw new Error('Gemini File API: timeout esperando estado ACTIVE (120s)');
+        }
+
         return fileUri;
     }
+
 
         private async processGeminiResponse(response: Response, role: AgentRole, config: any): Promise<AgentResponse> {
         if (!response.ok) {

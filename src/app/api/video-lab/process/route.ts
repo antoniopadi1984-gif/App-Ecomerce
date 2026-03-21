@@ -244,65 +244,87 @@ async function processVideoBackground(
         console.warn('[VideoLab] Research no disponible:', e);
     }
 
-    const analysisPrompt = `Analiza el siguiente vídeo publicitario.
+    const analysisPrompt = `Eres el agente VIDEO_INTELLIGENCE de EcomBoom. Analiza este vídeo publicitario de ecommerce con máximo detalle forense.
 
 PRODUCTO: "${product?.title}"
 SKU: "${product?.sku || 'PROD'}"
 
-TRANSCRIPCIÓN:
+TRANSCRIPCIÓN COMPLETA:
 ${transcription || 'Sin transcripción disponible'}
 ${researchContext}
 
-RESPONDE ÚNICAMENTE CON EL SIGUIENTE JSON, SIN TEXTO ADICIONAL, SIN MARKDOWN, SIN EXPLICACIONES.
-EL JSON DEBE EMPEZAR CON { Y TERMINAR CON }.
-USA EXACTAMENTE ESTAS CLAVES EN EL NIVEL RAÍZ:
+ANALIZA el vídeo fotograma a fotograma. Observa:
+- La persona, su credibilidad, tipo de producción (UGC, VSL, Broll, Testimonial, etc)
+- El gancho visual y verbal de los primeros 3 segundos
+- El flujo narrativo y estructura persuasiva exacta
+- Los timestamps reales de cada sección
+- El nivel de sofisticación del mercado al que apunta
+- El copy exacto del hook y el CTA
+
+RESPONDE ÚNICAMENTE CON JSON VÁLIDO. Sin markdown, sin explicaciones. Empieza directamente con {.
 
 {
-  "concept": "C1",
-  "conceptName": "PROBLEMA",
+  "concept": "C3",
+  "conceptName": "AUTORIDAD",
   "traffic": "FRIO",
   "awareness": 2,
   "awarenessName": "2_PROBLEM_AWARE",
-  "framework": "PAS",
-  "drivePath": "C1_PROBLEMA/FRIO/2_PROBLEM_AWARE",
+  "framework": "EDUCATIVO",
+  "drivePath": "2_CREATIVOS/C3_AUTORIDAD/FRIO/2_PROBLEM_AWARE",
   "hookScore": 8,
-  "hookType": "PROBLEMA_DIRECTO",
-  "angle": "angulo de venta detectado",
-  "avatar": "descripcion del avatar",
-  "emotionPillar": "emocion dominante",
-  "primaryDesire": "deseo principal",
+  "hookText": "texto exacto del hook (primeros 5-8 segundos)",
+  "hookType": "METRIC",
+  "angle": "ángulo de venta principal detectado (1-2 frases)",
+  "avatar": "descripción detallada del avatar objetivo (demografía + psicografía + dolor principal)",
+  "emotionPillar": "MIEDO",
+  "primaryDesire": "deseo principal que activa el vídeo",
   "lifeForce": "LF3",
-  "sophistication": 3,
+  "sophistication": 2,
   "productionType": "UGC",
+  "overallScore": 8,
+  "whyItWorks": "2-3 razones concretas y específicas de por qué este anuncio es efectivo",
+  "whyItFails": "1-2 debilidades reales si existen, o 'Sin fallos críticos detectados'",
   "clips": [
-    {"name": "HOOK", "start": 0, "end": 4, "effectiveness": 8, "notes": "evaluacion"},
-    {"name": "PROBLEMA", "start": 4, "end": 15, "effectiveness": 7, "notes": "evaluacion"},
-    {"name": "AGITACION", "start": 15, "end": 26, "effectiveness": 6, "notes": "evaluacion"},
-    {"name": "SOLUCION", "start": 26, "end": 43, "effectiveness": 7, "notes": "evaluacion"},
-    {"name": "CTA", "start": 43, "end": 58, "effectiveness": 8, "notes": "evaluacion"}
+    {"name": "HOOK", "start": 0, "end": 5, "effectiveness": 9, "notes": "qué funciona aquí y por qué"},
+    {"name": "AUTORIDAD", "start": 5, "end": 24, "effectiveness": 8, "notes": "evaluación detallada"},
+    {"name": "AGITACION", "start": 24, "end": 43, "effectiveness": 7, "notes": "evaluación detallada"},
+    {"name": "SOLUCION", "start": 43, "end": 58, "effectiveness": 8, "notes": "evaluación detallada"},
+    {"name": "RESULTADOS_CTA", "start": 58, "end": 114, "effectiveness": 8, "notes": "evaluación detallada"}
   ],
-  "overallScore": 7,
-  "whyItWorks": "razones especificas",
-  "whyItFails": "puntos de mejora",
   "improvements": [
-    {"priority": "ALTA", "change": "cambio", "impact": "impacto", "how": "como"}
+    {"priority": "ALTA", "change": "qué cambiar", "impact": "qué mejorará", "how": "cómo implementarlo"},
+    {"priority": "MEDIA", "change": "qué cambiar", "impact": "qué mejorará", "how": "cómo implementarlo"}
   ],
   "hookVariants": [
-    {"type": "DATO_SHOCK", "text": "hook alternativo especifico para este producto"}
+    {"type": "DATO_SHOCK", "text": "hook alternativo específico para este producto y avatar"},
+    {"type": "PREGUNTA_DOLOR", "text": "hook alternativo específico"},
+    {"type": "DECLARACION_AUDAZ", "text": "hook alternativo específico"}
   ],
   "metaCopy": {
-    "headline": "headline maximo 40 caracteres",
-    "primaryText": "copy maximo 125 caracteres",
+    "headline": "Titular impactante máx 40 caracteres",
+    "primaryText": "Copy principal máx 125 caracteres que captura el dolor y promete resultado",
+    "description": "Descripción secundaria máx 30 caracteres",
     "cta": "Comprar ahora"
   },
-  "extractedStructure": "guion resumido del video"
+  "replicableTemplate": {
+    "hook": "Si [PROBLEMA] te hace [CONSECUENCIA NEGATIVA], así lo reviertes en [TIEMPO].",
+    "authority": "Soy [EXPERTO] y el problema no es [CREENCIA COMÚN], es [CAUSA REAL].",
+    "agitation": "Los [SOLUCIONES EXISTENTES] son [DEFECTO] y las [ALTERNATIVAS] son [DEFECTO].",
+    "solution": "Por eso [PRODUCTO] funciona. Su [MECANISMO ÚNICO] lleva [BENEFICIO] a [NIVEL/PROFUNDIDAD].",
+    "results": "[RESULTADO 1], [RESULTADO 2] y [RESULTADO 3]. Verás cambios en [TIEMPO].",
+    "cta": "Si [PROBLEMA ESPECÍFICO], esta es la solución [VENTAJA]. [GARANTÍA]. [ACCIÓN]."
+  },
+  "extractedStructure": "Guión completo resumido del vídeo en español, sección a sección"
 }
 
-Sustituye los valores de ejemplo por el análisis real del vídeo.
-concept debe ser uno de: C1, C2, C3, C4, C5, C6, C7, C8, C9
-traffic debe ser uno de: FRIO, TEMPLADO, CALIENTE, RETARGETING
-framework debe ser uno de: PAS, AIDA, VSL, UGC, ANTES_DESPUES, TESTIMONIAL, EDUCATIVO, DEMOSTRACION, HOOK_PURO
-Los clips DEBEN seguir la estructura del framework detectado.`;
+concept: C1=PROBLEMA C2=ANTES_DESPUES C3=AUTORIDAD C4=PRUEBA_SOCIAL C5=OFERTA C6=OBJECION C7=RESULTADO C8=EDUCACION C9=MECANISMO
+traffic: FRIO, TEMPLADO, CALIENTE, RETARGETING
+awareness: 1=COMPLETELY_UNAWARE 2=PROBLEM_AWARE 3=SOLUTION_AWARE 4=PRODUCT_AWARE 5=MOST_AWARE
+frameworks: PAS, AIDA, VSL, UGC, ANTES_DESPUES, TESTIMONIAL, EDUCATIVO, DEMOSTRACION, HOOK_PURO
+hookType: PROBLEMA_DIRECTO, DATO_SHOCK, PREGUNTA, DECLARACION_AUDAZ, AUTORIDAD, RESULTADO, BEFORE_AFTER, METRIC
+emotionPillar: MIEDO, VERGUENZA, FRUSTRACION, ESPERANZA, CURIOSIDAD, URGENCIA, CONFIANZA
+lifeForce: LF1=Supervivencia LF2=Placer Sexual LF3=Belleza/Apariencia LF4=Riqueza LF5=Futuro LF6=Tribu LF7=Status LF8=Amor
+productionType: UGC, VSL, BROLL, TESTIMONIAL, EDUCATIVO, MIXTO`;
 
     // Cargar system prompt del agente VIDEO_INTELLIGENCE desde BD
     let videoIntelligencePrompt: string | undefined;
@@ -421,15 +443,61 @@ Los clips DEBEN seguir la estructura del framework detectado.`;
     }
     updateJob(jobId, { status: 'SPLIT', progress: 80 });
 
-    // Subir al path correcto en Drive
-    // Normalizar drivePath: todo mayúsculas, formato C1_PROBLEMA/FRIO/2_PROBLEM_AWARE
-    const rawDrivePath = (analysis.drivePath || `${conceptCode}_${analysis.conceptName || 'PROBLEMA'}/FRIO/2_PROBLEM_AWARE`)
+    // DRIVE_INTELLIGENCE confirma la organización basándose en el análisis de VIDEO_INTELLIGENCE
+    let driveDecision: any = null;
+    try {
+        const drivePrompt = `Recibe este análisis de un vídeo publicitario y devuelve la decisión de organización en Drive.
+
+ANÁLISIS DE VIDEO_INTELLIGENCE:
+${JSON.stringify(analysis, null, 2)}
+
+DATOS DEL ARCHIVO:
+Nombre original: ${file.name}
+SKU del producto: ${sku}
+Producto: ${product?.title}
+
+Devuelve ÚNICAMENTE este JSON:
+{
+  "drivePath": "2_CREATIVOS/C[N]_[CONCEPTO]/[TRAFICO]/[N]_[AWARENESS]",
+  "nomenclatura": "${sku}_C[N]_V${version}.mp4",
+  "concept": "C1",
+  "conceptName": "PROBLEMA",
+  "traffic": "FRIO",
+  "awareness": 2,
+  "awarenessName": "2_PROBLEM_AWARE",
+  "reason": "justificación breve"
+}`;
+
+        const driveResult = await AiRouter.dispatch(storeId, TaskType.PERFORMANCE_ADS, drivePrompt, {
+            jsonSchema: true,
+            systemPromptOverride: undefined // usa el prompt de BD de drive-intelligence
+        });
+
+        let driveRaw = driveResult.text.replace(/\`\`\`json\s*/g, '').replace(/\`\`\`/g, '').trim();
+        const firstBrace = driveRaw.indexOf('{');
+        const lastBrace = driveRaw.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+            driveRaw = driveRaw.slice(firstBrace, lastBrace + 1);
+        }
+        driveDecision = JSON.parse(driveRaw);
+        console.log(`[DriveIntelligence] ✅ Decisión: ${driveDecision.drivePath} | concept: ${driveDecision.concept}`);
+    } catch (driveErr: any) {
+        console.warn(`[DriveIntelligence] Falló, usando análisis directo: ${driveErr.message}`);
+    }
+
+    // Usar decisión de DRIVE_INTELLIGENCE si está disponible, sino fallback al análisis directo
+    const finalConcept = driveDecision?.concept || conceptCode;
+    const finalConceptName = driveDecision?.conceptName || analysis.conceptName || 'PROBLEMA';
+    const finalTraffic = driveDecision?.traffic || analysis.traffic || 'FRIO';
+    const finalAwareness = driveDecision?.awarenessName || analysis.awarenessName || '2_PROBLEM_AWARE';
+
+    const rawDrivePath = (driveDecision?.drivePath || `${finalConcept}_${finalConceptName}/${finalTraffic}/${finalAwareness}`)
         .toUpperCase()
         .replace(/\/COLD\//g, '/FRIO/')
         .replace(/\/WARM\//g, '/TEMPLADO/')
         .replace(/\/HOT[_A-Z]*\//g, '/CALIENTE/')
         .replace(/\/RETARGET[_A-Z]*\//g, '/RETARGETING/');
-    const drivePath = `2_CREATIVOS/${rawDrivePath}`;
+    const drivePath = rawDrivePath.startsWith('2_CREATIVOS') ? rawDrivePath : `2_CREATIVOS/${rawDrivePath}`;
     
     let driveOptions: any = { 
         subfolderName: drivePath,
@@ -454,47 +522,98 @@ Los clips DEBEN seguir la estructura del framework detectado.`;
       driveOptions
     );
 
-    // 5.2 Subir Documento de Análisis (Google Doc)
-    const analysisDocContent = `
-ANÁLISIS CREATIVO — ECOMMERCE FORENSIC FRAMEWORK
+    // ── Construir secciones del documento ───────────────────────────────────
+    const hookVariantsBlock = (analysis.hookVariants || []).length > 0
+        ? (analysis.hookVariants as any[]).map((h: any, i: number) => `${i + 1}. [${h.type}] "${h.text}"`).join('\n')
+        : '• Sin variantes generadas';
+
+    const improvementsBlock = Array.isArray(analysis.improvements)
+        ? (analysis.improvements as any[]).map((imp: any) =>
+            `• [${imp.priority || 'MEDIA'}] ${imp.change}\n  → Impacto: ${imp.impact}\n  → Cómo: ${imp.how || 'Ver análisis'}`
+          ).join('\n')
+        : String(analysis.improvements || 'Sin mejoras detectadas');
+
+    const clipsBlock = (analysis.clips || []).length > 0
+        ? (analysis.clips as any[]).map((c: any) =>
+            `[${c.start}s → ${c.end}s] ${c.name} | Score: ${c.effectiveness || '-'}/10\n  → ${c.notes || ''}`
+          ).join('\n')
+        : '• Sin breakdown de clips';
+
+    const replicableTemplate = analysis.replicableTemplate && typeof analysis.replicableTemplate === 'object'
+        ? Object.entries(analysis.replicableTemplate as Record<string,string>)
+            .map(([key, val]) => `${key.toUpperCase()}: ${val}`)
+            .join('\n')
+        : (analysis.extractedStructure || 'Sin plantilla generada');
+
+    const analysisDocContent = `ANÁLISIS CREATIVO — ECOMMERCE FORENSIC FRAMEWORK
 ================================================
 Archivo: ${generatedNomen}
 Ruta Drive: ${drivePath}/
+Fecha: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+Score Global: ${analysis.overallScore || analysis.hookScore || '—'}/10
 
 CLASIFICACIÓN CREATIVA
 ─────────────────────
 Concepto: ${analysis.concept} — ${analysis.conceptName}
 Tráfico: ${analysis.traffic}
 Consciencia: ${analysis.awareness} — ${analysis.awarenessName}
+Framework: ${analysis.framework}
+Tipo Producción: ${analysis.productionType || '—'}
+Sofisticación: ${analysis.sophistication || '—'}/5
+Life Force: ${analysis.lifeForce || '—'}
 
 ANÁLISIS DEL HOOK
 ─────────────────
 Score: ${analysis.hookScore}/10
 Tipo: ${analysis.hookType}
-Framework: ${analysis.framework}
+Texto exacto: "${analysis.hookText || transcription.slice(0, 150).replace(/\n/g, ' ')}..."
 Ángulo: ${analysis.angle}
 Avatar: ${analysis.avatar}
 Emoción Pilar: ${analysis.emotionPillar}
+Deseo Principal: ${analysis.primaryDesire || '—'}
+
+POR QUÉ FUNCIONA
+────────────────
+${analysis.whyItWorks || '—'}
+
+PUNTOS DÉBILES
+──────────────
+${analysis.whyItFails || 'Sin fallos críticos detectados'}
 
 TRANSCRIPCIÓN
 ─────────────
-${transcription}
+${transcription || 'Sin transcripción disponible'}
 
 SHOT BREAKDOWN
 ──────────────
-${(analysis.clips || []).map((c: any) => `[${c.start}s → ${c.end}s] ${c.name}`).join('\n')}
+${clipsBlock}
 
 MEJORAS CONCRETAS
 ─────────────────
-${(analysis.improvements || []).map((i: any) => `• [${i.priority}] ${i.change} → ${i.impact}`).join("\n")}
+${improvementsBlock}
+
+VARIANTES DE HOOK
+─────────────────
+${hookVariantsBlock}
+
+COPY META DIRECTO
+─────────────────
+Headline: ${analysis.metaCopy?.headline || '—'}
+Primary Text: ${analysis.metaCopy?.primaryText || '—'}
+Description: ${analysis.metaCopy?.description || '—'}
+CTA: ${analysis.metaCopy?.cta || 'Comprar ahora'}
 
 PLANTILLA REPLICABLE
 ────────────────────
-${analysis.extractedStructure || ""}
+${replicableTemplate}
+
+MÉTRICAS META (actualizar con datos reales)
+─────────────────────────────────────────
+CTR:—   CPM:—   ROAS:—   Gasto:—   Impresiones:—   Frecuencia:—
 
 ────────────────────────────────────────
-EcomBoom — Creative Forensic Agent
-`.trim();
+EcomBoom — Creative Forensic Agent`.trim();
+
 
     await saveAnalysisDoc(productId, storeId, mainVideoUpload.parentFolderId, `ANALISIS_${generatedNomen.replace('.mp4', '')}`, analysisDocContent);
 

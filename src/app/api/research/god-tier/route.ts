@@ -245,7 +245,7 @@ export async function POST(req: NextRequest) {
             try {
                 const { saveResearchDoc } = await import('@/lib/services/drive-service');
                 const sku = product.sku || product.title.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase();
-                const docName = `${sku}_${stepKey}_${driveSubfolder}`;
+                const docName = `${sku}_${driveSubfolder}`;
                 await saveResearchDoc(
                     product.driveFolderId,
                     `1_INVESTIGACION/${driveSubfolder}`,

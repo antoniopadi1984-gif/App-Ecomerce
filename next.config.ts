@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '500mb',
     },
+    middlewareClientMaxBodySize: 500 * 1024 * 1024,
     optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tooltip', 'framer-motion', 'recharts'],
   },
   images: {
@@ -61,6 +62,12 @@ const nextConfigWithSize = {
 nextConfigWithSize.experimental = {
     ...nextConfig.experimental,
     serverActions: { bodySizeLimit: '500mb' },
+};
+
+// @ts-ignore
+nextConfigWithSize.api = {
+    bodyParser: { sizeLimit: '500mb' },
+    responseLimit: '500mb',
 };
 
 export default nextConfigWithSize;

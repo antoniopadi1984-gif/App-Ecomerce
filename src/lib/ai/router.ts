@@ -12,7 +12,7 @@ const TASK_TO_AGENT: Record<string, AgentRole> = {
     [TaskType.COPY_LONGFORM]:     'funnel-architect',
     [TaskType.COPY_SHORT]:        'funnel-architect',
     [TaskType.SCRIPT_VIDEO]:      'video-intelligence',
-    [TaskType.CREATIVE_FORENSIC]: 'creative-forensic',
+    [TaskType.CREATIVE_FORENSIC]: 'video-intelligence',
     [TaskType.COPYWRITING_DEEP]:  'funnel-architect',
     [TaskType.COPYWRITING_PAGES]: 'funnel-architect',
     [TaskType.SCRIPTS_ADVANCED]:  'video-intelligence',

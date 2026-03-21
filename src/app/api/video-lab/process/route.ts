@@ -191,7 +191,30 @@ async function processVideoBackground(
  
     // PASO 2: Transcripción con ElevenLabs Scribe v2
     const audioPath = path.join(tmpDir, 'audio.mp3');
-    await execAsync(`ffmpeg -i '${strippedPath}' -vn -acodec mp3 '${audioPath}' -y`);
+    // Extraer audio — si el vídeo no tiene audio, continuar sin transcripción
+    let hasAudio = true;
+    try {
+        let hasAudio = true;
+    try {
+        await execAsync(`ffmpeg -i '${strippedPath}' -vn -acodec mp3 '${audioPath}' -y`);
+    } catch (audioErr: any) {
+        if (audioErr.message?.includes('does not contain any stream') ||
+            audioErr.message?.includes('Invalid argument')) {
+            console.warn('[VideoLab] Vídeo sin audio — continuando sin transcripción');
+            hasAudio = false;
+        } else {
+            throw audioErr;
+        }
+    }
+    } catch (audioErr: any) {
+        if (audioErr.message?.includes('does not contain any stream') || 
+            audioErr.message?.includes('Invalid argument')) {
+            console.warn('[VideoLab] Vídeo sin audio — continuando sin transcripción');
+            hasAudio = false;
+        } else {
+            throw audioErr;
+        }
+    }
     const audioBuffer = await fs.readFile(audioPath);
     const audioBlob = new Blob([audioBuffer], { type: 'audio/mp3' });
     

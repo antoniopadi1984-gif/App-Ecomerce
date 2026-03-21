@@ -26,7 +26,6 @@ import { ElevenLabsService } from '@/lib/services/elevenlabs-service';
 import { AiRouter } from '@/lib/ai/router';
 import { TaskType } from '@/lib/ai/providers/interfaces';
 import { generateSRT } from '@/lib/video/subtitle-utils';
-import { DEFAULT_AGENT_PROMPTS } from '@/lib/ai/defaults/agent-prompts';
 
 const execAsync = promisify(exec);
 
@@ -467,7 +466,7 @@ Los clips DEBEN seguir la estructura del framework detectado.`;
 
     // 5.2 Subir Documento de Análisis (Google Doc)
     const analysisDocContent = `
-ANÁLISIS CREATIVO — SPENCER PAWLING METHODOLOGY
+ANÁLISIS CREATIVO — ECOMMERCE FORENSIC FRAMEWORK
 ================================================
 Archivo: ${generatedNomen}
 Ruta Drive: ${drivePath}/

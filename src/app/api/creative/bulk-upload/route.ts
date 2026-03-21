@@ -70,15 +70,22 @@ export async function POST(req: NextRequest) {
                         }
                     );
                 } else {
-                    // Imagen — limpiar metadata y subir a Drive
-                    const { BulkUploadPipeline } = await import('@/lib/creative/bulk-upload-pipeline');
-                    await BulkUploadPipeline.processImage({
-                        buffer, fileName, productId, storeId, isCompetitor
+                    // Imagen — procesar directamente sin pipeline legacy
+                    const product = await (prisma as any).product.findUnique({
+                        where: { id: productId },
+                        select: { sku: true }
                     });
+                    const sku = product?.sku || 'PROD';
+                    const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+                    const existingCount = await (prisma as any).creativeAsset.count({
+                        where: { productId, type: 'IMAGE' }
+                    });
+                    const version = existingCount + 1;
+                    const nomenclatura = `${sku}_IMG_V${version}.${ext}`;
 
                     await (prisma as any).creativeAsset.update({
                         where: { id: assetId },
-                        data: { verdict: 'PENDING' }
+                        data: { nomenclatura, verdict: 'PENDING', type: 'IMAGE' }
                     });
                 }
             } catch (err: any) {

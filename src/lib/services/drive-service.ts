@@ -487,25 +487,18 @@ export async function uploadToProduct(
     let subFolder = folderId;
 
     if (opts.conceptCode) {
-        const biblioId = await findOrCreateFolder(drive, "2_CREATIVOS", folderId);
-        const parentConceptsId = biblioId;
-        
-        const conceptName = opts.conceptCode.toUpperCase().replace(/\s+/g, '_');
-        const conceptFolderId = await findOrCreateFolder(drive, conceptName, parentConceptsId);
-        
-        const stageName = (opts.funnelStage || 'TOFU').toUpperCase();
-        const stageFolderId = await findOrCreateFolder(drive, stageName, conceptFolderId);
-        
-        const angleName = (opts.angle || 'GENERAL').toUpperCase().replace(/\s+/g, '_');
-        const angleFolderId = await findOrCreateFolder(drive, angleName, stageFolderId);
-
-        subFolder = angleFolderId;
-
-        if (opts.subfolderName) {
-            if (opts.subfolderName.includes('/')) {
-                subFolder = await findOrCreatePath(drive, opts.subfolderName.toUpperCase(), folderId);
-            } else {
-                subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), subFolder);
+        // Si hay subfolderName con path completo, usarlo directamente sin crear estructura intermedia
+        if (opts.subfolderName && opts.subfolderName.includes('/')) {
+            subFolder = await findOrCreatePath(drive, opts.subfolderName.toUpperCase(), folderId);
+        } else {
+            const biblioId = await findOrCreateFolder(drive, "2_CREATIVOS", folderId);
+            const conceptName = opts.conceptCode.toUpperCase().replace(/\s+/g, '_');
+            const conceptFolderId = await findOrCreateFolder(drive, conceptName, biblioId);
+            const stageName = (opts.funnelStage || 'FRIO').toUpperCase();
+            const stageFolderId = await findOrCreateFolder(drive, stageName, conceptFolderId);
+            subFolder = stageFolderId;
+            if (opts.subfolderName) {
+                subFolder = await findOrCreateFolder(drive, opts.subfolderName.toUpperCase(), stageFolderId);
             }
         }
     } else if (opts.fileType === 'IMAGE') {

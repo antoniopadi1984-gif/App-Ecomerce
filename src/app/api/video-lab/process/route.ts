@@ -335,7 +335,7 @@ Devuelve SOLO este JSON:
     const generatedNomen = `${sku}_${conceptCode}_V${version}.mp4`;
 
     // Subir al path correcto en Drive
-    const drivePath = analysis.drivePath || `${conceptCode}/COLD`;
+    const drivePath = `CREATIVOS/${(analysis.drivePath || `${conceptCode}/FRIO`).toUpperCase()}`;
     
     let driveOptions: any = { 
         subfolderName: drivePath,
@@ -458,7 +458,7 @@ EcomBoom — Creative Forensic Agent
               angle: psychologyAngle,
               fileType: 'VIDEO', 
               version,
-              subfolderName: 'CLIPS'
+              subfolderName: `${drivePath}/CLIPS`
             }
         );
 

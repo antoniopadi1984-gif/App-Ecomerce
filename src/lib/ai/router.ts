@@ -46,6 +46,7 @@ export class AiRouter {
             images?: string[],
             video?: string,
             videoMimeType?: string,
+            videoFileUri?: string,
             model?: string,
             systemPrompt?: string,
             jsonSchema?: any,
@@ -84,6 +85,7 @@ export class AiRouter {
                 images: options.images,
                 video: options.video,
                 videoMimeType: options.videoMimeType,
+                videoFileUri: options.videoFileUri,
                 model: options.model,
                 context: options.context || options.systemPrompt, // Legacy bridge
                 taskDescription: taskKey as string,

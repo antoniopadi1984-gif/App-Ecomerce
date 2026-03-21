@@ -193,10 +193,6 @@ async function processVideoBackground(
     // Extraer audio — si el vídeo no tiene audio, continuar sin transcripción
     let hasAudio = true;
     try {
-        let hasAudio = true;
-    try {
-        let hasAudio = true;
-    try {
         await execAsync(`ffmpeg -i '${strippedPath}' -vn -acodec mp3 '${audioPath}' -y`);
     } catch (audioErr: any) {
         if (audioErr.message?.includes('does not contain any stream') ||
@@ -207,7 +203,7 @@ async function processVideoBackground(
             throw audioErr;
         }
     }
-    } catch (audioErr: any) {
+    try {
         if (audioErr.message?.includes('does not contain any stream') ||
             audioErr.message?.includes('Invalid argument')) {
             console.warn('[VideoLab] Vídeo sin audio — continuando sin transcripción');
@@ -341,9 +337,21 @@ Los clips DEBEN seguir la estructura del framework detectado.`;
         console.warn('[VideoLab] No se pudo cargar system prompt desde BD, usando default');
     }
 
+    // Subir vídeo a Gemini File API para análisis visual
+    let videoFileUri: string | undefined;
+    try {
+        const { agentDispatcher } = await import('@/lib/agents/agent-dispatcher');
+        videoFileUri = await agentDispatcher.uploadVideoToGemini(strippedPath, file.type || 'video/mp4');
+        console.log('[VideoLab] ✅ Vídeo subido a Gemini File API para análisis visual');
+    } catch (e: any) {
+        console.warn('[VideoLab] No se pudo subir vídeo a Gemini File API — analizando solo transcripción:', e.message);
+    }
+
     const analysisResult = await AiRouter.dispatch(storeId, TaskType.CREATIVE_FORENSIC, analysisPrompt, { 
         jsonSchema: true,
-        systemPromptOverride: videoIntelligencePrompt
+        systemPromptOverride: videoIntelligencePrompt,
+        videoFileUri,
+        videoMimeType: file.type || 'video/mp4'
     });
 
     let analysis: any = {
@@ -547,8 +555,8 @@ EcomBoom — Creative Forensic Agent
     for (let i = 0; i < clipsFiles.length; i++) {
         const clipFile = clipsFiles[i];
         const clipBuffer = await fs.readFile(path.join(clipsDir, clipFile));
-        const clipNameTag = clipFile.replace('.mp4', '').split('_').slice(2).join('_');
-        const clipNomen = `${sku}_${conceptCode}_V${version}_${clipNameTag}.mp4`.toUpperCase();
+        // El clipFile ya tiene nombre completo MICRLIFT_C1_V1_HOOK.mp4 — usarlo directamente
+        const clipNomen = clipFile.toUpperCase();
         
         const clipUpload = await uploadToProduct(
             clipBuffer,

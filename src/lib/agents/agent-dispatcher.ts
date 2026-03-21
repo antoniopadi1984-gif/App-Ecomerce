@@ -14,6 +14,7 @@ export interface AgentRequest {
     images?: string[];
     video?: string;
     videoMimeType?: string;
+    videoFileUri?: string;
     model?: string;
     locale?: string;
     storeId?: string;
@@ -212,6 +213,17 @@ export class AgentDispatcher {
         const fullPrompt = `LOCALIZACIÓN: ${culturalDirectives}\n\n${config.systemPrompt || ''}\n\n${request.context ? `CONTEXTO:\n${request.context}\n\n` : ''}TAREA:\n${request.prompt}`;
 
         const parts: any[] = [{ text: fullPrompt }];
+        
+        // Si hay fileUri de Gemini File API, añadir el vídeo para análisis visual
+        if (request.videoFileUri) {
+            parts.unshift({
+                fileData: {
+                    mimeType: request.videoMimeType || 'video/mp4',
+                    fileUri: request.videoFileUri
+                }
+            });
+            console.log('[Gemini] Analizando vídeo con File API:', request.videoFileUri);
+        }
 
         if (request.images && request.images.length > 0) {
             for (const imgUrl of request.images) {
@@ -324,7 +336,62 @@ export class AgentDispatcher {
         throw new Error("No Gemini credentials. Añade GEMINI_API_KEY en .env.local (obtén una en aistudio.google.com/apikey)");
     }
 
-    private async processGeminiResponse(response: Response, role: AgentRole, config: any): Promise<AgentResponse> {
+    // Upload vídeo a Gemini File API para análisis visual
+    async uploadVideoToGemini(videoPath: string, mimeType: string = 'video/mp4'): Promise<string> {
+        const fs = await import('fs');
+        const fetch = (await import('node-fetch')).default;
+        
+        const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        if (!serviceAccountKey) throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY no configurado');
+        
+        const sa = JSON.parse(serviceAccountKey);
+        const { GoogleAuth } = await import('google-auth-library');
+        const auth = new GoogleAuth({
+            credentials: sa,
+            scopes: ['https://www.googleapis.com/auth/generative-language']
+        });
+        const token = await auth.getAccessToken();
+        
+        const fileBuffer = fs.default.readFileSync(videoPath);
+        const fileSize = fileBuffer.length;
+        
+        // Iniciar upload resumable
+        const initRes = await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=resumable', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'X-Goog-Upload-Protocol': 'resumable',
+                'X-Goog-Upload-Command': 'start',
+                'X-Goog-Upload-Header-Content-Length': fileSize.toString(),
+                'X-Goog-Upload-Header-Content-Type': mimeType,
+            },
+            body: JSON.stringify({ file: { display_name: 'video_analysis' } })
+        });
+        
+        const uploadUrl = initRes.headers.get('x-goog-upload-url');
+        if (!uploadUrl) throw new Error('No se obtuvo upload URL de Gemini File API');
+        
+        // Subir el archivo
+        const uploadRes = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Length': fileSize.toString(),
+                'X-Goog-Upload-Offset': '0',
+                'X-Goog-Upload-Command': 'upload, finalize',
+            },
+            body: fileBuffer
+        });
+        
+        const uploadData = await uploadRes.json() as any;
+        const fileUri = uploadData.file?.uri;
+        if (!fileUri) throw new Error('No se obtuvo fileUri de Gemini File API');
+        
+        console.log('[Gemini FileAPI] ✅ Vídeo subido:', fileUri);
+        return fileUri;
+    }
+
+        private async processGeminiResponse(response: Response, role: AgentRole, config: any): Promise<AgentResponse> {
         if (!response.ok) {
             const errorBody = await response.text();
             console.error(`[AgentDispatcher] Gemini API Error (${response.status}):`, errorBody);

@@ -335,7 +335,7 @@ Devuelve SOLO este JSON:
     const generatedNomen = `${sku}_${conceptCode}_V${version}.mp4`;
 
     // Subir al path correcto en Drive
-    const drivePath = `CREATIVOS/${(analysis.drivePath || `${conceptCode}/FRIO`).toUpperCase()}`;
+    const drivePath = `2_CREATIVOS/${(analysis.drivePath || `${conceptCode}/FRIO`).toUpperCase()}`;
     
     let driveOptions: any = { 
         subfolderName: drivePath,

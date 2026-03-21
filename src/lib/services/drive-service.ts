@@ -70,7 +70,7 @@ export const DrivePaths = {
         `ECOMBOOM/${storeId}/${sku}/C${cNum}_${cName.replace(/\s+/g, '')}/${version}`,
     research: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/01_RESEARCH`,
     landings: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/04_LANDINGS`,
-    assets: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/06_ASSETS`,
+    assets: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/6_ASSETS`,
     index: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/index.json`,
 };
 
@@ -222,27 +222,34 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
 
         // ── ESTRUCTURA DEFINITIVA ──────────────────────────────────────
 
-        // INVESTIGACION
-        await findOrCreateFolder(drive, 'INVESTIGACION', prodFolderId);
+        // 1_INVESTIGACION
+        const inv1Id = await findOrCreateFolder(drive, '1_INVESTIGACION', prodFolderId);
+        await findOrCreateFolder(drive, 'P1_PRODUCTO', inv1Id);
+        await findOrCreateFolder(drive, 'P2_AVATARES', inv1Id);
+        await findOrCreateFolder(drive, 'P3_COMPETENCIA', inv1Id);
+        await findOrCreateFolder(drive, 'P4_ANGULOS', inv1Id);
+        await findOrCreateFolder(drive, 'P5_HOOKS', inv1Id);
+        await findOrCreateFolder(drive, 'P6_OBJECIONES', inv1Id);
+        await findOrCreateFolder(drive, 'P7_OFERTA', inv1Id);
 
-        // CREATIVOS — carpetas de concepto creadas dinámicamente por el agente
-        await findOrCreateFolder(drive, 'CREATIVOS', prodFolderId);
+        // 2_CREATIVOS — carpetas C1-C9 creadas dinámicamente por el agente
+        await findOrCreateFolder(drive, '2_CREATIVOS', prodFolderId);
 
-        // ESTATICOS — misma estructura que CREATIVOS
-        await findOrCreateFolder(drive, 'ESTATICOS', prodFolderId);
+        // 3_ESTATICOS — misma estructura que 2_CREATIVOS
+        await findOrCreateFolder(drive, '3_ESTATICOS', prodFolderId);
 
-        // COMPETENCIA
-        const compId = await findOrCreateFolder(drive, 'COMPETENCIA', prodFolderId);
+        // 4_COMPETENCIA
+        const compId = await findOrCreateFolder(drive, '4_COMPETENCIA', prodFolderId);
         await findOrCreateFolder(drive, 'INBOX', compId);
 
-        // LANDINGS
-        const landingsId = await findOrCreateFolder(drive, 'LANDINGS', prodFolderId);
+        // 5_LANDINGS
+        const landingsId = await findOrCreateFolder(drive, '5_LANDINGS', prodFolderId);
         await findOrCreateFolder(drive, 'SPY', landingsId);
         await findOrCreateFolder(drive, 'CLONES', landingsId);
         await findOrCreateFolder(drive, 'ADAPTADAS', landingsId);
 
-        // ASSETS
-        const assetsId = await findOrCreateFolder(drive, 'ASSETS', prodFolderId);
+        // 6_ASSETS
+        const assetsId = await findOrCreateFolder(drive, '6_ASSETS', prodFolderId);
         await findOrCreateFolder(drive, 'PRODUCTO', assetsId);
         await findOrCreateFolder(drive, 'PACKAGING', assetsId);
         await findOrCreateFolder(drive, 'AVATARES', assetsId);
@@ -474,8 +481,8 @@ export async function uploadToProduct(
     let subFolder = folderId;
 
     if (opts.conceptCode) {
-        const biblioId = await findOrCreateFolder(drive, "02_BIBLIOTECA_LISTOS_PARA_ADS", folderId);
-        const parentConceptsId = await findOrCreateFolder(drive, "02_CONCEPTOS", biblioId);
+        const biblioId = await findOrCreateFolder(drive, "2_CREATIVOS", folderId);
+        const parentConceptsId = biblioId;
         
         const conceptName = opts.conceptCode.toUpperCase().replace(/\s+/g, '_');
         const conceptFolderId = await findOrCreateFolder(drive, conceptName, parentConceptsId);
@@ -496,7 +503,7 @@ export async function uploadToProduct(
             }
         }
     } else if (opts.fileType === 'IMAGE') {
-        const assetsFolder = await findOrCreateFolder(drive, '06_ASSETS', folderId);
+        const assetsFolder = await findOrCreateFolder(drive, '6_ASSETS', folderId);
         subFolder = await findOrCreateFolder(drive, 'IMAGENES_LANDING', assetsFolder);
     }
 
@@ -579,7 +586,7 @@ export async function uploadToInbox(
     let folderId = product?.driveFolderId;
     if (!folderId) folderId = await setupProductDrive(productId, storeId);
 
-    const inboxId = await findOrCreateFolder(drive, "00_INBOX_SIN_PROCESAR", folderId);
+    const inboxId = await findOrCreateFolder(drive, "4_COMPETENCIA/INBOX", folderId);
     const targetFolderId = await findOrCreateFolder(drive, subfolder, inboxId);
 
     const res = await drive.files.create({
@@ -646,7 +653,7 @@ export async function getLandingAssets(productId: string): Promise<DriveFileEntr
 
     // Buscar en 05_LANDINGS/IMAGENES_LANDING o 06_ASSETS/IMAGENES_LANDING
     const centroId = product.driveFolderId;
-    const assetsFolder = await findOrCreateFolder(drive, '06_ASSETS', centroId);
+    const assetsFolder = await findOrCreateFolder(drive, '6_ASSETS', centroId);
     const landingImagesId = await findOrCreateFolder(drive, 'IMAGENES_LANDING', assetsFolder);
 
     const res = await drive.files.list({
@@ -682,7 +689,7 @@ export async function saveLandingProject(
     let folderId = product?.driveFolderId;
     if (!folderId) folderId = await setupProductDrive(productId, storeId);
 
-    const landingsFolderId = await findOrCreateFolder(drive, '05_LANDINGS', folderId);
+    const landingsFolderId = await findOrCreateFolder(drive, '5_LANDINGS', folderId);
     const typeFolderId = await findOrCreateFolder(drive, type.toUpperCase(), landingsFolderId);
     
     const fileName = `landing_v${version}.json`;
@@ -714,7 +721,7 @@ export async function processInbox(productId: string, storeId: string) {
     if (!product?.driveFolderId) return { error: 'No drive folder' };
 
     const centroId = product.driveFolderId;
-    const inboxId = await findOrCreateFolder(drive, "00_INBOX_SIN_PROCESAR", centroId);
+    const inboxId = await findOrCreateFolder(drive, "4_COMPETENCIA/INBOX", centroId);
 
     const res = await drive.files.list({
         q: `'${inboxId}' in parents and trashed = false`,
@@ -836,7 +843,13 @@ export async function getOrCreateConceptFolder(
     const drive = await getDriveClient();
 
     // Encontrar carpeta raíz de la sección
-    const sectionId = await findOrCreateFolder(drive, section, productRootId);
+    const sectionMap: Record<string, string> = {
+        'CREATIVOS': '2_CREATIVOS',
+        'ESTATICOS': '3_ESTATICOS',
+        'COMPETENCIA': '4_COMPETENCIA',
+    };
+    const sectionFolderName = sectionMap[section] || section;
+    const sectionId = await findOrCreateFolder(drive, sectionFolderName, productRootId);
 
     // Carpeta del concepto: C2_ANTES_DESPUES
     const conceptFolder = `${concept}_${CONCEPTS[concept]}`;

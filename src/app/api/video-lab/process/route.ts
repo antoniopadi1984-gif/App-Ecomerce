@@ -338,7 +338,13 @@ DEVUELVE ÚNICAMENTE EL JSON COMPLETO SIN MARKDOWN.`;
         if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
             raw = raw.slice(firstBrace, lastBrace + 1);
         }
-        const parsed = JSON.parse(raw);
+        let parsed = JSON.parse(raw);
+        // Gemini a veces envuelve el JSON en una clave raíz — extraer el objeto real
+        const rootKeys = Object.keys(parsed);
+        if (rootKeys.length === 1 && typeof parsed[rootKeys[0]] === 'object') {
+            console.log('[VideoLab] JSON envuelto detectado — extrayendo de clave:', rootKeys[0]);
+            parsed = parsed[rootKeys[0]];
+        }
         analysis = { ...analysis, ...parsed };
         console.log('[VideoLab] ✅ Análisis parseado — concept:', parsed.concept, '| framework:', parsed.framework, '| traffic:', parsed.traffic);
     } catch (e) {

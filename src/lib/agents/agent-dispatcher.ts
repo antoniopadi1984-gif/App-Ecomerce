@@ -258,7 +258,8 @@ export class AgentDispatcher {
 
         // Canal 1: Vertex AI (Service Account) ─────────────────────────────
         // Usa v1beta1 que soporta los modelos Gemini 2026 (gemini-3.1-pro-preview, etc.)
-        if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+        // Si hay videoFileUri, usar API Key directa (Vertex AI no soporta fileUri de Generative Language)
+        if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY && !request.videoFileUri) {
             try {
                 const client = await this.googleAuth.getClient();
                 const token = await client.getAccessToken();
@@ -341,25 +342,16 @@ export class AgentDispatcher {
         const fs = await import('fs');
         const fetch = (await import('node-fetch')).default;
         
-        const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-        if (!serviceAccountKey) throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY no configurado');
-        
-        const sa = JSON.parse(serviceAccountKey);
-        const { GoogleAuth } = await import('google-auth-library');
-        const auth = new GoogleAuth({
-            credentials: sa,
-            scopes: ['https://www.googleapis.com/auth/generative-language']
-        });
-        const token = await auth.getAccessToken();
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error('GEMINI_API_KEY no configurado');
         
         const fileBuffer = fs.default.readFileSync(videoPath);
         const fileSize = fileBuffer.length;
         
-        // Iniciar upload resumable
-        const initRes = await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=resumable', {
+        // Iniciar upload resumable con API Key
+        const initRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=resumable&key=${apiKey}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'X-Goog-Upload-Protocol': 'resumable',
                 'X-Goog-Upload-Command': 'start',

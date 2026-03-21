@@ -410,7 +410,7 @@ Los clips DEBEN seguir la estructura del framework detectado.`;
             const duration = clip.end - clip.start;
             if (duration > 0.5) {
                 await execAsync(
-                    `ffmpeg -i '${strippedPath}' -ss ${clip.start} -t ${duration} -c:v libx264 -crf 23 -c:a aac '${clipsDir}/${sku}_${conceptCode}_V${version}_${name}.mp4' -y`
+                    `ffmpeg -i '${strippedPath}' -ss ${clip.start} -t ${duration} -c:v libx264 -crf 23 -c:a aac '${clipsDir}/${sku}_${conceptCode}_${name}.mp4' -y`
                 );
             }
         }

@@ -571,6 +571,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     }
 
     return (
+        <>
         <div className="flex flex-col h-[calc(100vh-140px)] animate-in fade-in duration-500">
             {/* TOP ACTIONS BAR */}
             <div className="flex items-center justify-between p-4 bg-white border-b border-[var(--border)] rounded-t-xl">
@@ -1637,5 +1638,6 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                 </div>
             </div>
         )}
+        </>
     );
 }

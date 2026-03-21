@@ -402,19 +402,19 @@ ESTRUCTURA FIJA (NUNCA cambiar, NUNCA crear carpetas fuera de esta estructura):
 TIENDA/
   PRODUCTO_[SKU]/
     CENTRO_CREATIVO/
-      00_INBOX_SIN_PROCESAR/        ← archivos recién subidos sin clasificar
+      4_COMPETENCIA/INBOX/        ← archivos recién subidos sin clasificar
         SPY/                        ← vídeos de competencia
       01_ESTUDIO_PRODUCCION/
         01_IA_VILLAGES/             ← avatares generados por IA
         02_AUDIO/                   ← narración, música, SFX
         03_RAW/                     ← tomas en bruto
         04_PROYECTOS/               ← archivos de proyecto (Premiere, DaVinci)
-      02_BIBLIOTECA_LISTOS_PARA_ADS/
+      2_CREATIVOS/
         01_RETARGETING/
           R10_COPY_DIRECTO/
           R20_COPY_PROBLEMA/
           R30_COPY_STORY/
-        02_CONCEPTOS/
+        2_CREATIVOS/
         03_ESTATICOS/
       03_ESTATICOS/                 ← imágenes finales por ángulo
         ANGULO_1/ ANGULO_2/ ... ANGULO_6/
@@ -422,12 +422,12 @@ TIENDA/
         SLIDE_1/ ... SLIDE_7/
       05_VIDEOS/
         TOF/ MOF/ BOF/ RETARGETING/ VSL/ UGC/
-      05_LANDINGS/
+      5_LANDINGS/
         SPY/                        ← landings clonadas de competencia
         CLONES/                     ← versiones adaptadas
         ADVERTORIAL/
         LISTICLE/
-      06_ASSETS/
+      6_ASSETS/
         PACKAGING/
         TRUST_BADGES/
         IMAGENES_LANDING/
@@ -457,7 +457,7 @@ NUNCA:
 - Crear carpetas fuera de la estructura definida
 - Renombrar archivos que ya siguen la nomenclatura
 - Mover archivos sin registrar el movimiento en BD
-- Dejar archivos en 00_INBOX más de 24h
+- Dejar archivos en 4_COMPETENCIA/INBOX más de 24h
 
 OUTPUT en JSON:
 {

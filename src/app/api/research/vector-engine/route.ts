@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 // → 50 vectores por producto
 // → etiquetados por avatar, emoción, nivel consciencia
 // → listos para: ads, listicles, PDP, emails, VSL
-// → guardados en Drive: 01_RESEARCH/VECTORES/
+// → guardados en Drive: 1_INVESTIGACION/VECTORES/
 export async function POST(req: Request) {
     try {
         const body = await req.json();
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
 
         // Integración con DriveSync para exportar estos 50 JSON a Sheets/Docts
         // --> driveSync.createFile(...)
-        console.log(`[Vector Engine] Exportando a Drive: 01_RESEARCH/VECTORES/VECTORES_PRODUCTO.json`);
+        console.log(`[Vector Engine] Exportando a Drive: 1_INVESTIGACION/VECTORES/VECTORES_PRODUCTO.json`);
 
         return NextResponse.json({ ok: true, generatedVectors: vectors.length, data: vectors });
 

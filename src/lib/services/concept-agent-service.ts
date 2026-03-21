@@ -128,7 +128,7 @@ SKU Sugerido (si existe): ${product.sku || 'N/A'}
 
             if (productWithDrive?.driveRootPath) {
                 const structure = JSON.parse(productWithDrive.driveRootPath);
-                // Target: 02_BIBLIOTECA_LISTOS_PARA_ADS > 02_CONCEPTOS
+                // Target: 2_CREATIVOS > 2_CREATIVOS
                 const conceptosFolderId = structure.biblioteca?.conceptos;
 
                 if (conceptosFolderId) {

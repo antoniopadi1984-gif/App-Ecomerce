@@ -22,19 +22,19 @@ export async function POST(req: NextRequest) {
 
         // 1. Generate structure
         const foldersToCreate = [
-            `00_INBOX/VIDEOS`,
-            `00_INBOX/IMAGENES`,
-            `00_INBOX/LANDINGS`,
-            `00_INBOX/SPY`,
-            `00_INBOX/OTROS`,
+            `4_COMPETENCIA/INBOX/VIDEOS`,
+            `4_COMPETENCIA/INBOX/IMAGENES`,
+            `4_COMPETENCIA/INBOX/LANDINGS`,
+            `4_COMPETENCIA/INBOX/SPY`,
+            `4_COMPETENCIA/INBOX/OTROS`,
 
-            `01_RESEARCH/CORE`,
-            `01_RESEARCH/AVATARES`,
-            `01_RESEARCH/ANGULOS`,
-            `01_RESEARCH/COMBOS`,
-            `01_RESEARCH/VECTORES`,
+            `1_INVESTIGACION/CORE`,
+            `1_INVESTIGACION/AVATARES`,
+            `1_INVESTIGACION/ANGULOS`,
+            `1_INVESTIGACION/COMBOS`,
+            `1_INVESTIGACION/VECTORES`,
 
-            `03_CONCEPTOS`,
+            `2_CREATIVOS`,
 
             `04_PRODUCCION/TOF/UGC`,
             `04_PRODUCCION/TOF/FACECAM`,
@@ -42,10 +42,10 @@ export async function POST(req: NextRequest) {
             `04_PRODUCCION/BOF/STATIC`,
             `04_PRODUCCION/RETARGETING/STATIC`,
 
-            `05_LANDINGS/VSL`,
-            `05_LANDINGS/ADVERTORIAL`,
-            `05_LANDINGS/LISTICLE`,
-            `05_LANDINGS/PRODUCT_PAGE`,
+            `5_LANDINGS/VSL`,
+            `5_LANDINGS/ADVERTORIAL`,
+            `5_LANDINGS/LISTICLE`,
+            `5_LANDINGS/PRODUCT_PAGE`,
 
             `06_AVATARES_IA/FACE_MODELS`,
             `06_AVATARES_IA/VOICE_PROFILES`,

@@ -6,7 +6,7 @@ import { MetadataRemover } from '@/lib/creative/generators/metadata-remover';
 // POST /api/spy/import
 // Recibe assets Meta/TikTok desde extensión Chrome
 // → descarga archivos (mp4, webm, jpg, gif, png)
-// → sube a 00_INBOX/SPY/ en Drive
+// → sube a 4_COMPETENCIA/INBOX/SPY/ en Drive
 // → limpia metadata FFmpeg (strip all, normalizar H264/AAC)
 // → lanza agente clasificador completo
 export async function POST(req: NextRequest) {
@@ -43,10 +43,10 @@ export async function POST(req: NextRequest) {
                     ? await MetadataRemover.stripVideo(assetBuffer, fileName).catch(() => assetBuffer)
                     : await MetadataRemover.stripImage(assetBuffer, fileName).catch(() => assetBuffer);
 
-                // Subir a Drive 00_INBOX/SPY/
+                // Subir a Drive 4_COMPETENCIA/INBOX/SPY/
                 const driveResult = await uploadToProduct(
                     stripped, fileName, mimeType, productoId, storeId,
-                    { subfolderName: `00_INBOX/SPY/${competitorId || 'GENERAL'}`, fileType: asset.type === 'video' ? 'VIDEO' : 'IMAGE' }
+                    { subfolderName: `4_COMPETENCIA/INBOX/SPY/${competitorId || 'GENERAL'}`, fileType: asset.type === 'video' ? 'VIDEO' : 'IMAGE' }
                 );
 
                 // Registrar en BD
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
                         productId: productoId, storeId,
                         driveFileId: driveResult.driveFileId,
                         driveUrl: driveResult.driveUrl,
-                        drivePath: `00_INBOX/SPY/${competitorId || 'GENERAL'}`,
+                        drivePath: `4_COMPETENCIA/INBOX/SPY/${competitorId || 'GENERAL'}`,
                         assetType: asset.type === 'video' ? 'SPY_VIDEO' : 'SPY_IMAGE',
                         sourceUrl: assetUrl,
                         organized: false, // Pendiente de clasificar por el agente

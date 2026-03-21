@@ -348,7 +348,7 @@ Devuelve SOLO este JSON:
 
     if (hints.competitorSource) {
         const brand = conceptCode.replace('SPY_', '') || 'UNKNOWN';
-        driveOptions.subfolderName = `00_INBOX/SPY/COMPETENCIA/${brand}`;
+        driveOptions.subfolderName = `4_COMPETENCIA/INBOX/SPY/COMPETENCIA/${brand}`;
     }
 
     const mainVideoUpload = await uploadToProduct(

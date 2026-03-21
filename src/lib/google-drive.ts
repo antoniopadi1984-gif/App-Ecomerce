@@ -8,15 +8,15 @@
  *   [STORE_ID]/
  *     _CONFIG/
  *     [PROD_SKU]_[PROD_TITLE]/
- *       00_INBOX/
- *       01_RESEARCH/
+ *       4_COMPETENCIA/INBOX/
+ *       1_INVESTIGACION/
  *       02_SPY/
- *       03_CONCEPTOS/
+ *       2_CREATIVOS/
  *       04_PRODUCCION/
- *       05_LANDINGS/
- *       06_ASSETS/
- *       07_AVATARES_IA/
- *       08_BIBLIOTECA/
+ *       5_LANDINGS/
+ *       6_ASSETS/
+ *       6_ASSETS/AVATARES/
+ *       2_CREATIVOS/
  *
  * REGLA: Drive es almacenamiento visual. La verdad está en DB (DriveFolder table).
  * Los agentes NUNCA buscan carpetas en Drive — preguntan a la DB.
@@ -28,15 +28,15 @@ import { google } from 'googleapis';
 const ROOT_FOLDER_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1-3S_uYhq3mEBbtPNwNP3gXSLCN-yEmp8';
 
 const PRODUCT_SUBFOLDERS = [
-    '00_INBOX',
-    '01_RESEARCH',
+    '4_COMPETENCIA/INBOX',
+    '1_INVESTIGACION',
     '02_SPY',
-    '03_CONCEPTOS',
+    '2_CREATIVOS',
     '04_PRODUCCION',
-    '05_LANDINGS',
-    '06_ASSETS',
-    '07_AVATARES_IA',
-    '08_BIBLIOTECA',
+    '5_LANDINGS',
+    '6_ASSETS',
+    '6_ASSETS/AVATARES',
+    '2_CREATIVOS',
 ] as const;
 
 export type ProductSubfolder = typeof PRODUCT_SUBFOLDERS[number];
@@ -238,11 +238,11 @@ export async function createProductDriveStructure(
     };
 }
 
-// ─── Concept folder (dentro de 03_CONCEPTOS) ──────────────────────────────────
+// ─── Concept folder (dentro de 2_CREATIVOS) ──────────────────────────────────
 
 /**
  * Estructura Spencer Mode para un concepto creativo:
- * 03_CONCEPTOS/CONCEPT_01_NOMBRE/ANGLE_A_NOMBRE/CREATIVE_01/
+ * 2_CREATIVOS/CONCEPT_01_NOMBRE/ANGLE_A_NOMBRE/CREATIVE_01/
  *   RAW/ CLIPS/ SCRIPT/ AVATAR/ LANDING/ DATA/
  */
 export async function createConceptFolder(params: {
@@ -255,9 +255,9 @@ export async function createConceptFolder(params: {
     creativeNumber?: number; // ej: 1
 }): Promise<{ conceptFolderId: string; creativeFolderId?: string }> {
 
-    // Obtener carpeta 03_CONCEPTOS del producto desde BD
+    // Obtener carpeta 2_CREATIVOS del producto desde BD
     const conceptosFolder = await (prisma as any).driveFolder.findFirst({
-        where: { productId: params.productId, label: '03_CONCEPTOS' },
+        where: { productId: params.productId, label: '2_CREATIVOS' },
     });
 
     if (!conceptosFolder) throw new Error('Product Drive structure not initialized');

@@ -170,7 +170,7 @@ export class NomenclatureService {
         const cName = artifact.concept.name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
         const vFolder = `V${String(artifact.version).padStart(2, '0')}${artifact.variantSuffix || ''}`;
 
-        // Fixed path: STORE/PRODUCT/CENTRO_CREATIVO/02_BIBLIOTECA_LISTOS_PARA_ADS/02_CONCEPTOS/CONC_N_NAME/V_N/
-        return `${storeName}/${sku}/CENTRO_CREATIVO/02_BIBLIOTECA_LISTOS_PARA_ADS/02_CONCEPTOS/CONC_${String(cNum).padStart(2, '0')}_${cName}/${vFolder}`;
+        // Fixed path: STORE/PRODUCT/CENTRO_CREATIVO/2_CREATIVOS/2_CREATIVOS/CONC_N_NAME/V_N/
+        return `${storeName}/${sku}/CENTRO_CREATIVO/2_CREATIVOS/2_CREATIVOS/CONC_${String(cNum).padStart(2, '0')}_${cName}/${vFolder}`;
     }
 }

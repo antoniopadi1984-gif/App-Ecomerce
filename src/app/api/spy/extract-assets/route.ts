@@ -83,7 +83,7 @@ Devuelve JSON:
             const stripped = await MetadataRemover.stripImage(imgBuffer, fileName).catch(() => imgBuffer);
             const driveResult = await uploadToProduct(
                 stripped, fileName, 'image/jpeg', productId, storeId,
-                { subfolderName: `00_INBOX/SPY/${competitorId || 'GENERAL'}/ASSETS`, fileType: 'IMAGE' }
+                { subfolderName: `4_COMPETENCIA/INBOX/SPY/${competitorId || 'GENERAL'}/ASSETS`, fileType: 'IMAGE' }
             );
             uploadedImages.push({ url: imgUrl, driveUrl: driveResult.driveUrl, driveFileId: driveResult.driveFileId });
         } catch { /* imagen no descargable, skip */ }
@@ -94,7 +94,7 @@ Devuelve JSON:
         data: {
             productId, storeId,
             driveFileId: `spy_extract_${Date.now()}`,
-            drivePath: `00_INBOX/SPY/${competitorId || 'GENERAL'}/ASSETS`,
+            drivePath: `4_COMPETENCIA/INBOX/SPY/${competitorId || 'GENERAL'}/ASSETS`,
             assetType: 'SPY_EXTRACT',
             sourceUrl: targetUrl,
             organized: true,

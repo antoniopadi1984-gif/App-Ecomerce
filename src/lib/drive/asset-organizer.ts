@@ -42,16 +42,16 @@ export class AssetOrganizer {
         // Product folder
         const pFol = await this.driveSync.createFolder(productSku, rootFolderId);
 
-        // 00_INBOX
-        const inb = await this.driveSync.createFolder('00_INBOX', pFol.id);
+        // 4_COMPETENCIA/INBOX
+        const inb = await this.driveSync.createFolder('4_COMPETENCIA/INBOX', pFol.id);
         await this.driveSync.createFolder('VIDEOS', inb.id);
         await this.driveSync.createFolder('IMAGENES', inb.id);
         await this.driveSync.createFolder('LANDINGS', inb.id);
         await this.driveSync.createFolder('SPY', inb.id);
         await this.driveSync.createFolder('OTROS', inb.id);
 
-        // 01_RESEARCH
-        const res = await this.driveSync.createFolder('01_RESEARCH', pFol.id);
+        // 1_INVESTIGACION
+        const res = await this.driveSync.createFolder('1_INVESTIGACION', pFol.id);
         await this.driveSync.createFolder('CORE', res.id);
         await this.driveSync.createFolder('AVATARES', res.id);
         await this.driveSync.createFolder('ANGULOS', res.id);
@@ -70,8 +70,8 @@ export class AssetOrganizer {
             }
         }
 
-        // 03_CONCEPTOS
-        const conc = await this.driveSync.createFolder('03_CONCEPTOS', pFol.id);
+        // 2_CREATIVOS
+        const conc = await this.driveSync.createFolder('2_CREATIVOS', pFol.id);
         // We will create the dynamic folders later when concepts are generated
 
         // 04_PRODUCCION
@@ -84,8 +84,8 @@ export class AssetOrganizer {
             await this.driveSync.createFolder('STATIC', stg.id);
         }
 
-        // 05_LANDINGS
-        const lan = await this.driveSync.createFolder('05_LANDINGS', pFol.id);
+        // 5_LANDINGS
+        const lan = await this.driveSync.createFolder('5_LANDINGS', pFol.id);
         await this.driveSync.createFolder('VSL', lan.id);
         await this.driveSync.createFolder('ADVERTORIAL', lan.id);
         await this.driveSync.createFolder('LISTICLE', lan.id);

@@ -68,8 +68,8 @@ export const DrivePaths = {
         `ECOMBOOM/${storeId}/${sku}/C${cNum}_${cName.replace(/\s+/g, '')}`,
     version: (storeId: string, sku: string, cNum: number, cName: string, version: string) =>
         `ECOMBOOM/${storeId}/${sku}/C${cNum}_${cName.replace(/\s+/g, '')}/${version}`,
-    research: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/01_RESEARCH`,
-    landings: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/04_LANDINGS`,
+    research: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/1_INVESTIGACION`,
+    landings: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/5_LANDINGS`,
     assets: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/6_ASSETS`,
     index: (storeId: string, sku: string) => `ECOMBOOM/${storeId}/${sku}/index.json`,
 };
@@ -214,9 +214,15 @@ export async function setupProductDrive(productId: string, storeId: string): Pro
         let storeFolderId = store?.driveRootFolderId;
         if (!storeFolderId) storeFolderId = await setupStoreDrive(storeId);
 
-        // SKU como nombre de carpeta raíz del producto
-        const prodSku = product?.sku || product?.title?.toUpperCase()
-            .replace(/[^A-Z0-9]/g, '_').replace(/_+/g, '_').slice(0, 15) || productId;
+        // Nombre carpeta: SKU_NOMBRE (ej: MICRLIFT_PARCHES_MICROLIFT)
+        const skuPart = product?.sku || '';
+        // Usar solo las primeras 2 palabras del título, sin caracteres especiales
+        const titleWords = (product?.title || productId)
+            .replace(/[™®©|\-]/g, ' ')
+            .trim().split(/\s+/).slice(0, 2)
+            .join('_').toUpperCase()
+            .replace(/[^A-Z0-9_]/g, '');
+        const prodSku = skuPart ? `${skuPart}_${titleWords}` : titleWords;
 
         const prodFolderId = await findOrCreateFolder(drive, prodSku, storeFolderId);
 
@@ -651,7 +657,7 @@ export async function getLandingAssets(productId: string): Promise<DriveFileEntr
     });
     if (!product?.driveFolderId) return [];
 
-    // Buscar en 05_LANDINGS/IMAGENES_LANDING o 06_ASSETS/IMAGENES_LANDING
+    // Buscar en 5_LANDINGS/IMAGENES_LANDING o 6_ASSETS/IMAGENES_LANDING
     const centroId = product.driveFolderId;
     const assetsFolder = await findOrCreateFolder(drive, '6_ASSETS', centroId);
     const landingImagesId = await findOrCreateFolder(drive, 'IMAGENES_LANDING', assetsFolder);

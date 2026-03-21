@@ -75,7 +75,7 @@ REQUISITOS:
 
     const driveResult = await uploadTextToDrive(
         productId, storeId, fileName, finalHtml,
-        { subfolderName: '05_LANDINGS' }
+        { subfolderName: '5_LANDINGS' }
     );
 
     return NextResponse.json({

@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const htmlFileName = `LANDING_SPY_${competitorId || 'COMP'}_${timestamp}.html`;
     const htmlDrive = await uploadToProduct(
         htmlBuffer, htmlFileName, 'text/html', productoId, storeId,
-        { subfolderName: `00_INBOX/SPY/${competitorId || 'GENERAL'}/LANDINGS`, fileType: 'LANDING' }
+        { subfolderName: `4_COMPETENCIA/INBOX/SPY/${competitorId || 'GENERAL'}/LANDINGS`, fileType: 'LANDING' }
     );
 
     // 2. Subir screenshot si viene en base64
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         const screenshotFileName = `SCREENSHOT_${competitorId || 'COMP'}_${timestamp}.jpg`;
         screenshotDrive = await uploadToProduct(
             screenshotBuffer, screenshotFileName, 'image/jpeg', productoId, storeId,
-            { subfolderName: `00_INBOX/SPY/${competitorId || 'GENERAL'}/LANDINGS`, fileType: 'IMAGE' }
+            { subfolderName: `4_COMPETENCIA/INBOX/SPY/${competitorId || 'GENERAL'}/LANDINGS`, fileType: 'IMAGE' }
         ).catch(() => null);
     }
 
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
             productId: productoId, storeId,
             driveFileId: htmlDrive.driveFileId,
             driveUrl: htmlDrive.driveUrl,
-            drivePath: `00_INBOX/SPY/${competitorId || 'GENERAL'}/LANDINGS`,
+            drivePath: `4_COMPETENCIA/INBOX/SPY/${competitorId || 'GENERAL'}/LANDINGS`,
             assetType: 'LANDING_CLONE',
             sourceUrl: cloneData.url || '',
             organized: true, agentReadable: true,

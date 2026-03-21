@@ -6,13 +6,29 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { 
-    buildNomenclature, 
-    CREATIVE_CONCEPTS, 
-    TRAFFIC_TEMPS, 
-    AWARENESS_LEVELS,
-    getDrivePath
-} from '@/lib/creative/spencer-knowledge';
+// Clasificación creativa inlineada
+const CREATIVE_CONCEPTS_MAP: Record<string, { name: string; traffic: string[]; awareness: number[] }> = {
+    C1: { name: 'PROBLEMA',       traffic: ['FRIO'],     awareness: [1, 2] },
+    C2: { name: 'ANTES_DESPUES',  traffic: ['FRIO'],     awareness: [2, 3] },
+    C3: { name: 'MECANISMO',      traffic: ['FRIO'],     awareness: [3]    },
+    C4: { name: 'PRUEBA_SOCIAL',  traffic: ['TEMPLADO'], awareness: [3, 4] },
+    C5: { name: 'OFERTA',         traffic: ['CALIENTE'], awareness: [4, 5] },
+    C6: { name: 'OBJECION',       traffic: ['TEMPLADO'], awareness: [3, 4] },
+    C7: { name: 'RESULTADO',      traffic: ['TEMPLADO'], awareness: [4]    },
+    C8: { name: 'EDUCACION',      traffic: ['FRIO'],     awareness: [1, 2] },
+    C9: { name: 'AUTORIDAD',      traffic: ['FRIO'],     awareness: [2, 3] },
+};
+const CREATIVE_CONCEPTS = Object.entries(CREATIVE_CONCEPTS_MAP).map(([code, v]) => ({ code, ...v }));
+function getDrivePath(opts: { concept: string; traffic: string; awareness: number }): string {
+    const c = CREATIVE_CONCEPTS_MAP[opts.concept];
+    const name = c?.name || opts.concept;
+    return `${opts.concept}_${name}/${opts.traffic}/${opts.awareness}_AWARENESS`;
+}
+function buildNomenclature(opts: any): string {
+    return `${opts.sku}_${opts.concept}_V${opts.version}.${opts.ext || 'mp4'}`;
+}
+const TRAFFIC_TEMPS = ['FRIO', 'TEMPLADO', 'CALIENTE', 'RETARGETING'];
+const AWARENESS_LEVELS = [1, 2, 3, 4, 5];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface DriveFolder { id: string; name: string; path: string; }

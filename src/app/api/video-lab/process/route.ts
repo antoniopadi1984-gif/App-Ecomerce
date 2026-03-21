@@ -196,7 +196,18 @@ async function processVideoBackground(
     try {
         let hasAudio = true;
     try {
+        let hasAudio = true;
+    try {
         await execAsync(`ffmpeg -i '${strippedPath}' -vn -acodec mp3 '${audioPath}' -y`);
+    } catch (audioErr: any) {
+        if (audioErr.message?.includes('does not contain any stream') ||
+            audioErr.message?.includes('Invalid argument')) {
+            console.warn('[VideoLab] Vídeo sin audio — continuando sin transcripción');
+            hasAudio = false;
+        } else {
+            throw audioErr;
+        }
+    }
     } catch (audioErr: any) {
         if (audioErr.message?.includes('does not contain any stream') ||
             audioErr.message?.includes('Invalid argument')) {
@@ -297,21 +308,24 @@ DEVUELVE ÚNICAMENTE EL JSON COMPLETO SIN MARKDOWN.`;
     });
 
     let analysis: any = {
-        concept: 'C3',
-        conceptName: 'Mecanismo',
-        traffic: 'COLD',
-        awareness: 3,
-        awarenessName: 'Solution_Aware',
-        drivePath: 'C3_Mecanismo/COLD/3_Solution_Aware',
+        concept: 'C1',
+        conceptName: 'PROBLEMA',
+        traffic: 'FRIO',
+        awareness: 2,
+        awarenessName: '2_PROBLEM_AWARE',
+        drivePath: 'C1_PROBLEMA/FRIO/2_PROBLEM_AWARE',
         hookScore: 5,
-        hookType: 'General',
+        hookType: 'PROBLEMA_DIRECTO',
         framework: 'PAS',
-        angle: 'General',
+        angle: 'GENERAL',
         avatar: 'No detectado',
         emotionPillar: 'curiosidad',
         clips: [],
         improvements: 'Análisis no disponible',
-        replicableTemplate: ''
+        replicableTemplate: '',
+        hookVariants: [],
+        variantsRecommended: [],
+        metaCopy: { headline: '', primaryText: '', cta: '' }
     };
 
     try {
@@ -340,7 +354,7 @@ DEVUELVE ÚNICAMENTE EL JSON COMPLETO SIN MARKDOWN.`;
             const duration = clip.end - clip.start;
             if (duration > 0.5) {
                 await execAsync(
-                    `ffmpeg -i '${strippedPath}' -ss ${clip.start} -t ${duration} -c:v libx264 -crf 23 -c:a aac '${clipsDir}/CLIP_${i+1}_${name}.mp4' -y`
+                    `ffmpeg -i '${strippedPath}' -ss ${clip.start} -t ${duration} -c:v libx264 -crf 23 -c:a aac '${clipsDir}/${sku}_${conceptCode}_V${version}_${name}.mp4' -y`
                 );
             }
         }
@@ -362,7 +376,14 @@ DEVUELVE ÚNICAMENTE EL JSON COMPLETO SIN MARKDOWN.`;
     const generatedNomen = `${sku}_${conceptCode}_V${version}.mp4`;
 
     // Subir al path correcto en Drive
-    const drivePath = `2_CREATIVOS/${(analysis.drivePath || `${conceptCode}/FRIO`).toUpperCase()}`;
+    // Normalizar drivePath: todo mayúsculas, formato C1_PROBLEMA/FRIO/2_PROBLEM_AWARE
+    const rawDrivePath = (analysis.drivePath || `${conceptCode}_${analysis.conceptName || 'PROBLEMA'}/FRIO/2_PROBLEM_AWARE`)
+        .toUpperCase()
+        .replace(/\/COLD\//g, '/FRIO/')
+        .replace(/\/WARM\//g, '/TEMPLADO/')
+        .replace(/\/HOT[_A-Z]*\//g, '/CALIENTE/')
+        .replace(/\/RETARGET[_A-Z]*\//g, '/RETARGETING/');
+    const drivePath = `2_CREATIVOS/${rawDrivePath}`;
     
     let driveOptions: any = { 
         subfolderName: drivePath,

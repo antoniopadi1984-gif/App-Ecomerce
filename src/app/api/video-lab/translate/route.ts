@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
                 {}
             );
             const translatedText = translationResult.text.replace(/^"|"$/g, '').trim();
-            console.log(\`[Translate TTS] Texto traducido: \${translatedText.slice(0, 80)}...\`);
+            console.log(`[Translate TTS] Texto traducido: ${translatedText.slice(0, 80)}...`);
             
             // Generar audio con ElevenLabs TTS
             const ttsBuffer = await ElevenLabsService.textToSpeech(translatedText, voiceId, {
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
                 const burnedPath = path.join(tmpDir, 'final_tts.mp4');
                 await fs.writeFile(srtPath, srtContent);
                 try {
-                    await execAsync(\`ffmpeg -i '\${ttsVideoPath}' -vf "subtitles='\${srtPath}':force_style='FontSize=18,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,Outline=2,Bold=1,Alignment=2'" -c:a copy '\${burnedPath}' -y\`);
+                    await execAsync(`ffmpeg -i '${ttsVideoPath}' -vf "subtitles='${srtPath}':force_style='FontSize=18,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,Outline=2,Bold=1,Alignment=2'" -c:a copy '${burnedPath}' -y`);
                     finalPath = burnedPath;
                 } catch {}
             }
@@ -158,23 +158,23 @@ export async function POST(req: NextRequest) {
             // Subir a Drive
             const langCode = targetLang.toUpperCase();
             const baseNomen = (asset.nomenclatura || asset.name).replace(/\.mp4$/i, '');
-            const translatedNomen = \`\${baseNomen}_\${langCode}_TTS.mp4\`;
-            const driveSubfolder = \`\${asset.drivePath || '2_CREATIVOS'}/\${langCode}\`;
+            const translatedNomen = `${baseNomen}_${langCode}_TTS.mp4`;
+            const driveSubfolder = `${asset.drivePath || '2_CREATIVOS'}/${langCode}`;
             
             const videoUpload = await uploadToProduct(await fs.readFile(finalPath), translatedNomen, 'video/mp4', asset.productId, storeId, { subfolderName: driveSubfolder, conceptCode: asset.conceptCode, fileType: 'VIDEO', version: asset.versionNumber });
             
             let srtDriveUrl = '';
             if (srtContent) {
-                const srtUp = await uploadToProduct(Buffer.from(srtContent), \`\${baseNomen}_\${langCode}.srt\`, 'text/plain', asset.productId, storeId, { subfolderName: driveSubfolder, conceptCode: asset.conceptCode, fileType: 'DOCUMENT', version: asset.versionNumber });
-                srtDriveUrl = \`https://drive.google.com/file/d/\${srtUp.driveFileId}/view\`;
+                const srtUp = await uploadToProduct(Buffer.from(srtContent), `${baseNomen}_${langCode}.srt`, 'text/plain', asset.productId, storeId, { subfolderName: driveSubfolder, conceptCode: asset.conceptCode, fileType: 'DOCUMENT', version: asset.versionNumber });
+                srtDriveUrl = `https://drive.google.com/file/d/${srtUp.driveFileId}/view`;
             }
             
             const translatedAsset = await (prisma as any).creativeAsset.create({
-                data: { id: crypto.randomUUID(), storeId, productId: asset.productId, name: translatedNomen, nomenclatura: translatedNomen, type: 'VIDEO', language: targetLang, conceptCode: asset.conceptCode, funnelStage: asset.funnelStage, versionNumber: asset.versionNumber, driveFileId: videoUpload.driveFileId, driveUrl: \`https://drive.google.com/file/d/\${videoUpload.driveFileId}/view\`, drivePath: driveSubfolder, processingStatus: 'DONE', sourceAssetId: assetId, tagsJson: JSON.stringify({ mode: 'tts', voiceId, translatedFrom: asset.language || 'auto', translatedTo: targetLang, srtUrl: srtDriveUrl }) }
+                data: { id: crypto.randomUUID(), storeId, productId: asset.productId, name: translatedNomen, nomenclatura: translatedNomen, type: 'VIDEO', language: targetLang, conceptCode: asset.conceptCode, funnelStage: asset.funnelStage, versionNumber: asset.versionNumber, driveFileId: videoUpload.driveFileId, driveUrl: `https://drive.google.com/file/d/${videoUpload.driveFileId}/view`, drivePath: driveSubfolder, processingStatus: 'DONE', sourceAssetId: assetId, tagsJson: JSON.stringify({ mode: 'tts', voiceId, translatedFrom: asset.language || 'auto', translatedTo: targetLang, srtUrl: srtDriveUrl }) }
             });
             
-            console.log(\`[Translate TTS] ✅ \${translatedNomen}\`);
-            return NextResponse.json({ success: true, assetId: translatedAsset.id, nomenclatura: translatedNomen, driveUrl: \`https://drive.google.com/file/d/\${videoUpload.driveFileId}/view\`, srtUrl: srtDriveUrl, language: targetLang, mode: 'tts' });
+            console.log(`[Translate TTS] ✅ ${translatedNomen}`);
+            return NextResponse.json({ success: true, assetId: translatedAsset.id, nomenclatura: translatedNomen, driveUrl: `https://drive.google.com/file/d/${videoUpload.driveFileId}/view`, srtUrl: srtDriveUrl, language: targetLang, mode: 'tts' });
         }
 
         // ── MODO DUBBING (ElevenLabs) ─────────────────────────────────────────

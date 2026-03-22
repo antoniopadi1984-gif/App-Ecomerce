@@ -367,9 +367,10 @@ def main():
         if args.margin_v > 0:
             margin_v = args.margin_v
         elif region:
-            # Place new subs IN the detected original subtitle zone
-            # margin_v = distance from bottom of frame to bottom of the region
-            margin_v = vh - region["yBottom"]
+            # Place new subs ABOVE the original subtitle zone
+            # margin_v = distance from bottom of frame to bottom of new sub box
+            # → bottom of new sub = yTop of original region - 8px gap
+            margin_v = vh - max(0, region["yTop"] - 8)
             margin_v = max(5, margin_v)
         else:
             # Fallback: standard bottom position (10% from bottom)

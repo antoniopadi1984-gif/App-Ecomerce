@@ -263,7 +263,7 @@ export async function POST(req: NextRequest) {
                 const slowVideoPath = path.join(tmpDir, 'slow_video.mp4');
                 const ptsExpr = (1.0 / videoFactor).toFixed(6);
                 await execAsync(
-                    `${FFMPEG} -i '${videoPath}' -vf "setpts=${ptsExpr}*PTS" -an -c:v libx264 -crf 18 -preset fast '${slowVideoPath}' -y`
+                    `${FFMPEG} -i '${videoPath}' -vf "setpts=${ptsExpr}*PTS" -an -c:v libx264 -crf 18 -preset fast -map_metadata -1 '${slowVideoPath}' -y`
                 );
 
                 // Paso B: Ajustar audio TTS (puede ser 1.0x = sin cambio)
@@ -282,15 +282,18 @@ export async function POST(req: NextRequest) {
                     finalAudioPath = speededAudioPath;
                 }
 
-                // Paso C: Mezclar vídeo lento + audio
+                // Paso C: Mezclar vídeo lento + audio (sin metadata, web-ready)
                 await execAsync(
                     `${FFMPEG} -i '${slowVideoPath}' -i '${finalAudioPath}' ` +
-                    `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
+                    `-map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest ` +
+                    `-map_metadata -1 -movflags +faststart '${ttsVideoPath}' -y`
                 );
             } else {
+                // Duraciones ya coinciden — solo mezcla, sin metadata
                 await execAsync(
                     `${FFMPEG} -i '${videoPath}' -i '${ttsAudioPath}' ` +
-                    `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
+                    `-map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest ` +
+                    `-map_metadata -1 -movflags +faststart '${ttsVideoPath}' -y`
                 );
             }
 

@@ -296,7 +296,10 @@ def inject_subtitles(video_path: str, ass_path: str, out_path: str,
             "-i", video_path,
             "-filter_complex", filter_complex,
             "-c:v", "libx264", "-crf", "18", "-preset", "fast",
-            "-c:a", "copy",
+            "-c:a", "aac", "-b:a", "192k",
+            "-map_metadata", "-1",        # strip ALL original metadata
+            "-movflags", "+faststart",    # web-ready MP4
+            "-fflags", "+bitexact",       # remove encoder signature
             out_path
         ]
         print(f"[FFmpeg] Blur region: x={x} y={y_padded} w={bw} h={bh_padded}px", file=sys.stderr)
@@ -306,7 +309,10 @@ def inject_subtitles(video_path: str, ass_path: str, out_path: str,
             "-i", video_path,
             "-vf", f"ass={ass_path}",
             "-c:v", "libx264", "-crf", "18", "-preset", "fast",
-            "-c:a", "copy",
+            "-c:a", "aac", "-b:a", "192k",
+            "-map_metadata", "-1",        # strip ALL original metadata
+            "-movflags", "+faststart",    # web-ready MP4
+            "-fflags", "+bitexact",       # remove encoder signature
             out_path
         ]
 

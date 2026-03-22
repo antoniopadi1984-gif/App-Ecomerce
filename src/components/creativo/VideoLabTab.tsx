@@ -131,6 +131,10 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const [translateStyle, setTranslateStyle] = useState(0.3);
     const [translating, setTranslating] = useState(false);
     const [translateMode, setTranslateMode] = useState<'tts'|'dubbing'>('tts');
+    // Configuración de traducción automática al subir
+    const [uploadAutoTranslate, setUploadAutoTranslate] = useState(true);
+    const [uploadTargetLang, setUploadTargetLang] = useState('es');
+    const [uploadVoiceId, setUploadVoiceId] = useState('ojUrU2nc4bppCZKFp9U8');
     const [customScript, setCustomScript] = useState('');
     const [showScriptEditor, setShowScriptEditor] = useState(false);
 
@@ -439,6 +443,12 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
             const formData = new FormData();
             formData.append('productId', productId);
             valid.forEach(f => formData.append('files', f));
+
+            if (uploadAutoTranslate) {
+                formData.append('autoTranslate', 'true');
+                formData.append('targetLang', uploadTargetLang);
+                formData.append('voiceId', uploadVoiceId);
+            }
 
             const res = await fetch('/api/creative/bulk-upload', {
                 method: 'POST',
@@ -1135,6 +1145,51 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                             Competencia
                                         </button>
                                     </div>
+                                </div>
+
+                                {/* ── CONFIGURACIÓN TRADUCCIÓN AUTOMÁTICA ── */}
+                                <div className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">Traducción automática al subir</span>
+                                        <button onClick={() => setUploadAutoTranslate(!uploadAutoTranslate)}
+                                            className={`w-10 h-5 rounded-full transition-all ${uploadAutoTranslate ? 'bg-[var(--cre)]' : 'bg-[var(--border)]'} relative`}>
+                                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all shadow ${uploadAutoTranslate ? 'left-5' : 'left-0.5'}`}/>
+                                        </button>
+                                    </div>
+                                    {uploadAutoTranslate && (
+                                        <div className="space-y-3 pt-1">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">Idioma destino</label>
+                                                    <select value={uploadTargetLang} onChange={e => setUploadTargetLang(e.target.value)}
+                                                        className="w-full bg-white border border-[var(--border)] rounded-xl px-2 py-1.5 text-[10px] text-[var(--text-primary)]">
+                                                        {[['es','🇪🇸 Español'],['en','🇬🇧 English'],['fr','🇫🇷 Français'],['de','🇩🇪 Deutsch'],['it','🇮🇹 Italiano'],['pt','🇧🇷 Português']].map(([code,label]) => (
+                                                            <option key={code} value={code}>{label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">Voz</label>
+                                                    <select value={uploadVoiceId} onChange={e => setUploadVoiceId(e.target.value)}
+                                                        className="w-full bg-white border border-[var(--border)] rounded-xl px-2 py-1.5 text-[10px] text-[var(--text-primary)]">
+                                                        <optgroup label="🇪🇸 Español">
+                                                            <option value="ojUrU2nc4bppCZKFp9U8">Javier — Comercial</option>
+                                                            <option value="yiWEefwu5z3DQCM79clN">Laura López</option>
+                                                            <option value="GwtqU7RCQKrjzJ0dGhqT">José Borda</option>
+                                                            <option value="h3l1RP4XfcWsPwoRp9G6">Sheila España</option>
+                                                            <option value="NhUo7cJi70nyU8yfCimA">Theo — Ads</option>
+                                                            <option value="XcWPJPVzbTFL09D9rQkl">Marco</option>
+                                                        </optgroup>
+                                                        <optgroup label="🇬🇧 English">
+                                                            <option value="EXAVITQu4vr4xnSDxMaL">Sarah</option>
+                                                            <option value="TX3LPaxmHKxFdv7VOQHJ">Liam</option>
+                                                            <option value="pqHfZKP75CvOlQylNhV4">Bill</option>
+                                                        </optgroup>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* ── ZONA DRAG & DROP ── */}

@@ -66,7 +66,7 @@ PlayResY: 1920
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Arial,52,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,1,0,0,0,100,100,0,0,1,3,1,2,20,20,40,1
+Style: Default,Arial,72,&H00000000,&H000000FF,&H00FFFFFF,&HFFFFFFFF,1,0,0,0,100,100,0,0,1,4,0,2,20,20,50,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -84,7 +84,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         if (!t) continue;
         const start = +t[1]*3600 + +t[2]*60 + +t[3] + +t[4]/1000;
         const end = +t[5]*3600 + +t[6]*60 + +t[7] + +t[8]/1000;
-        const text = parts.slice(2).join(' ').replace(/\{[^}]+\}/g,'').replace(/\n/g,'\\N');
+        const text = parts.slice(2).join(' ').replace(/\{[^}]+\}/g,'').replace(/\n/g,'\\N').replace(/\s+/g,' ').trim();
         lines.push(`Dialogue: 0,${toT(start)},${toT(end)},Default,,0,0,0,,${text}`);
     }
     return header + lines.join('\n');
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
             const { TaskType } = await import('@/lib/ai/providers/interfaces');
             const translationResult = await AiRouter.dispatch(
                 storeId,
-                TaskType.COPYWRITING_DEEP,
+                TaskType.SCRIPTS_ADVANCED,
                 `Traduce al ${SUPPORTED_LANGUAGES[targetLang] || targetLang} este texto publicitario. ` +
                 `Mantén exactamente el tono, urgencia, pausas naturales y estructura. ` +
                 `Devuelve ÚNICAMENTE el texto traducido, sin comillas ni explicaciones:\n\n${originalText}`,

@@ -22,7 +22,7 @@ const CREATIVE_CONCEPTS = Object.entries(CREATIVE_CONCEPTS_MAP).map(([code, v]) 
 function getDrivePath(opts: { concept: string; traffic: string; awareness: number }): string {
     const c = CREATIVE_CONCEPTS_MAP[opts.concept];
     const name = c?.name || opts.concept;
-    return `${opts.concept}_${name}/${opts.traffic}/${opts.awareness}_AWARENESS`;
+    return opts.concept + '_' + name + '/' + opts.traffic + '/' + opts.awareness + '_AWARENESS';
 }
 function buildNomenclature(opts: any): string {
     return `${opts.sku}_${opts.concept}_V${opts.version}.${opts.ext || 'mp4'}`;

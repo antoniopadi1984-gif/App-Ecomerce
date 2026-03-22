@@ -107,44 +107,6 @@ async function burnSubs(videoPath: string, srtPath: string, outputPath: string):
 }
 
 
-async function burnSubs(videoPath: string, srtPath: string, outputPath: string): Promise<boolean> {
-    try {
-        const srtContent = await fs.readFile(srtPath, 'utf8');
-        const blocks = srtContent.trim().split(/\n\s*\n/).slice(0, 120); // max 120 bloques
-        const entries: string[] = [];
-        for (const block of blocks) {
-            const lines = block.trim().split('\n');
-            if (lines.length < 3) continue;
-            const t = lines[1]?.match(/(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})/);
-            if (!t) continue;
-            const sec = (h: string, m: string, s: string, ms: string) =>
-                parseInt(h)*3600 + parseInt(m)*60 + parseInt(s) + parseInt(ms)/1000;
-            const ts = sec(t[1],t[2],t[3],t[4]);
-            const te = sec(t[5],t[6],t[7],t[8]);
-            // Limpiar texto: escapar comillas simples, barras y % para drawtext
-            const text = lines.slice(2).join(' ')
-                .replace(/[\\]/g, '')
-                .replace(/'/g, '')
-                .replace(/[%:,=\[\]]/g, ' ')
-                .trim();
-            if (!text) continue;
-            entries.push(
-                `drawtext=text='${text}':fontsize=20:fontcolor=white:borderw=2:bordercolor=black` +
-                `:x=(w-text_w)/2:y=h-90:enable='between(t,${ts.toFixed(2)},${te.toFixed(2)})'`
-            );
-        }
-        if (entries.length === 0) { console.warn('[BurnSubs] No entries'); return false; }
-        // drawtext acepta filtros encadenados con ,
-        const filter = entries.join(',');
-        await execAsync(
-            `${FFMPEG} -i '${videoPath}' -vf "${filter}" -c:v libx264 -preset ultrafast -crf 23 -c:a copy '${outputPath}' -y`
-        );
-        return true;
-    } catch (e: any) {
-        console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0,250)}`);
-        return false;
-    }
-}
 
 
 export async function POST(req: NextRequest) {

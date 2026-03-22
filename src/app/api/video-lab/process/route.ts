@@ -448,7 +448,7 @@ productionType: UGC, VSL, BROLL, TESTIMONIAL, EDUCATIVO, MIXTO`;
     try {
         const drivePrompt = `Recibe este análisis de un vídeo publicitario y devuelve la decisión de organización en Drive.
 
-ANÁLISIS DE VIDEO_INTELLIGENCE:
+ANÁLISIS DE VIDEO_INTELLIGENCE (USAR COMO VERDAD ABSOLUTA):
 ${JSON.stringify(analysis, null, 2)}
 
 DATOS DEL ARCHIVO:
@@ -456,21 +456,27 @@ Nombre original: ${file.name}
 SKU del producto: ${sku}
 Producto: ${product?.title}
 
-Devuelve ÚNICAMENTE este JSON:
+⚠️ IMPORTANTE: El campo "concept" del análisis (${analysis.concept || 'C3'}) es DEFINITIVO.
+NO lo cambies. El agente de Video Intelligence ya lo analizó visualmente.
+Si el análisis dice concept: "${analysis.concept || 'C3'}", tu respuesta debe tener concept: "${analysis.concept || 'C3'}".
+
+Devuelve ÚNICAMENTE este JSON (sin texto adicional):
 {
   "drivePath": "2_CREATIVOS/C[N]_[CONCEPTO]/[TRAFICO]/[N]_[AWARENESS]",
   "nomenclatura": "${sku}_C[N]_V${version}.mp4",
-  "concept": "C1",
-  "conceptName": "PROBLEMA",
-  "traffic": "FRIO",
+  "concept": "${analysis.concept || 'C3'}",
+  "conceptName": "${analysis.conceptName || 'AUTORIDAD'}",
+  "traffic": "${analysis.traffic || 'FRIO'}",
   "awareness": 2,
-  "awarenessName": "2_PROBLEM_AWARE",
+  "awarenessName": "${analysis.awarenessName || '2_PROBLEM_AWARE'}",
   "reason": "justificación breve"
 }`;
 
-        const driveResult = await AiRouter.dispatch(storeId, TaskType.PERFORMANCE_ADS, drivePrompt, {
+        // IMPORTANTE: usar 'DRIVE_ORGANIZE' → drive-intelligence, NO PERFORMANCE_ADS
+        // El análisis de Video Intelligence ya detectó el concepto correcto (analysis.concept)
+        // Se lo pasamos explícitamente para que drive-intelligence lo respete
+        const driveResult = await AiRouter.dispatch(storeId, 'DRIVE_ORGANIZE', drivePrompt, {
             jsonSchema: true,
-            systemPromptOverride: undefined // usa el prompt de BD de drive-intelligence
         });
 
         let driveRaw = driveResult.text.replace(/\`\`\`json\s*/g, '').replace(/\`\`\`/g, '').trim();
@@ -732,7 +738,7 @@ EcomBoom — Creative Forensic Agent`.trim();
       hookText: analysis.hookType, 
       angulo: analysis.angle,
       driveFileId: mainVideoUpload.driveFileId, 
-      drivePath: mainVideoUpload.drivePath, 
+      drivePath: drivePath, 
       driveUrl: `https://drive.google.com/file/d/${mainVideoUpload.driveFileId}/view`, 
       thumbnailUrl: mainVideoUpload.thumbnailUrl,
       processingStatus: 'DONE', 

@@ -139,6 +139,34 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const [loadingWorkspace, setLoadingWorkspace] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [viewingAnalysis, setViewingAnalysis] = useState<any | null>(null);
+    // Video player in-app
+    const [playingCreative, setPlayingCreative] = useState<any | null>(null);
+    // Drive sync
+    const [syncingDrive, setSyncingDrive] = useState(false);
+
+    const handleSyncDrive = async () => {
+        if (!storeId) return;
+        setSyncingDrive(true);
+        toast.loading('🔄 Sincronizando con Drive...', { id: 'sync-drive' });
+        try {
+            const res = await fetch('/api/video-lab/sync-drive', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ storeId, productId: productId !== 'GLOBAL' ? productId : undefined })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error en sync');
+            toast.success(
+                `✅ Sync completo — ${data.existing} OK · ${data.removed} eliminados`,
+                { id: 'sync-drive', duration: 5000 }
+            );
+            fetchOwnCreatives();
+        } catch (e: any) {
+            toast.error(`❌ ${e.message}`, { id: 'sync-drive' });
+        } finally {
+            setSyncingDrive(false);
+        }
+    };
 
     const toggleSelect = (id: string) => {
         setSelectedIds(prev => {
@@ -622,6 +650,15 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                 </div>
 
                 <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-tight">
+                    <button
+                        onClick={handleSyncDrive}
+                        disabled={syncingDrive}
+                        title="Sincronizar con Drive (elimina archivos borrados)"
+                        className="h-8 px-3 rounded-lg border border-[var(--border)] bg-white text-[var(--text-tertiary)] hover:text-blue-600 hover:border-blue-300 transition-all flex items-center gap-1.5 text-[9px] font-black uppercase disabled:opacity-50"
+                    >
+                        <RefreshCw size={11} className={syncingDrive ? 'animate-spin' : ''} />
+                        Sync Drive
+                    </button>
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     Agente Video Lab Activo
                 </div>
@@ -1004,13 +1041,13 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                                     })()}
 
                                                     {/* ── BOTONES SIEMPRE VISIBLES ─────────────────── */}
-                                                    <div className="flex gap-1 pt-1 border-t border-slate-50 mt-1">
-                                                        {(creative.driveUrl || creative.videoUrl) && (
-                                                            <a href={creative.driveUrl || creative.videoUrl} target="_blank" rel="noopener noreferrer"
-                                                                onClick={e => e.stopPropagation()}
-                                                                className="flex-1 py-1.5 bg-slate-100 text-slate-700 rounded-md text-[7px] font-black uppercase flex items-center justify-center gap-0.5 hover:bg-slate-200 transition-all">
+                                                    <div className="flex gap-1 pt-1 border-t border-slate-100 mt-1">
+                                                        {creative.driveFileId && (
+                                                            <button
+                                                                onClick={e => { e.stopPropagation(); setPlayingCreative(creative); }}
+                                                                className="flex-1 py-1.5 bg-slate-900 text-white rounded-md text-[7px] font-black uppercase flex items-center justify-center gap-0.5 hover:bg-slate-700 transition-all">
                                                                 <Play size={8} fill="currentColor" /> Ver
-                                                            </a>
+                                                            </button>
                                                         )}
                                                         {creative.driveFileId && (
                                                             <a href={`/api/creative/download?assetId=${creative.id}&storeId=${storeId}`}
@@ -1422,10 +1459,54 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                     </div>
                 )}
 
+                {/* ─── VIDEO PLAYER MODAL ─────────────────────────────── */}
+                {playingCreative && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/95 backdrop-blur-sm" onClick={() => setPlayingCreative(null)} />
+                        <div className="relative z-10 w-full max-w-2xl flex flex-col gap-3 animate-in zoom-in-95 duration-200">
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-1">
+                                <div>
+                                    <div className="text-white font-black text-sm uppercase tracking-widest truncate max-w-xs">{playingCreative.concept}</div>
+                                    {playingCreative.language && playingCreative.language !== 'auto' && (
+                                        <span className="text-blue-400 text-[9px] font-bold uppercase">🌐 {playingCreative.language.toUpperCase()}</span>
+                                    )}
+                                </div>
+                                <button onClick={() => setPlayingCreative(null)}
+                                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all">
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            {/* Player */}
+                            <div className="rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10">
+                                <video
+                                    src={`/api/creative/stream?assetId=${playingCreative.id}&storeId=${storeId}`}
+                                    controls
+                                    autoPlay
+                                    playsInline
+                                    className="w-full max-h-[70vh] object-contain bg-black"
+                                    style={{ aspectRatio: 'auto' }}
+                                >
+                                    Tu navegador no soporta la reproducción de vídeo.
+                                </video>
+                            </div>
+                            {/* Footer actions */}
+                            <div className="flex gap-2 justify-end">
+                                <a href={`/api/creative/download?assetId=${playingCreative.id}&storeId=${storeId}`}
+                                    download={`${(playingCreative.concept || 'video').replace(/[^a-zA-Z0-9._-]/g,'_')}.mp4`}
+                                    className="h-9 px-4 bg-[var(--cre)] text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:brightness-110 transition-all shadow-lg">
+                                    <Download size={12} /> Descargar MP4
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Analysis Modal */}
                 {viewingAnalysis && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setViewingAnalysis(null)} />
+
                         <div className="bg-white rounded-3xl w-full max-w-xl max-h-[85vh] overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200 flex flex-col">
                             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                                 <div>

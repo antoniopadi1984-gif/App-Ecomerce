@@ -57,9 +57,56 @@ async function runLatentSync(videoUrl: string, audioUrl: string, replicateToken:
     return Array.isArray(result.output) ? result.output[0] : result.output;
 }
 
-// ── Quemar subtítulos vía ffmpeg drawtext (sin libass) ──────────────────────
-// Parsea SRT agrupando en bloques de ~3s y genera filtro drawtext
-// NOTA: ffmpeg en Homebrew no tiene --enable-libass; drawtext no lo necesita
+// ── Quemar subtítulos con libass (soporte completo tildes y unicode) ─────────
+function srtToAss(srtContent: string): string {
+    const header = `[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,52,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,1,0,0,0,100,100,0,0,1,3,1,2,20,20,40,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
+    const toT = (s: number) => {
+        const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60), cs = Math.round((s%1)*100);
+        return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(cs).padStart(2,'0')}`;
+    };
+    const lines: string[] = [];
+    const blocks = srtContent.trim().split(/\n\s*\n/);
+    for (const block of blocks) {
+        const parts = block.trim().split('\n');
+        if (parts.length < 3) continue;
+        const t = parts[1].match(/(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+)/);
+        if (!t) continue;
+        const start = +t[1]*3600 + +t[2]*60 + +t[3] + +t[4]/1000;
+        const end = +t[5]*3600 + +t[6]*60 + +t[7] + +t[8]/1000;
+        const text = parts.slice(2).join(' ').replace(/\{[^}]+\}/g,'').replace(/\n/g,'\\N');
+        lines.push(`Dialogue: 0,${toT(start)},${toT(end)},Default,,0,0,0,,${text}`);
+    }
+    return header + lines.join('\n');
+}
+
+async function burnSubs(videoPath: string, srtPath: string, outputPath: string): Promise<boolean> {
+    try {
+        const fsSync = require('fs');
+        const srtContent = fsSync.readFileSync(srtPath, 'utf8');
+        const assContent = srtToAss(srtContent);
+        const assPath = srtPath.replace('.srt', '.ass');
+        fsSync.writeFileSync(assPath, assContent, 'utf8');
+        const escapedAss = assPath.replace(/\\/g, '/').replace(/:/g, '\\:');
+        await execAsync(`ffmpeg -i '${videoPath}' -vf "ass='${assPath}'" -c:a copy '${outputPath}' -y`);
+        return true;
+    } catch(e: any) {
+        console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0,200)}`);
+        return false;
+    }
+}
+
+
 async function burnSubs(videoPath: string, srtPath: string, outputPath: string): Promise<boolean> {
     try {
         const srtContent = await fs.readFile(srtPath, 'utf8');
@@ -201,8 +248,8 @@ export async function POST(req: NextRequest) {
 
             // 5. Obtener duraciones con ffprobe y ajustar velocidad de vídeo al audio TTS
             const [vDurRes, aDurRes] = await Promise.all([
-                execAsync(`/opt/homebrew/bin/ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '${videoPath}'`).catch(() => ({ stdout: '0' })),
-                execAsync(`/opt/homebrew/bin/ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '${ttsAudioPath}'`).catch(() => ({ stdout: '0' }))
+                execAsync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '${videoPath}'`).catch(() => ({ stdout: '0' })),
+                execAsync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '${ttsAudioPath}'`).catch(() => ({ stdout: '0' }))
             ]);
             const videoDuration = parseFloat(vDurRes.stdout.trim()) || 0;
             const audioDuration = parseFloat(aDurRes.stdout.trim()) || 0;

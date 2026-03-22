@@ -64,7 +64,7 @@ export function Sidebar({
         <nav className="flex-1 overflow-y-auto no-scrollbar py-2 flex flex-col gap-0.5 px-2">
           {navigation.map((item: any) => {
             const modulePath = item.href.split('/')[1];
-            const isActive = pathname.startsWith('/' + modulePath);
+            const isActive = (pathname ?? '').startsWith('/' + modulePath);
             const hasChildren = item.children && item.children.length > 0;
             const isOpen = openItem === item.id || isActive;
             const showChildren = isExpanded && hasChildren && isOpen;
@@ -119,7 +119,7 @@ export function Sidebar({
                 {showChildren && (
                   <div className="flex flex-col gap-0.5 mt-1 mb-2 animate-in slide-in-from-top-1 duration-200">
                     {item.children.map((child: any) => {
-                      const isSubActive = pathname === child.href || pathname.startsWith(child.href + '/');
+                      const isSubActive = (pathname ?? '') === child.href || (pathname ?? '').startsWith(child.href + '/');
                       return (
                         <Link
                           key={child.href}

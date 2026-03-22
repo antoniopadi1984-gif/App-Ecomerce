@@ -8,6 +8,7 @@ export interface VoiceSettings {
     similarity_boost: number;
     style?: number;
     use_speaker_boost?: boolean;
+    speed?: number;  // 0.7 – 1.3, velocidad del habla (ElevenLabs v3)
 }
 
 export interface Voice {
@@ -36,22 +37,24 @@ export class ElevenLabsService {
 
     static async textToSpeech(text: string, voiceId: string, settings?: VoiceSettings): Promise<Buffer> {
         const headers = await this.getHeaders();
+        const payload: Record<string, any> = {
+            text,
+            model_id: 'eleven_v3',
+            voice_settings: {
+                stability: settings?.stability ?? 0.5,
+                similarity_boost: settings?.similarity_boost ?? 0.8,
+                style: settings?.style ?? 0.0,
+                use_speaker_boost: settings?.use_speaker_boost ?? true,
+            },
+        };
+        // speaking_rate es un campo a nivel raíz en eleven_v3
+        if (settings?.speed && settings.speed !== 1.0) {
+            payload.speaking_rate = settings.speed;
+        }
         const response = await axios.post(
             `${BASE_URL}/text-to-speech/${voiceId}`,
-            {
-                text,
-                model_id: 'eleven_v3',
-                voice_settings: settings || {
-                    stability: 0.5,
-                    similarity_boost: 0.8,
-                    style: 0.0,
-                    use_speaker_boost: true
-                },
-            },
-            {
-                headers,
-                responseType: 'arraybuffer',
-            }
+            payload,
+            { headers, responseType: 'arraybuffer' }
         );
         return Buffer.from(response.data);
     }

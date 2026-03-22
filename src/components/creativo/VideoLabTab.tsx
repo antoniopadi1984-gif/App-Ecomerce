@@ -181,7 +181,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                 fetch('/api/video-lab/translate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ assetId, storeId, targetLang: translateLang, voiceId: translateVoiceId, speed: translateSpeed, stability: translateStability, style: translateStyle, burnSubtitles: true, lipSync: false, mode: translateMode })
+                    body: JSON.stringify({ assetId, storeId, targetLang: translateLang, voiceId: translateVoiceId, speed: translateSpeed, stability: translateStability, style: translateStyle, burnSubtitles: true, doLipSync: false, mode: translateMode })
                 }).then(r => r.json())
             ));
             const ok = results.filter(r => r.success).length;

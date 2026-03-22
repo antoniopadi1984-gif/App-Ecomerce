@@ -76,7 +76,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         const m = Math.floor((secs % 3600) / 60);
         const s = Math.floor(secs % 60);
         const cs = Math.round((secs % 1) * 100);
-        return \`\${h}:\${String(m).padStart(2,'0')}:\${String(s).padStart(2,'0')}.\${String(cs).padStart(2,'0')}\`;
+        return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(cs).padStart(2,'0')}`;
     };
     const lines: string[] = [];
     const blocks = srtContent.trim().split(/\n\s*\n/);
@@ -88,7 +88,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         const start = parseInt(times[1])*3600 + parseInt(times[2])*60 + parseInt(times[3]) + parseInt(times[4])/1000;
         const end = parseInt(times[5])*3600 + parseInt(times[6])*60 + parseInt(times[7]) + parseInt(times[8])/1000;
         const text = parts.slice(2).join('\n').replace(/\{[^}]+\}/g, '').replace(/\n/g, '\\N');
-        lines.push(\`Dialogue: 0,\${toAssTime(start)},\${toAssTime(end)},Default,,0,0,0,,\${text}\`);
+        lines.push(`Dialogue: 0,${toAssTime(start)},${toAssTime(end)},Default,,0,0,0,,${text}`);
     }
     return assHeader + lines.join('\n');
 }
@@ -99,12 +99,14 @@ async function burnSubs(videoPath: string, srtPath: string, outputPath: string):
         const assContent = await srtToAss(srtContent);
         const assPath = srtPath.replace('.srt', '.ass');
         require('fs').writeFileSync(assPath, assContent, 'utf8');
+        // Escapar ruta para ffmpeg (reemplazar espacios y caracteres especiales)
+        const escapedAss = assPath.replace(/'/g, "'\''");
         await execAsync(
-            \`ffmpeg -i '\${videoPath}' -vf "ass='\${assPath}'" -c:a copy '\${outputPath}' -y\`
+            'ffmpeg -i \'' + videoPath + '\' -vf "ass=\'' + escapedAss + '\'" -c:a copy \'' + outputPath + '\' -y'
         );
         return true;
     } catch(e: any) {
-        console.warn(\`[Translate] burnSubs falló: \${e.message?.slice(0,200)}\`);
+        console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0,200)}`);
         return false;
     }
 }
@@ -220,20 +222,31 @@ export async function POST(req: NextRequest) {
 
             const ttsVideoPath = path.join(tmpDir, 'tts_video.mp4');
             if (audioDuration > 0 && videoDuration > 0 && Math.abs(audioDuration - videoDuration) > 0.3) {
-                // Ajustar velocidad del video para que coincida con la duración del audio TTS
-                // PTS factor: aumentar → video más lento, reducir → más rápido
-                const ptsFactor = audioDuration / videoDuration;
-                console.log(`[Translate TTS] Ajustando velocidad video: factor ${ptsFactor.toFixed(3)}x`);
+                // Acelerar el audio TTS para que coincida con la duración del vídeo original
+                // atempo acepta valores entre 0.5 y 2.0
+                const speedFactor = audioDuration / videoDuration;
+                console.log('[Translate TTS] Acelerando audio TTS: factor ' + speedFactor.toFixed(3) + 'x');
+                const speededAudioPath = path.join(tmpDir, 'tts_speeded.mp3');
+                // Si speedFactor > 2.0 hay que aplicar atempo en cadena
+                let atempoFilter = '';
+                if (speedFactor <= 2.0) {
+                    atempoFilter = 'atempo=' + speedFactor.toFixed(6);
+                } else if (speedFactor <= 4.0) {
+                    atempoFilter = 'atempo=2.0,atempo=' + (speedFactor / 2.0).toFixed(6);
+                } else {
+                    atempoFilter = 'atempo=2.0,atempo=2.0,atempo=' + (speedFactor / 4.0).toFixed(6);
+                }
                 await execAsync(
-                    `${FFMPEG} -i '${videoPath}' -i '${ttsAudioPath}' ` +
-                    `-filter_complex "[0:v]setpts=${ptsFactor.toFixed(6)}*PTS[v]" ` +
-                    `-map "[v]" -map 1:a -c:v libx264 -preset ultrafast -crf 23 -c:a aac '${ttsVideoPath}' -y`
+                    FFMPEG + " -i '" + ttsAudioPath + "' -filter:a \"" + atempoFilter + "\" '" + speededAudioPath + "' -y"
+                );
+                await execAsync(
+                    FFMPEG + " -i '" + videoPath + "' -i '" + speededAudioPath + "' " +
+                    "-map 0:v -map 1:a -c:v copy -c:a aac -shortest '" + ttsVideoPath + "' -y"
                 );
             } else {
-                // Duraciones similares o sin info: copiar video stream directamente
                 await execAsync(
-                    `${FFMPEG} -i '${videoPath}' -i '${ttsAudioPath}' ` +
-                    `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
+                    FFMPEG + " -i '" + videoPath + "' -i '" + ttsAudioPath + "' " +
+                    "-map 0:v -map 1:a -c:v copy -c:a aac -shortest '" + ttsVideoPath + "' -y"
                 );
             }
             console.log('[Translate TTS] Audio TTS sincronizado con vídeo');

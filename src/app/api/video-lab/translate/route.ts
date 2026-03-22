@@ -109,8 +109,11 @@ export async function POST(req: NextRequest) {
         // Autenticar Google Drive
         const { google } = await import('googleapis');
         const { getConnectionSecret } = await import('@/lib/server/connections');
-        const saKey = await getConnectionSecret(storeId, 'GOOGLE_DRIVE');
-        if (!saKey) return NextResponse.json({ error: 'Google Drive no configurado' }, { status: 400 });
+        // La clave SA de Google está guardada como 'GOOGLE_CLOUD' (no 'GOOGLE_DRIVE')
+        const saKey = await getConnectionSecret(storeId, 'GOOGLE_CLOUD')
+            || process.env.GOOGLE_SERVICE_ACCOUNT_KEY
+            || null;
+        if (!saKey) return NextResponse.json({ error: 'Google Drive / Service Account no configurado. Ve a Configuración → Conexiones y añade tu clave de Google Cloud.' }, { status: 400 });
 
         const driveAuth = new google.auth.GoogleAuth({ credentials: JSON.parse(saKey), scopes: ['https://www.googleapis.com/auth/drive'] });
         const drive = google.drive({ version: 'v3', auth: driveAuth });

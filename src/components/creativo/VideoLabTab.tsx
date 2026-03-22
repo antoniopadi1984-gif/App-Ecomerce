@@ -1507,187 +1507,143 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                 )}
             </div>
         </div>
-
-        {/* ── MODAL TRADUCCIÓN — PREMIUM DARK ──────────────────────── */}
+        {/* ── MODAL TRADUCCIÓN — COMPACTO LIGHT ─────────────────────── */}
         {showTranslateModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)' }}>
-                <div className="relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
-                    style={{ background: 'linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                onClick={e => { if (e.target === e.currentTarget) setShowTranslateModal(false); }}>
+                <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl"
+                    style={{ background: 'var(--bg-card, #fff)', border: '1px solid var(--border, #e5e7eb)' }}>
 
-                    {/* Header con gradiente naranja */}
-                    <div className="relative px-6 pt-5 pb-4" style={{ background: 'linear-gradient(135deg, rgba(212,90,10,0.3) 0%, rgba(212,90,10,0.05) 100%)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-                                    style={{ background: 'linear-gradient(135deg, #D45A0A, #ff7a2f)', boxShadow: '0 4px 15px rgba(212,90,10,0.4)' }}>
-                                    🌐
-                                </div>
-                                <div>
-                                    <h3 className="text-[13px] font-black text-white tracking-tight">Traducir Vídeo</h3>
-                                    <p className="text-[9px] text-white/40 uppercase tracking-widest">IA · ElevenLabs · Subtítulos</p>
-                                </div>
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-5 py-4"
+                        style={{ borderBottom: '1px solid var(--border, #e5e7eb)' }}>
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                                style={{ background: 'linear-gradient(135deg, #D45A0A, #ff7a2f)' }}>
+                                🌐
                             </div>
-                            <button onClick={() => setShowTranslateModal(false)}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all text-sm">
-                                ✕
-                            </button>
+                            <div>
+                                <p className="text-[12px] font-black text-[var(--text-primary,#111)] tracking-tight leading-none">Traducir Vídeo</p>
+                                <p className="text-[9px] text-[var(--text-tertiary,#888)] uppercase tracking-wider mt-0.5">IA · ElevenLabs · Subs</p>
+                            </div>
                         </div>
+                        <button onClick={() => setShowTranslateModal(false)}
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-[var(--text-tertiary,#888)] hover:bg-[var(--bg,#f5f5f5)] transition-all text-xs">
+                            ✕
+                        </button>
                     </div>
 
-                    {/* Body */}
-                    <div className="px-6 py-5 space-y-5">
-
-                        {/* Idioma destino */}
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40">Idioma destino</label>
-                            <select value={translateLang} onChange={e => setTranslateLang(e.target.value)}
-                                className="w-full rounded-xl px-4 py-2.5 text-[12px] font-semibold text-white outline-none transition-all"
-                                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}>
-                                {[['es','🇪🇸 Español'],['en','🇬🇧 English'],['fr','🇫🇷 Français'],['de','🇩🇪 Deutsch'],['it','🇮🇹 Italiano'],['pt','🇧🇷 Português'],['ar','🇸🇦 Árabe'],['zh','🇨🇳 Chino'],['ja','🇯🇵 Japonés'],['ko','🇰🇷 Coreano'],['ru','🇷🇺 Ruso'],['pl','🇵🇱 Polaco'],['hi','🇮🇳 Hindi'],['nl','🇳🇱 Neerlandés'],['sv','🇸🇪 Sueco'],['tr','🇹🇷 Turco']].map(([code, label]) => (
-                                    <option key={code} value={code} style={{ background: '#1a1a2e', color: 'white' }}>{label}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Modo de traducción */}
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40">Modo de traducción</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button onClick={() => setTranslateMode('tts')}
-                                    className="py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                                    style={translateMode === 'tts' ? { background: 'linear-gradient(135deg, #D45A0A, #ff7a2f)', color: 'white', boxShadow: '0 4px 15px rgba(212,90,10,0.35)' } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}>
-                                    🎙️ Voz elegida
-                                </button>
-                                <button onClick={() => setTranslateMode('dubbing')}
-                                    className="py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                                    style={translateMode === 'dubbing' ? { background: 'linear-gradient(135deg, #D45A0A, #ff7a2f)', color: 'white', boxShadow: '0 4px 15px rgba(212,90,10,0.35)' } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}>
-                                    🤖 Dubbing IA
-                                </button>
+                    <div className="px-5 py-4 space-y-4">
+                        {/* Idioma + modo en fila */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-[var(--text-tertiary,#888)]">Idioma</label>
+                                <select value={translateLang} onChange={e => setTranslateLang(e.target.value)}
+                                    className="w-full rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-[var(--text-primary,#111)] outline-none"
+                                    style={{ background: 'var(--bg,#f5f5f5)', border: '1px solid var(--border,#e5e7eb)' }}>
+                                    {[['es','🇪🇸 Español'],['en','🇬🇧 English'],['fr','🇫🇷 Français'],['de','🇩🇪 Deutsch'],['it','🇮🇹 Italiano'],['pt','🇧🇷 Português'],['ar','🇸🇦 Árabe'],['zh','🇨🇳 Chino'],['ja','🇯🇵 Japonés'],['ko','🇰🇷 Coreano'],['ru','🇷🇺 Ruso'],['pl','🇵🇱 Polski'],['hi','🇮🇳 Hindi'],['nl','🇳🇱 Neerlandés'],['sv','🇸🇪 Sueco'],['tr','🇹🇷 Turco']].map(([code, label]) => (
+                                        <option key={code} value={code}>{label}</option>
+                                    ))}
+                                </select>
                             </div>
-                            <p className="text-[8px] text-white/30 leading-relaxed">
-                                {translateMode === 'tts'
-                                    ? '✦ Transcribe el audio → traduce el texto → genera audio nuevo con la voz que elijas'
-                                    : '✦ ElevenLabs clona la voz original y dobla el vídeo manteniendo el timbre'}
-                            </p>
+                            <div className="space-y-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-[var(--text-tertiary,#888)]">Modo</label>
+                                <div className="grid grid-cols-2 gap-1">
+                                    <button onClick={() => setTranslateMode('tts')}
+                                        className="py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all"
+                                        style={translateMode === 'tts'
+                                            ? { background: 'linear-gradient(135deg, #D45A0A, #ff7a2f)', color: 'white' }
+                                            : { background: 'var(--bg,#f5f5f5)', border: '1px solid var(--border,#e5e7eb)', color: 'var(--text-tertiary,#888)' }}>
+                                        🎙️ TTS
+                                    </button>
+                                    <button onClick={() => setTranslateMode('dubbing')}
+                                        className="py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all"
+                                        style={translateMode === 'dubbing'
+                                            ? { background: 'linear-gradient(135deg, #D45A0A, #ff7a2f)', color: 'white' }
+                                            : { background: 'var(--bg,#f5f5f5)', border: '1px solid var(--border,#e5e7eb)', color: 'var(--text-tertiary,#888)' }}>
+                                        🤖 Dub
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Selector de voz — solo en modo TTS */}
+                        {/* Voz — solo en TTS */}
                         {translateMode === 'tts' && (
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40">Voz ElevenLabs</label>
+                            <div className="space-y-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-[var(--text-tertiary,#888)]">Voz ElevenLabs</label>
                                 <select value={translateVoiceId} onChange={e => setTranslateVoiceId(e.target.value)}
-                                    className="w-full rounded-xl px-4 py-2.5 text-[12px] font-semibold outline-none transition-all"
-                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}>
-                                    <optgroup label="🇪🇸 Español Peninsular" style={{ background: '#1a1a2e' }}>
-                                        <option value="ojUrU2nc4bppCZKFp9U8" style={{ background: '#1a1a2e' }}>Javier — Comercial y Dinámico</option>
-                                        <option value="yiWEefwu5z3DQCM79clN" style={{ background: '#1a1a2e' }}>Laura López — Social Media</option>
-                                        <option value="GwtqU7RCQKrjzJ0dGhqT" style={{ background: '#1a1a2e' }}>José Borda — Expresivo</option>
-                                        <option value="PwxTzhTOyJ9IXBhXZdc8" style={{ background: '#1a1a2e' }}>Jose A. del Rio — Publicidad</option>
-                                        <option value="h3l1RP4XfcWsPwoRp9G6" style={{ background: '#1a1a2e' }}>Sheila España — Social Media</option>
-                                        <option value="D7dkYvH17OKLgp4SLulf" style={{ background: '#1a1a2e' }}>Martin Osborne — Publicidad</option>
-                                        <option value="KHCvMklQZZo0O30ERnVn" style={{ background: '#1a1a2e' }}>Sara Martin — Educativa</option>
-                                        <option value="XcWPJPVzbTFL09D9rQkl" style={{ background: '#1a1a2e' }}>Marco — Conversacional</option>
-                                        <option value="NhUo7cJi70nyU8yfCimA" style={{ background: '#1a1a2e' }}>Theo — Social Media y Ads</option>
-                                        <option value="bXNyE7Z9cvPDl9TXt4Wg" style={{ background: '#1a1a2e' }}>Toñi Moreno — Andaluza</option>
+                                    className="w-full rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-[var(--text-primary,#111)] outline-none"
+                                    style={{ background: 'var(--bg,#f5f5f5)', border: '1px solid var(--border,#e5e7eb)' }}>
+                                    <optgroup label="🇪🇸 Español Peninsular">
+                                        <option value="ojUrU2nc4bppCZKFp9U8">Javier — Comercial</option>
+                                        <option value="yiWEefwu5z3DQCM79clN">Laura López — Social</option>
+                                        <option value="GwtqU7RCQKrjzJ0dGhqT">José Borda — Expresivo</option>
+                                        <option value="PwxTzhTOyJ9IXBhXZdc8">Jose A. del Rio — Ads</option>
+                                        <option value="h3l1RP4XfcWsPwoRp9G6">Sheila España — Social</option>
+                                        <option value="D7dkYvH17OKLgp4SLulf">Martin Osborne — Ads</option>
+                                        <option value="KHCvMklQZZo0O30ERnVn">Sara Martin — Educativa</option>
+                                        <option value="XcWPJPVzbTFL09D9rQkl">Marco — Conversacional</option>
+                                        <option value="NhUo7cJi70nyU8yfCimA">Theo — Social & Ads</option>
+                                        <option value="bXNyE7Z9cvPDl9TXt4Wg">Toñi Moreno — Andaluza</option>
                                     </optgroup>
-                                    <optgroup label="🇦🇷 Español Argentino" style={{ background: '#1a1a2e' }}>
-                                        <option value="gBTPbHzRd0ZmV75Z5Zk4" style={{ background: '#1a1a2e' }}>Carlos Pro — Narrativa</option>
+                                    <optgroup label="🇦🇷 Español Argentino">
+                                        <option value="gBTPbHzRd0ZmV75Z5Zk4">Carlos Pro — Narrativa</option>
                                     </optgroup>
-                                    <optgroup label="🇬🇧 English" style={{ background: '#1a1a2e' }}>
-                                        <option value="EXAVITQu4vr4xnSDxMaL" style={{ background: '#1a1a2e' }}>Sarah — Confident Female</option>
-                                        <option value="CwhRBWXzGAHq8TQ4Fs17" style={{ background: '#1a1a2e' }}>Roger — Casual Male</option>
-                                        <option value="JBFqnCBsd6RMkjVDRZzb" style={{ background: '#1a1a2e' }}>George — British Male</option>
-                                        <option value="TX3LPaxmHKxFdv7VOQHJ" style={{ background: '#1a1a2e' }}>Liam — Social Media</option>
-                                        <option value="pqHfZKP75CvOlQylNhV4" style={{ background: '#1a1a2e' }}>Bill — Advertisement</option>
-                                        <option value="nPczCjzI2devNBz1zQrb" style={{ background: '#1a1a2e' }}>Brian — Deep Social</option>
-                                        <option value="cgSgspJ2msm6clMCkdW9" style={{ background: '#1a1a2e' }}>Jessica — Playful Female</option>
+                                    <optgroup label="🇬🇧 English">
+                                        <option value="EXAVITQu4vr4xnSDxMaL">Sarah — Confident Female</option>
+                                        <option value="CwhRBWXzGAHq8TQ4Fs17">Roger — Casual Male</option>
+                                        <option value="JBFqnCBsd6RMkjVDRZzb">George — British Male</option>
+                                        <option value="TX3LPaxmHKxFdv7VOQHJ">Liam — Social Media</option>
+                                        <option value="pqHfZKP75CvOlQylNhV4">Bill — Advertisement</option>
+                                        <option value="nPczCjzI2devNBz1zQrb">Brian — Deep Social</option>
+                                        <option value="cgSgspJ2msm6clMCkdW9">Jessica — Playful</option>
                                     </optgroup>
                                 </select>
                             </div>
                         )}
 
-                        {/* Sliders — solo en modo TTS */}
+                        {/* Sliders compactos — solo TTS */}
                         {translateMode === 'tts' && (
-                            <div className="grid grid-cols-3 gap-4">
-                                {/* Velocidad */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[8px] font-black uppercase tracking-wider text-white/40">Velocidad</span>
-                                        <span className="text-[9px] font-black" style={{ color: '#ff7a2f' }}>{translateSpeed.toFixed(1)}x</span>
+                            <div className="grid grid-cols-3 gap-3 py-1">
+                                {[
+                                    { label: 'Velocidad', value: translateSpeed, set: setTranslateSpeed, min: 0.7, max: 1.3, step: 0.05, fmt: (v: number) => v.toFixed(1) + 'x' },
+                                    { label: 'Estabilidad', value: translateStability, set: setTranslateStability, min: 0, max: 1, step: 0.05, fmt: (v: number) => Math.round(v * 100) + '%' },
+                                    { label: 'Expresividad', value: translateStyle, set: setTranslateStyle, min: 0, max: 1, step: 0.05, fmt: (v: number) => Math.round(v * 100) + '%' },
+                                ].map(({ label, value, set, min, max, step, fmt }) => (
+                                    <div key={label} className="space-y-1.5">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[7px] font-black uppercase tracking-wider text-[var(--text-tertiary,#888)]">{label}</span>
+                                            <span className="text-[8px] font-black" style={{ color: '#D45A0A' }}>{fmt(value)}</span>
+                                        </div>
+                                        <input type="range" min={min} max={max} step={step} value={value}
+                                            onChange={e => set(parseFloat(e.target.value))}
+                                            className="w-full cursor-pointer" style={{ accentColor: '#D45A0A', height: '3px' }} />
                                     </div>
-                                    <input type="range" min="0.7" max="1.3" step="0.05" value={translateSpeed}
-                                        onChange={e => setTranslateSpeed(parseFloat(e.target.value))}
-                                        className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                                        style={{ accentColor: '#D45A0A' }} />
-                                    <div className="flex justify-between text-[7px] text-white/20">
-                                        <span>0.7x</span><span>1.3x</span>
-                                    </div>
-                                </div>
-
-                                {/* Estabilidad */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[8px] font-black uppercase tracking-wider text-white/40">Estabilidad</span>
-                                        <span className="text-[9px] font-black" style={{ color: '#ff7a2f' }}>{Math.round(translateStability * 100)}%</span>
-                                    </div>
-                                    <input type="range" min="0" max="1" step="0.05" value={translateStability}
-                                        onChange={e => setTranslateStability(parseFloat(e.target.value))}
-                                        className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                                        style={{ accentColor: '#D45A0A' }} />
-                                    <div className="flex justify-between text-[7px] text-white/20">
-                                        <span>Variable</span><span>Estable</span>
-                                    </div>
-                                </div>
-
-                                {/* Expresividad */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[8px] font-black uppercase tracking-wider text-white/40">Expresividad</span>
-                                        <span className="text-[9px] font-black" style={{ color: '#ff7a2f' }}>{Math.round(translateStyle * 100)}%</span>
-                                    </div>
-                                    <input type="range" min="0" max="1" step="0.05" value={translateStyle}
-                                        onChange={e => setTranslateStyle(parseFloat(e.target.value))}
-                                        className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                                        style={{ accentColor: '#D45A0A' }} />
-                                    <div className="flex justify-between text-[7px] text-white/20">
-                                        <span>Neutro</span><span>Exp.</span>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         )}
 
-                        {/* Info badge */}
-                        <div className="flex items-center gap-2.5 rounded-xl px-4 py-3"
-                            style={{ background: 'rgba(212,90,10,0.08)', border: '1px solid rgba(212,90,10,0.2)' }}>
-                            <span className="text-base">🎬</span>
-                            <div>
-                                <p className="text-[10px] font-black text-white/70">
-                                    {translateTargetIds.length} vídeo{translateTargetIds.length !== 1 ? 's' : ''} seleccionado{translateTargetIds.length !== 1 ? 's' : ''}
-                                </p>
-                                <p className="text-[8px] text-white/30">Subtítulos sincronizados se queman automáticamente</p>
-                            </div>
+                        {/* Info */}
+                        <div className="flex items-center gap-2 rounded-lg px-3 py-2"
+                            style={{ background: 'rgba(212,90,10,0.06)', border: '1px solid rgba(212,90,10,0.15)' }}>
+                            <span className="text-sm">🎬</span>
+                            <p className="text-[10px] font-bold text-[var(--text-primary,#111)]">
+                                <span style={{ color: '#D45A0A' }}>{translateTargetIds.length}</span> vídeo{translateTargetIds.length !== 1 ? 's' : ''} · subtítulos automáticos
+                            </p>
                         </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="px-6 pb-5 flex gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                    <div className="flex gap-2 px-5 pb-4">
                         <button onClick={() => setShowTranslateModal(false)}
-                            className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
-                            style={{ border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', background: 'transparent' }}>
+                            className="flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-70"
+                            style={{ border: '1px solid var(--border,#e5e7eb)', color: 'var(--text-tertiary,#888)', background: 'transparent' }}>
                             Cancelar
                         </button>
                         <button onClick={executeTranslation} disabled={translating}
-                            className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                            style={{ background: translating ? 'rgba(212,90,10,0.5)' : 'linear-gradient(135deg, #D45A0A, #ff7a2f)', color: 'white', boxShadow: translating ? 'none' : '0 4px 20px rgba(212,90,10,0.4)' }}>
-                            {translating ? (
-                                <>
-                                    <span className="animate-spin text-sm">⟳</span>
-                                    Procesando...
-                                </>
-                            ) : (
-                                <>🌐 Traducir ahora</>
-                            )}
+                            className="flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                            style={{ background: 'linear-gradient(135deg, #D45A0A, #ff7a2f)', color: 'white', boxShadow: '0 3px 12px rgba(212,90,10,0.3)' }}>
+                            {translating ? <><span className="animate-spin">⟳</span> Procesando</> : <>🌐 Traducir</>}
                         </button>
                     </div>
                 </div>

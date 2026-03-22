@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
             const { AiRouter } = await import('@/lib/ai/router');
             const { TaskType } = await import('@/lib/ai/providers/interfaces');
             const translationResult = await AiRouter.dispatch(storeId, TaskType.COPYWRITING_DEEP,
-                \`Traduce al \${targetLang} este texto publicitario manteniendo exactamente el tono, urgencia y estructura. Devuelve SOLO el texto traducido:\n\n"\${originalText}"\`,
+                `Traduce al ${targetLang} este texto publicitario manteniendo exactamente el tono, urgencia y estructura. Devuelve SOLO el texto traducido:\n\n"${originalText}"`,
                 {}
             );
             const translatedText = translationResult.text.replace(/^"|"$/g, '').trim();

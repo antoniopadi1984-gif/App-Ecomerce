@@ -57,49 +57,58 @@ async function runLatentSync(videoUrl: string, audioUrl: string, replicateToken:
     return Array.isArray(result.output) ? result.output[0] : result.output;
 }
 
-// ── Quemar subtítulos vía ffmpeg drawtext (sin libass) ──────────────────────
-// Parsea el SRT y genera filtro drawtext para cada línea
-function srtToDrawtext(srtContent: string, videoPath: string): string | null {
-    try {
-        const blocks = srtContent.trim().split(/\n\n+/);
-        const entries: {start: number; end: number; text: string}[] = [];
-        for (const block of blocks) {
-            const lines = block.split('\n');
-            if (lines.length < 3) continue;
-            const timeMatch = lines[1]?.match(/(\d{2}):(\d{2}):(\d{2}),(\d{3}) --> (\d{2}):(\d{2}):(\d{2}),(\d{3})/);
-            if (!timeMatch) continue;
-            const toSec = (h:string,m:string,s:string,ms:string) => parseInt(h)*3600+parseInt(m)*60+parseInt(s)+parseInt(ms)/1000;
-            const start = toSec(timeMatch[1],timeMatch[2],timeMatch[3],timeMatch[4]);
-            const end = toSec(timeMatch[5],timeMatch[6],timeMatch[7],timeMatch[8]);
-            const text = lines.slice(2).join(' ').replace(/['"\\:]/g,' ').trim();
-            if (text) entries.push({ start, end, text });
-        }
-        if (entries.length === 0) return null;
-        // Agrupar en bloques de ~6 palabras por línea de subtítulo
-        const filters = entries.map(e => {
-            const escaped = e.text.replace(/'/g, "'\\''").replace(/[%]/g, '\\%');
-            return `drawtext=text='${escaped}':fontsize=22:fontcolor=white:borderw=2:bordercolor=black:x=(w-text_w)/2:y=h-80:enable='between(t,${e.start.toFixed(3)},${e.end.toFixed(3)})'`;
-        });
-        return filters.join(',');
-    } catch { return null; }
+// ── Quemar subtítulos vía ffmpeg con subtitles filter ────────────────────────
+async function srtToAss(srtContent: string): Promise<string> {
+    const assHeader = `[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,52,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,1,0,0,0,100,100,0,0,1,3,1,2,20,20,40,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
+    const toAssTime = (secs: number) => {
+        const h = Math.floor(secs / 3600);
+        const m = Math.floor((secs % 3600) / 60);
+        const s = Math.floor(secs % 60);
+        const cs = Math.round((secs % 1) * 100);
+        return \`\${h}:\${String(m).padStart(2,'0')}:\${String(s).padStart(2,'0')}.\${String(cs).padStart(2,'0')}\`;
+    };
+    const lines: string[] = [];
+    const blocks = srtContent.trim().split(/\n\s*\n/);
+    for (const block of blocks) {
+        const parts = block.trim().split('\n');
+        if (parts.length < 3) continue;
+        const times = parts[1].match(/(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+)/);
+        if (!times) continue;
+        const start = parseInt(times[1])*3600 + parseInt(times[2])*60 + parseInt(times[3]) + parseInt(times[4])/1000;
+        const end = parseInt(times[5])*3600 + parseInt(times[6])*60 + parseInt(times[7]) + parseInt(times[8])/1000;
+        const text = parts.slice(2).join('\n').replace(/\{[^}]+\}/g, '').replace(/\n/g, '\\N');
+        lines.push(\`Dialogue: 0,\${toAssTime(start)},\${toAssTime(end)},Default,,0,0,0,,\${text}\`);
+    }
+    return assHeader + lines.join('\n');
 }
 
 async function burnSubs(videoPath: string, srtPath: string, outputPath: string): Promise<boolean> {
     try {
-        const srtContent = await fs.readFile(srtPath, 'utf8');
-        const drawtextFilter = srtToDrawtext(srtContent, videoPath);
-        if (!drawtextFilter) { console.warn('[Translate] burnSubs: SRT vacío'); return false; }
+        const srtContent = require('fs').readFileSync(srtPath, 'utf8');
+        const assContent = await srtToAss(srtContent);
+        const assPath = srtPath.replace('.srt', '.ass');
+        require('fs').writeFileSync(assPath, assContent, 'utf8');
         await execAsync(
-            `${FFMPEG} -i '${videoPath}' ` +
-            `-vf "${drawtextFilter}" ` +
-            `-c:v libx264 -preset ultrafast -crf 23 -c:a copy '${outputPath}' -y`
+            \`ffmpeg -i '\${videoPath}' -vf "ass='\${assPath}'" -c:a copy '\${outputPath}' -y\`
         );
         return true;
-    } catch (e: any) {
-        console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0,300)}`);
+    } catch(e: any) {
+        console.warn(\`[Translate] burnSubs falló: \${e.message?.slice(0,200)}\`);
         return false;
     }
 }
+
 
 export async function POST(req: NextRequest) {
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vlab-translate-'));

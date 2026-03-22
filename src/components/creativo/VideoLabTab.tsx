@@ -135,6 +135,14 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
     const [uploadAutoTranslate, setUploadAutoTranslate] = useState(true);
     const [uploadTargetLang, setUploadTargetLang] = useState('es');
     const [uploadVoiceId, setUploadVoiceId] = useState('ojUrU2nc4bppCZKFp9U8');
+    // Voces ElevenLabs cargadas dinámicamente
+    const [elVoices, setElVoices] = useState<any[]>([]);
+    useEffect(() => {
+        fetch('/api/elevenlabs/voices')
+            .then(r => r.json())
+            .then(d => setElVoices(d.voices || []))
+            .catch(() => {});
+    }, []);
     const [customScript, setCustomScript] = useState('');
     const [showScriptEditor, setShowScriptEditor] = useState(false);
 
@@ -1172,19 +1180,18 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                                     <label className="text-[8px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">Voz</label>
                                                     <select value={uploadVoiceId} onChange={e => setUploadVoiceId(e.target.value)}
                                                         className="w-full bg-white border border-[var(--border)] rounded-xl px-2 py-1.5 text-[10px] text-[var(--text-primary)]">
-                                                        <optgroup label="🇪🇸 Español">
-                                                            <option value="ojUrU2nc4bppCZKFp9U8">Javier — Comercial</option>
-                                                            <option value="yiWEefwu5z3DQCM79clN">Laura López</option>
-                                                            <option value="GwtqU7RCQKrjzJ0dGhqT">José Borda</option>
-                                                            <option value="h3l1RP4XfcWsPwoRp9G6">Sheila España</option>
-                                                            <option value="NhUo7cJi70nyU8yfCimA">Theo — Ads</option>
-                                                            <option value="XcWPJPVzbTFL09D9rQkl">Marco</option>
-                                                        </optgroup>
-                                                        <optgroup label="🇬🇧 English">
-                                                            <option value="EXAVITQu4vr4xnSDxMaL">Sarah</option>
-                                                            <option value="TX3LPaxmHKxFdv7VOQHJ">Liam</option>
-                                                            <option value="pqHfZKP75CvOlQylNhV4">Bill</option>
-                                                        </optgroup>
+                                                        {elVoices.length === 0 ? (
+                                                            <option value="ojUrU2nc4bppCZKFp9U8">Cargando voces...</option>
+                                                        ) : (() => {
+                                                            const grps: Record<string, any[]> = {};
+                                                            elVoices.forEach((v: any) => { const l = v.language||'other'; if(!grps[l])grps[l]=[]; grps[l].push(v); });
+                                                            const ll: Record<string,string> = {es:'🇪🇸 Español',en:'🇬🇧 English',fr:'🇫🇷 Français',de:'🇩🇪 Deutsch',it:'🇮🇹 Italiano',pt:'🇧🇷 Português',other:'🌐 Otras'};
+                                                            return Object.entries(grps).map(([l, vs]) => (
+                                                                <optgroup key={l} label={ll[l]||l}>
+                                                                    {vs.map((v: any) => <option key={v.voice_id} value={v.voice_id}>{v.name}{v.use_case?` — ${v.use_case}`:''}</option>)}
+                                                                </optgroup>
+                                                            ));
+                                                        })()}
                                                     </select>
                                                 </div>
                                             </div>
@@ -1715,30 +1722,32 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                 <select value={translateVoiceId} onChange={e => setTranslateVoiceId(e.target.value)}
                                     className="w-full rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-[var(--text-primary,#111)] outline-none"
                                     style={{ background: 'var(--bg,#f5f5f5)', border: '1px solid var(--border,#e5e7eb)' }}>
-                                    <optgroup label="🇪🇸 Español Peninsular">
-                                        <option value="ojUrU2nc4bppCZKFp9U8">Javier — Comercial</option>
-                                        <option value="yiWEefwu5z3DQCM79clN">Laura López — Social</option>
-                                        <option value="GwtqU7RCQKrjzJ0dGhqT">José Borda — Expresivo</option>
-                                        <option value="PwxTzhTOyJ9IXBhXZdc8">Jose A. del Rio — Ads</option>
-                                        <option value="h3l1RP4XfcWsPwoRp9G6">Sheila España — Social</option>
-                                        <option value="D7dkYvH17OKLgp4SLulf">Martin Osborne — Ads</option>
-                                        <option value="KHCvMklQZZo0O30ERnVn">Sara Martin — Educativa</option>
-                                        <option value="XcWPJPVzbTFL09D9rQkl">Marco — Conversacional</option>
-                                        <option value="NhUo7cJi70nyU8yfCimA">Theo — Social & Ads</option>
-                                        <option value="bXNyE7Z9cvPDl9TXt4Wg">Toñi Moreno — Andaluza</option>
-                                    </optgroup>
-                                    <optgroup label="🇦🇷 Español Argentino">
-                                        <option value="gBTPbHzRd0ZmV75Z5Zk4">Carlos Pro — Narrativa</option>
-                                    </optgroup>
-                                    <optgroup label="🇬🇧 English">
-                                        <option value="EXAVITQu4vr4xnSDxMaL">Sarah — Confident Female</option>
-                                        <option value="CwhRBWXzGAHq8TQ4Fs17">Roger — Casual Male</option>
-                                        <option value="JBFqnCBsd6RMkjVDRZzb">George — British Male</option>
-                                        <option value="TX3LPaxmHKxFdv7VOQHJ">Liam — Social Media</option>
-                                        <option value="pqHfZKP75CvOlQylNhV4">Bill — Advertisement</option>
-                                        <option value="nPczCjzI2devNBz1zQrb">Brian — Deep Social</option>
-                                        <option value="cgSgspJ2msm6clMCkdW9">Jessica — Playful</option>
-                                    </optgroup>
+                                    {elVoices.length === 0 ? (
+                                        <option value="ojUrU2nc4bppCZKFp9U8">Cargando voces...</option>
+                                    ) : (
+                                        (() => {
+                                            const groups: Record<string, any[]> = {};
+                                            elVoices.forEach((v: any) => {
+                                                const lang = v.language || 'other';
+                                                if (!groups[lang]) groups[lang] = [];
+                                                groups[lang].push(v);
+                                            });
+                                            const langLabel: Record<string, string> = {
+                                                es: '🇪🇸 Español', en: '🇬🇧 English', fr: '🇫🇷 Français',
+                                                de: '🇩🇪 Deutsch', it: '🇮🇹 Italiano', pt: '🇧🇷 Português',
+                                                other: '🌐 Otras',
+                                            };
+                                            return Object.entries(groups).map(([lang, voices]) => (
+                                                <optgroup key={lang} label={langLabel[lang] || lang}>
+                                                    {voices.map((v: any) => (
+                                                        <option key={v.voice_id} value={v.voice_id}>
+                                                            {v.name}{v.use_case ? ` — ${v.use_case}` : ''}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
+                                            ));
+                                        })()
+                                    )}
                                 </select>
                             </div>
                         )}

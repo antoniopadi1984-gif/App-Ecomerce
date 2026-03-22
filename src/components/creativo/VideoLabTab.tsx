@@ -175,21 +175,33 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
         if (translateTargetIds.length === 0) return;
         setTranslating(true);
         setShowTranslateModal(false);
-        toast.loading(`Traduciendo ${translateTargetIds.length} vídeo(s) a ${translateLang}...`, { id: 'translate' });
+        const langNames: Record<string,string> = { es:'Español', en:'English', fr:'Français', de:'Deutsch', it:'Italiano', pt:'Português', ar:'Árabe', zh:'Chino', ja:'Japonés', ko:'Coreano', ru:'Ruso', pl:'Polaco', hi:'Hindi', nl:'Neerlandés', sv:'Sueco', tr:'Turco' };
+        toast.loading(`🌐 Traduciendo ${translateTargetIds.length} vídeo(s) a ${langNames[translateLang] || translateLang}...`, { id: 'translate', duration: Infinity });
         try {
-            const results = await Promise.all(translateTargetIds.map(assetId =>
-                fetch('/api/video-lab/translate', {
+            const results = await Promise.all(translateTargetIds.map(async assetId => {
+                const res = await fetch('/api/video-lab/translate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ assetId, storeId, targetLang: translateLang, voiceId: translateVoiceId, speed: translateSpeed, stability: translateStability, style: translateStyle, burnSubtitles: true, doLipSync: false, mode: translateMode })
-                }).then(r => r.json())
-            ));
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+                return data;
+            }));
             const ok = results.filter(r => r.success).length;
             const fail = results.length - ok;
-            toast.success(`✅ ${ok} traducido(s)${fail > 0 ? ` — ${fail} fallaron` : ''}`, { id: 'translate' });
+            const firstOk = results.find(r => r.success);
+            // Mostrar toast con enlace de descarga directo
+            toast.success(
+                `✅ ${ok} vídeo${ok !== 1 ? 's' : ''} traducido${ok !== 1 ? 's' : ''}${fail > 0 ? ` · ${fail} fallaron` : ''}. ${
+                    firstOk?.assetId ? '⬇️ Haz clic en la tarjeta → Bajar para descargar.' : ''
+                }`,
+                { id: 'translate', duration: 8000 }
+            );
             fetchOwnCreatives();
         } catch (e: any) {
-            toast.error(`Error: ${e.message}`, { id: 'translate' });
+            console.error('[Translate]', e);
+            toast.error(`❌ Error: ${e.message}`, { id: 'translate', duration: 6000 });
         } finally {
             setTranslating(false);
             setSelectedIds(new Set());
@@ -938,12 +950,24 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                                     )}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 gap-1.5 translate-y-2 group-hover:translate-y-0 duration-300">
                                                         <div className="flex flex-col gap-1">
-                                                            {(creative.driveUrl || creative.videoUrl) && (
-                                                                <a href={creative.driveUrl || creative.videoUrl} target="_blank" rel="noopener noreferrer"
-                                                                    className="w-full py-1.5 bg-white text-slate-900 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-slate-100 transition-colors">
-                                                                    <Play size={10} fill="currentColor" /> Ver Video
-                                                                </a>
-                                                            )}
+                                                            {/* Fila: Ver + Descargar */}
+                                                            <div className="grid grid-cols-2 gap-1">
+                                                                {(creative.driveUrl || creative.videoUrl) && (
+                                                                    <a href={creative.driveUrl || creative.videoUrl} target="_blank" rel="noopener noreferrer"
+                                                                        className="py-1.5 bg-white text-slate-900 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-slate-100 transition-colors">
+                                                                        <Play size={10} fill="currentColor" /> Ver
+                                                                    </a>
+                                                                )}
+                                                                {creative.driveFileId && (
+                                                                    <a href={`/api/creative/download?assetId=${creative.id}&storeId=${storeId}`}
+                                                                        download={`${creative.concept || 'video'}.mp4`}
+                                                                        onClick={e => e.stopPropagation()}
+                                                                        className="py-1.5 bg-[var(--cre)] text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:brightness-110 transition-all">
+                                                                        <Download size={10} /> Bajar
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                            {/* Fila: Subs + Traducir */}
                                                             <div className="grid grid-cols-2 gap-1">
                                                                 <button 
                                                                     onClick={(e) => { e.stopPropagation(); handleSubtitles(creative.id); }}
@@ -955,24 +979,32 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                                                     onClick={(e) => { e.stopPropagation(); handleTranslate(creative.id); }}
                                                                     className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all"
                                                                 >
-                                                                    <Globe size={10} /> Trans
+                                                                    <Globe size={10} /> Trad.
                                                                 </button>
                                                             </div>
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); setViewingAnalysis(creative); }}
-                                                                className="w-full py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all font-mono"
-                                                            >
-                                                                <Eye size={10} /> Data
-                                                            </button>
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleDeleteCreative(creative.id); }}
-                                                                className="w-full py-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all"
-                                                            >
-                                                                <Trash2 size={10} /> Borrar
-                                                            </button>
+                                                            {/* Fila: Data + Borrar */}
+                                                            <div className="grid grid-cols-2 gap-1">
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); setViewingAnalysis(creative); }}
+                                                                    className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all"
+                                                                >
+                                                                    <Eye size={10} /> Data
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteCreative(creative.id); }}
+                                                                    className="py-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all"
+                                                                >
+                                                                    <Trash2 size={10} /> Borrar
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div className="absolute top-2 right-2 flex gap-1">
+                                                    <div className="absolute top-2 right-2 flex gap-1 flex-col items-end">
+                                                        {creative.language && creative.language !== 'auto' && (
+                                                            <span className="px-1.5 py-0.5 bg-blue-500 text-white text-[7px] font-black rounded uppercase shadow-sm">
+                                                                🌐 {creative.language.toUpperCase()}
+                                                            </span>
+                                                        )}
                                                         <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[7px] font-black rounded uppercase shadow-sm">
                                                             REAL
                                                         </span>
@@ -1491,15 +1523,16 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                     onClick={() => window.open(viewingAnalysis.driveUrl || viewingAnalysis.videoUrl, '_blank')}
                                     className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
                                 >
-                                    <Play size={14} fill="currentColor" /> Ver Video Original
+                                    <Play size={14} fill="currentColor" /> Ver en Drive
                                 </button>
                                 {viewingAnalysis.driveFileId && (
-                                    <button 
-                                        onClick={() => window.open(`https://drive.google.com/file/d/${viewingAnalysis.driveFileId}/view`, '_blank')}
-                                        className="w-12 h-12 bg-white border border-slate-200 text-slate-400 rounded-xl flex items-center justify-center hover:text-slate-900 transition-all shadow-sm"
+                                    <a 
+                                        href={`/api/creative/download?assetId=${viewingAnalysis.id}&storeId=${storeId}`}
+                                        download={`${viewingAnalysis.concept || 'video'}.mp4`}
+                                        className="flex-1 py-3 bg-[var(--cre)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all"
                                     >
-                                        <HardDrive size={18} />
-                                    </button>
+                                        <Download size={14} /> Descargar MP4
+                                    </a>
                                 )}
                             </div>
                         </div>

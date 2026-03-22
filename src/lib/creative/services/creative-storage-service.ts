@@ -109,6 +109,7 @@ export class CreativeStorageService {
             storeId: a.storeId,
             type: a.type || 'VIDEO',
             videoUrl: a.driveUrl || `https://drive.google.com/file/d/${a.driveFileId}/view`,
+            driveUrl: a.driveUrl,
             concept: a.nomenclatura || a.name,
             createdAt: a.createdAt,
             status: 'REAL',
@@ -118,6 +119,8 @@ export class CreativeStorageService {
             hook: a.hookText,
             thumbnailUrl: a.thumbnailUrl,
             driveFileId: a.driveFileId,
+            language: a.language,
+            sourceAssetId: a.sourceAssetId,
             ctr: a.ctr,
             revenue: a.revenue,
             spend: a.spend,
@@ -190,6 +193,7 @@ export class CreativeStorageService {
             id: a.id,
             type: a.type || 'VIDEO',
             videoUrl: a.driveUrl || `https://drive.google.com/file/d/${a.driveFileId}/view`,
+            driveUrl: a.driveUrl,
             concept: a.nomenclatura || a.name,
             createdAt: a.createdAt,
             status: 'REAL',
@@ -197,6 +201,9 @@ export class CreativeStorageService {
             product: a.product,
             store: a.store,
             thumbnailUrl: a.thumbnailUrl,
+            driveFileId: a.driveFileId,
+            language: a.language,
+            sourceAssetId: a.sourceAssetId,
             tagsJson: a.tagsJson
         }));
 

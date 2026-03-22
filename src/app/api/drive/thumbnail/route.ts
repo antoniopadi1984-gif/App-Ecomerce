@@ -1,19 +1,16 @@
 /**
  * GET /api/drive/thumbnail?fileId=xxx&storeId=xxx
- * Genera miniatura extrayendo el frame 1s del video con ffmpeg.
- * Drive no genera thumbnailLink para MP4 en Shared Drives privados.
+ * Genera miniatura del vídeo usando ffmpeg con pipe desde Drive.
+ * Evita el problema del moov atom al final del MP4 usando spawn+stdin.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getConnectionSecret } from '@/lib/server/connections';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 
-const execAsync = promisify(exec);
 const FFMPEG = process.env.FFMPEG_PATH || '/opt/homebrew/bin/ffmpeg';
-const FFPROBE = '/opt/homebrew/bin/ffprobe';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -21,12 +18,13 @@ export const maxDuration = 30;
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const fileId = searchParams.get('fileId');
-    // storeId puede venir como param o usar store-main como fallback
     const storeId = searchParams.get('storeId') || 'store-main';
 
     if (!fileId) return new NextResponse('Missing fileId', { status: 400 });
 
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'thumb-'));
+    const thumbPath = path.join(tmpDir, 'thumb.jpg');
+
     try {
         // Auth con Google Drive
         const { google } = await import('googleapis');
@@ -41,7 +39,7 @@ export async function GET(request: NextRequest) {
         });
         const drive = google.drive({ version: 'v3', auth: driveAuth });
 
-        // Intentar primero el thumbnailLink nativo de Drive (rápido para imágenes/docs)
+        // 1. Intentar thumbnailLink nativo de Drive (funciona para docs/imágenes, no para MP4 privados)
         try {
             const meta = await drive.files.get({
                 fileId,
@@ -53,47 +51,54 @@ export async function GET(request: NextRequest) {
                 if (imgRes.ok) {
                     const buf = await imgRes.arrayBuffer();
                     return new NextResponse(buf, {
-                        headers: {
-                            'Content-Type': 'image/jpeg',
-                            'Cache-Control': 'public, max-age=86400',
-                        }
+                        headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' }
                     });
                 }
             }
         } catch {}
 
-        // Fallback: descargar primero 5 segundos del video con Range y extraer frame
-        const videoPath = path.join(tmpDir, 'segment.mp4');
-        const thumbPath = path.join(tmpDir, 'thumb.jpg');
-
-        // Descargar solo los primeros ~2MB para obtener el frame inicial
+        // 2. Descargar el archivo completo (hasta 80MB) y guardar localmente para que ffmpeg pueda leer el moov atom
+        const videoPath = path.join(tmpDir, 'video.mp4');
         const driveRes = await drive.files.get(
             { fileId, alt: 'media', supportsAllDrives: true },
-            { responseType: 'stream', headers: { Range: 'bytes=0-2097152' } }
+            { responseType: 'stream', headers: { Range: 'bytes=0-83886080' } }
         );
 
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
             const ws = require('fs').createWriteStream(videoPath);
-            (driveRes.data as any).pipe(ws);
+            const stream = driveRes.data as any;
+            stream.pipe(ws);
             ws.on('finish', resolve);
-            ws.on('error', reject);
-            (driveRes.data as any).on('error', resolve); // 206 puede cerrar con error
+            ws.on('error', resolve);
+            stream.on('error', resolve); // 206 partial puede cerrar con error
         });
 
-        // Extraer frame al segundo 1 (o al principio si el video es muy corto)
-        await execAsync(
-            `${FFMPEG} -i '${videoPath}' -ss 00:00:01 -frames:v 1 -q:v 3 '${thumbPath}' -y 2>/dev/null`
-        ).catch(() =>
-            execAsync(`${FFMPEG} -i '${videoPath}' -frames:v 1 -q:v 3 '${thumbPath}' -y 2>/dev/null`)
-        );
+        // Intentar extraer frame con el archivo descargado
+        const ffmpegExtract = (seek: string) => new Promise<boolean>((resolve) => {
+            const proc = spawn(FFMPEG, [
+                '-y',
+                '-i', videoPath,
+                ...(seek ? ['-ss', seek] : []),
+                '-frames:v', '1',
+                '-q:v', '3',
+                '-f', 'image2',
+                thumbPath
+            ]);
+            proc.on('close', (code) => resolve(code === 0));
+        });
 
-        const thumbData = await fs.readFile(thumbPath);
-        return new NextResponse(thumbData, {
-            headers: {
-                'Content-Type': 'image/jpeg',
-                'Cache-Control': 'public, max-age=86400',
+        const ok = await ffmpegExtract('0:00:01') || await ffmpegExtract('');
+
+        if (ok) {
+            const thumbData = await fs.readFile(thumbPath).catch(() => null);
+            if (thumbData) {
+                return new NextResponse(thumbData, {
+                    headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' }
+                });
             }
-        });
+        }
+
+        return new NextResponse('No thumbnail', { status: 404 });
 
     } catch (error: any) {
         console.error('[DriveThumbnail] Error:', error.message?.slice(0, 200));

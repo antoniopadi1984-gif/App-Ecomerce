@@ -57,56 +57,44 @@ async function runLatentSync(videoUrl: string, audioUrl: string, replicateToken:
     return Array.isArray(result.output) ? result.output[0] : result.output;
 }
 
-// ── Quemar subtítulos vía ffmpeg con subtitles filter ────────────────────────
-async function srtToAss(srtContent: string): Promise<string> {
-    const assHeader = `[Script Info]
-ScriptType: v4.00+
-PlayResX: 1080
-PlayResY: 1920
-
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Arial,52,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,1,0,0,0,100,100,0,0,1,3,1,2,20,20,40,1
-
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-`;
-    const toAssTime = (secs: number) => {
-        const h = Math.floor(secs / 3600);
-        const m = Math.floor((secs % 3600) / 60);
-        const s = Math.floor(secs % 60);
-        const cs = Math.round((secs % 1) * 100);
-        return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(cs).padStart(2,'0')}`;
-    };
-    const lines: string[] = [];
-    const blocks = srtContent.trim().split(/\n\s*\n/);
-    for (const block of blocks) {
-        const parts = block.trim().split('\n');
-        if (parts.length < 3) continue;
-        const times = parts[1].match(/(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+)/);
-        if (!times) continue;
-        const start = parseInt(times[1])*3600 + parseInt(times[2])*60 + parseInt(times[3]) + parseInt(times[4])/1000;
-        const end = parseInt(times[5])*3600 + parseInt(times[6])*60 + parseInt(times[7]) + parseInt(times[8])/1000;
-        const text = parts.slice(2).join('\n').replace(/\{[^}]+\}/g, '').replace(/\n/g, '\\N');
-        lines.push(`Dialogue: 0,${toAssTime(start)},${toAssTime(end)},Default,,0,0,0,,${text}`);
-    }
-    return assHeader + lines.join('\n');
-}
-
+// ── Quemar subtítulos vía ffmpeg drawtext (sin libass) ──────────────────────
+// Parsea SRT agrupando en bloques de ~3s y genera filtro drawtext
+// NOTA: ffmpeg en Homebrew no tiene --enable-libass; drawtext no lo necesita
 async function burnSubs(videoPath: string, srtPath: string, outputPath: string): Promise<boolean> {
     try {
-        const srtContent = require('fs').readFileSync(srtPath, 'utf8');
-        const assContent = await srtToAss(srtContent);
-        const assPath = srtPath.replace('.srt', '.ass');
-        require('fs').writeFileSync(assPath, assContent, 'utf8');
-        // Escapar ruta para ffmpeg (reemplazar espacios y caracteres especiales)
-        const escapedAss = assPath.replace(/'/g, "'\''");
+        const srtContent = await fs.readFile(srtPath, 'utf8');
+        const blocks = srtContent.trim().split(/\n\s*\n/).slice(0, 120); // max 120 bloques
+        const entries: string[] = [];
+        for (const block of blocks) {
+            const lines = block.trim().split('\n');
+            if (lines.length < 3) continue;
+            const t = lines[1]?.match(/(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})/);
+            if (!t) continue;
+            const sec = (h: string, m: string, s: string, ms: string) =>
+                parseInt(h)*3600 + parseInt(m)*60 + parseInt(s) + parseInt(ms)/1000;
+            const ts = sec(t[1],t[2],t[3],t[4]);
+            const te = sec(t[5],t[6],t[7],t[8]);
+            // Limpiar texto: escapar comillas simples, barras y % para drawtext
+            const text = lines.slice(2).join(' ')
+                .replace(/[\\]/g, '')
+                .replace(/'/g, '')
+                .replace(/[%:,=\[\]]/g, ' ')
+                .trim();
+            if (!text) continue;
+            entries.push(
+                `drawtext=text='${text}':fontsize=20:fontcolor=white:borderw=2:bordercolor=black` +
+                `:x=(w-text_w)/2:y=h-90:enable='between(t,${ts.toFixed(2)},${te.toFixed(2)})'`
+            );
+        }
+        if (entries.length === 0) { console.warn('[BurnSubs] No entries'); return false; }
+        // drawtext acepta filtros encadenados con ,
+        const filter = entries.join(',');
         await execAsync(
-            'ffmpeg -i \'' + videoPath + '\' -vf "ass=\'' + escapedAss + '\'" -c:a copy \'' + outputPath + '\' -y'
+            `${FFMPEG} -i '${videoPath}' -vf "${filter}" -c:v libx264 -preset ultrafast -crf 23 -c:a copy '${outputPath}' -y`
         );
         return true;
-    } catch(e: any) {
-        console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0,200)}`);
+    } catch (e: any) {
+        console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0,250)}`);
         return false;
     }
 }

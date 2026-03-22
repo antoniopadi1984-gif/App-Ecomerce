@@ -168,34 +168,53 @@ async function runPipeline(
 
         let finalVideoPath = mergedVideoPath;
 
-        // BLUR texto inglés + subtítulos español
-        const subtitledPath2 = join(tmpDir, 'subtitled.mp4');
-        try {
-            const { stdout: pOut } = await execAsync(
-                'ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "' + mergedVideoPath + '"'
-            );
-            const dims = pOut.trim().split(',');
-            const vw2 = parseInt(dims[0]);
-            const vh2 = parseInt(dims[1]);
-            const topH2 = Math.floor(vh2 * 0.25);
-            const botY2 = Math.floor(vh2 * 0.78);
-            const botH2 = vh2 - botY2;
+        // PASO 7: Inyectar subtítulos en español con Python worker (OpenCV OCR + FFmpeg/libass)
+        if (addSubtitles && translation) {
+            const subtitledPath = join(tmpDir, 'subtitled.mp4');
+            const srtPath = join(tmpDir, 'subtitles.srt');
 
-            const { stdout: dOut } = await execAsync(
-                'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "' + mergedVideoPath + '"'
-            );
-            const dur2 = parseFloat(dOut.trim());
+            try {
+                // Obtener duración del vídeo
+                const { stdout: durOut } = await execAsync(
+                    `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${mergedVideoPath}"`
+                );
+                const duration = parseFloat(durOut.trim()) || 30;
 
-            // Generar SRT y usar filtro de video por pasos separados
-            // PASO 1: Solo blur (sin texto — es lo más seguro)
-            const blurFilter = 'drawbox=x=0:y=0:w=' + vw2 + ':h=' + topH2 + ':color=black@0.85:t=fill,drawbox=x=0:y=' + botY2 + ':w=' + vw2 + ':h=' + botH2 + ':color=black@0.85:t=fill';
-            const blurOnlyPath = join(tmpDir, 'blur_only.mp4');
-            await execAsync(`/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -i "${blurOnlyPath}" -vf "subtitles=${srtPath3}" "${subtitledPath2}"`);
-            finalVideoPath = subtitledPath2;
-            console.log('[Pipeline] ✅ Blur + subtítulos aplicados');
-        } catch (e2: any) {
-            console.warn('[Pipeline] Blur/subs fallaron:', e2.message);
+                // Generar SRT desde el texto traducido (distribución uniforme)
+                const words = translation.trim().split(/\s+/);
+                const chunkSize = 8;
+                let srtContent = '';
+                const chunks: string[] = [];
+                for (let i = 0; i < words.length; i += chunkSize) {
+                    chunks.push(words.slice(i, i + chunkSize).join(' '));
+                }
+                const chunkDur = duration / Math.max(chunks.length, 1);
+                chunks.forEach((text, i) => {
+                    const s = i * chunkDur;
+                    const e = Math.min((i + 1) * chunkDur - 0.1, duration);
+                    srtContent += `${i + 1}\n${fmtSrt(s)} --> ${fmtSrt(e)}\n${text}\n\n`;
+                });
+                await writeFile(srtPath, srtContent);
+
+                // Llamar al Python worker: detecta posición OCR + inyecta con libass
+                const pythonBin = process.env.PYTHON_BIN || 'python3';
+                const injectorPath = join(process.cwd(), 'scripts', 'subtitle_injector.py');
+                await execAsync(
+                    `${pythonBin} "${injectorPath}" --video "${mergedVideoPath}" --srt "${srtPath}" --out "${subtitledPath}"`,
+                    { maxBuffer: 50 * 1024 * 1024 }
+                );
+
+                if (require('fs').existsSync(subtitledPath)) {
+                    finalVideoPath = subtitledPath;
+                    console.log('[Pipeline] ✅ Subtítulos inyectados con Python worker');
+                } else {
+                    console.warn('[Pipeline] ⚠️ Python worker no produjo archivo, usando sin subtítulos');
+                }
+            } catch (e2: any) {
+                console.warn('[Pipeline] Subtítulos fallaron:', e2.message);
+            }
         }
+
 
         // LipSync si está activado
         if (addLipsync) {
@@ -271,4 +290,14 @@ async function runPipeline(
     } finally {
         await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
     }
+}
+
+/** Format seconds → SRT timestamp (HH:MM:SS,mmm) */
+function fmtSrt(sec: number): string {
+    const ms = Math.floor((sec % 1) * 1000);
+    const s  = Math.floor(sec) % 60;
+    const m  = Math.floor(sec / 60) % 60;
+    const h  = Math.floor(sec / 3600);
+    const p  = (n: number, d = 2) => String(n).padStart(d, '0');
+    return `${p(h)}:${p(m)}:${p(s)},${p(ms, 3)}`;
 }

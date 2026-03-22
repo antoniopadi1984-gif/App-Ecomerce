@@ -23,6 +23,10 @@
     {
       "path": "/api/automations/process",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/subtitle-batch",
+      "schedule": "0 4 * * *"
     }
   ]
 }

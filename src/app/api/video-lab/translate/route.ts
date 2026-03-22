@@ -286,16 +286,24 @@ export async function POST(req: NextRequest) {
                 console.log(`[Translate TTS] SRT fallback con ${words.length} palabras del texto traducido`);
             }
 
-            // 7. Quemar subtítulos encima del vídeo TTS
+            // 7. Quemar subtítulos con detección automática de posición (OpenCV+Tesseract)
             let finalPath = ttsVideoPath;
             if (burnSubtitles && srtContent) {
                 const srtPath = path.join(tmpDir, 'subs_tts.srt');
                 const burnedPath = path.join(tmpDir, 'final_tts.mp4');
                 await fs.writeFile(srtPath, srtContent);
-                const burned = await burnSubs(ttsVideoPath, srtPath, burnedPath);
-                if (burned) {
+                try {
+                    const scriptPath = path.join(process.cwd(), 'scripts', 'subtitle_injector.py');
+                    const { stdout, stderr } = await execAsync(
+                        'python3 ' + scriptPath + ' --video \'' + ttsVideoPath + '\' --srt \'' + srtPath + '\' --out \'' + burnedPath + '\''
+                    );
+                    if (stderr) console.log('[SubtitleInjector]', stderr.slice(0, 500));
                     finalPath = burnedPath;
-                    console.log('[Translate TTS] Subtítulos quemados correctamente');
+                    console.log('[Translate TTS] Subtítulos inyectados con detección automática');
+                } catch (burnErr: any) {
+                    console.warn('[Translate TTS] subtitle_injector falló, usando burnSubs:', burnErr.message?.slice(0,200));
+                    const burned = await burnSubs(ttsVideoPath, srtPath, burnedPath);
+                    if (burned) finalPath = burnedPath;
                 }
             }
 

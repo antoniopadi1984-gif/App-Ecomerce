@@ -57,22 +57,46 @@ async function runLatentSync(videoUrl: string, audioUrl: string, replicateToken:
     return Array.isArray(result.output) ? result.output[0] : result.output;
 }
 
-// ── Quemar subtítulos vía ffmpeg con estilo personalizado ────────────────────
+// ── Quemar subtítulos vía ffmpeg drawtext (sin libass) ──────────────────────
+// Parsea el SRT y genera filtro drawtext para cada línea
+function srtToDrawtext(srtContent: string, videoPath: string): string | null {
+    try {
+        const blocks = srtContent.trim().split(/\n\n+/);
+        const entries: {start: number; end: number; text: string}[] = [];
+        for (const block of blocks) {
+            const lines = block.split('\n');
+            if (lines.length < 3) continue;
+            const timeMatch = lines[1]?.match(/(\d{2}):(\d{2}):(\d{2}),(\d{3}) --> (\d{2}):(\d{2}):(\d{2}),(\d{3})/);
+            if (!timeMatch) continue;
+            const toSec = (h:string,m:string,s:string,ms:string) => parseInt(h)*3600+parseInt(m)*60+parseInt(s)+parseInt(ms)/1000;
+            const start = toSec(timeMatch[1],timeMatch[2],timeMatch[3],timeMatch[4]);
+            const end = toSec(timeMatch[5],timeMatch[6],timeMatch[7],timeMatch[8]);
+            const text = lines.slice(2).join(' ').replace(/['"\\:]/g,' ').trim();
+            if (text) entries.push({ start, end, text });
+        }
+        if (entries.length === 0) return null;
+        // Agrupar en bloques de ~6 palabras por línea de subtítulo
+        const filters = entries.map(e => {
+            const escaped = e.text.replace(/'/g, "'\\''").replace(/[%]/g, '\\%');
+            return `drawtext=text='${escaped}':fontsize=22:fontcolor=white:borderw=2:bordercolor=black:x=(w-text_w)/2:y=h-80:enable='between(t,${e.start.toFixed(3)},${e.end.toFixed(3)})'`;
+        });
+        return filters.join(',');
+    } catch { return null; }
+}
+
 async function burnSubs(videoPath: string, srtPath: string, outputPath: string): Promise<boolean> {
     try {
-        // ffmpeg 8.x: 'filename=' es obligatorio al combinar con force_style
-        const escapedSrt = srtPath.replace(/\\/g, '/').replace(/'/g, "\\'");
+        const srtContent = await fs.readFile(srtPath, 'utf8');
+        const drawtextFilter = srtToDrawtext(srtContent, videoPath);
+        if (!drawtextFilter) { console.warn('[Translate] burnSubs: SRT vacío'); return false; }
         await execAsync(
             `${FFMPEG} -i '${videoPath}' ` +
-            `-vf "subtitles=filename='${escapedSrt}':force_style=` +
-            `'FontName=Arial,FontSize=16,PrimaryColour=&H00FFFFFF,` +
-            `OutlineColour=&H00000000,BackColour=&H80000000,` +
-            `Outline=2,Shadow=1,Bold=1,Alignment=2,MarginV=20'" ` +
+            `-vf "${drawtextFilter}" ` +
             `-c:v libx264 -preset ultrafast -crf 23 -c:a copy '${outputPath}' -y`
         );
         return true;
     } catch (e: any) {
-        console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0, 400)}`);
+        console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0,300)}`);
         return false;
     }
 }

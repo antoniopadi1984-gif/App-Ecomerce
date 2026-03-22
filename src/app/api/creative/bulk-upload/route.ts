@@ -7,9 +7,12 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
     const storeId  = req.headers.get('X-Store-Id');
     const formData = await req.formData();
-    const productId    = formData.get('productId') as string;
-    const isCompetitor = formData.get('isCompetitor') === 'true';
-    const files        = formData.getAll('files') as File[];
+    const productId      = formData.get('productId') as string;
+    const isCompetitor   = formData.get('isCompetitor') === 'true';
+    const autoTranslate  = formData.get('autoTranslate') === 'true';
+    const targetLang     = formData.get('targetLang') as string || 'es';
+    const voiceId        = formData.get('voiceId') as string || 'ojUrU2nc4bppCZKFp9U8';
+    const files          = formData.getAll('files') as File[];
 
     if (!productId || !files.length || !storeId) {
         return NextResponse.json(
@@ -60,6 +63,11 @@ export async function POST(req: NextRequest) {
                     fd.append('video', blob, fileName);
                     fd.append('productId', productId);
                     fd.append('assetId', assetId);
+                    if (autoTranslate) {
+                        fd.append('autoTranslate', 'true');
+                        fd.append('targetLang', targetLang);
+                        fd.append('voiceId', voiceId);
+                    }
 
                     await fetch(
                         `${process.env.NEXT_PUBLIC_APP_URL}/api/video-lab/process`,

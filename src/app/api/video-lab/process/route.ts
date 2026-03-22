@@ -151,6 +151,18 @@ export async function POST(request: NextRequest) {
             if (j) { j.status = 'ERROR'; j.error = e.message; j.updatedAt = new Date().toISOString(); }
         });
 
+        // Traducción automática si se solicitó al subir
+        if (autoTranslate) {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+            fetch(appUrl + '/api/video-lab/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetId, targetLang, voiceId, storeId, burnSubtitles: true, mode: 'tts' })
+            }).then(r => r.json())
+              .then(r => console.log('[AutoTranslate] ✅', r.nomenclatura || r.error))
+              .catch(e => console.warn('[AutoTranslate] Error:', e.message));
+        }
+
         return NextResponse.json({ ok: true, jobId, assetId: asset.id });
 
     } catch (error) {
@@ -505,8 +517,13 @@ Devuelve ÚNICAMENTE este JSON (sin texto adicional):
         .replace(/\/RETARGET[_A-Z]*\//g, '/RETARGETING/');
     const drivePath = rawDrivePath.startsWith('2_CREATIVOS') ? rawDrivePath : `2_CREATIVOS/${rawDrivePath}`;
     
+    // Original va en 2_CREATIVOS/ORIGINAL/... con idioma detectado
+    const detectedLang = (analysis.language || 'ENG').toUpperCase();
+    const originalNomen = `${sku}_${conceptCode}_V${version}_${detectedLang}.mp4`;
+    const originalPath = drivePath.replace('2_CREATIVOS/', '2_CREATIVOS/ORIGINAL/');
+
     let driveOptions: any = { 
-        subfolderName: drivePath,
+        subfolderName: originalPath,
         conceptCode, 
         funnelStage: analysis.traffic, 
         angle: analysis.angle,
@@ -521,7 +538,7 @@ Devuelve ÚNICAMENTE este JSON (sin texto adicional):
 
     const mainVideoUpload = await uploadToProduct(
       Buffer.from(await fs.readFile(strippedPath)),
-      generatedNomen,
+      originalNomen,
       file.type,
       productId,
       storeId,

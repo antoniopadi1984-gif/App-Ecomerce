@@ -356,9 +356,11 @@ export async function POST(req: NextRequest) {
 
             // 8. Subir vídeo final a Drive
             const langCode = targetLang.toUpperCase();
-            const baseNomen = (asset.nomenclatura || asset.name).replace(/\.mp4$/i, '');
-            const translatedNomen = `${baseNomen}_${langCode}_TTS.mp4`;
-            const driveSubfolder = `${asset.drivePath || '2_CREATIVOS'}/${langCode}`;
+            const baseNomen = (asset.nomenclatura || asset.name)
+                .replace(/\.mp4$/i, '')
+                .replace(/_ENG$|_EN$|_ES$|_FR$|_DE$|_IT$|_PT$/, ''); // quitar idioma del original
+            const translatedNomen = `${baseNomen}.mp4`; // nomenclatura limpia sin idioma ni sufijo
+            const driveSubfolder = asset.drivePath || '2_CREATIVOS'; // misma ruta que el original sin subcarpeta
 
             const videoUpload = await uploadToProduct(
                 await fs.readFile(finalPath), translatedNomen, 'video/mp4',

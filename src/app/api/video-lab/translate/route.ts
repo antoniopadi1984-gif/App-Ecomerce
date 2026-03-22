@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma';
 import { ElevenLabsService } from '@/lib/services/elevenlabs-service';
 import { uploadToProduct } from '@/lib/services/drive-service';
 import { generateSRT } from '@/lib/video/subtitle-utils';
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -20,6 +20,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 // Path absoluto de ffmpeg — Next.js puede no tener /opt/homebrew/bin en su PATH
 const FFMPEG = process.env.FFMPEG_PATH || '/opt/homebrew/bin/ffmpeg';
 
@@ -217,33 +218,70 @@ export async function POST(req: NextRequest) {
             const audioDuration = parseFloat(aDurRes.stdout.trim()) || 0;
             console.log(`[Translate TTS] Video: ${videoDuration.toFixed(2)}s | TTS Audio: ${audioDuration.toFixed(2)}s`);
 
+            // ─── SYNC DUAL-EJE: distribuir ajuste entre vídeo y audio ───────────────
+            // En lugar de acelerar solo el audio (lo que lo hace sonar robótico),
+            // dividimos el ajuste:
+            //   1. Ralentizamos el vídeo hasta un máx del 20% (factor vídeo mín = 0.80)
+            //   2. El resto del ajuste va al audio (siempre << 1.4x)
+            // Ejemplo: audio=103s, video=73s → ratio=1.400
+            //   videoFactor=0.80 → nuevaDuraciónVideo=73/0.80=91.25s
+            //   audioFactor=103/91.25=1.129 (mucho más natural)
+            // ────────────────────────────────────────────────────────────────────────
             const ttsVideoPath = path.join(tmpDir, 'tts_video.mp4');
             if (audioDuration > 0 && videoDuration > 0 && Math.abs(audioDuration - videoDuration) > 0.3) {
-                // Acelerar el audio TTS para que coincida con la duración del vídeo original
-                // atempo acepta valores entre 0.5 y 2.0
-                const speedFactor = audioDuration / videoDuration;
-                console.log('[Translate TTS] Acelerando audio TTS: factor ' + speedFactor.toFixed(3) + 'x');
+                const ratio = audioDuration / videoDuration; // e.g. 1.40
+
+                // Calcular el factor de ralentización del vídeo (máx 20%)
+                const VIDEO_SLOWDOWN_MAX = 0.80; // mínimo 0.80x (20% más lento)
+                const AUDIO_MAX = 1.60;           // máximo que aceleramos el audio
+
+                // ¿Cuánto del ajuste cargamos al vídeo?
+                // Queremos que videoFactor * audioFactor = ratio
+                // Optamos por videoFactor = max(VIDEO_SLOWDOWN_MAX, 1/sqrt(ratio)) — punto medio geométrico
+                let videoFactor = Math.max(VIDEO_SLOWDOWN_MAX, 1.0 / Math.sqrt(ratio));
+                let audioFactor = ratio / videoFactor;
+
+                // Si audioFactor todavía > AUDIO_MAX, cargamos más al vídeo
+                if (audioFactor > AUDIO_MAX) {
+                    audioFactor = AUDIO_MAX;
+                    videoFactor = ratio / audioFactor;
+                }
+
+                const newVideoDuration = videoDuration / videoFactor;
+                console.log(
+                    `[Translate TTS] Sync dual-eje: ratio=${ratio.toFixed(3)}x ` +
+                    `→ vídeo ×${videoFactor.toFixed(3)} (${videoDuration.toFixed(1)}s→${newVideoDuration.toFixed(1)}s) ` +
+                    `+ audio ×${audioFactor.toFixed(3)}`
+                );
+
+                // Paso A: Ralentizar vídeo con setpts (no recodifica pixel-quality, solo timestamps)
+                const slowVideoPath = path.join(tmpDir, 'slow_video.mp4');
+                const ptsExpr = (1.0 / videoFactor).toFixed(6);
+                await execAsync(
+                    `${FFMPEG} -i '${videoPath}' -vf "setpts=${ptsExpr}*PTS" -an -c:v libx264 -crf 18 -preset fast '${slowVideoPath}' -y`
+                );
+
+                // Paso B: Acelerar el audio TTS en audioFactor
                 const speededAudioPath = path.join(tmpDir, 'tts_speeded.mp3');
-                // Si speedFactor > 2.0 hay que aplicar atempo en cadena
-                let atempoFilter = '';
-                if (speedFactor <= 2.0) {
-                    atempoFilter = 'atempo=' + speedFactor.toFixed(6);
-                } else if (speedFactor <= 4.0) {
-                    atempoFilter = 'atempo=2.0,atempo=' + (speedFactor / 2.0).toFixed(6);
+                let atempoFilter: string;
+                if (audioFactor <= 2.0) {
+                    atempoFilter = `atempo=${audioFactor.toFixed(6)}`;
                 } else {
-                    atempoFilter = 'atempo=2.0,atempo=2.0,atempo=' + (speedFactor / 4.0).toFixed(6);
+                    atempoFilter = `atempo=2.0,atempo=${(audioFactor / 2.0).toFixed(6)}`;
                 }
                 await execAsync(
-                    FFMPEG + " -i '" + ttsAudioPath + "' -filter:a \"" + atempoFilter + "\" '" + speededAudioPath + "' -y"
+                    `${FFMPEG} -i '${ttsAudioPath}' -filter:a "${atempoFilter}" '${speededAudioPath}' -y`
                 );
+
+                // Paso C: Mezclar vídeo lento + audio ajustado
                 await execAsync(
-                    FFMPEG + " -i '" + videoPath + "' -i '" + speededAudioPath + "' " +
-                    "-map 0:v -map 1:a -c:v copy -c:a aac -shortest '" + ttsVideoPath + "' -y"
+                    `${FFMPEG} -i '${slowVideoPath}' -i '${speededAudioPath}' ` +
+                    `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
                 );
             } else {
                 await execAsync(
-                    FFMPEG + " -i '" + videoPath + "' -i '" + ttsAudioPath + "' " +
-                    "-map 0:v -map 1:a -c:v copy -c:a aac -shortest '" + ttsVideoPath + "' -y"
+                    `${FFMPEG} -i '${videoPath}' -i '${ttsAudioPath}' ` +
+                    `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
                 );
             }
             console.log('[Translate TTS] Audio TTS sincronizado con vídeo');
@@ -294,12 +332,21 @@ export async function POST(req: NextRequest) {
                 await fs.writeFile(srtPath, srtContent);
                 try {
                     const scriptPath = path.join(process.cwd(), 'scripts', 'subtitle_injector.py');
-                    const { stdout, stderr } = await execAsync(
-                        'python3 ' + scriptPath + ' --video \'' + ttsVideoPath + '\' --srt \'' + srtPath + '\' --out \'' + burnedPath + '\''
+                    const pythonBin = process.env.PYTHON_BIN || 'python3';
+                    // Usamos execFileAsync para evitar problemas de quoting con rutas con espacios
+                    const { stderr } = await execFileAsync(
+                        pythonBin,
+                        [scriptPath, '--video', ttsVideoPath, '--srt', srtPath, '--out', burnedPath],
+                        { maxBuffer: 50 * 1024 * 1024 }
                     );
                     if (stderr) console.log('[SubtitleInjector]', stderr.slice(0, 500));
-                    finalPath = burnedPath;
-                    console.log('[Translate TTS] Subtítulos inyectados con detección automática');
+                    const exists = await fs.access(burnedPath).then(() => true).catch(() => false);
+                    if (exists) {
+                        finalPath = burnedPath;
+                        console.log('[Translate TTS] ✅ Subtítulos inyectados con detección automática');
+                    } else {
+                        throw new Error('subtitle_injector no produjo archivo de salida');
+                    }
                 } catch (burnErr: any) {
                     console.warn('[Translate TTS] subtitle_injector falló, usando burnSubs:', burnErr.message?.slice(0,200));
                     const burned = await burnSubs(ttsVideoPath, srtPath, burnedPath);

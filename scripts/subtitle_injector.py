@@ -40,6 +40,16 @@ try:
 except ImportError:
     TESSEROCR = False
 
+# Absolute paths — Next.js/shell may not have /opt/homebrew/bin in PATH
+FFPROBE = os.environ.get('FFPROBE_PATH', '/opt/homebrew/bin/ffprobe')
+if not os.path.exists(FFPROBE):
+    FFPROBE = 'ffprobe'  # fallback to PATH
+
+FFMPEG_BIN = os.environ.get('FFMPEG_PATH', '/opt/homebrew/bin/ffmpeg')
+if not os.path.exists(FFMPEG_BIN):
+    FFMPEG_BIN = 'ffmpeg'
+
+
 # ─────────────────────────────────────────────
 # Frame extraction
 # ─────────────────────────────────────────────
@@ -47,7 +57,7 @@ except ImportError:
 def extract_frame(video_path: str, out_path: str, t: float = 1.0) -> bool:
     """Extract a single frame at time t (seconds)."""
     result = subprocess.run(
-        ["ffmpeg", "-y", "-ss", str(t), "-i", video_path,
+        [FFMPEG_BIN, "-y", "-ss", str(t), "-i", video_path,
          "-vframes", "1", "-q:v", "2", out_path],
         capture_output=True
     )
@@ -58,16 +68,38 @@ def extract_frame(video_path: str, out_path: str, t: float = 1.0) -> bool:
 # Video dimensions
 # ─────────────────────────────────────────────
 
-def get_video_dims(video_path: str) -> tuple[int, int]:
-    """Returns (width, height) in pixels."""
-    result = subprocess.run(
-        ["ffprobe", "-v", "error", "-select_streams", "v:0",
-         "-show_entries", "stream=width,height",
-         "-of", "csv=p=0", video_path],
-        capture_output=True, text=True
-    )
-    parts = result.stdout.strip().split(",")
-    return int(parts[0]), int(parts[1])
+def get_video_dims(video_path: str) -> tuple:
+    """Returns (width, height) in pixels. Uses JSON output for reliability."""
+    # Method 1: JSON via ffprobe (most reliable)
+    try:
+        result = subprocess.run(
+            [FFPROBE, "-v", "error", "-select_streams", "v:0",
+             "-show_entries", "stream=width,height",
+             "-of", "json", video_path],
+            capture_output=True, text=True, timeout=15
+        )
+        data = json.loads(result.stdout)
+        streams = data.get("streams", [])
+        if streams and streams[0].get("width") and streams[0].get("height"):
+            return int(streams[0]["width"]), int(streams[0]["height"])
+    except Exception:
+        pass
+
+    # Method 2: Use OpenCV directly as fallback (no ffprobe needed)
+    try:
+        cap = cv2.VideoCapture(video_path)
+        if cap.isOpened():
+            w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            cap.release()
+            if w > 0 and h > 0:
+                print(f"[INFO] Dims via OpenCV: {w}x{h}", file=sys.stderr)
+                return w, h
+        cap.release()
+    except Exception:
+        pass
+
+    raise RuntimeError(f"Could not determine video dimensions for: {video_path}")
 
 
 # ─────────────────────────────────────────────
@@ -237,13 +269,10 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 
 def inject_subtitles(video_path: str, ass_path: str, out_path: str) -> bool:
     """Burn ASS subtitles using FFmpeg libass. Audio copied without re-encoding."""
-    # Escape path for FFmpeg filter (colons and backslashes need escaping)
-    escaped = ass_path.replace("\\", "/").replace(":", "\\:")
-
     cmd = [
-        "ffmpeg", "-y",
+        FFMPEG_BIN, "-y",
         "-i", video_path,
-        "-vf", f"ass={escaped}",
+        "-vf", f"ass={ass_path}",
         "-c:v", "libx264", "-crf", "18", "-preset", "fast",
         "-c:a", "copy",
         out_path

@@ -176,37 +176,71 @@ export async function POST(req: NextRequest) {
             await fs.writeFile(ttsAudioPath, ttsBuffer);
             console.log('[Translate TTS] Audio TTS generado');
 
-            // 5. Reemplazar audio en el vídeo (video original + audio TTS)
+            // 5. Obtener duraciones con ffprobe y ajustar velocidad de vídeo al audio TTS
+            const [vDurRes, aDurRes] = await Promise.all([
+                execAsync(`/opt/homebrew/bin/ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '${videoPath}'`).catch(() => ({ stdout: '0' })),
+                execAsync(`/opt/homebrew/bin/ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '${ttsAudioPath}'`).catch(() => ({ stdout: '0' }))
+            ]);
+            const videoDuration = parseFloat(vDurRes.stdout.trim()) || 0;
+            const audioDuration = parseFloat(aDurRes.stdout.trim()) || 0;
+            console.log(`[Translate TTS] Video: ${videoDuration.toFixed(2)}s | TTS Audio: ${audioDuration.toFixed(2)}s`);
+
             const ttsVideoPath = path.join(tmpDir, 'tts_video.mp4');
-            await execAsync(
-                `${FFMPEG} -i '${videoPath}' -i '${ttsAudioPath}' ` +
-                `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
-            );
-            console.log('[Translate TTS] Audio reemplazado en vídeo');
+            if (audioDuration > 0 && videoDuration > 0 && Math.abs(audioDuration - videoDuration) > 0.3) {
+                // Ajustar velocidad del video para que coincida con la duración del audio TTS
+                // PTS factor: aumentar → video más lento, reducir → más rápido
+                const ptsFactor = audioDuration / videoDuration;
+                console.log(`[Translate TTS] Ajustando velocidad video: factor ${ptsFactor.toFixed(3)}x`);
+                await execAsync(
+                    `${FFMPEG} -i '${videoPath}' -i '${ttsAudioPath}' ` +
+                    `-filter_complex "[0:v]setpts=${ptsFactor.toFixed(6)}*PTS[v]" ` +
+                    `-map "[v]" -map 1:a -c:v libx264 -preset ultrafast -crf 23 -c:a aac '${ttsVideoPath}' -y`
+                );
+            } else {
+                // Duraciones similares o sin info: copiar video stream directamente
+                await execAsync(
+                    `${FFMPEG} -i '${videoPath}' -i '${ttsAudioPath}' ` +
+                    `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
+                );
+            }
+            console.log('[Translate TTS] Audio TTS sincronizado con vídeo');
+
 
             // 6. Transcribir el audio TTS para obtener timestamps REALES del texto traducido
-            //    Esto es crítico para que los subtítulos estén sincronizados con el audio nuevo
+            //    Esto es crítico para que los subtítulos estén en el idioma correcto y sincronizados
             let srtContent = '';
             try {
                 const ttsTranscription = await ElevenLabsService.speechToText(
-                    new Blob([new Uint8Array(ttsBuffer)], { type: 'audio/mp3' }), { storeId }
+                    new Blob([new Uint8Array(ttsBuffer)], { type: 'audio/mp3' }),
+                    { storeId, language: targetLang }   // forzar idioma destino para transcripción
                 );
                 const ttsWords = ttsTranscription?.words || [];
                 if (ttsWords.length > 0) {
                     srtContent = generateSRT(ttsWords.map((w: any) => ({ text: w.text, start: w.start, end: w.end })));
                     console.log(`[Translate TTS] SRT generado con ${ttsWords.length} palabras del audio TTS`);
+                } else if (ttsTranscription?.text) {
+                    // Fallback: texto plano sin timestamps → distribución proporcional
+                    const dur = audioDuration || 60;
+                    const words = ttsTranscription.text.split(' ');
+                    const wordsWithTimes = words.map((w, i) => ({
+                        text: w,
+                        start: (i / words.length) * dur,
+                        end: ((i + 1) / words.length) * dur
+                    }));
+                    srtContent = generateSRT(wordsWithTimes);
                 }
             } catch (srtErr: any) {
-                // Fallback: SRT proporcional basado en duración total
-                console.warn(`[Translate TTS] Transcripción TTS fallida, usando SRT proporcional: ${srtErr.message}`);
-                if (originalWords.length > 0) {
-                    const totalDuration = originalWords[originalWords.length - 1]?.end || 60;
-                    const ttsWords = translatedText.split(' ').map((word: string, i: number) => {
-                        const ratio = i / translatedText.split(' ').length;
-                        return { text: word, start: ratio * totalDuration, end: (ratio + 1 / translatedText.split(' ').length) * totalDuration };
-                    });
-                    srtContent = generateSRT(ttsWords);
-                }
+                // Último fallback: usar el texto traducido con tiempo proporcional
+                console.warn(`[Translate TTS] Transcripción TTS fallida: ${srtErr.message}`);
+                const dur = audioDuration || 60;
+                const words = translatedText.split(' ');
+                const wordsWithTimes = words.map((w, i) => ({
+                    text: w,
+                    start: (i / words.length) * dur,
+                    end: ((i + 1) / words.length) * dur
+                }));
+                srtContent = generateSRT(wordsWithTimes);
+                console.log(`[Translate TTS] SRT fallback con ${words.length} palabras del texto traducido`);
             }
 
             // 7. Quemar subtítulos encima del vídeo TTS

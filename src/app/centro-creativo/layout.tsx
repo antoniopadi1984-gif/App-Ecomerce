@@ -22,7 +22,7 @@ function CreativoLayoutInner({ children }: { children: React.ReactNode }) {
     const contextForAgent = `Centro Creativo. Tienda: ${activeStoreId}. Producto: ${productId}. Mercado: ${marketLang}`;
 
     return (
-        <div className="content-main flex flex-col gap-4 pt-0 h-full min-h-screen bg-[var(--bg)]">
+        <div className="content-main flex flex-col gap-4 pt-0 min-h-screen bg-[var(--bg)]">
             <div className="flex justify-between items-center py-2 mt-2">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg shrink-0 bg-[#F59E0B] flex items-center justify-center text-white shadow-sm">

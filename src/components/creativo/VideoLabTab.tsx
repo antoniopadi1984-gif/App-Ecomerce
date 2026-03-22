@@ -572,7 +572,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
 
     return (
         <>
-        <div className="flex flex-col h-[calc(100vh-140px)] animate-in fade-in duration-500">
+        <div className="flex flex-col min-h-0 animate-in fade-in duration-500">
             {/* TOP ACTIONS BAR */}
             <div className="flex items-center justify-between p-4 bg-white border-b border-[var(--border)] rounded-t-xl">
                 <div className="flex gap-2">
@@ -615,7 +615,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                 </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 min-h-[600px]">
                 {/* LEFT PANEL */}
                 <aside className="w-64 border-r border-[var(--border)] bg-white p-4 flex flex-col gap-6 overflow-y-auto">
                     <div>

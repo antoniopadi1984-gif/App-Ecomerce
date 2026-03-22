@@ -31,7 +31,7 @@ export default function VideoLabPage() {
     ];
 
     return (
-        <div className="flex flex-col h-[calc(100vh-140px)]">
+        <div className="flex flex-col gap-0 overflow-y-auto">
             <div className="flex items-center gap-1 pb-3">
                 {tabs.map(t => (
                     <button key={t.id} onClick={() => setTab(t.id)}
@@ -45,7 +45,7 @@ export default function VideoLabPage() {
                 )}
             </div>
 
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
                 {tab === 'lab' && (
                     <>
                         <VideoLabTab storeId={storeId} productId={productId} />

@@ -727,7 +727,7 @@ EcomBoom — Creative Forensic Agent`.trim();
       transcription, 
       conceptCode, 
       funnelStage, 
-      type: analysis.framework || 'UGC', 
+      type: 'VIDEO', 
       versionNumber: version,
       hookText: analysis.hookType, 
       angulo: analysis.angle,

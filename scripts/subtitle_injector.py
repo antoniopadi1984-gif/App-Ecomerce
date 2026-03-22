@@ -108,8 +108,10 @@ def get_video_dims(video_path: str) -> tuple:
 
 def detect_subtitle_region(frame_path: str, video_h: int) -> Optional[dict]:
     """
-    Uses OpenCV preprocessing + Tesseract OCR to find the subtitle text region.
-    Returns { yTop, yBottom, estimatedFontSize } in absolute pixels, or None.
+    Detects the original subtitle bounding box using two strategies:
+    1. Adaptive threshold + contour detection (dark text on any bg)
+    2. Bright-region detection (white/light subtitle boxes common in TikTok)
+    Returns { yTop, yBottom, xLeft, xRight, estimatedFontSize } or None.
     """
     img = cv2.imread(frame_path)
     if img is None:
@@ -117,68 +119,62 @@ def detect_subtitle_region(frame_path: str, video_h: int) -> Optional[dict]:
 
     h, w = img.shape[:2]
 
-    # Only look at bottom 40% of the frame (where subs usually live)
-    bottom_start = int(h * 0.60)
-    roi = img[bottom_start:, :]
+    # Search in the bottom 65% of the frame (TikTok subs can be in mid-lower area)
+    search_start = int(h * 0.35)
+    roi = img[search_start:, :]
+    roi_h, roi_w = roi.shape[:2]
 
-    # Convert to grayscale
+    candidates = []
+
+    # ── Strategy 1: Bright rectangular regions (white subtitle boxes) ──────────
     gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-
-    # Adaptive threshold to isolate bright text on dark bg (or dark on light)
-    thresh = cv2.adaptiveThreshold(
-        gray, 255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY,
-        blockSize=11, C=2
-    )
-
-    # Dilate to connect nearby text blobs
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 4))
-    dilated = cv2.dilate(thresh, kernel, iterations=2)
-
-    # Find contours of text regions
-    contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Also try inverted (dark text on light bg)
-    thresh_inv = cv2.bitwise_not(thresh)
-    dilated_inv = cv2.dilate(thresh_inv, kernel, iterations=2)
-    contours_inv, _ = cv2.findContours(dilated_inv, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    contours = list(contours) + list(contours_inv)
-
-    best = None
-    best_score = 0
-
-    for cnt in contours:
+    # Threshold for bright/white areas (e.g. white TikTok sub boxes)
+    _, bright_thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+    kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (w // 3, 1))
+    bright_dilated = cv2.dilate(bright_thresh, kernel_h, iterations=3)
+    kernel_v = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 8))
+    bright_dilated = cv2.dilate(bright_dilated, kernel_v, iterations=2)
+    contours_bright, _ = cv2.findContours(bright_dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    for cnt in contours_bright:
         x, y, cw, ch = cv2.boundingRect(cnt)
+        if cw < roi_w * 0.35: continue
+        if ch < 10 or ch > 180: continue
+        candidates.append((x, y + search_start, x + cw, y + ch + search_start, cw * ch + (y * 8)))
 
-        # Filter: must be wide (subtitle spans most of width) and reasonable height
-        if cw < w * 0.25:
-            continue
-        if ch < 8 or ch > 80:
-            continue
+    # ── Strategy 2: Adaptive threshold (dark/outline text on any background) ───
+    thresh_adapt = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,
+        blockSize=15, C=2
+    )
+    thresh_inv = cv2.bitwise_not(thresh_adapt)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (roi_w // 4, 5))
+    for t in [thresh_adapt, thresh_inv]:
+        dilated = cv2.dilate(t, kernel, iterations=2)
+        contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for cnt in contours:
+            x, y, cw, ch = cv2.boundingRect(cnt)
+            if cw < roi_w * 0.35: continue
+            if ch < 10 or ch > 180: continue
+            candidates.append((x, y + search_start, x + cw, y + ch + search_start, cw * ch + (y * 8)))
 
-        # Score: prefer wider + lower in frame
-        area = cw * ch
-        score = area + (y * 10)  # prefer lower regions
-        if score > best_score:
-            best_score = score
-            best = (x, y + bottom_start, x + cw, y + ch + bottom_start)
-
-    if best is None:
+    if not candidates:
         print("[OCR] No subtitle region detected — using fallback position", file=sys.stderr)
         return None
 
-    xL, yT, xR, yB = best
-    font_size = max(12, min(28, int((yB - yT) * 0.85)))
+    # Pick the candidate with the highest score (widest + lowest in frame)
+    best = max(candidates, key=lambda c: c[4])
+    xL, yT, xR, yB, _ = best
+    font_size = max(14, min(60, int((yB - yT) * 0.80)))
 
-    print(f"[OCR] Detected subtitle region: yTop={yT}, yBottom={yB}, fontSize≈{font_size}", file=sys.stderr)
+    print(f"[OCR] ✅ Subtitle region: y={yT}–{yB} x={xL}–{xR} (h={yB-yT}px) fontSize≈{font_size}", file=sys.stderr)
     return {
-        "yTop": yT,
-        "yBottom": yB,
-        "xLeft": xL,
-        "xRight": xR,
+        "yTop":              yT,
+        "yBottom":           yB,
+        "xLeft":             xL,
+        "xRight":            xR,
         "estimatedFontSize": font_size
     }
+
 
 
 # ─────────────────────────────────────────────
@@ -359,9 +355,9 @@ def main():
         frame_path = os.path.join(tmp, "frame.jpg")
         ass_path   = os.path.join(tmp, "subtitles.ass")
 
-        # 2. Try multiple frame times to find one with subtitles
+        # Try multiple frame times spread across the video to find one with subtitles
         region = None
-        for t in [args.frame_t, 2.0, 3.0, 0.5]:
+        for t in [1.0, 5.0, 10.0, 20.0, 30.0, 2.0]:
             if extract_frame(args.video, frame_path, t):
                 region = detect_subtitle_region(frame_path, vh)
                 if region:

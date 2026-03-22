@@ -60,19 +60,19 @@ async function runLatentSync(videoUrl: string, audioUrl: string, replicateToken:
 // ── Quemar subtítulos vía ffmpeg con estilo personalizado ────────────────────
 async function burnSubs(videoPath: string, srtPath: string, outputPath: string): Promise<boolean> {
     try {
-        const escapedSrt = srtPath.replace(/'/g, "'\\''");
+        // ffmpeg 8.x: 'filename=' es obligatorio al combinar con force_style
+        const escapedSrt = srtPath.replace(/\\/g, '/').replace(/'/g, "\\'");
         await execAsync(
             `${FFMPEG} -i '${videoPath}' ` +
-            `-vf "subtitles='${escapedSrt}':force_style='` +
-            `FontName=Arial,FontSize=16,PrimaryColour=&H00FFFFFF,` +
+            `-vf "subtitles=filename='${escapedSrt}':force_style=` +
+            `'FontName=Arial,FontSize=16,PrimaryColour=&H00FFFFFF,` +
             `OutlineColour=&H00000000,BackColour=&H80000000,` +
-            `Outline=2,Shadow=1,Bold=1,Alignment=2,` +
-            `MarginV=20'" ` +
-            `-c:a copy '${outputPath}' -y`
+            `Outline=2,Shadow=1,Bold=1,Alignment=2,MarginV=20'" ` +
+            `-c:v libx264 -preset ultrafast -crf 23 -c:a copy '${outputPath}' -y`
         );
         return true;
     } catch (e: any) {
-        console.warn(`[Translate] burnSubs falló: ${e.message}`);
+        console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0, 400)}`);
         return false;
     }
 }

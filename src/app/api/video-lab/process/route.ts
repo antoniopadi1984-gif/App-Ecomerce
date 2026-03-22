@@ -102,12 +102,16 @@ export async function POST(request: NextRequest) {
         if (!storeId) return NextResponse.json({ error: 'Store ID required' }, { status: 400 });
 
         const formData = await request.formData();
-        const file = formData.get('video') as File | null; // Cambiado de 'file' a 'video' para mayor claridad
+        const file = formData.get('video') as File | null;
         const productId = formData.get('productId') as string;
         const assetIdHint = formData.get('assetId') as string | null;
         const conceptCodeHint = formData.get('conceptCode') as string | null;
         const funnelHint = formData.get('funnelStage') as string | null;
         const competitorSource = formData.get('competitorSource') === 'true';
+        // Auto-translate vars — sent by bulk-upload when user picked lang + voice
+        const autoTranslate = formData.get('autoTranslate') === 'true';
+        const translateLang = (formData.get('targetLang') as string) || 'es';
+        const translateVoiceId = (formData.get('voiceId') as string) || '';
 
         if (!file || !productId) {
             return NextResponse.json({ error: 'file and productId required' }, { status: 400 });
@@ -145,23 +149,14 @@ export async function POST(request: NextRequest) {
         processVideoBackground(file, asset.id, productId, storeId, jobId, {
             conceptCode: conceptCodeHint,
             funnelStage: funnelHint,
-            competitorSource
+            competitorSource,
+            autoTranslate,
+            translateLang,
+            translateVoiceId,
         }).catch(e => {
             const j = jobs.get(jobId);
             if (j) { j.status = 'ERROR'; j.error = e.message; j.updatedAt = new Date().toISOString(); }
         });
-
-        // Traducción automática si se solicitó al subir
-        if (autoTranslate) {
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-            fetch(appUrl + '/api/video-lab/translate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ assetId, targetLang, voiceId, storeId, burnSubtitles: true, mode: 'tts' })
-            }).then(r => r.json())
-              .then(r => console.log('[AutoTranslate] ✅', r.nomenclatura || r.error))
-              .catch(e => console.warn('[AutoTranslate] Error:', e.message));
-        }
 
         return NextResponse.json({ ok: true, jobId, assetId: asset.id });
 
@@ -183,7 +178,15 @@ export async function GET(request: NextRequest) {
 // ── Background processing ─────────────────────────────────────────────────────
 async function processVideoBackground(
   file: File, assetId: string, productId: string, storeId: string,
-  jobId: string, hints: { conceptCode?: string | null; funnelStage?: string | null; competitorSource?: boolean }
+  jobId: string,
+  hints: {
+    conceptCode?: string | null;
+    funnelStage?: string | null;
+    competitorSource?: boolean;
+    autoTranslate?: boolean;
+    translateLang?: string;
+    translateVoiceId?: string;
+  }
 ) {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vlab-'));
   const inputPath = path.join(tmpDir, file.name);
@@ -455,53 +458,10 @@ productionType: UGC, VSL, BROLL, TESTIMONIAL, EDUCATIVO, MIXTO`;
     }
     updateJob(jobId, { status: 'SPLIT', progress: 80 });
 
-    // DRIVE_INTELLIGENCE confirma la organización basándose en el análisis de VIDEO_INTELLIGENCE
-    let driveDecision: any = null;
-    try {
-        const drivePrompt = `Recibe este análisis de un vídeo publicitario y devuelve la decisión de organización en Drive.
+    // Usar directamente los campos de VIDEO_INTELLIGENCE — ya tiene concept/traffic/awareness/drivePath
+    // La llamada secundaria a DRIVE_ORGANIZE causaba JSON truncado por el tamaño del prompt
+    const driveDecision: any = null; // mantenemos la variable para compatibilidad con el bloque siguiente
 
-ANÁLISIS DE VIDEO_INTELLIGENCE (USAR COMO VERDAD ABSOLUTA):
-${JSON.stringify(analysis, null, 2)}
-
-DATOS DEL ARCHIVO:
-Nombre original: ${file.name}
-SKU del producto: ${sku}
-Producto: ${product?.title}
-
-⚠️ IMPORTANTE: El campo "concept" del análisis (${analysis.concept || 'C3'}) es DEFINITIVO.
-NO lo cambies. El agente de Video Intelligence ya lo analizó visualmente.
-Si el análisis dice concept: "${analysis.concept || 'C3'}", tu respuesta debe tener concept: "${analysis.concept || 'C3'}".
-
-Devuelve ÚNICAMENTE este JSON (sin texto adicional):
-{
-  "drivePath": "2_CREATIVOS/C[N]_[CONCEPTO]/[TRAFICO]/[N]_[AWARENESS]",
-  "nomenclatura": "${sku}_C[N]_V${version}.mp4",
-  "concept": "${analysis.concept || 'C3'}",
-  "conceptName": "${analysis.conceptName || 'AUTORIDAD'}",
-  "traffic": "${analysis.traffic || 'FRIO'}",
-  "awareness": 2,
-  "awarenessName": "${analysis.awarenessName || '2_PROBLEM_AWARE'}",
-  "reason": "justificación breve"
-}`;
-
-        // IMPORTANTE: usar 'DRIVE_ORGANIZE' → drive-intelligence, NO PERFORMANCE_ADS
-        // El análisis de Video Intelligence ya detectó el concepto correcto (analysis.concept)
-        // Se lo pasamos explícitamente para que drive-intelligence lo respete
-        const driveResult = await AiRouter.dispatch(storeId, 'DRIVE_ORGANIZE', drivePrompt, {
-            jsonSchema: true,
-        });
-
-        let driveRaw = driveResult.text.replace(/\`\`\`json\s*/g, '').replace(/\`\`\`/g, '').trim();
-        const firstBrace = driveRaw.indexOf('{');
-        const lastBrace = driveRaw.lastIndexOf('}');
-        if (firstBrace !== -1 && lastBrace !== -1) {
-            driveRaw = driveRaw.slice(firstBrace, lastBrace + 1);
-        }
-        driveDecision = JSON.parse(driveRaw);
-        console.log(`[DriveIntelligence] ✅ Decisión: ${driveDecision.drivePath} | concept: ${driveDecision.concept}`);
-    } catch (driveErr: any) {
-        console.warn(`[DriveIntelligence] Falló, usando análisis directo: ${driveErr.message}`);
-    }
 
     // Usar decisión de DRIVE_INTELLIGENCE si está disponible, sino fallback al análisis directo
     const finalConcept = driveDecision?.concept || conceptCode;
@@ -792,6 +752,27 @@ EcomBoom — Creative Forensic Agent`.trim();
     }
 
     updateJob(jobId, { status: 'DONE', progress: 100, nomenclature: generatedNomen });
+
+    // ── AUTO-TRANSLATE: dispara traducción TTS automática al final del pipeline ──
+    // El asset ya tiene driveFileId guardado en BD — translate/route.ts puede descargarlo
+    if (hints.autoTranslate && hints.translateLang && hints.translateVoiceId) {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        console.log(`[AutoTranslate] Disparando traducción: ${assetId} → ${hints.translateLang}`);
+        fetch(`${appUrl}/api/video-lab/translate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                assetId,
+                storeId,
+                targetLang: hints.translateLang,
+                voiceId: hints.translateVoiceId,
+                burnSubtitles: true,
+                mode: 'tts',
+            })
+        }).then(r => r.json())
+          .then(r => console.log('[AutoTranslate] ✅', r.nomenclatura || r.error))
+          .catch(e => console.warn('[AutoTranslate] ❌', e.message));
+    }
  
   } catch (err: any) {
     console.error('[VideoLab] Pipeline error:', err);

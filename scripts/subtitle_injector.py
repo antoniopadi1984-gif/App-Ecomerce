@@ -203,7 +203,15 @@ def parse_srt(srt_path: str) -> list[dict]:
         h1,m1,s1,ms1,h2,m2,s2,ms2 = [int(x) for x in m.groups()]
         start_ms = ((h1*3600 + m1*60 + s1) * 1000) + ms1
         end_ms   = ((h2*3600 + m2*60 + s2) * 1000) + ms2
-        text = " ".join(lines[2:]).replace("\n", " \\N")
+        raw_text = " ".join(lines[2:]).replace("\n", " ")
+        # Wrap to max 5 words per line so the box doesn't span the full width
+        words = raw_text.split()
+        MAX_WORDS = 5
+        if len(words) > MAX_WORDS:
+            mid = (len(words) + 1) // 2
+            text = " ".join(words[:mid]) + "\\N" + " ".join(words[mid:])
+        else:
+            text = raw_text
         entries.append({"start_ms": start_ms, "end_ms": end_ms, "text": text})
 
     return entries
@@ -230,11 +238,14 @@ def generate_ass(srt_entries: list[dict], video_w: int, video_h: int,
     - Black text with thin outline
     - Dynamic MarginV positioning
     """
-    # ASS colours: &HAABBGGRR (alpha, blue, green, red)
+    # ─────────────────────────────────────────────────────────
+    # ASS colour format: &HAABBGGRR  (AA=alpha 00=opaque FF=transparent)
     # &H00000000 = opaque black text
-    # &H00FFFFFF = opaque white outline
-    # &HCC000000 = 80% transparent black back-colour (not used with BorderStyle 4)
-    # For white box behind text: we use BorderStyle=4 (opaque box) + BackColour=&H99FFFFFF (white, 60% opaque)
+    # &H00FFFFFF = opaque white box background (SOLID, no transparency)
+    # BorderStyle=4 = opaque box behind text (no outline/shadow mode)
+    # ScaleX=110 → 10% wider box for more breathing room
+    # Spacing=1.5 → slight letter spacing for legibility
+    # ─────────────────────────────────────────────────────────
 
     header = f"""[Script Info]
 ScriptType: v4.00+
@@ -244,7 +255,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
-Style: Default,Arial,{font_size},&H00000000,&H000000FF,&H00FFFFFF,&H99FFFFFF,-1,0,0,0,100,100,0,0,4,1.5,0,2,20,20,{margin_v},1
+Style: Default,Arial,{font_size},&H00000000,&H000000FF,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,4,2,0,2,20,20,{margin_v},1
 
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
@@ -267,18 +278,50 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 # FFmpeg injection
 # ─────────────────────────────────────────────
 
-def inject_subtitles(video_path: str, ass_path: str, out_path: str) -> bool:
-    """Burn ASS subtitles using FFmpeg libass. Audio copied without re-encoding."""
-    cmd = [
-        FFMPEG_BIN, "-y",
-        "-i", video_path,
-        "-vf", f"ass={ass_path}",
-        "-c:v", "libx264", "-crf", "18", "-preset", "fast",
-        "-c:a", "copy",
-        out_path
-    ]
+def inject_subtitles(video_path: str, ass_path: str, out_path: str,
+                     blur_region: Optional[dict] = None) -> bool:
+    """Burn ASS subtitles using FFmpeg libass. Optionally blurs the original subtitle region."""
 
-    print(f"[FFmpeg] Running: {' '.join(cmd)}", file=sys.stderr)
+    if blur_region:
+        # Build a filter_complex that:
+        # 1. Blurs the detected region (original subs)
+        # 2. Burns the new ASS subs on top
+        x  = max(0, blur_region['xLeft'])
+        y  = max(0, blur_region['yTop'])
+        bw = max(1, blur_region['xRight'] - blur_region['xLeft'])
+        bh = max(1, blur_region['yBottom'] - blur_region['yTop'])
+
+        # Pad blur height slightly to make sure we cover the full original sub area
+        y_padded = max(0, y - 4)
+        bh_padded = bh + 8
+
+        filter_complex = (
+            f"[0:v]split[main][blur_in];"
+            f"[blur_in]crop={bw}:{bh_padded}:{x}:{y_padded},"
+            f"boxblur=luma_radius=18:luma_power=4:chroma_radius=18:chroma_power=4[blurred];"
+            f"[main][blurred]overlay={x}:{y_padded}[blurred_v];"
+            f"[blurred_v]ass={ass_path}"
+        )
+        cmd = [
+            FFMPEG_BIN, "-y",
+            "-i", video_path,
+            "-filter_complex", filter_complex,
+            "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+            "-c:a", "copy",
+            out_path
+        ]
+        print(f"[FFmpeg] Blur region: x={x} y={y_padded} w={bw} h={bh_padded}px", file=sys.stderr)
+    else:
+        cmd = [
+            FFMPEG_BIN, "-y",
+            "-i", video_path,
+            "-vf", f"ass={ass_path}",
+            "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+            "-c:a", "copy",
+            out_path
+        ]
+
+    print(f"[FFmpeg] Running injection...", file=sys.stderr)
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     if result.returncode != 0:
@@ -328,22 +371,21 @@ def main():
         if args.margin_v > 0:
             margin_v = args.margin_v
         elif region:
-            # Place new subtitles just above the detected ones
-            # marginV in ASS = distance from bottom of frame to bottom of text box
-            # new_yBottom = region["yTop"] - 4
-            new_y_bottom = region["yTop"] - 4
-            margin_v = vh - new_y_bottom
-            margin_v = max(10, margin_v)
+            # Place new subs IN the detected original subtitle zone
+            # margin_v = distance from bottom of frame to bottom of the region
+            margin_v = vh - region["yBottom"]
+            margin_v = max(5, margin_v)
         else:
-            # Fallback: position at 72% of frame height (just above typical sub area)
-            margin_v = int(vh * 0.28)
+            # Fallback: standard bottom position (10% from bottom)
+            margin_v = int(vh * 0.10)
 
         if args.font_size > 0:
             font_size = args.font_size
         elif region:
-            font_size = region["estimatedFontSize"]
+            font_size = max(18, region["estimatedFontSize"])
         else:
-            font_size = max(14, int(vh * 0.038))  # ~3.8% of video height
+            font_size = max(18, int(vh * 0.035))  # 3.5% of video height
+
 
         print(f"[INFO] Using marginV={margin_v}, fontSize={font_size}", file=sys.stderr)
 
@@ -369,8 +411,8 @@ def main():
         # 5. Generate ASS file
         generate_ass(entries, vw, vh, margin_v, font_size, ass_path)
 
-        # 6. Burn into video
-        ok = inject_subtitles(args.video, ass_path, args.out)
+        # 6. Burn into video (with blur on original sub region if detected)
+        ok = inject_subtitles(args.video, ass_path, args.out, blur_region=region)
         if not ok:
             sys.exit(1)
 

@@ -231,51 +231,60 @@ export async function POST(req: NextRequest) {
             if (audioDuration > 0 && videoDuration > 0 && Math.abs(audioDuration - videoDuration) > 0.3) {
                 const ratio = audioDuration / videoDuration; // e.g. 1.40
 
-                // Calcular el factor de ralentización del vídeo (máx 20%)
-                const VIDEO_SLOWDOWN_MAX = 0.80; // mínimo 0.80x (20% más lento)
-                const AUDIO_MAX = 1.60;           // máximo que aceleramos el audio
+                // Estrategia: estirar el vídeo para que dure igual que audio → voz a 1.0x
+                // Solo si el vídeo necesita más del 45% de ralentización dividimos el exceso
+                const VIDEO_MIN = 0.55;  // máximo 45% más lento
+                const AUDIO_MAX = 1.30;  // límite suave de aceleración de audio
 
-                // ¿Cuánto del ajuste cargamos al vídeo?
-                // Queremos que videoFactor * audioFactor = ratio
-                // Optamos por videoFactor = max(VIDEO_SLOWDOWN_MAX, 1/sqrt(ratio)) — punto medio geométrico
-                let videoFactor = Math.max(VIDEO_SLOWDOWN_MAX, 1.0 / Math.sqrt(ratio));
-                let audioFactor = ratio / videoFactor;
+                // Estirar vídeo al máximo razonable
+                const idealVideoFactor = videoDuration / audioDuration; // e.g. 0.714
 
-                // Si audioFactor todavía > AUDIO_MAX, cargamos más al vídeo
-                if (audioFactor > AUDIO_MAX) {
-                    audioFactor = AUDIO_MAX;
-                    videoFactor = ratio / audioFactor;
+                let videoFactor: number;
+                let audioFactor: number;
+
+                if (idealVideoFactor >= VIDEO_MIN) {
+                    // El vídeo puede absorber toda la diferencia → audio sin cambio
+                    videoFactor = idealVideoFactor;
+                    audioFactor = 1.0;
+                } else {
+                    // Demasiada diferencia: vídeo al límite, el resto al audio
+                    videoFactor = VIDEO_MIN;
+                    audioFactor = Math.min(AUDIO_MAX, ratio / VIDEO_MIN);
                 }
 
                 const newVideoDuration = videoDuration / videoFactor;
                 console.log(
-                    `[Translate TTS] Sync dual-eje: ratio=${ratio.toFixed(3)}x ` +
+                    `[Translate TTS] Sync: ratio=${ratio.toFixed(3)}x ` +
                     `→ vídeo ×${videoFactor.toFixed(3)} (${videoDuration.toFixed(1)}s→${newVideoDuration.toFixed(1)}s) ` +
                     `+ audio ×${audioFactor.toFixed(3)}`
                 );
 
-                // Paso A: Ralentizar vídeo con setpts (no recodifica pixel-quality, solo timestamps)
+                // Paso A: Ralentizar vídeo con setpts
                 const slowVideoPath = path.join(tmpDir, 'slow_video.mp4');
                 const ptsExpr = (1.0 / videoFactor).toFixed(6);
                 await execAsync(
                     `${FFMPEG} -i '${videoPath}' -vf "setpts=${ptsExpr}*PTS" -an -c:v libx264 -crf 18 -preset fast '${slowVideoPath}' -y`
                 );
 
-                // Paso B: Acelerar el audio TTS en audioFactor
-                const speededAudioPath = path.join(tmpDir, 'tts_speeded.mp3');
-                let atempoFilter: string;
-                if (audioFactor <= 2.0) {
-                    atempoFilter = `atempo=${audioFactor.toFixed(6)}`;
-                } else {
-                    atempoFilter = `atempo=2.0,atempo=${(audioFactor / 2.0).toFixed(6)}`;
+                // Paso B: Ajustar audio TTS (puede ser 1.0x = sin cambio)
+                let finalAudioPath = ttsAudioPath;
+                if (Math.abs(audioFactor - 1.0) > 0.02) {
+                    const speededAudioPath = path.join(tmpDir, 'tts_speeded.mp3');
+                    let atempoFilter: string;
+                    if (audioFactor <= 2.0) {
+                        atempoFilter = `atempo=${audioFactor.toFixed(6)}`;
+                    } else {
+                        atempoFilter = `atempo=2.0,atempo=${(audioFactor / 2.0).toFixed(6)}`;
+                    }
+                    await execAsync(
+                        `${FFMPEG} -i '${ttsAudioPath}' -filter:a "${atempoFilter}" '${speededAudioPath}' -y`
+                    );
+                    finalAudioPath = speededAudioPath;
                 }
-                await execAsync(
-                    `${FFMPEG} -i '${ttsAudioPath}' -filter:a "${atempoFilter}" '${speededAudioPath}' -y`
-                );
 
-                // Paso C: Mezclar vídeo lento + audio ajustado
+                // Paso C: Mezclar vídeo lento + audio
                 await execAsync(
-                    `${FFMPEG} -i '${slowVideoPath}' -i '${speededAudioPath}' ` +
+                    `${FFMPEG} -i '${slowVideoPath}' -i '${finalAudioPath}' ` +
                     `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
                 );
             } else {
@@ -284,6 +293,7 @@ export async function POST(req: NextRequest) {
                     `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
                 );
             }
+
             console.log('[Translate TTS] Audio TTS sincronizado con vídeo');
 
 

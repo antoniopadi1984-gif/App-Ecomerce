@@ -20,6 +20,9 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const execAsync = promisify(exec);
+// Path absoluto de ffmpeg — Next.js puede no tener /opt/homebrew/bin en su PATH
+const FFMPEG = process.env.FFMPEG_PATH || '/opt/homebrew/bin/ffmpeg';
+
 
 const SUPPORTED_LANGUAGES: Record<string, string> = {
     'es': 'Español', 'en': 'English', 'fr': 'Français', 'de': 'Deutsch',
@@ -57,10 +60,9 @@ async function runLatentSync(videoUrl: string, audioUrl: string, replicateToken:
 // ── Quemar subtítulos vía ffmpeg con estilo personalizado ────────────────────
 async function burnSubs(videoPath: string, srtPath: string, outputPath: string): Promise<boolean> {
     try {
-        // Escapar comillas simples en el path para ffmpeg
         const escapedSrt = srtPath.replace(/'/g, "'\\''");
         await execAsync(
-            `ffmpeg -i '${videoPath}' ` +
+            `${FFMPEG} -i '${videoPath}' ` +
             `-vf "subtitles='${escapedSrt}':force_style='` +
             `FontName=Arial,FontSize=16,PrimaryColour=&H00FFFFFF,` +
             `OutlineColour=&H00000000,BackColour=&H80000000,` +
@@ -137,7 +139,7 @@ export async function POST(req: NextRequest) {
 
             // 1. Extraer audio del vídeo
             const audioOrigPath = path.join(tmpDir, 'audio_orig.mp3');
-            await execAsync(`ffmpeg -i '${videoPath}' -vn -acodec mp3 -q:a 2 '${audioOrigPath}' -y`);
+            await execAsync(`${FFMPEG} -i '${videoPath}' -vn -acodec mp3 -q:a 2 '${audioOrigPath}' -y`);
             console.log('[Translate TTS] Audio extraído');
 
             // 2. Transcribir con ElevenLabs Scribe (incluye timestamps por palabra)
@@ -177,7 +179,7 @@ export async function POST(req: NextRequest) {
             // 5. Reemplazar audio en el vídeo (video original + audio TTS)
             const ttsVideoPath = path.join(tmpDir, 'tts_video.mp4');
             await execAsync(
-                `ffmpeg -i '${videoPath}' -i '${ttsAudioPath}' ` +
+                `${FFMPEG} -i '${videoPath}' -i '${ttsAudioPath}' ` +
                 `-map 0:v -map 1:a -c:v copy -c:a aac -shortest '${ttsVideoPath}' -y`
             );
             console.log('[Translate TTS] Audio reemplazado en vídeo');
@@ -272,10 +274,31 @@ export async function POST(req: NextRequest) {
         // ─────────────────────────────────────────────────────────────────────
         // MODO DUBBING: ElevenLabs Dubbing API
         // ─────────────────────────────────────────────────────────────────────
-        // Para ElevenLabs, el vídeo debe estar accesible por URL — usamos Drive export link
-        const driveViewUrl = `https://drive.google.com/uc?export=download&id=${asset.driveFileId}`;
+        // El vídeo ya está descargado en videoPath (tmpDir)
+        // ElevenLabs no puede acceder a URLs privadas de Drive → subimos el archivo directamente
+        const apiKey = await getConnectionSecret(storeId, 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY || '';
+        if (!apiKey) return NextResponse.json({ error: 'ELEVENLABS_API_KEY no configurado' }, { status: 400 });
 
-        const dubbingJob = await ElevenLabsService.dubVideo(driveViewUrl, targetLang);
+        console.log('[Translate] Subiendo vídeo a ElevenLabs Dubbing (multipart)...');
+        const dubFormData = new FormData();
+        const videoBuffer = await fs.readFile(videoPath);
+        dubFormData.append('file', new Blob([videoBuffer], { type: 'video/mp4' }), path.basename(videoPath));
+        dubFormData.append('target_lang', targetLang);
+        dubFormData.append('source_lang', 'auto');
+        dubFormData.append('num_speakers', '0');
+        dubFormData.append('watermark', 'false');
+        dubFormData.append('highest_resolution', 'true');
+
+        const dubRes = await fetch('https://api.elevenlabs.io/v1/dubbing', {
+            method: 'POST',
+            headers: { 'xi-api-key': apiKey },
+            body: dubFormData
+        });
+        if (!dubRes.ok) {
+            const err = await dubRes.json().catch(() => ({}));
+            throw new Error(`ElevenLabs dubbing error: ${(err as any).detail || dubRes.statusText}`);
+        }
+        const dubbingJob = await dubRes.json();
         const dubbingId = dubbingJob.dubbing_id;
         console.log(`[Translate] DubbingID: ${dubbingId}`);
 
@@ -293,7 +316,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: `Dubbing falló. Status: ${status}` }, { status: 500 });
 
         // Descargar vídeo doblado
-        const apiKey = await getConnectionSecret(storeId, 'ELEVENLABS') || process.env.ELEVENLABS_API_KEY || '';
         const dubbedRes = await fetch(`https://api.elevenlabs.io/v1/dubbing/${dubbingId}/audio/${targetLang}`, {
             headers: { 'xi-api-key': apiKey }
         });
@@ -311,7 +333,7 @@ export async function POST(req: NextRequest) {
                 if (!replicateToken) throw new Error('REPLICATE_API_TOKEN no configurado');
 
                 const audioOnlyPath = path.join(tmpDir, `audio_only_${targetLang}.wav`);
-                await execAsync(`ffmpeg -i '${dubbedPath}' -vn -acodec pcm_s16le -ar 16000 '${audioOnlyPath}' -y`);
+                await execAsync(`${FFMPEG} -i '${dubbedPath}' -vn -acodec pcm_s16le -ar 16000 '${audioOnlyPath}' -y`);
 
                 const audioBuffer = await fs.readFile(audioOnlyPath);
                 const audioUpload = await uploadToProduct(audioBuffer, `tmp_audio_${Date.now()}.wav`, 'audio/wav', asset.productId, storeId, { subfolderName: '_TMP', fileType: 'DOCUMENT' });
@@ -327,7 +349,7 @@ export async function POST(req: NextRequest) {
                     await fs.writeFile(lipsyncPath, Buffer.from(await lipsyncRes.arrayBuffer()));
 
                     const mergedPath = path.join(tmpDir, `merged_${targetLang}.mp4`);
-                    await execAsync(`ffmpeg -i '${lipsyncPath}' -i '${dubbedPath}' -map 0:v -map 1:a -c:v copy -c:a aac '${mergedPath}' -y`);
+                    await execAsync(`${FFMPEG} -i '${lipsyncPath}' -i '${dubbedPath}' -map 0:v -map 1:a -c:v copy -c:a aac '${mergedPath}' -y`);
                     lipsyncPath = mergedPath;
                     console.log('[LipSync] ✅ Lip sync + merge completado');
 
@@ -344,7 +366,7 @@ export async function POST(req: NextRequest) {
         let srtContent = '';
         try {
             const audioPath = path.join(tmpDir, 'audio_srt.mp3');
-            await execAsync(`ffmpeg -i '${lipsyncPath}' -vn -acodec mp3 -q:a 2 '${audioPath}' -y`);
+            await execAsync(`${FFMPEG} -i '${lipsyncPath}' -vn -acodec mp3 -q:a 2 '${audioPath}' -y`);
             const transcriptionResult = await ElevenLabsService.speechToText(
                 new Blob([await fs.readFile(audioPath)], { type: 'audio/mp3' }), { storeId }
             );

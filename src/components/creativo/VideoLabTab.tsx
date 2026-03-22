@@ -948,55 +948,24 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                                             <div className="text-[7px] text-white/30 uppercase font-bold tracking-tighter">Sin Miniatura</div>
                                                         </div>
                                                     )}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 gap-1.5 translate-y-2 group-hover:translate-y-0 duration-300">
-                                                        <div className="flex flex-col gap-1">
-                                                            {/* Fila: Ver + Descargar */}
-                                                            <div className="grid grid-cols-2 gap-1">
-                                                                {(creative.driveUrl || creative.videoUrl) && (
-                                                                    <a href={creative.driveUrl || creative.videoUrl} target="_blank" rel="noopener noreferrer"
-                                                                        className="py-1.5 bg-white text-slate-900 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-slate-100 transition-colors">
-                                                                        <Play size={10} fill="currentColor" /> Ver
-                                                                    </a>
-                                                                )}
-                                                                {creative.driveFileId && (
-                                                                    <a href={`/api/creative/download?assetId=${creative.id}&storeId=${storeId}`}
-                                                                        download={`${creative.concept || 'video'}.mp4`}
-                                                                        onClick={e => e.stopPropagation()}
-                                                                        className="py-1.5 bg-[var(--cre)] text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:brightness-110 transition-all">
-                                                                        <Download size={10} /> Bajar
-                                                                    </a>
-                                                                )}
-                                                            </div>
-                                                            {/* Fila: Subs + Traducir */}
-                                                            <div className="grid grid-cols-2 gap-1">
-                                                                <button 
-                                                                    onClick={(e) => { e.stopPropagation(); handleSubtitles(creative.id); }}
-                                                                    className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all"
-                                                                >
-                                                                    <Languages size={10} /> Subs
-                                                                </button>
-                                                                <button 
-                                                                    onClick={(e) => { e.stopPropagation(); handleTranslate(creative.id); }}
-                                                                    className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all"
-                                                                >
-                                                                    <Globe size={10} /> Trad.
-                                                                </button>
-                                                            </div>
-                                                            {/* Fila: Data + Borrar */}
-                                                            <div className="grid grid-cols-2 gap-1">
-                                                                <button 
-                                                                    onClick={(e) => { e.stopPropagation(); setViewingAnalysis(creative); }}
-                                                                    className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all"
-                                                                >
-                                                                    <Eye size={10} /> Data
-                                                                </button>
-                                                                <button 
-                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteCreative(creative.id); }}
-                                                                    className="py-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all"
-                                                                >
-                                                                    <Trash2 size={10} /> Borrar
-                                                                </button>
-                                                            </div>
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 gap-1 translate-y-2 group-hover:translate-y-0 duration-300">
+                                                        <div className="grid grid-cols-2 gap-1">
+                                                            <button onClick={(e) => { e.stopPropagation(); handleSubtitles(creative.id); }}
+                                                                className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all">
+                                                                <Languages size={10} /> Subs
+                                                            </button>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleTranslate(creative.id); }}
+                                                                className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all">
+                                                                <Globe size={10} /> Trad.
+                                                            </button>
+                                                            <button onClick={(e) => { e.stopPropagation(); setViewingAnalysis(creative); }}
+                                                                className="py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 hover:bg-white/20 transition-all">
+                                                                <Eye size={10} /> Data
+                                                            </button>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteCreative(creative.id); }}
+                                                                className="py-1.5 bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all">
+                                                                <Trash2 size={10} /> Borrar
+                                                            </button>
                                                         </div>
                                                     </div>
                                                     <div className="absolute top-2 right-2 flex gap-1 flex-col items-end">
@@ -1024,33 +993,36 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    
-                                                    {creative.angle && (
-                                                        <div className="text-[7px] text-slate-500 font-medium uppercase tracking-tighter flex items-center gap-1 bg-slate-50 px-1 py-0.5 rounded w-fit">
-                                                            <Target size={7} /> {creative.angle}
-                                                        </div>
-                                                    )}
 
-                                                    {creative.tagsJson && (
-                                                        <div className="pt-1 mt-1 border-t border-slate-50 flex items-center justify-between">
-                                                            <div className="flex items-center gap-1">
-                                                                <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                                                                <span className="text-[7px] font-bold text-slate-400 uppercase">Analizado</span>
-                                                            </div>
-                                                            {(() => {
-                                                                try {
-                                                                    const tags = JSON.parse(creative.tagsJson);
-                                                                    return tags.hookScore && (
-                                                                        <div className="text-[7px] font-black text-emerald-600 px-1 bg-emerald-50 rounded">
-                                                                            HOOK: {tags.hookScore}/10
-                                                                        </div>
-                                                                    );
-                                                                } catch { return null; }
-                                                            })()}
-                                                        </div>
-                                                    )}
+                                                    {creative.tagsJson && (() => {
+                                                        try {
+                                                            const tags = JSON.parse(creative.tagsJson);
+                                                            return tags.hookScore ? (
+                                                                <div className="text-[7px] font-black text-emerald-600 px-1 bg-emerald-50 rounded w-fit">HOOK {tags.hookScore}/10</div>
+                                                            ) : null;
+                                                        } catch { return null; }
+                                                    })()}
 
-                                                    <div className="text-[7px] text-slate-400 uppercase font-bold mt-1 flex items-center gap-1">
+                                                    {/* ── BOTONES SIEMPRE VISIBLES ─────────────────── */}
+                                                    <div className="flex gap-1 pt-1 border-t border-slate-50 mt-1">
+                                                        {(creative.driveUrl || creative.videoUrl) && (
+                                                            <a href={creative.driveUrl || creative.videoUrl} target="_blank" rel="noopener noreferrer"
+                                                                onClick={e => e.stopPropagation()}
+                                                                className="flex-1 py-1.5 bg-slate-100 text-slate-700 rounded-md text-[7px] font-black uppercase flex items-center justify-center gap-0.5 hover:bg-slate-200 transition-all">
+                                                                <Play size={8} fill="currentColor" /> Ver
+                                                            </a>
+                                                        )}
+                                                        {creative.driveFileId && (
+                                                            <a href={`/api/creative/download?assetId=${creative.id}&storeId=${storeId}`}
+                                                                download={`${(creative.concept || 'video').replace(/[^a-zA-Z0-9._-]/g,'_')}.mp4`}
+                                                                onClick={e => e.stopPropagation()}
+                                                                className="flex-1 py-1.5 bg-[var(--cre)] text-white rounded-md text-[7px] font-black uppercase flex items-center justify-center gap-0.5 hover:brightness-110 transition-all shadow-sm">
+                                                                <Download size={8} /> Bajar
+                                                            </a>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="text-[7px] text-slate-400 uppercase font-bold flex items-center gap-1">
                                                         <Clock size={8} />{new Date(creative.createdAt).toLocaleDateString()}
                                                     </div>
                                                 </div>

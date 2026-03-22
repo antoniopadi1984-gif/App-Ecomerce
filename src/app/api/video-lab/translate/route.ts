@@ -180,6 +180,32 @@ export async function POST(req: NextRequest) {
         // ── MODO DUBBING (ElevenLabs) ─────────────────────────────────────────
         // ElevenLabs Dubbing
         const driveViewUrl = `https://drive.google.com/uc?export=download&id=${asset.driveFileId}`;
+
+        // MODO TTS: voz elegida
+        if (mode === 'tts' && voiceId) {
+            const audioExtPath = path.join(tmpDir, 'audio_orig.mp3');
+            await execAsync("ffmpeg -i '" + videoPath + "' -vn -acodec mp3 '" + audioExtPath + "' -y");
+            const transcResult = await ElevenLabsService.speechToText(new Blob([await fs.readFile(audioExtPath)], { type: 'audio/mp3' }), { storeId });
+            const origText = transcResult?.text || '';
+            if (!origText) throw new Error('No se pudo transcribir');
+            const { AiRouter } = await import('@/lib/ai/router');
+            const { TaskType } = await import('@/lib/ai/providers/interfaces');
+            const transResult = await AiRouter.dispatch(storeId, TaskType.COPYWRITING_DEEP, 'Traduce al ' + targetLang + ' este texto. Devuelve SOLO el texto traducido: ' + origText, {});
+            const translatedText = transResult.text.replace(/^"|"$/g, '').trim();
+            const ttsBuffer = await ElevenLabsService.textToSpeech(translatedText, voiceId, { stability, similarity_boost: 0.8, style, speed });
+            const ttsAudio = path.join(tmpDir, 'tts.mp3');
+            await fs.writeFile(ttsAudio, ttsBuffer);
+            const ttsVideo = path.join(tmpDir, 'tts_video.mp4');
+            await execAsync("ffmpeg -i '" + videoPath + "' -i '" + ttsAudio + "' -map 0:v -map 1:a -c:v copy -c:a aac -shortest '" + ttsVideo + "' -y");
+            const lc = targetLang.toUpperCase();
+            const base = (asset.nomenclatura || asset.name).replace(/\.mp4$/i, '');
+            const ttsNomen = base + '_' + lc + '_TTS.mp4';
+            const ttsSub = (asset.drivePath || '2_CREATIVOS') + '/' + lc;
+            const ttsUp = await uploadToProduct(await fs.readFile(ttsVideo), ttsNomen, 'video/mp4', asset.productId, storeId, { subfolderName: ttsSub, conceptCode: asset.conceptCode, fileType: 'VIDEO', version: asset.versionNumber });
+            const ttsAsset = await (prisma as any).creativeAsset.create({ data: { id: crypto.randomUUID(), storeId, productId: asset.productId, name: ttsNomen, nomenclatura: ttsNomen, type: 'VIDEO', language: targetLang, conceptCode: asset.conceptCode, funnelStage: asset.funnelStage, versionNumber: asset.versionNumber, driveFileId: ttsUp.driveFileId, driveUrl: 'https://drive.google.com/file/d/' + ttsUp.driveFileId + '/view', drivePath: ttsSub, processingStatus: 'DONE', sourceAssetId: assetId, tagsJson: JSON.stringify({ mode: 'tts', voiceId, translatedTo: targetLang }) } });
+            return NextResponse.json({ success: true, assetId: ttsAsset.id, nomenclatura: ttsNomen, driveUrl: 'https://drive.google.com/file/d/' + ttsUp.driveFileId + '/view', language: targetLang, mode: 'tts' });
+        }
+
         const dubbingJob = await ElevenLabsService.dubVideo(driveViewUrl, targetLang);
         const dubbingId = dubbingJob.dubbing_id;
         console.log(`[Translate] DubbingID: ${dubbingId}`);

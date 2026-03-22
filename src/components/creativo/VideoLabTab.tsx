@@ -1404,7 +1404,7 @@ export function VideoLabTab({ storeId, productId, marketLang }: {
                                 >
                                     <Languages size={14} /> Subtítulos (Bulk)
                                 </button>
-                                <button className="px-4 py-2 bg-white/5 text-white/50 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 cursor-not-allowed">
+                                <button onClick={handleBulkTranslate} className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:brightness-110 transition-all hover:scale-105">
                                     <Globe size={14} /> Traducir (Bulk)
                                 </button>
                                 <button 

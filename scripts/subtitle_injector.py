@@ -108,9 +108,9 @@ def get_video_dims(video_path: str) -> tuple:
 
 def detect_subtitle_region(frame_path: str, video_h: int) -> Optional[dict]:
     """
-    Detects the original subtitle bounding box using two strategies:
-    1. Adaptive threshold + contour detection (dark text on any bg)
-    2. Bright-region detection (white/light subtitle boxes common in TikTok)
+    Detects the original subtitle bounding box.
+    Searches the FULL frame — TikTok subs can be at top, middle, or bottom.
+    Filters by aspect ratio (must be wide & short) to avoid false positives.
     Returns { yTop, yBottom, xLeft, xRight, estimatedFontSize } or None.
     """
     img = cv2.imread(frame_path)
@@ -118,55 +118,47 @@ def detect_subtitle_region(frame_path: str, video_h: int) -> Optional[dict]:
         return None
 
     h, w = img.shape[:2]
-
-    # Search in the bottom 65% of the frame (TikTok subs can be in mid-lower area)
-    search_start = int(h * 0.35)
-    roi = img[search_start:, :]
-    roi_h, roi_w = roi.shape[:2]
-
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     candidates = []
 
-    # ── Strategy 1: Bright rectangular regions (white subtitle boxes) ──────────
-    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    # Threshold for bright/white areas (e.g. white TikTok sub boxes)
-    _, bright_thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
-    kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (w // 3, 1))
-    bright_dilated = cv2.dilate(bright_thresh, kernel_h, iterations=3)
-    kernel_v = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 8))
-    bright_dilated = cv2.dilate(bright_dilated, kernel_v, iterations=2)
-    contours_bright, _ = cv2.findContours(bright_dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for cnt in contours_bright:
+    # ── Strategy 1: Bright white rectangular regions (TikTok sub boxes) ─────────
+    _, bright = cv2.threshold(gray, 210, 255, cv2.THRESH_BINARY)
+    kh = cv2.getStructuringElement(cv2.MORPH_RECT, (max(1, w // 8), 1))
+    b_dil = cv2.dilate(bright, kh, iterations=2)
+    kv = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 5))
+    b_dil = cv2.dilate(b_dil, kv, iterations=2)
+    cnts, _ = cv2.findContours(b_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    for cnt in cnts:
         x, y, cw, ch = cv2.boundingRect(cnt)
-        if cw < roi_w * 0.35: continue
-        if ch < 10 or ch > 180: continue
-        candidates.append((x, y + search_start, x + cw, y + ch + search_start, cw * ch + (y * 8)))
+        if cw < w * 0.30: continue          # must span 30%+ of width
+        if ch < 15 or ch > 130: continue    # subtitle height range
+        if cw / max(ch, 1) < 2.5: continue  # must be wide (aspect > 2.5:1)
+        candidates.append((x, y, x + cw, y + ch, cw * ch))
 
-    # ── Strategy 2: Adaptive threshold (dark/outline text on any background) ───
-    thresh_adapt = cv2.adaptiveThreshold(
-        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,
-        blockSize=15, C=2
-    )
-    thresh_inv = cv2.bitwise_not(thresh_adapt)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (roi_w // 4, 5))
-    for t in [thresh_adapt, thresh_inv]:
-        dilated = cv2.dilate(t, kernel, iterations=2)
-        contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        for cnt in contours:
+    # ── Strategy 2: Adaptive threshold for dark-outline text ────────────────────
+    t_adapt = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                    cv2.THRESH_BINARY, blockSize=15, C=2)
+    for t in [t_adapt, cv2.bitwise_not(t_adapt)]:
+        k = cv2.getStructuringElement(cv2.MORPH_RECT, (max(1, w // 8), 4))
+        d = cv2.dilate(t, k, iterations=2)
+        cnts2, _ = cv2.findContours(d, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for cnt in cnts2:
             x, y, cw, ch = cv2.boundingRect(cnt)
-            if cw < roi_w * 0.35: continue
-            if ch < 10 or ch > 180: continue
-            candidates.append((x, y + search_start, x + cw, y + ch + search_start, cw * ch + (y * 8)))
+            if cw < w * 0.30: continue
+            if ch < 15 or ch > 130: continue
+            if cw / max(ch, 1) < 2.5: continue
+            candidates.append((x, y, x + cw, y + ch, cw * ch))
 
     if not candidates:
         print("[OCR] No subtitle region detected — using fallback position", file=sys.stderr)
         return None
 
-    # Pick the candidate with the highest score (widest + lowest in frame)
+    # Pick largest area (most confident subtitle-like region)
     best = max(candidates, key=lambda c: c[4])
     xL, yT, xR, yB, _ = best
-    font_size = max(14, min(60, int((yB - yT) * 0.80)))
+    font_size = max(14, min(60, int((yB - yT) * 0.85)))
 
-    print(f"[OCR] ✅ Subtitle region: y={yT}–{yB} x={xL}–{xR} (h={yB-yT}px) fontSize≈{font_size}", file=sys.stderr)
+    print(f"[OCR] ✅ Region: y={yT}–{yB} x={xL}–{xR} ({xR-xL}x{yB-yT}px) aspect={((xR-xL)/max(yB-yT,1)):.1f} fontSize≈{font_size}", file=sys.stderr)
     return {
         "yTop":              yT,
         "yBottom":           yB,
@@ -174,6 +166,7 @@ def detect_subtitle_region(frame_path: str, video_h: int) -> Optional[dict]:
         "xRight":            xR,
         "estimatedFontSize": font_size
     }
+
 
 
 
@@ -367,14 +360,13 @@ def main():
         if args.margin_v > 0:
             margin_v = args.margin_v
         elif region:
-            # Place new subs ABOVE the original subtitle zone
-            # margin_v = distance from bottom of frame to bottom of new sub box
-            # → bottom of new sub = yTop of original region - 8px gap
-            margin_v = vh - max(0, region["yTop"] - 8)
-            margin_v = max(5, margin_v)
+            # Place new subs IN the detected original subtitle zone
+            # margin_v = distance from bottom of frame to bottom of that zone
+            margin_v = max(5, vh - region["yBottom"])
         else:
-            # Fallback: standard bottom position (10% from bottom)
-            margin_v = int(vh * 0.10)
+            # Fallback: 12% from bottom
+            margin_v = int(vh * 0.12)
+
 
         if args.font_size > 0:
             font_size = args.font_size

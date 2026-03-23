@@ -108,6 +108,9 @@ export async function getDriveClient() {
     return google.drive({ version: 'v3', auth });
 }
 
+// ── Folder creation mutex — prevents race conditions when uploading multiple videos simultaneously ──
+const folderCreationLocks = new Map<string, Promise<string>>();
+
 export async function findOrCreateFolder(
     drive: any,
     name: string,
@@ -116,6 +119,26 @@ export async function findOrCreateFolder(
     const ROOT_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '0AKpcFZDnKLgZUk9PVA';
     const effectiveParentId = parentId || ROOT_ID;
 
+    // Deduplicate concurrent calls for the same folder (prevents race-condition duplicates)
+    const lockKey = `${effectiveParentId}/${name}`;
+    const existing = folderCreationLocks.get(lockKey);
+    if (existing) {
+        console.log(`[DriveService] Waiting for concurrent folder creation: "${name}"`);
+        return existing;
+    }
+
+    const promise = _findOrCreateFolderImpl(drive, name, effectiveParentId);
+    folderCreationLocks.set(lockKey, promise);
+    try {
+        const result = await promise;
+        return result;
+    } finally {
+        // Keep lock for 5s to prevent immediate re-creation after the folder is created
+        setTimeout(() => folderCreationLocks.delete(lockKey), 5000);
+    }
+}
+
+async function _findOrCreateFolderImpl(drive: any, name: string, effectiveParentId: string): Promise<string> {
     const safeName = name.replace(/'/g, "\\'");
     const q = [
         `name = '${safeName}'`,
@@ -132,12 +155,12 @@ export async function findOrCreateFolder(
         supportsAllDrives: true,
         includeItemsFromAllDrives: true,
         corpora: 'allDrives',
-        pageSize: 1,
+        pageSize: 5, // get up to 5 to detect & handle pre-existing duplicates
     });
 
     if (res.data.files?.length > 0) {
         const foundId = res.data.files[0].id;
-        console.log(`[DriveService] Found folder: "${name}" -> ${foundId}`);
+        console.log(`[DriveService] Found folder: "${name}" -> ${foundId}${res.data.files.length > 1 ? ` (${res.data.files.length} duplicates exist!)` : ''}`);
         return foundId;
     }
 
@@ -164,6 +187,8 @@ export async function findOrCreateFolder(
         throw createErr;
     }
 }
+
+
 
 /**
  * findOrCreatePath - Crea una serie de carpetas anidadas a partir de un path 'A/B/C'.

@@ -341,15 +341,23 @@ export async function POST(req: NextRequest) {
             let finalPath = ttsVideoPath;
             if (burnSubtitles && srtContent) {
                 const srtPath = path.join(tmpDir, 'subs_tts.srt');
+                const srtOrigPath = path.join(tmpDir, 'subs_orig.srt');
                 const burnedPath = path.join(tmpDir, 'final_tts.mp4');
                 await fs.writeFile(srtPath, srtContent);
+                // Generar SRT original con timestamps del audio en inglés para tapado preciso
+                if (originalWords && originalWords.length > 0) {
+                    const origSrtContent = generateSRT(originalWords.map((w: any) => ({ text: w.text, start: w.start, end: w.end })));
+                    await fs.writeFile(srtOrigPath, origSrtContent);
+                }
+                const hasOrigSrt = await fs.access(srtOrigPath).then(() => true).catch(() => false);
                 try {
                     const scriptPath = path.join(process.cwd(), 'scripts', 'subtitle_injector.py');
                     const pythonBin = process.env.PYTHON_BIN || 'python3';
-                    // Usamos execFileAsync para evitar problemas de quoting con rutas con espacios
+                    const args = [scriptPath, '--video', ttsVideoPath, '--srt', srtPath, '--out', burnedPath];
+                    if (hasOrigSrt) args.push('--srt-orig', srtOrigPath);
                     const { stdout, stderr } = await execFileAsync(
                         pythonBin,
-                        [scriptPath, '--video', ttsVideoPath, '--srt', srtPath, '--out', burnedPath],
+                        args,
                         { maxBuffer: 50 * 1024 * 1024 }
                     );
                     if (stdout) console.log('[SubtitleInjector OUT]', stdout.trim());

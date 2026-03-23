@@ -146,16 +146,33 @@ export async function POST(request: NextRequest) {
         };
         jobs.set(jobId, job);
 
-        processVideoBackground(file, asset.id, productId, storeId, jobId, {
-            conceptCode: conceptCodeHint,
-            funnelStage: funnelHint,
-            competitorSource,
-            autoTranslate,
-            translateLang,
-            translateVoiceId,
-        }).catch(e => {
-            const j = jobs.get(jobId);
-            if (j) { j.status = 'ERROR'; j.error = e.message; j.updatedAt = new Date().toISOString(); }
+        // --- SEQUENTIAL PROCESSING QUEUE ---
+        // Avoid crashing the Mac by running 10+ FFmpeg/OCR processes at once.
+        const globalRef = global as any;
+        globalRef.videoProcessingQueue = globalRef.videoProcessingQueue || Promise.resolve();
+        
+        // Chain the job to the global queue
+        globalRef.videoProcessingQueue = globalRef.videoProcessingQueue.then(async () => {
+            console.log(`[Queue] Starting Job: ${jobId} (${file.name})`);
+            try {
+                await processVideoBackground(file, asset.id, productId, storeId, jobId, {
+                    conceptCode: conceptCodeHint,
+                    funnelStage: funnelHint,
+                    competitorSource,
+                    autoTranslate,
+                    translateLang,
+                    translateVoiceId,
+                });
+                console.log(`[Queue] Finished Job: ${jobId}`);
+            } catch (e: any) {
+                console.error(`[Queue] Failed Job: ${jobId}`, e);
+                const j = jobs.get(jobId);
+                if (j) { 
+                    j.status = 'ERROR'; 
+                    j.error = e.message; 
+                    j.updatedAt = new Date().toISOString(); 
+                }
+            }
         });
 
         return NextResponse.json({ ok: true, jobId, assetId: asset.id });

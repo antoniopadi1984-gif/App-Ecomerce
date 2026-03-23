@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
 """
-subtitle_injector.py — Smart subtitle overlay using local OCR + FFmpeg/libass
-
-Usage:
-  python3 subtitle_injector.py \\
-    --video input.mp4 \\
-    --srt subtitles.srt \\
-    --out output.mp4 \\
-    [--font-size 18] \\
-    [--lang es]
-
-How it works:
-  1. Extract a frame at t=1s with FFmpeg
-  2. OpenCV + Tesseract detect the original subtitle bounding box (in px)
-  3. Compute overlay Y = yTop_original - box_height - 4px
-  4. Generate a .ass subtitle file with dynamic MarginV and white background
-  5. Burn subtitles with FFmpeg libass filter (no video reencoding needed)
+subtitle_injector.py — Professional Subtitle & On-Screen Text Masking + Overlay
+ 
+Features:
+- Dual SRT mode: --srt-orig for masking timing, --srt for overlay timing
+- Multi-frame OCR (3 snapshots per block to maximize detection)
+- White/Black box detection via contour analysis
+- Dynamic drawbox patching (solid color, timed per block)
+- Precise ASS positioning at detected region center
+- Full bounds checking to avoid FFmpeg crashes
+- Fallback to previous region if detection fails for a block
 """
-
+ 
 import argparse
 import subprocess
 import sys
@@ -26,56 +20,39 @@ import re
 import tempfile
 import json
 from typing import Optional
-
+ 
 try:
     import cv2
     import numpy as np
 except ImportError:
-    print("[ERROR] OpenCV not installed. Run: pip3 install opencv-python", file=sys.stderr)
+    print("[ERROR] OpenCV not installed. Run: pip install opencv-python numpy", file=sys.stderr)
     sys.exit(1)
-
+ 
 try:
-    import tesserocr
-    TESSEROCR = True
+    import pytesseract
+    from PIL import Image as PILImage
 except ImportError:
-    TESSEROCR = False
-
-# Absolute paths
+    print("[ERROR] Pytesseract/PIL not installed.", file=sys.stderr)
+    sys.exit(1)
+ 
+# ─────────────────────────────────────────────
+# Binary Paths
+# ─────────────────────────────────────────────
 FFPROBE = os.environ.get('FFPROBE_PATH', '/opt/homebrew/bin/ffprobe')
-if not os.path.exists(FFPROBE):
-    FFPROBE = 'ffprobe'
-
+if not os.path.exists(FFPROBE): FFPROBE = 'ffprobe'
+ 
 FFMPEG_BIN = os.environ.get('FFMPEG_PATH', '/usr/local/ffmpeg-libass/bin/ffmpeg')
-if not os.path.exists(FFMPEG_BIN):
-    FFMPEG_BIN = '/usr/local/ffmpeg-libass/bin/ffmpeg'
-
-
+if not os.path.exists(FFMPEG_BIN): FFMPEG_BIN = 'ffmpeg'
+ 
+ 
 # ─────────────────────────────────────────────
-# Frame extraction
+# Video Utilities
 # ─────────────────────────────────────────────
-
-def extract_frame(video_path: str, out_path: str, t: float = 1.0) -> bool:
-    """Extract a single frame at time t (seconds)."""
-    result = subprocess.run(
-        [FFMPEG_BIN, "-y", "-ss", str(t), "-i", video_path,
-         "-vframes", "1", "-q:v", "2", out_path],
-        capture_output=True
-    )
-    return result.returncode == 0 and os.path.exists(out_path)
-
-
-# ─────────────────────────────────────────────
-# Video dimensions
-# ─────────────────────────────────────────────
-
 def get_video_dims(video_path: str) -> tuple:
-    """Returns (width, height) in pixels. Uses JSON output for reliability."""
-    # Method 1: JSON via ffprobe (most reliable)
     try:
         result = subprocess.run(
             [FFPROBE, "-v", "error", "-select_streams", "v:0",
-             "-show_entries", "stream=width,height",
-             "-of", "json", video_path],
+             "-show_entries", "stream=width,height", "-of", "json", video_path],
             capture_output=True, text=True, timeout=15
         )
         data = json.loads(result.stdout)
@@ -84,376 +61,323 @@ def get_video_dims(video_path: str) -> tuple:
             return int(streams[0]["width"]), int(streams[0]["height"])
     except Exception:
         pass
-
-    # Method 2: Use OpenCV directly as fallback (no ffprobe needed)
-    try:
-        cap = cv2.VideoCapture(video_path)
-        if cap.isOpened():
-            w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            cap.release()
-            if w > 0 and h > 0:
-                print(f"[INFO] Dims via OpenCV: {w}x{h}", file=sys.stderr)
-                return w, h
-        cap.release()
-    except Exception:
-        pass
-
-    raise RuntimeError(f"Could not determine video dimensions for: {video_path}")
-
-
+    return 720, 1280
+ 
+ 
+def extract_frame(video_path: str, out_path: str, t: float) -> bool:
+    subprocess.run(
+        [FFMPEG_BIN, "-y", "-ss", f"{t:.3f}", "-i", video_path,
+         "-vframes", "1", "-q:v", "2", out_path],
+        capture_output=True, check=False
+    )
+    return os.path.exists(out_path)
+ 
+ 
 # ─────────────────────────────────────────────
-# Subtitle region detection
+# SRT Parser
 # ─────────────────────────────────────────────
-
-def detect_subtitle_region(frame_path: str, video_h: int) -> Optional[dict]:
-    """
-    Detecta la región de subtítulos originales usando pytesseract (word-level bboxes).
-    Funciona con CUALQUIER estilo: texto blanco sobre negro, negro sobre blanco, etc.
-    Fallback: OpenCV bright/dark region detection.
-    Returns { yTop, yBottom, xLeft, xRight, estimatedFontSize } or None.
-    """
-    img = cv2.imread(frame_path)
-    if img is None:
-        return None
-    h, w = img.shape[:2]
-
-    # ── Paso 1: Tesseract word-level bounding boxes ───────────────────────────
-    try:
-        import pytesseract
-        from PIL import Image as PILImage
-        pil_img = PILImage.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        data = pytesseract.image_to_data(pil_img, output_type=pytesseract.Output.DICT,
-                                          config="--psm 11 --oem 3")
-        # Agrupar palabras por filas (±15px de Y centro)
-        rows: dict[int, list] = {}
-        for i, conf in enumerate(data["conf"]):
-            try:
-                c = int(conf)
-            except (ValueError, TypeError):
-                continue
-            if c < 30:  # baja confianza, ignorar
-                continue
-            bx, by, bw2, bh2 = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
-            if bw2 < 5 or bh2 < 5:
-                continue
-            cy = by + bh2 // 2
-            # Buscar fila existente dentro de ±20px
-            row_key = None
-            for rk in rows:
-                if abs(rk - cy) <= 20:
-                    row_key = rk
-                    break
-            if row_key is None:
-                row_key = cy
-                rows[row_key] = []
-            rows[row_key].append((bx, by, bx + bw2, by + bh2))
-
-        if rows:
-            # Fusionar filas cercanas (±30px) → bloque de subtítulo
-            sorted_keys = sorted(rows.keys())
-            merged = []
-            current_group = [sorted_keys[0]]
-            for k in sorted_keys[1:]:
-                if k - current_group[-1] <= 30:
-                    current_group.append(k)
-                else:
-                    merged.append(current_group)
-                    current_group = [k]
-            merged.append(current_group)
-
-            # Seleccionar el grupo con más palabras
-            best_group = max(merged, key=lambda g: sum(len(rows[k]) for k in g))
-            all_boxes = [box for k in best_group for box in rows[k]]
-            xL = min(b[0] for b in all_boxes)
-            yT = min(b[1] for b in all_boxes)
-            xR = max(b[2] for b in all_boxes)
-            yB = max(b[3] for b in all_boxes)
-            region_w = xR - xL
-            region_h = yB - yT
-
-            # Sanity check: debe ser un bloque de texto razonable
-            if region_w >= w * 0.25 and region_h >= 10 and region_h <= 200:
-                font_size = max(14, min(80, int(region_h * 0.90)))
-                print(f"[OCR-Tesseract] ✅ Region: y={yT}–{yB} x={xL}–{xR} ({region_w}x{region_h}px) fontSize≈{font_size}", file=sys.stderr)
-                return {"yTop": yT, "yBottom": yB, "xLeft": xL, "xRight": xR, "estimatedFontSize": font_size}
-    except Exception as e:
-        print(f"[OCR-Tesseract] Error: {e} — usando fallback OpenCV", file=sys.stderr)
-
-    # ── Paso 2: Fallback OpenCV — detecta cajas claras u oscuras ──────────────
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    candidates = []
-
-    for inv in [False, True]:  # intenta original y invertido
-        g = cv2.bitwise_not(gray) if inv else gray
-        # Threshold alto (busca zonas muy claras u oscuras)
-        _, thresh = cv2.threshold(g, 200, 255, cv2.THRESH_BINARY)
-        kh = cv2.getStructuringElement(cv2.MORPH_RECT, (max(1, w // 8), 1))
-        d = cv2.dilate(thresh, kh, iterations=3)
-        kv = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 6))
-        d = cv2.dilate(d, kv, iterations=2)
-        cnts, _ = cv2.findContours(d, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        for cnt in cnts:
-            x, y, cw, ch = cv2.boundingRect(cnt)
-            if cw < w * 0.28: continue
-            if ch < 12 or ch > 150: continue
-            if cw / max(ch, 1) < 2.0: continue  # debe ser ancho
-            candidates.append((x, y, x + cw, y + ch, cw * ch))
-
-    if candidates:
-        best = max(candidates, key=lambda c: c[4])
-        xL, yT, xR, yB, _ = best
-        font_size = max(14, min(80, int((yB - yT) * 0.90)))
-        print(f"[OCR-OpenCV] ✅ Region: y={yT}–{yB} x={xL}–{xR} ({xR-xL}x{yB-yT}px) fontSize≈{font_size}", file=sys.stderr)
-        return {"yTop": yT, "yBottom": yB, "xLeft": xL, "xRight": xR, "estimatedFontSize": font_size}
-
-    print("[OCR] No subtitle region detected — using fallback position", file=sys.stderr)
-    return None
-
-# ─────────────────────────────────────────────
-# SRT → chunks for ASS
-# ─────────────────────────────────────────────
-
-def parse_srt(srt_path: str) -> list[dict]:
-    """Parse SRT into list of {start_ms, end_ms, text}."""
+def parse_srt(srt_path: str) -> list:
     entries = []
+    if not srt_path or not os.path.exists(srt_path):
+        return entries
     with open(srt_path, "r", encoding="utf-8") as f:
         content = f.read()
-
     blocks = re.split(r'\n\s*\n', content.strip())
     for block in blocks:
         lines = block.strip().splitlines()
-        if len(lines) < 3:
-            continue
-        time_line = lines[1]
-        m = re.match(r'(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+)', time_line)
-        if not m:
-            continue
+        if len(lines) < 3: continue
+        m = re.match(r'(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+)', lines[1])
+        if not m: continue
         h1,m1,s1,ms1,h2,m2,s2,ms2 = [int(x) for x in m.groups()]
-        start_ms = ((h1*3600 + m1*60 + s1) * 1000) + ms1
-        end_ms   = ((h2*3600 + m2*60 + s2) * 1000) + ms2
-        raw_text = " ".join(lines[2:]).replace("\n", " ")
-        # Wrap to max 5 words per line so the box doesn't span the full width
+        start_ms = (h1*3600 + m1*60 + s1)*1000 + ms1
+        end_ms   = (h2*3600 + m2*60 + s2)*1000 + ms2
+        raw_text = " ".join(lines[2:]).replace("\n", " ").strip()
+        # Word wrap at 6 words
         words = raw_text.split()
-        MAX_WORDS = 5
-        if len(words) > MAX_WORDS:
-            mid = (len(words) + 1) // 2
+        if len(words) > 6:
+            mid = (len(words)+1)//2
             text = " ".join(words[:mid]) + "\\N" + " ".join(words[mid:])
         else:
             text = raw_text
-        entries.append({"start_ms": start_ms, "end_ms": end_ms, "text": text})
-
+        entries.append({"start_ms": start_ms, "end_ms": end_ms, "text": text, "region": None})
     return entries
-
-
-def ms_to_ass_time(ms: int) -> str:
-    """Convert milliseconds to ASS time format H:MM:SS.CC"""
+ 
+ 
+# ─────────────────────────────────────────────
+# Region Detection
+# ─────────────────────────────────────────────
+def detect_subtitle_region(frame_path: str, vw: int, vh: int) -> Optional[dict]:
+    img = cv2.imread(frame_path)
+    if img is None: return None
+    h, w = img.shape[:2]
+    candidates = []
+ 
+    # OCR detection
+    try:
+        pil_img = PILImage.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        data = pytesseract.image_to_data(pil_img, output_type=pytesseract.Output.DICT,
+                                          config="--psm 11 --oem 3")
+        elements = []
+        for i, conf in enumerate(data["conf"]):
+            if int(conf) < 40: continue
+            tx = data["text"][i].strip()
+            if not tx: continue
+            bx, by, bw, bh = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
+            elements.append((bx, by, bx+bw, by+bh))
+        if elements:
+            min_x = min(e[0] for e in elements)
+            min_y = min(e[1] for e in elements)
+            max_x = max(e[2] for e in elements)
+            max_y = max(e[3] for e in elements)
+            area_w = max_x - min_x
+            area_h = max_y - min_y
+            if area_w > w * 0.1 and area_h > 12:
+                candidates.append({
+                    "yTop": min_y, "yBottom": max_y, "xLeft": min_x, "xRight": max_x,
+                    "fontSize": max(14, min(100, int(area_h * 0.9))),
+                    "score": area_w * area_h * 2  # OCR weighted higher
+                })
+    except Exception as e:
+        print(f"[DEBUG] OCR error: {e}", file=sys.stderr)
+ 
+    # Geometry detection — solid white/black boxes
+    try:
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        for invert in [False, True]:
+            proc = cv2.bitwise_not(gray) if invert else gray
+            _, thresh = cv2.threshold(proc, 220, 255, cv2.THRESH_BINARY)
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (w//10, 5))
+            closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+            cnts, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            for cnt in cnts:
+                cx, cy, cw, ch = cv2.boundingRect(cnt)
+                if cw > w*0.15 and ch > 20 and ch < vh*0.4 and cw/ch > 1.2:
+                    candidates.append({
+                        "yTop": cy, "yBottom": cy+ch, "xLeft": cx, "xRight": cx+cw,
+                        "fontSize": max(14, min(80, int(ch*0.8))),
+                        "score": cw * ch
+                    })
+    except Exception as e:
+        print(f"[DEBUG] Geometry error: {e}", file=sys.stderr)
+ 
+    if not candidates: return None
+ 
+    def rank(c):
+        center_y = (c["yTop"] + c["yBottom"]) / 2
+        multiplier = 1.5 if center_y > vh * 0.4 else 1.0
+        return c["score"] * multiplier
+ 
+    return max(candidates, key=rank)
+ 
+ 
+def get_dominant_bg_color(frame_path: str, region: dict) -> str:
+    img = cv2.imread(frame_path)
+    if img is None: return "white"
+    h, w = img.shape[:2]
+    y1, y2 = max(0, region["yTop"]), min(h, region["yBottom"])
+    x1, x2 = max(0, region["xLeft"]), min(w, region["xRight"])
+    crop = img[y1:y2, x1:x2]
+    if crop.size == 0: return "white"
+    avg = np.average(np.average(crop, axis=0), axis=0)
+    brightness = 0.299*avg[2] + 0.587*avg[1] + 0.114*avg[0]
+    return "white" if brightness > 127 else "black"
+ 
+ 
+# ─────────────────────────────────────────────
+# ASS Generation
+# ─────────────────────────────────────────────
+def ms_to_ass(ms: int) -> str:
     cs = ms // 10
-    s  = cs // 100; cs = cs % 100
-    m  = s  // 60;  s  = s  % 60
-    h  = m  // 60;  m  = m  % 60
+    s, cs = divmod(cs, 100)
+    m, s = divmod(s, 60)
+    h, m = divmod(m, 60)
     return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
-
-
-# ─────────────────────────────────────────────
-# ASS file generation
-# ─────────────────────────────────────────────
-
-def generate_ass(srt_entries: list[dict], video_w: int, video_h: int,
-                 margin_v: int, font_size: int, out_path: str):
-    """
-    Generate an ASS subtitle file with:
-    - White semi-transparent background box
-    - Black text with thin outline
-    - Dynamic MarginV positioning
-    """
-    # ─────────────────────────────────────────────────────────
-    # ASS colour format: &HAABBGGRR  (AA=alpha 00=opaque FF=transparent)
-    # &H00000000 = opaque black text
-    # &H00FFFFFF = opaque white box background (SOLID, no transparency)
-    # BorderStyle=4 = opaque box behind text (no outline/shadow mode)
-    # ScaleX=110 → 10% wider box for more breathing room
-    # Spacing=1.5 → slight letter spacing for legibility
-    # ─────────────────────────────────────────────────────────
-
+ 
+ 
+def generate_ass(entries: list, vw: int, vh: int, out_path: str):
     header = f"""[Script Info]
-ScriptType: v4.00+
-PlayResX: {video_w}
-PlayResY: {video_h}
+PlayResX: {vw}
+PlayResY: {vh}
 ScaledBorderAndShadow: yes
-
+ 
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
-Style: Default,Arial,{font_size},&H00000000,&H000000FF,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,4,2,0,2,20,20,{margin_v},1
-
+Style: Default,Arial,20,&H00000000,&H000000FF,&H00FFFFFF,&H99FFFFFF,-1,0,0,0,100,100,0,0,4,1,0,2,10,10,10,1
+ 
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 """
-
     events = ""
-    for e in srt_entries:
-        start = ms_to_ass_time(e["start_ms"])
-        end   = ms_to_ass_time(e["end_ms"])
-        text  = e["text"]
-        events += f"Dialogue: 0,{start},{end},Default,,0,0,0,,{text}\n"
-
+    for e in entries:
+        start = ms_to_ass(e["start_ms"])
+        end   = ms_to_ass(e["end_ms"])
+        if e.get("region"):
+            r = e["region"]
+            pos_x = (r["xLeft"] + r["xRight"]) // 2
+            pos_y = r["yBottom"] - max(2, (r["yBottom"] - r["yTop"]) // 6)
+            fs = max(16, r["fontSize"])
+            tags = f"{{\\pos({pos_x},{pos_y})\\fs{fs}\\bord1\\shad0}}"
+        else:
+            fs = max(20, int(vh * 0.035))
+            tags = f"{{\\pos({vw//2},{int(vh*0.88)})\\fs{fs}\\bord1\\shad0}}"
+        events += f"Dialogue: 0,{start},{end},Default,,0,0,0,,{tags}{e['text']}\n"
+ 
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(header + events)
-
-    print(f"[ASS] Generated: {out_path} ({len(srt_entries)} entries, marginV={margin_v}, fontSize={font_size})", file=sys.stderr)
-
-
+ 
+ 
 # ─────────────────────────────────────────────
-# FFmpeg injection
+# FFmpeg Injection
 # ─────────────────────────────────────────────
-
-def inject_subtitles(video_path: str, ass_path: str, out_path: str,
-                     blur_region: Optional[dict] = None) -> bool:
-    """Burn ASS subtitles using FFmpeg libass. Optionally blurs the original subtitle region."""
-
-    if blur_region:
-        # Build a filter_complex that:
-        # 1. Blurs the detected region (original subs)
-        # 2. Burns the new ASS subs on top
-        x  = max(0, blur_region['xLeft'])
-        y  = max(0, blur_region['yTop'])
-        bw = max(1, blur_region['xRight'] - blur_region['xLeft'])
-        bh = max(1, blur_region['yBottom'] - blur_region['yTop'])
-
-        # Pad blur height slightly to make sure we cover the full original sub area
-        y_padded = max(0, y - 4)
-        bh_padded = bh + 8
-
-        filter_complex = (
-            f"[0:v]split[main][blur_in];"
-            f"[blur_in]crop={bw}:{bh_padded}:{x}:{y_padded},"
-            f"boxblur=luma_radius=18:luma_power=4:chroma_radius=18:chroma_power=4[blurred];"
-            f"[main][blurred]overlay={x}:{y_padded}[blurred_v];"
-            f"[blurred_v]ass={ass_path}"
+def inject_subtitles(video_path: str, ass_path: str, mask_entries: list,
+                     vw: int, vh: int, out_path: str, tmp_dir: str) -> bool:
+    filters = []
+    chain_idx = 0
+    curr_stream = "[0:v]"
+ 
+    for i, e in enumerate(mask_entries):
+        if not e.get("region"): continue
+        r = e["region"]
+        ts = e["start_ms"] / 1000.0
+        te = e["end_ms"] / 1000.0
+        px, py = 8, 8
+        x = max(0, r["xLeft"] - px)
+        y = max(0, r["yTop"] - py)
+        w = min(vw - x - 1, r["xRight"] - r["xLeft"] + px*2)
+        h = min(vh - y - 1, r["yBottom"] - r["yTop"] + py*2)
+        if w < 4 or h < 4: continue
+ 
+        # Detect background color
+        f_path = os.path.join(tmp_dir, f"mask_{i}_50.jpg")
+        bg = get_dominant_bg_color(f_path, r) if os.path.exists(f_path) else "white"
+ 
+        out_stream = f"[v_patch{chain_idx}]"
+        filters.append(
+            f"{curr_stream}drawbox=x={x}:y={y}:w={w}:h={h}:"
+            f"color={bg}:t=fill:enable='between(t,{ts:.3f},{te:.3f})'"
+            f"{out_stream}"
         )
-        cmd = [
-            FFMPEG_BIN, "-y",
-            "-i", video_path,
-            "-filter_complex", filter_complex,
-            "-c:v", "libx264", "-crf", "18", "-preset", "fast",
-            "-c:a", "aac", "-b:a", "192k",
-            "-map_metadata", "-1",        # strip ALL original metadata
-            "-movflags", "+faststart",    # web-ready MP4
-            "-fflags", "+bitexact",       # remove encoder signature
-            out_path
-        ]
-        print(f"[FFmpeg] Blur region: x={x} y={y_padded} w={bw} h={bh_padded}px", file=sys.stderr)
-    else:
-        cmd = [
-            FFMPEG_BIN, "-y",
-            "-i", video_path,
-            "-vf", f"ass={ass_path}",
-            "-c:v", "libx264", "-crf", "18", "-preset", "fast",
-            "-c:a", "aac", "-b:a", "192k",
-            "-map_metadata", "-1",        # strip ALL original metadata
-            "-movflags", "+faststart",    # web-ready MP4
-            "-fflags", "+bitexact",       # remove encoder signature
-            out_path
-        ]
-
-    print(f"[FFmpeg] Running injection...", file=sys.stderr)
+        curr_stream = out_stream
+        chain_idx += 1
+ 
+    filter_str = ";".join(filters)
+    if filter_str: filter_str += ";"
+    safe_ass = ass_path.replace("\\", "/").replace(":", "\\:")
+    filter_str += f"{curr_stream}ass='{safe_ass}'"
+ 
+    cmd = [
+        FFMPEG_BIN, "-y", "-i", video_path,
+        "-filter_complex", filter_str,
+        "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+        "-c:a", "copy", out_path
+    ]
+ 
+    print(f"[FFmpeg] Patching {chain_idx} zones + ASS overlay...", file=sys.stderr)
     result = subprocess.run(cmd, capture_output=True, text=True)
-
     if result.returncode != 0:
-        print(f"[FFmpeg] Error:\n{result.stderr[-2000:]}", file=sys.stderr)
+        print(f"[FFmpeg] FAILED:\n{result.stderr[-1500:]}", file=sys.stderr)
         return False
-
     return True
-
-
+ 
+ 
+# ─────────────────────────────────────────────
+# Region Detection Loop
+# ─────────────────────────────────────────────
+def detect_regions_for_entries(entries: list, video_path: str, vw: int, vh: int,
+                                tmp_dir: str, prefix: str = "f") -> list:
+    last_region = None
+    for i, e in enumerate(entries):
+        candidates = []
+        dur = (e["end_ms"] - e["start_ms"]) / 1000.0
+        for off in [0.25, 0.5, 0.75]:
+            t = (e["start_ms"] / 1000.0) + (dur * off)
+            fp = os.path.join(tmp_dir, f"{prefix}_{i}_{int(off*100)}.jpg")
+            if extract_frame(video_path, fp, t):
+                reg = detect_subtitle_region(fp, vw, vh)
+                if reg: candidates.append(reg)
+ 
+        if candidates:
+            best = max(candidates, key=lambda c: c["score"])
+            e["region"] = best
+            last_region = best
+            print(f"  [{i+1}/{len(entries)}] ✓ box at y={best['yTop']}–{best['yBottom']}", file=sys.stderr)
+        elif last_region:
+            e["region"] = last_region
+            print(f"  [{i+1}/{len(entries)}] ~ fallback to last region", file=sys.stderr)
+        else:
+            print(f"  [{i+1}/{len(entries)}] ✗ not detected", file=sys.stderr)
+    return entries
+ 
+ 
 # ─────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────
-
 def main():
-    parser = argparse.ArgumentParser(description="Smart subtitle injector")
-    parser.add_argument("--video",     required=True,  help="Input video path")
-    parser.add_argument("--srt",       required=True,  help="SRT subtitle file path")
-    parser.add_argument("--out",       required=True,  help="Output video path")
-    parser.add_argument("--font-size", type=int, default=0,  help="Override font size (0=auto)")
-    parser.add_argument("--margin-v",  type=int, default=0,  help="Override marginV in px (0=auto)")
-    parser.add_argument("--frame-t",   type=float, default=1.0, help="Frame time for OCR (seconds)")
-    parser.add_argument("--json-out",  default="",  help="Output detected region as JSON to this file")
+    parser = argparse.ArgumentParser(description="Smart subtitle injector with dynamic masking")
+    parser.add_argument("--video",    required=True,  help="Input video (already has TTS audio)")
+    parser.add_argument("--srt",      required=True,  help="SRT of TRANSLATED text (for overlay)")
+    parser.add_argument("--out",      required=True,  help="Output video path")
+    parser.add_argument("--srt-orig", default="",     help="SRT of ORIGINAL text (for masking timing)")
     args = parser.parse_args()
-
-    # 1. Get video dimensions
-    try:
-        vw, vh = get_video_dims(args.video)
-    except Exception as e:
-        print(f"[ERROR] Could not get video dims: {e}", file=sys.stderr)
-        sys.exit(1)
-
+ 
+    vw, vh = get_video_dims(args.video)
     print(f"[INFO] Video: {vw}x{vh}", file=sys.stderr)
-
+ 
+    # Translated entries — for ASS overlay timing
+    overlay_entries = parse_srt(args.srt)
+    if not overlay_entries:
+        print("[ERROR] Translated SRT is empty", file=sys.stderr)
+        sys.exit(1)
+ 
     with tempfile.TemporaryDirectory() as tmp:
-        frame_path = os.path.join(tmp, "frame.jpg")
-        ass_path   = os.path.join(tmp, "subtitles.ass")
-
-        # Try multiple frame times spread across the video to find one with subtitles
-        region = None
-        for t in [1.0, 3.0, 5.0, 8.0, 12.0, 20.0, 30.0, 2.0]:
-            if extract_frame(args.video, frame_path, t):
-                region = detect_subtitle_region(frame_path, vh)
-                if region:
-                    print(f"[OCR] Found region at t={t}s", file=sys.stderr)
-                    break
-
-        # 3. Calculate MarginV and font size
-        if args.margin_v > 0:
-            margin_v = args.margin_v
-        elif region:
-            # Place new subs IN the detected original subtitle zone
-            # margin_v = distance from bottom of frame to bottom of that zone
-            margin_v = max(5, vh - region["yBottom"])
+ 
+        # ── MASKING ENTRIES ──────────────────────────────────────────────────
+        # If we have the original SRT, use it for masking timing (more precise)
+        # Otherwise fall back to translated SRT timing
+        if args.srt_orig and os.path.exists(args.srt_orig):
+            print(f"[INFO] Dual-SRT mode: masking from original, overlay from translated", file=sys.stderr)
+            mask_entries = parse_srt(args.srt_orig)
+            print(f"[INFO] Detecting regions from ORIGINAL video ({len(mask_entries)} blocks)...", file=sys.stderr)
+            mask_entries = detect_regions_for_entries(mask_entries, args.video, vw, vh, tmp, prefix="mask")
         else:
-            # Fallback: 12% from bottom
-            margin_v = int(vh * 0.12)
-
-
-        if args.font_size > 0:
-            font_size = args.font_size
-        elif region:
-            font_size = max(18, region["estimatedFontSize"])
-        else:
-            font_size = max(18, int(vh * 0.035))  # 3.5% of video height
-
-
-        print(f"[INFO] Using marginV={margin_v}, fontSize={font_size}", file=sys.stderr)
-
-        # Output region JSON if requested
-        if args.json_out:
-            with open(args.json_out, "w") as jf:
-                json.dump({
-                    "region": region,
-                    "margin_v": margin_v,
-                    "font_size": font_size,
-                    "video_w": vw,
-                    "video_h": vh
-                }, jf)
-
-        # 4. Parse SRT
-        entries = parse_srt(args.srt)
-        if not entries:
-            print("[ERROR] SRT file is empty or invalid", file=sys.stderr)
-            sys.exit(1)
-
-        print(f"[INFO] Parsed {len(entries)} subtitle entries", file=sys.stderr)
-
-        # 5. Generate ASS file
-        generate_ass(entries, vw, vh, margin_v, font_size, ass_path)
-
-        # 6. Burn into video (with blur on original sub region if detected)
-        ok = inject_subtitles(args.video, ass_path, args.out, blur_region=region)
+            print(f"[INFO] Single-SRT mode: using translated SRT for both masking and overlay", file=sys.stderr)
+            mask_entries = overlay_entries
+            print(f"[INFO] Detecting regions ({len(mask_entries)} blocks)...", file=sys.stderr)
+            mask_entries = detect_regions_for_entries(mask_entries, args.video, vw, vh, tmp, prefix="mask")
+            # Share detected regions with overlay entries (same timing)
+            for i, e in enumerate(overlay_entries):
+                if i < len(mask_entries):
+                    e["region"] = mask_entries[i].get("region")
+ 
+        # ── OVERLAY ENTRIES — inherit regions from mask ──────────────────────
+        # For dual-SRT mode: each overlay entry gets the region from the
+        # closest-in-time mask entry (since timings differ)
+        if args.srt_orig and os.path.exists(args.srt_orig):
+            for oe in overlay_entries:
+                oe_mid = (oe["start_ms"] + oe["end_ms"]) / 2
+                best_me = None
+                best_diff = float("inf")
+                for me in mask_entries:
+                    if me.get("region"):
+                        me_mid = (me["start_ms"] + me["end_ms"]) / 2
+                        diff = abs(oe_mid - me_mid)
+                        if diff < best_diff:
+                            best_diff = diff
+                            best_me = me
+                if best_me:
+                    oe["region"] = best_me["region"]
+ 
+        # ── GENERATE ASS ────────────────────────────────────────────────────
+        ass_path = os.path.join(tmp, "subs.ass")
+        generate_ass(overlay_entries, vw, vh, ass_path)
+ 
+        # ── INJECT ──────────────────────────────────────────────────────────
+        ok = inject_subtitles(args.video, ass_path, mask_entries, vw, vh, args.out, tmp)
         if not ok:
             sys.exit(1)
-
+ 
     print(f"[DONE] Output: {args.out}", file=sys.stderr)
-
-
+ 
+ 
 if __name__ == "__main__":
     main()

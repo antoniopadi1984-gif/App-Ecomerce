@@ -108,67 +108,107 @@ def get_video_dims(video_path: str) -> tuple:
 
 def detect_subtitle_region(frame_path: str, video_h: int) -> Optional[dict]:
     """
-    Detects the original subtitle bounding box.
-    Searches the FULL frame — TikTok subs can be at top, middle, or bottom.
-    Filters by aspect ratio (must be wide & short) to avoid false positives.
+    Detecta la región de subtítulos originales usando pytesseract (word-level bboxes).
+    Funciona con CUALQUIER estilo: texto blanco sobre negro, negro sobre blanco, etc.
+    Fallback: OpenCV bright/dark region detection.
     Returns { yTop, yBottom, xLeft, xRight, estimatedFontSize } or None.
     """
     img = cv2.imread(frame_path)
     if img is None:
         return None
-
     h, w = img.shape[:2]
+
+    # ── Paso 1: Tesseract word-level bounding boxes ───────────────────────────
+    try:
+        import pytesseract
+        from PIL import Image as PILImage
+        pil_img = PILImage.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        data = pytesseract.image_to_data(pil_img, output_type=pytesseract.Output.DICT,
+                                          config="--psm 11 --oem 3")
+        # Agrupar palabras por filas (±15px de Y centro)
+        rows: dict[int, list] = {}
+        for i, conf in enumerate(data["conf"]):
+            try:
+                c = int(conf)
+            except (ValueError, TypeError):
+                continue
+            if c < 30:  # baja confianza, ignorar
+                continue
+            bx, by, bw2, bh2 = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
+            if bw2 < 5 or bh2 < 5:
+                continue
+            cy = by + bh2 // 2
+            # Buscar fila existente dentro de ±20px
+            row_key = None
+            for rk in rows:
+                if abs(rk - cy) <= 20:
+                    row_key = rk
+                    break
+            if row_key is None:
+                row_key = cy
+                rows[row_key] = []
+            rows[row_key].append((bx, by, bx + bw2, by + bh2))
+
+        if rows:
+            # Fusionar filas cercanas (±30px) → bloque de subtítulo
+            sorted_keys = sorted(rows.keys())
+            merged = []
+            current_group = [sorted_keys[0]]
+            for k in sorted_keys[1:]:
+                if k - current_group[-1] <= 30:
+                    current_group.append(k)
+                else:
+                    merged.append(current_group)
+                    current_group = [k]
+            merged.append(current_group)
+
+            # Seleccionar el grupo con más palabras
+            best_group = max(merged, key=lambda g: sum(len(rows[k]) for k in g))
+            all_boxes = [box for k in best_group for box in rows[k]]
+            xL = min(b[0] for b in all_boxes)
+            yT = min(b[1] for b in all_boxes)
+            xR = max(b[2] for b in all_boxes)
+            yB = max(b[3] for b in all_boxes)
+            region_w = xR - xL
+            region_h = yB - yT
+
+            # Sanity check: debe ser un bloque de texto razonable
+            if region_w >= w * 0.25 and region_h >= 10 and region_h <= 200:
+                font_size = max(14, min(80, int(region_h * 0.90)))
+                print(f"[OCR-Tesseract] ✅ Region: y={yT}–{yB} x={xL}–{xR} ({region_w}x{region_h}px) fontSize≈{font_size}", file=sys.stderr)
+                return {"yTop": yT, "yBottom": yB, "xLeft": xL, "xRight": xR, "estimatedFontSize": font_size}
+    except Exception as e:
+        print(f"[OCR-Tesseract] Error: {e} — usando fallback OpenCV", file=sys.stderr)
+
+    # ── Paso 2: Fallback OpenCV — detecta cajas claras u oscuras ──────────────
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     candidates = []
 
-    # ── Strategy 1: Bright white rectangular regions (TikTok sub boxes) ─────────
-    _, bright = cv2.threshold(gray, 210, 255, cv2.THRESH_BINARY)
-    kh = cv2.getStructuringElement(cv2.MORPH_RECT, (max(1, w // 8), 1))
-    b_dil = cv2.dilate(bright, kh, iterations=2)
-    kv = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 5))
-    b_dil = cv2.dilate(b_dil, kv, iterations=2)
-    cnts, _ = cv2.findContours(b_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for cnt in cnts:
-        x, y, cw, ch = cv2.boundingRect(cnt)
-        if cw < w * 0.30: continue          # must span 30%+ of width
-        if ch < 15 or ch > 130: continue    # subtitle height range
-        if cw / max(ch, 1) < 2.5: continue  # must be wide (aspect > 2.5:1)
-        candidates.append((x, y, x + cw, y + ch, cw * ch))
-
-    # ── Strategy 2: Adaptive threshold for dark-outline text ────────────────────
-    t_adapt = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                    cv2.THRESH_BINARY, blockSize=15, C=2)
-    for t in [t_adapt, cv2.bitwise_not(t_adapt)]:
-        k = cv2.getStructuringElement(cv2.MORPH_RECT, (max(1, w // 8), 4))
-        d = cv2.dilate(t, k, iterations=2)
-        cnts2, _ = cv2.findContours(d, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        for cnt in cnts2:
+    for inv in [False, True]:  # intenta original y invertido
+        g = cv2.bitwise_not(gray) if inv else gray
+        # Threshold alto (busca zonas muy claras u oscuras)
+        _, thresh = cv2.threshold(g, 200, 255, cv2.THRESH_BINARY)
+        kh = cv2.getStructuringElement(cv2.MORPH_RECT, (max(1, w // 8), 1))
+        d = cv2.dilate(thresh, kh, iterations=3)
+        kv = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 6))
+        d = cv2.dilate(d, kv, iterations=2)
+        cnts, _ = cv2.findContours(d, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for cnt in cnts:
             x, y, cw, ch = cv2.boundingRect(cnt)
-            if cw < w * 0.30: continue
-            if ch < 15 or ch > 130: continue
-            if cw / max(ch, 1) < 2.5: continue
+            if cw < w * 0.28: continue
+            if ch < 12 or ch > 150: continue
+            if cw / max(ch, 1) < 2.0: continue  # debe ser ancho
             candidates.append((x, y, x + cw, y + ch, cw * ch))
 
-    if not candidates:
-        print("[OCR] No subtitle region detected — using fallback position", file=sys.stderr)
-        return None
+    if candidates:
+        best = max(candidates, key=lambda c: c[4])
+        xL, yT, xR, yB, _ = best
+        font_size = max(14, min(80, int((yB - yT) * 0.90)))
+        print(f"[OCR-OpenCV] ✅ Region: y={yT}–{yB} x={xL}–{xR} ({xR-xL}x{yB-yT}px) fontSize≈{font_size}", file=sys.stderr)
+        return {"yTop": yT, "yBottom": yB, "xLeft": xL, "xRight": xR, "estimatedFontSize": font_size}
 
-    # Pick largest area (most confident subtitle-like region)
-    best = max(candidates, key=lambda c: c[4])
-    xL, yT, xR, yB, _ = best
-    font_size = max(14, min(60, int((yB - yT) * 0.85)))
-
-    print(f"[OCR] ✅ Region: y={yT}–{yB} x={xL}–{xR} ({xR-xL}x{yB-yT}px) aspect={((xR-xL)/max(yB-yT,1)):.1f} fontSize≈{font_size}", file=sys.stderr)
-    return {
-        "yTop":              yT,
-        "yBottom":           yB,
-        "xLeft":             xL,
-        "xRight":            xR,
-        "estimatedFontSize": font_size
-    }
-
-
-
+    print("[OCR] No subtitle region detected — using fallback position", file=sys.stderr)
+    return None
 
 # ─────────────────────────────────────────────
 # SRT → chunks for ASS
@@ -356,10 +396,11 @@ def main():
 
         # Try multiple frame times spread across the video to find one with subtitles
         region = None
-        for t in [1.0, 5.0, 10.0, 20.0, 30.0, 2.0]:
+        for t in [1.0, 3.0, 5.0, 8.0, 12.0, 20.0, 30.0, 2.0]:
             if extract_frame(args.video, frame_path, t):
                 region = detect_subtitle_region(frame_path, vh)
                 if region:
+                    print(f"[OCR] Found region at t={t}s", file=sys.stderr)
                     break
 
         # 3. Calculate MarginV and font size

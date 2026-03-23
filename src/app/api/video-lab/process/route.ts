@@ -425,12 +425,47 @@ productionType: UGC, VSL, BROLL, TESTIMONIAL, EDUCATIVO, MIXTO`;
     updateJob(jobId, { status: 'ANALYZED', progress: 65, hook: analysis.hook, funnelStage });
  
     // PASO 4: Nomenclatura y versión
+    // Fuente de verdad: máximo entre BD + Drive (evita V1/V1 al limpiar BD)
     const sku = product?.sku || productCode(product?.title ?? 'PRD');
-    const existingVersions = await (prisma as any).creativeAsset.count({
+    const dbVersionCount = await (prisma as any).creativeAsset.count({
         where: { productId, conceptCode }
     });
-    const version = existingVersions + 1;
+
+    // Buscar también en Drive para versiones ya subidas (robustez ante limpieza de BD)
+    let driveVersionCount = 0;
+    try {
+        const { getDriveClient, findOrCreatePath } = await import('@/lib/services/drive-service');
+        const drv = await getDriveClient();
+        const ROOT_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '0AKpcFZDnKLgZUk9PVA';
+        const product2 = await (prisma as any).product.findUnique({ where: { id: productId }, select: { driveFolderId: true } });
+        const prodFolderId = product2?.driveFolderId;
+        if (prodFolderId) {
+            // Buscar archivos con patrón SKU_CONCEPT_V*.mp4 en cualquier subcarpeta del producto
+            const searchQ = `name contains '${sku}_${conceptCode}_V' and '${prodFolderId}' in parents and mimeType = 'video/mp4' and trashed = false`;
+            const driveRes = await drv.files.list({
+                q: searchQ, fields: 'files(id,name)', pageSize: 50,
+                supportsAllDrives: true, includeItemsFromAllDrives: true,
+                corpora: 'allDrives'
+            });
+            // También buscar en toda la jerarquía del producto (búsqueda global por fullText)
+            const driveRes2 = await drv.files.list({
+                q: `name contains '${sku}_${conceptCode}_V' and mimeType = 'video/mp4' and trashed = false`,
+                fields: 'files(id,name)', pageSize: 50,
+                supportsAllDrives: true, includeItemsFromAllDrives: true,
+                corpora: 'allDrives'
+            });
+            const allFiles = [...(driveRes.data.files || []), ...(driveRes2.data.files || [])];
+            // Extraer número de versión más alto
+            for (const f of allFiles) {
+                const m = f.name?.match(/_V(\d+)/i);
+                if (m) driveVersionCount = Math.max(driveVersionCount, parseInt(m[1]));
+            }
+        }
+    } catch (e) { /* Drive search failed, use DB count only */ }
+
+    const version = Math.max(dbVersionCount, driveVersionCount) + 1;
     const generatedNomen = `${sku}_${conceptCode}_V${version}.mp4`;
+
 
     // PASO 5: Corte de clips con FFmpeg usando timestamps del análisis
     const clipsDir = path.join(tmpDir, 'clips');

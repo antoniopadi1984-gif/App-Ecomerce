@@ -199,7 +199,7 @@ async function processVideoBackground(
  
     // PASO 1: Strip metadata con FFmpeg (obligatorio)
     await execAsync(
-      `ffmpeg -i '${inputPath}' -map_metadata -1 -c:v copy -c:a copy '${strippedPath}' -y`
+      `/usr/local/ffmpeg-libass/bin/ffmpeg -i '${inputPath}' -map_metadata -1 -c:v copy -c:a copy '${strippedPath}' -y`
     );
     updateJob(jobId, { status: 'INGESTED', progress: 20 });
  
@@ -208,7 +208,7 @@ async function processVideoBackground(
     // Extraer audio — si el vídeo no tiene audio, continuar sin transcripción
     let hasAudio = true;
     try {
-        await execAsync(`ffmpeg -i '${strippedPath}' -vn -acodec mp3 '${audioPath}' -y`);
+        await execAsync(`/usr/local/ffmpeg-libass/bin/ffmpeg -i '${strippedPath}' -vn -acodec mp3 '${audioPath}' -y`);
     } catch (audioErr: any) {
         if (audioErr.message?.includes('does not contain any stream') ||
             audioErr.message?.includes('Invalid argument')) {
@@ -425,46 +425,57 @@ productionType: UGC, VSL, BROLL, TESTIMONIAL, EDUCATIVO, MIXTO`;
     updateJob(jobId, { status: 'ANALYZED', progress: 65, hook: analysis.hook, funnelStage });
  
     // PASO 4: Nomenclatura y versión
-    // Fuente de verdad: máximo entre BD + Drive (evita V1/V1 al limpiar BD)
+    // Evitar race conditions en uploads paralelos usando un Mutex en memoria
+    const lockKey = `${productId}_${conceptCode}`;
     const sku = product?.sku || productCode(product?.title ?? 'PRD');
-    const dbVersionCount = await (prisma as any).creativeAsset.count({
-        where: { productId, conceptCode }
-    });
+    
+    // Función aislada para calcular la versión
+    const computeVersion = async () => {
+        const dbVersionCount = await (prisma as any).creativeAsset.count({
+            where: { productId, conceptCode }
+        });
 
-    // Buscar también en Drive para versiones ya subidas (robustez ante limpieza de BD)
-    let driveVersionCount = 0;
-    try {
-        const { getDriveClient, findOrCreatePath } = await import('@/lib/services/drive-service');
-        const drv = await getDriveClient();
-        const ROOT_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '0AKpcFZDnKLgZUk9PVA';
-        const product2 = await (prisma as any).product.findUnique({ where: { id: productId }, select: { driveFolderId: true } });
-        const prodFolderId = product2?.driveFolderId;
-        if (prodFolderId) {
-            // Buscar archivos con patrón SKU_CONCEPT_V*.mp4 en cualquier subcarpeta del producto
-            const searchQ = `name contains '${sku}_${conceptCode}_V' and '${prodFolderId}' in parents and mimeType = 'video/mp4' and trashed = false`;
-            const driveRes = await drv.files.list({
-                q: searchQ, fields: 'files(id,name)', pageSize: 50,
-                supportsAllDrives: true, includeItemsFromAllDrives: true,
-                corpora: 'allDrives'
-            });
-            // También buscar en toda la jerarquía del producto (búsqueda global por fullText)
-            const driveRes2 = await drv.files.list({
-                q: `name contains '${sku}_${conceptCode}_V' and mimeType = 'video/mp4' and trashed = false`,
-                fields: 'files(id,name)', pageSize: 50,
-                supportsAllDrives: true, includeItemsFromAllDrives: true,
-                corpora: 'allDrives'
-            });
-            const allFiles = [...(driveRes.data.files || []), ...(driveRes2.data.files || [])];
-            // Extraer número de versión más alto
-            for (const f of allFiles) {
-                const m = f.name?.match(/_V(\d+)/i);
-                if (m) driveVersionCount = Math.max(driveVersionCount, parseInt(m[1]));
+        let driveVersionCount = 0;
+        try {
+            const { getDriveClient } = await import('@/lib/services/drive-service');
+            const drv = await getDriveClient();
+            const product2 = await (prisma as any).product.findUnique({ where: { id: productId }, select: { driveFolderId: true } });
+            const prodFolderId = product2?.driveFolderId;
+            if (prodFolderId) {
+                const searchQ = `name contains '${sku}_${conceptCode}_V' and '${prodFolderId}' in parents and mimeType = 'video/mp4' and trashed = false`;
+                const driveRes = await drv.files.list({
+                    q: searchQ, fields: 'files(id,name)', pageSize: 50,
+                    supportsAllDrives: true, includeItemsFromAllDrives: true, corpora: 'allDrives'
+                });
+                for (const f of driveRes.data.files || []) {
+                    const m = f.name?.match(/_V(\d+)/i);
+                    if (m) driveVersionCount = Math.max(driveVersionCount, parseInt(m[1]));
+                }
             }
-        }
-    } catch (e) { /* Drive search failed, use DB count only */ }
+        } catch (e) { /* Fallback a DB */ }
 
-    const version = Math.max(dbVersionCount, driveVersionCount) + 1;
-    const generatedNomen = `${sku}_${conceptCode}_V${version}.mp4`;
+        // Aquí guardamos el record para que el siguiente count de DB ya lo vea (y la reserva de nombre)
+        let newVersion = Math.max(dbVersionCount, driveVersionCount) + 1;
+        const newNomen = `${sku}_${conceptCode}_V${newVersion}.mp4`;
+        
+        // Actualizamos el asset original para "reservar" esta versión en DB
+        await (prisma as any).creativeAsset.update({
+            where: { id: assetId },
+            data: { conceptCode, name: newNomen }
+        });
+        
+        return { version: newVersion, generatedNomen: newNomen };
+    };
+
+    // Ejecutar sequentializando por producto+concepto
+    const globalMutex = global as any;
+    globalMutex.versionLocks = globalMutex.versionLocks || new Map<string, Promise<any>>();
+    const prevLock = globalMutex.versionLocks.get(lockKey) || Promise.resolve();
+    const versionPromise = prevLock.then(() => computeVersion()).catch(() => computeVersion());
+    globalMutex.versionLocks.set(lockKey, versionPromise);
+
+    
+    const { version, generatedNomen } = await versionPromise;
 
 
     // PASO 5: Corte de clips con FFmpeg usando timestamps del análisis
@@ -482,13 +493,13 @@ productionType: UGC, VSL, BROLL, TESTIMONIAL, EDUCATIVO, MIXTO`;
             const duration = clip.end - clip.start;
             if (duration > 0.5) {
                 await execAsync(
-                    `ffmpeg -i '${strippedPath}' -ss ${clip.start} -t ${duration} -c:v libx264 -crf 23 -c:a aac '${clipsDir}/${sku}_${conceptCode}_${name}.mp4' -y`
+                    `/usr/local/ffmpeg-libass/bin/ffmpeg -i '${strippedPath}' -ss ${clip.start} -t ${duration} -c:v libx264 -crf 23 -c:a aac '${clipsDir}/${sku}_${conceptCode}_${name}.mp4' -y`
                 );
             }
         }
     } else {
         await execAsync(
-            `ffmpeg -i '${strippedPath}' -f segment -segment_time 10 -c copy '${clipsDir}/SCENE_%02d.mp4' -y`
+            `/usr/local/ffmpeg-libass/bin/ffmpeg -i '${strippedPath}' -f segment -segment_time 10 -c copy '${clipsDir}/SCENE_%02d.mp4' -y`
         );
     }
     updateJob(jobId, { status: 'SPLIT', progress: 80 });

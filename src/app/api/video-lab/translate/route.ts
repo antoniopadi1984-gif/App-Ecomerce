@@ -99,7 +99,7 @@ async function burnSubs(videoPath: string, srtPath: string, outputPath: string):
         const assPath = srtPath.replace('.srt', '.ass');
         fsSync.writeFileSync(assPath, assContent, 'utf8');
         const escapedAss = assPath.replace(/\\/g, '/').replace(/:/g, '\\:');
-        await execAsync(`ffmpeg -i '${videoPath}' -vf "ass='${assPath}'" -c:a copy '${outputPath}' -y`);
+        await execAsync(`/usr/local/ffmpeg-libass/bin/ffmpeg -i '${videoPath}' -vf "ass='${assPath}'" -c:a copy '${outputPath}' -y`);
         return true;
     } catch(e: any) {
         console.warn(`[Translate] burnSubs falló: ${e.message?.slice(0,200)}`);
@@ -347,12 +347,13 @@ export async function POST(req: NextRequest) {
                     const scriptPath = path.join(process.cwd(), 'scripts', 'subtitle_injector.py');
                     const pythonBin = process.env.PYTHON_BIN || 'python3';
                     // Usamos execFileAsync para evitar problemas de quoting con rutas con espacios
-                    const { stderr } = await execFileAsync(
+                    const { stdout, stderr } = await execFileAsync(
                         pythonBin,
                         [scriptPath, '--video', ttsVideoPath, '--srt', srtPath, '--out', burnedPath],
                         { maxBuffer: 50 * 1024 * 1024 }
                     );
-                    if (stderr) console.log('[SubtitleInjector]', stderr.slice(0, 500));
+                    if (stdout) console.log('[SubtitleInjector OUT]', stdout.trim());
+                    if (stderr) console.log('[SubtitleInjector ERR]', stderr.trim());
                     const exists = await fs.access(burnedPath).then(() => true).catch(() => false);
                     if (exists) {
                         finalPath = burnedPath;

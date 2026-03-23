@@ -40,14 +40,14 @@ try:
 except ImportError:
     TESSEROCR = False
 
-# Absolute paths — Next.js/shell may not have /opt/homebrew/bin in PATH
+# Absolute paths
 FFPROBE = os.environ.get('FFPROBE_PATH', '/opt/homebrew/bin/ffprobe')
 if not os.path.exists(FFPROBE):
-    FFPROBE = 'ffprobe'  # fallback to PATH
+    FFPROBE = 'ffprobe'
 
-FFMPEG_BIN = os.environ.get('FFMPEG_PATH', '/opt/homebrew/bin/ffmpeg')
+FFMPEG_BIN = os.environ.get('FFMPEG_PATH', '/usr/local/ffmpeg-libass/bin/ffmpeg')
 if not os.path.exists(FFMPEG_BIN):
-    FFMPEG_BIN = 'ffmpeg'
+    FFMPEG_BIN = '/usr/local/ffmpeg-libass/bin/ffmpeg'
 
 
 # ─────────────────────────────────────────────

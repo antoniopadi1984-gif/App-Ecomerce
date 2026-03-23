@@ -100,7 +100,7 @@ export async function POST(
                 await fs.writeFile(videoPath, videoBuffer);
                 await fs.writeFile(musicPath, Buffer.from(musicResult));
                 await execAsync(
-                    `ffmpeg -i '${videoPath}' -i '${musicPath}' -filter_complex '[0:a]volume=1.0[voice];[1:a]volume=0.22[music];[voice][music]amix=inputs=2:duration=first[out]' -map 0:v -map '[out]' -c:v copy -shortest '${outputPath}' -y`
+                    `/usr/local/ffmpeg-libass/bin/ffmpeg -i '${videoPath}' -i '${musicPath}' -filter_complex '[0:a]volume=1.0[voice];[1:a]volume=0.22[music];[voice][music]amix=inputs=2:duration=first[out]' -map 0:v -map '[out]' -c:v copy -shortest '${outputPath}' -y`
                 );
                 const outputBuffer = await fs.readFile(outputPath);
                 const product = await prisma.product.findUnique({ where: { id: asset.productId || '' }, select: { sku: true } });
@@ -168,7 +168,7 @@ export async function POST(
                 // Quemar subtítulos con FFmpeg
                 // Usamos un estilo más moderno y legible
                 await execAsync(
-                    `ffmpeg -i '${videoPath}' -vf "subtitles='${srtPath}':force_style='Alignment=2,OutlineColour=&H10000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=30,Fontname=Impact,Fontsize=18'" -c:a copy '${outputPath}' -y`
+                    `/usr/local/ffmpeg-libass/bin/ffmpeg -i '${videoPath}' -vf "subtitles='${srtPath}':force_style='Alignment=2,OutlineColour=&H10000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=30,Fontname=Impact,Fontsize=18'" -c:a copy '${outputPath}' -y`
                 );
                 const outputBuffer = await fs.readFile(outputPath);
                 const product = await prisma.product.findUnique({ where: { id: asset.productId || '' }, select: { sku: true } });

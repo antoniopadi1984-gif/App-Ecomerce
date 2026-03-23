@@ -7,8 +7,8 @@
   },
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:all": "concurrently \"next dev\" \"bash src/engine/start_engine.sh\" \"npm run worker\"",
+    "dev": "PATH=/usr/local/ffmpeg-libass/bin:$PATH next dev",
+    "dev:all": "concurrently \"npm run dev\" \"bash src/engine/start_engine.sh\" \"npm run worker\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

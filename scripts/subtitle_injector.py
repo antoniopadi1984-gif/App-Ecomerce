@@ -112,31 +112,49 @@ def detect_subtitle_region(frame_path: str, vw: int, vh: int) -> Optional[dict]:
     h, w = img.shape[:2]
     candidates = []
  
-    # OCR detection
+    # OCR detection — detecta TODOS los grupos de texto en el frame completo
     try:
         pil_img = PILImage.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         data = pytesseract.image_to_data(pil_img, output_type=pytesseract.Output.DICT,
                                           config="--psm 11 --oem 3")
         elements = []
         for i, conf in enumerate(data["conf"]):
-            if int(conf) < 40: continue
+            if int(conf) < 45: continue
             tx = data["text"][i].strip()
-            if not tx: continue
+            if not tx or len(tx) < 2: continue
             bx, by, bw, bh = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
-            elements.append((bx, by, bx+bw, by+bh))
+            if bw > 5 and bh > 5:
+                elements.append((bx, by, bx+bw, by+bh))
+
         if elements:
-            min_x = min(e[0] for e in elements)
-            min_y = min(e[1] for e in elements)
-            max_x = max(e[2] for e in elements)
-            max_y = max(e[3] for e in elements)
-            area_w = max_x - min_x
-            area_h = max_y - min_y
-            if area_w > w * 0.1 and area_h > 12:
-                candidates.append({
-                    "yTop": min_y, "yBottom": max_y, "xLeft": min_x, "xRight": max_x,
-                    "fontSize": max(14, min(100, int(area_h * 0.9))),
-                    "score": area_w * area_h * 2  # OCR weighted higher
-                })
+            # Agrupar por proximidad vertical — cada grupo es un bloque de texto independiente
+            elements.sort(key=lambda e: e[1])
+            groups = []
+            current = [elements[0]]
+            for e in elements[1:]:
+                # Nueva línea si hay gap vertical > 30px
+                if e[1] - current[-1][3] > 30:
+                    groups.append(current)
+                    current = [e]
+                else:
+                    current.append(e)
+            groups.append(current)
+
+            # Cada grupo es una región candidata independiente
+            for group in groups:
+                min_x = max(0, min(e[0] for e in group) - 8)
+                min_y = max(0, min(e[1] for e in group) - 8)
+                max_x = min(w, max(e[2] for e in group) + 8)
+                max_y = min(vh, max(e[3] for e in group) + 8)
+                area_w = max_x - min_x
+                area_h = max_y - min_y
+                # Filtrar: debe ser razonablemente ancho y no demasiado alto
+                if area_w > w * 0.08 and area_h > 8 and area_h < vh * 0.3:
+                    candidates.append({
+                        "yTop": min_y, "yBottom": max_y, "xLeft": min_x, "xRight": max_x,
+                        "fontSize": max(14, min(60, int(area_h * 0.85))),
+                        "score": area_w * area_h * 2
+                    })
     except Exception as e:
         print(f"[DEBUG] OCR error: {e}", file=sys.stderr)
  
@@ -161,13 +179,21 @@ def detect_subtitle_region(frame_path: str, vw: int, vh: int) -> Optional[dict]:
         print(f"[DEBUG] Geometry error: {e}", file=sys.stderr)
  
     if not candidates: return None
- 
-    def rank(c):
-        center_y = (c["yTop"] + c["yBottom"]) / 2
-        multiplier = 1.5 if center_y > vh * 0.4 else 1.0
-        return c["score"] * multiplier
- 
-    return max(candidates, key=rank)
+
+    def overlaps(a, b):
+        ix1 = max(a["xLeft"], b["xLeft"]); ix2 = min(a["xRight"], b["xRight"])
+        iy1 = max(a["yTop"],  b["yTop"]);  iy2 = min(a["yBottom"], b["yBottom"])
+        if ix2 <= ix1 or iy2 <= iy1: return False
+        inter = (ix2-ix1)*(iy2-iy1)
+        area_a = (a["xRight"]-a["xLeft"])*(a["yBottom"]-a["yTop"])
+        return inter / max(area_a, 1) > 0.7
+
+    unique = []
+    for c in sorted(candidates, key=lambda x: -x["score"]):
+        if not any(overlaps(c, u) for u in unique):
+            unique.append(c)
+
+    return unique
  
  
 def get_dominant_bg_color(frame_path: str, region: dict) -> str:
@@ -202,7 +228,7 @@ ScaledBorderAndShadow: yes
  
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
-Style: Default,Arial,20,&H00000000,&H000000FF,&H00FFFFFF,&H99FFFFFF,-1,0,0,0,100,100,0,0,4,1,0,2,10,10,10,1
+Style: Default,Arial,20,&H00000000,&H000000FF,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,4,2,0,2,10,10,10,1
  
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
@@ -236,29 +262,24 @@ def inject_subtitles(video_path: str, ass_path: str, mask_entries: list,
     curr_stream = "[0:v]"
  
     for i, e in enumerate(mask_entries):
-        if not e.get("region"): continue
-        r = e["region"]
+        regions = e.get("regions") or ([e["region"]] if e.get("region") else [])
+        if not regions: continue
+        r = regions[0]  # para compatibilidad
         ts = e["start_ms"] / 1000.0
         te = e["end_ms"] / 1000.0
-        px, py = 8, 8
-        x = max(0, r["xLeft"] - px)
-        y = max(0, r["yTop"] - py)
-        w = min(vw - x - 1, r["xRight"] - r["xLeft"] + px*2)
-        h = min(vh - y - 1, r["yBottom"] - r["yTop"] + py*2)
-        if w < 4 or h < 4: continue
- 
-        # Detect background color
         f_path = os.path.join(tmp_dir, f"mask_{i}_50.jpg")
-        bg = get_dominant_bg_color(f_path, r) if os.path.exists(f_path) else "white"
- 
-        out_stream = f"[v_patch{chain_idx}]"
-        filters.append(
-            f"{curr_stream}drawbox=x={x}:y={y}:w={w}:h={h}:"
-            f"color={bg}:t=fill:enable='between(t,{ts:.3f},{te:.3f})'"
-            f"{out_stream}"
-        )
-        curr_stream = out_stream
-        chain_idx += 1
+        for r in regions:
+            px, py = 8, 8
+            x = max(0, r["xLeft"] - px)
+            y = max(0, r["yTop"] - py)
+            w = min(vw - x - 1, r["xRight"] - r["xLeft"] + px*2)
+            h = min(vh - y - 1, r["yBottom"] - r["yTop"] + py*2)
+            if w < 4 or h < 4: continue
+            bg = get_dominant_bg_color(f_path, r) if os.path.exists(f_path) else "white"
+            out_stream = f"[v_patch{chain_idx}]"
+            filters.append(f"{curr_stream}drawbox=x={x}:y={y}:w={w}:h={h}:color={bg}:t=fill:enable='between(t,{ts:.3f},{te:.3f})'{out_stream}")
+            curr_stream = out_stream
+            chain_idx += 1
  
     filter_str = ";".join(filters)
     if filter_str: filter_str += ";"
@@ -285,7 +306,7 @@ def inject_subtitles(video_path: str, ass_path: str, mask_entries: list,
 # ─────────────────────────────────────────────
 def detect_regions_for_entries(entries: list, video_path: str, vw: int, vh: int,
                                 tmp_dir: str, prefix: str = "f") -> list:
-    last_region = None
+    last_regions = []
     for i, e in enumerate(entries):
         candidates = []
         dur = (e["end_ms"] - e["start_ms"]) / 1000.0
@@ -296,15 +317,34 @@ def detect_regions_for_entries(entries: list, video_path: str, vw: int, vh: int,
                 reg = detect_subtitle_region(fp, vw, vh)
                 if reg: candidates.append(reg)
  
-        if candidates:
-            best = max(candidates, key=lambda c: c["score"])
-            e["region"] = best
-            last_region = best
-            print(f"  [{i+1}/{len(entries)}] ✓ box at y={best['yTop']}–{best['yBottom']}", file=sys.stderr)
-        elif last_region:
-            e["region"] = last_region
-            print(f"  [{i+1}/{len(entries)}] ~ fallback to last region", file=sys.stderr)
+        # Combinar todos los candidatos de los 3 frames — deduplicar
+        all_regions = []
+        for reg in candidates:
+            if isinstance(reg, list):
+                all_regions.extend(reg)
+            elif reg:
+                all_regions.append(reg)
+
+        if all_regions:
+            # Deduplicar entre frames
+            unique = []
+            def overlaps(a, b):
+                ix1=max(a["xLeft"],b["xLeft"]); ix2=min(a["xRight"],b["xRight"])
+                iy1=max(a["yTop"],b["yTop"]); iy2=min(a["yBottom"],b["yBottom"])
+                if ix2<=ix1 or iy2<=iy1: return False
+                inter=(ix2-ix1)*(iy2-iy1)
+                area_a=(a["xRight"]-a["xLeft"])*(a["yBottom"]-a["yTop"])
+                return inter/max(area_a,1)>0.7
+            for c in sorted(all_regions, key=lambda x: -x["score"]):
+                if not any(overlaps(c,u) for u in unique): unique.append(c)
+            e["regions"] = unique
+            last_regions = unique
+            print(f"  [{i+1}/{len(entries)}] ✓ {len(unique)} region(s) detected", file=sys.stderr)
+        elif last_regions:
+            e["regions"] = last_regions
+            print(f"  [{i+1}/{len(entries)}] ~ fallback to last regions", file=sys.stderr)
         else:
+            e["regions"] = []
             print(f"  [{i+1}/{len(entries)}] ✗ not detected", file=sys.stderr)
     return entries
  
@@ -365,7 +405,7 @@ def main():
                             best_diff = diff
                             best_me = me
                 if best_me:
-                    oe["region"] = best_me["region"]
+                    oe["regions"] = best_me.get("regions", [])
  
         # ── GENERATE ASS ────────────────────────────────────────────────────
         ass_path = os.path.join(tmp, "subs.ass")

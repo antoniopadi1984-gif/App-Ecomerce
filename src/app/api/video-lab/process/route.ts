@@ -448,31 +448,23 @@ productionType: UGC, VSL, BROLL, TESTIMONIAL, EDUCATIVO, MIXTO`;
     
     // Función aislada para calcular la versión
     const computeVersion = async () => {
+        // Contar solo assets ORIGINALES con este conceptCode — excluir traducciones
         const dbVersionCount = await (prisma as any).creativeAsset.count({
-            where: { productId, conceptCode }
+            where: {
+                productId,
+                conceptCode,
+                id: { not: assetId }, // excluir el actual que aún no tiene nombre
+                nomenclatura: { not: null },
+                NOT: [
+                    { nomenclatura: { contains: '_ES' } },
+                    { nomenclatura: { contains: '_EN' } },
+                    { nomenclatura: { contains: '_FR' } },
+                    { nomenclatura: { contains: '_TTS' } },
+                ]
+            }
         });
 
-        let driveVersionCount = 0;
-        try {
-            const { getDriveClient } = await import('@/lib/services/drive-service');
-            const drv = await getDriveClient();
-            const product2 = await (prisma as any).product.findUnique({ where: { id: productId }, select: { driveFolderId: true } });
-            const prodFolderId = product2?.driveFolderId;
-            if (prodFolderId) {
-                const searchQ = `name contains '${sku}_${conceptCode}_V' and '${prodFolderId}' in parents and mimeType = 'video/mp4' and trashed = false`;
-                const driveRes = await drv.files.list({
-                    q: searchQ, fields: 'files(id,name)', pageSize: 50,
-                    supportsAllDrives: true, includeItemsFromAllDrives: true, corpora: 'allDrives'
-                });
-                for (const f of driveRes.data.files || []) {
-                    const m = f.name?.match(/_V(\d+)/i);
-                    if (m) driveVersionCount = Math.max(driveVersionCount, parseInt(m[1]));
-                }
-            }
-        } catch (e) { /* Fallback a DB */ }
-
-        // Aquí guardamos el record para que el siguiente count de DB ya lo vea (y la reserva de nombre)
-        let newVersion = Math.max(dbVersionCount, driveVersionCount) + 1;
+        let newVersion = dbVersionCount + 1;
         const newNomen = `${sku}_${conceptCode}_V${newVersion}.mp4`;
         
         // Actualizamos el asset original para "reservar" esta versión en DB
